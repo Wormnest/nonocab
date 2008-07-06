@@ -1,50 +1,147 @@
 
 class Tile {
 
-	static NORTH = 0;
-	static EAST  = 1;
-	static SOUTH = 2;
-	static WEST  = 3;
-	static NORTH_EAST = 4;
-	static SOUTH_EAST = 5;
-	static NORTH_WEST = 6;
-	static SOUTH_WEST = 7;
-	
+
+	static BRIDGE = 0;
+	static TUNNEL = 1;
+	static ROAD   = 2;
 
 	constructor() {
 
 	}
 
-	static function GetTilesAround(tile, getDiagonal, testFunction);
-	static function IsBuildable(tile);
+	static function GetTilesAround(currentTile, currentDirection);
+	static function GetTilesAround2(currentTile);
+	static function GetBridges(startTile, direction);
+	static function GetTunnels(startTile, direction);
+	static function IsSlopedRoad(startNode, direction);
+	static function IsBuildable(node);
 }
+
+function Tile::GetTilesAround2(currentTile) {
+	return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX()];
+}
+
 /**
- * Get all tiles around a given tile (we don't check boundaries),
- * we get the Northern, Western, Southern, and Eastern tiles. If
- * getDiagonal is true, we also get those. 
- *
- * TODO: A test function can
- * be provided to test if a certain tile should be included in
- * the set.
+ * Get all the tiles around currentTile, if these tiles happen to be a 
+ * starting point of a tunnel or bridge we return the end points of these
+ * structures. Also, we explore the possibility to build bridges and
+ * tunnels and return those end points as well.
  */
-function Tile::GetTilesAround(tile, getDiagonal, testFunction) {
+function Tile::GetTilesAround(currentTile, currentDirection) {
 
-	local tileArray = array( (getDiagonal ? 8 : 4));
+	local tileArray = [];
 
-	tileArray[Tile.NORTH] = tile + AIMap.GetMapSizeX(); 	// North
-	tileArray[Tile.EAST] = tile + 1;			// East
-	tileArray[Tile.SOUTH] = tile - AIMap.GetMapSizeX();	// South
-	tileArray[Tile.WEST] = tile - 1;			// West
+	local offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1),
+		                 AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
-	// Check diagonals
-	if(getDiagonal) {
-		tileArray[Tile.NORTH_EAST] = tile + AIMap.GetMapSizeX() + 1;	 // North-East
-		tileArray[Tile.SOUTH_EAST] = tile - AIMap.GetMapSizeX() + 1;  // South-East
-		tileArray[Tile.NORTH_WEST] = tile + AIMap.GetMapSizeX() - 1;  // North-West
-		tileArray[Tile.SOUTH_WEST] = tile - AIMap.GetMapSizeX() - 1;  // South-West
+	foreach (offset in offsets) {
+		
+		// Don't build in the wrong direction
+		if (offset == currentDirection)
+			continue;
+		
+		// Check for each tile if it already has a bridge / tunnel
+		// or if we could build one.
+		local nextTile = currentTile + offset;
+		
+		if (AIBridge.IsBridgeTile(nextTile)) {
+			tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
+		} else if (AITunnel.IsTunnelTile(nextTile)) {
+			tileArray.push([AITunnel.GetOtherTunnelEnd(nextTile), offset, Tile.TUNNEL, 0]);
+		}
+		
+		
+		/** 
+		 * If it is neither a tunnel or a bridge, we try to build one
+		 * our selves.
+		 */
+		else {
+			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
+				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+			}
+			
+			foreach (tunnel in Tile.GetTunnels(nextTile, offset)) {
+				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
+			}
+			
+			// Besides the tunnels and bridges, we also add the tiles
+			// adjacent to the currentTile.
+			tileArray.push([nextTile, offset, Tile.ROAD, 0]);
+		}
 	}
 
 	return tileArray;
+}
+
+/**
+ * Get all bridges and tunnels which can be build on the given node
+ * in the given direction.
+ */
+function Tile::GetBridges(startNode, direction) 
+{
+	local slope = AITile.GetSlope(startNode);
+	if (slope == AITile.SLOPE_FLAT) return [];
+	local tiles = [];
+
+	/** Try to build a bridge 
+	for (local i = 2; i < 20; i++) {
+		local bridge_list = AIBridgeList_Length(i + 1);
+		local target = startNode + i * direction;
+		if (!bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
+			tiles.push(target);
+		}
+	}*/
+	
+	return tiles;
+}
+	
+function Tile::GetTunnels(startNode, direction)
+{
+	local slope = AITile.GetSlope(startNode);
+	if (slope == AITile.SLOPE_FLAT) return [];
+	local tiles = [];
+	
+	/** Try to build a tunnel */
+	if (slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SE && slope != AITile.SLOPE_NE) return tiles;
+	local other_tunnel_end = AITunnel.GetOtherTunnelEnd(startNode);
+	if (!AIMap.IsValidTile(other_tunnel_end)) return tiles;
+
+	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end);
+	local prev_tile = startNode + (startNode - other_tunnel_end) / tunnel_length;
+	if (tunnel_length >= 2 && tunnel_length < 20 && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)) {
+		tiles.push(other_tunnel_end);
+	}
+	return tiles;
+}
+
+function Tile::IsSlopedRoad(start, middle, end)
+{
+	local NW = 0; //Set to true if we want to build a road to / from the north-west
+	local NE = 0; //Set to true if we want to build a road to / from the north-east
+	local SW = 0; //Set to true if we want to build a road to / from the south-west
+	local SE = 0; //Set to true if we want to build a road to / from the south-east
+
+	if (middle - AIMap.GetMapSizeX() == start || middle - AIMap.GetMapSizeX() == end) NW = 1;
+	if (middle - 1 == start || middle - 1 == end) NE = 1;
+	if (middle + AIMap.GetMapSizeX() == start || middle + AIMap.GetMapSizeX() == end) SE = 1;
+	if (middle + 1 == start || middle + 1 == end) SW = 1;
+
+	/* If there is a turn in the current tile, it can't be sloped. */
+	if ((NW || SE) && (NE || SW)) return false;
+
+	local slope = AITile.GetSlope(middle);
+	/* A road on a steep slope is always sloped. */
+	if (AITile.IsSteepSlope(slope)) return true;
+
+	/* If only one corner is raised, the road is sloped. */
+	if (slope == AITile.SLOPE_N || slope == AITile.SLOPE_W) return true;
+	if (slope == AITile.SLOPE_S || slope == AITile.SLOPE_E) return true;
+
+	if (NW && (slope == AITile.SLOPE_NW || slope == AITile.SLOPE_SE)) return true;
+	if (NE && (slope == AITile.SLOPE_NE || slope == AITile.SLOPE_SW)) return true;
+
+	return false;
 }
 
 /**
@@ -60,7 +157,7 @@ function Tile::IsBuildable(tile) {
 
 		// Check if we can build a road station on this tile (then we know for sure it's
 		// save to build here :)
-		foreach(directionTile in Tile.GetTilesAround(tile, false, null)) {
+		foreach(directionTile in Tile.GetTilesAround2(tile)) {
 			if(AIRoad.BuildRoadStation(tile, directionTile, true, false)) {
 				return true;
 			}

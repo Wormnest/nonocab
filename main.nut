@@ -38,10 +38,10 @@ function NoCAP::Start()
 		print("Cargo: " + i + " " + AICargo.GetCargoLabel(i));
 	}
 
-	if(!this.company.SetCompanyName("MyNewAI")) 
+	if(!this.company.SetCompanyName("NoCAP")) 
 	{
 		local i = 2;
-		while(!this.company.SetCompanyName("MyNewAI #" + i))
+		while(!this.company.SetCompanyName("NoCAP #" + i))
 		{
 			i = i + 1;
 		}

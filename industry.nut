@@ -85,17 +85,19 @@ function IndustryManager::UpdateIndustry(ai) {
 
 					print("Find path from " + AIIndustry.GetName(fromIndustry.industryID) + " to " + AIIndustry.GetName(toIndustry.industryID));
 
-					pathInfo = pathFinder.FindFastestRoad(fromIndustry.tilesAroundProducing, toIndustry.tilesAroundAccepting, 0, null, ai);
+					pathInfo = pathFinder.FindFastestRoad(fromIndustry.tilesAroundProducing, toIndustry.tilesAroundAccepting);
 
 					if(!pathInfo)
 						continue;
 					print("FOUND PATH! " + pathInfo.roadList.len());
+					
+					
 
 					local accounter = AIAccounting();
 					pathFinder.CreateRoad(pathInfo.roadList, ai);
 					pathInfo.roadCost = accounter.GetCosts();
-				} 
-
+				}
+				
 				local exec = AIExecMode();
 				// Check if we can build this (and if we can, do so!)
 				local comp = AICompany();
@@ -113,13 +115,14 @@ function IndustryManager::UpdateIndustry(ai) {
 
 					// Build begin and end stations
 					local roadAI = AIRoad();
-					if(!roadAI.BuildRoadStation(pathInfo.roadList[0], pathInfo.roadList[1], true, false))
+					if(!roadAI.BuildRoadStation(pathInfo.roadList[0][0], pathInfo.roadList[1][0], true, false))
 						print("[FATAL ERROR] Failed to build road station!");
-					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1], pathInfo.roadList[pathInfo.roadList.len() - 2], true, false))
+					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1][0], pathInfo.roadList[pathInfo.roadList.len() - 2][0], true, false))
 						print("[FATAL ERROR] Failed to build road station!");
 
+					quit();
 					// Build a road depod :)
-					local buildDepot = null;
+					/*local buildDepot = null;
 					for(local roads = 4; roads < pathInfo.roadList.len(); roads++) {
 						local depotTiles = Tile.GetTilesAround(pathInfo.roadList[roads], false, null);
 						
@@ -134,7 +137,7 @@ function IndustryManager::UpdateIndustry(ai) {
 						}
 						if(buildDepot)
 							break;
-					}
+					}*/
 				}
 			}
 		}
