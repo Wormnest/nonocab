@@ -52,11 +52,6 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
-	foreach (a in roadList) {
-		local test = AIExecMode();
-		AISign.BuildSign(a.tile, "R");
-	}
-		
 	local buildFrom = roadList[roadList.len() - 1].tile;
 	local currentDirection = roadList[roadList.len() - 1].direction;
 	
@@ -66,17 +61,6 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 		local direction = roadList[a].direction;
 		
 		switch (roadList[a].type) {
-			case Tile.TUNNEL:
-				AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction);
-				
-				// Build road before the bridge
-				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
-				
-				if (a > 0)
-					buildFrom = roadList[a - 1].tile;
-				else
-					buildFrom = roadList[0].tile;
-				break;
 			case Tile.ROAD:
 				if (direction != currentDirection) {
 					
@@ -87,15 +71,35 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
 						print("FATAL ERROR!");
-					//	Quit();
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
 				}
 				break;
+			case Tile.TUNNEL:
+				AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction);
+
+				// Build road before the tunnel
+				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
+
+				if (a > 0)
+					buildFrom = roadList[a - 1].tile;
+				else
+					buildFrom = roadList[0].tile;
+				break;
 			case Tile.BRIDGE:
-				AISign.BuildSign(buildTo, "Bridge");
-				print("Not yet implemented.");
+				local e = AIExecMode();
+				AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "Begin");
+				AISign.BuildSign(roadList[a].tile, "End");
+				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, AIBridgeList_Length(10).Begin(), roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
+								
+				// Build road before the tunnel
+				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
+
+				if (a > 0)
+					buildFrom = roadList[a - 1].tile;
+				else
+					buildFrom = roadList[0].tile;
 				break;
 		}
 	}
@@ -252,7 +256,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		// Get all possible tiles from this annotated tile (North, South, West,
 		// East) and check if we're already at the end or if new roads are possible
 		// from those tiles.
-		local directions = Tile.GetTilesAround(at);
+		local directions = Tile.GetNeighbours(at);
 		
 		/**
 		 * neighbour is an array with 4 elements:

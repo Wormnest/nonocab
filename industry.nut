@@ -123,7 +123,7 @@ function IndustryManager::UpdateIndustry(ai) {
 					// Build a road depod :)
 					local buildDepot = null;
 					for(local roads = 4; roads < pathInfo.roadList.len(); roads++) {
-						local depotTiles = Tile.GetTilesAround2(pathInfo.roadList[roads].tile);
+						local depotTiles = Tile.GetTilesAround(pathInfo.roadList[roads].tile);
 						
 						// Try building one here! :)
 						foreach(tile in depotTiles) {

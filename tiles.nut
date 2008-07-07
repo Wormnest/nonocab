@@ -10,8 +10,8 @@ class Tile {
 
 	}
 
-	static function GetTilesAround(currentAnnotatedTile);
-	static function GetTilesAround2(currentTile);
+	static function GetNeighbours(currentAnnotatedTile);
+	static function GetTilesAround(currentTile);
 	static function GetBridges(startTile, direction);
 	static function GetTunnels(startTile, direction);
 	static function IsSlopedRoad(startNode, direction);
@@ -19,7 +19,7 @@ class Tile {
 	static function ValidateTurn(startTile, dir);
 }
 
-function Tile::GetTilesAround2(currentTile) {
+function Tile::GetTilesAround(currentTile) {
 	return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX()];
 }
 
@@ -29,7 +29,7 @@ function Tile::GetTilesAround2(currentTile) {
  * structures. Also, we explore the possibility to build bridges and
  * tunnels and return those end points as well.
  */
-function Tile::GetTilesAround(currentAnnotatedTile) {
+function Tile::GetNeighbours(currentAnnotatedTile) {
 
 	local tileArray = [];
 
@@ -71,9 +71,9 @@ function Tile::GetTilesAround(currentAnnotatedTile) {
 		 * our selves.
 		 */
 		else {
-			//foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-			//	tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
-			//}
+//			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
+//				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+//			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
 				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
@@ -98,14 +98,14 @@ function Tile::GetBridges(startNode, direction)
 	if (slope == AITile.SLOPE_FLAT) return [];
 	local tiles = [];
 
-	/** Try to build a bridge 
+	/** Try to build a bridge */
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
 			tiles.push(target);
 		}
-	}*/
+	}
 	
 	return tiles;
 }
@@ -126,7 +126,7 @@ function Tile::GetTunnels(startNode, previousNode)
 	
 	local prev_tile = startNode - direction;
 	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)) {
-		tiles.push(other_tunnel_end); //  + direction
+		tiles.push(other_tunnel_end);
 	}
 	return tiles;
 }
@@ -173,7 +173,7 @@ function Tile::IsBuildable(tile) {
 
 		// Check if we can build a road station on this tile (then we know for sure it's
 		// save to build here :)
-		foreach(directionTile in Tile.GetTilesAround2(tile)) {
+		foreach(directionTile in Tile.GetTilesAround(tile)) {
 			if(AIRoad.BuildRoadStation(tile, directionTile, true, false)) {
 				return true;
 			}
