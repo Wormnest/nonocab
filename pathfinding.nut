@@ -20,7 +20,7 @@ class RoadPathFinding
 	 */
 	function CreateRoad(roadList);		// Create the best road from start to end
 	function GetCostForRoad(roadList);	// Give the cost for the best road from start to end
-	function FindFastestRoad(start, end, allowenceSavings, excludeList, ai);
+	function FindFastestRoad(start, end);
 }
 
 /**
@@ -52,42 +52,92 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
-	local buildFrom = roadList[0][0];
-	local buildTo   = roadList[1][0];
-	local currentDirection = 123;
-	
-	for(local a = 1; a < roadList.len(); a++)		
-	{
-		buildTo = roadList[a][0];
-		local direction = buildTo - roadList[a - 1][0];
+	foreach (a in roadList) {
+		local test = AIExecMode();
+		AISign.BuildSign(a.tile, "R");
+	}
 		
-		switch (roadList[a][1]) {
+	local buildFrom = roadList[roadList.len() - 1].tile;
+	local currentDirection = roadList[roadList.len() - 1].direction;
+	
+	for(local a = roadList.len() - 2; -1 < a; a--)		
+	{
+		local buildTo = roadList[a].tile;
+		local direction = roadList[a].direction;
+		
+		switch (roadList[a].type) {
 			case Tile.TUNNEL:
-				AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, buildTo);
-				AIRoad.BuildRoad(buildFrom, roadList[a - 1][0]);
-				buildFrom = AITunnel.GetOtherTunnelEnd(buildTo);
+				AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction);
 				
-				// There is still an error with the planner. An extra
-				// points is added which shouldn't be here!
-				a++;
+				// Build road before the bridge
+				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
+				
+				if (a > 0)
+					buildFrom = roadList[a - 1].tile;
+				else
+					buildFrom = roadList[0].tile;
 				break;
 			case Tile.ROAD:
 				if (direction != currentDirection) {
-					AIRoad.BuildRoad(buildFrom, roadList[a - 1][0]);
+					
+					// Check if we need to do some terraforming
+					// Not needed ATM, as we make sure we only consider roads which
+					// don't require terraforming
+					// Terraform(buildFrom, currentDirection);
+					
+					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
+						print("FATAL ERROR!");
+					//	Quit();
+					}
 					currentDirection = direction;
-					buildFrom = roadList[a - 1][0];
+					buildFrom = roadList[a + 1].tile;
 				}
 				break;
 			case Tile.BRIDGE:
+				AISign.BuildSign(buildTo, "Bridge");
 				print("Not yet implemented.");
 				break;
 		}
 	}
 	
 	// Build the last part
-	AIRoad.BuildRoad(buildFrom, roadList[roadList.len() - 1][0]);
+	AIRoad.BuildRoad(roadList[0].tile, buildFrom);
 	return true;			
 }
+
+/*
+Might need this function later on.
+function RoadPathFinding::Terraform(startTile, dir) {
+
+	local lowSlope, highSlope;
+	local x = AIMap.GetMapSizeX();
+	local y = AIMap.GetMapSizeY();
+
+	if (dir == -AIMap.GetMapSizeX()) {
+		lowSlope = AITile.SLOPE_NW;
+		highSlope = AITile.SLOPE_SE;
+	} else if (dir == -1) {
+		lowSlope = AITile.SLOPE_NE;
+		highSlope = AITile.SLOPE_SW;
+	} else if (dir == AIMap.GetMapSizeX()) {
+		lowSlope = AITile.SLOPE_SE;
+		highSlope = AITile.SLOPE_NW;
+	} else if (dir ==  1) {
+		lowSlope = AITile.SLOPE_SW;
+		highSlope = AITile.SLOPE_NE;
+	} else {
+		print("Fix terraforming!");
+		return;
+	}
+	
+	local slope = AITile.GetSlope(startTile);
+	
+	if ((~slope & lowSlope) == 
+		lowSlope && (slope & highSlope) != 0 ) {
+		AITile.RaiseTile(startTile, lowSlope);
+		AISign.BuildSign(startTile, "Terra form!");
+	}
+}*/
 
 /**
  * Plan and check how much it cost to create the fastest route
@@ -151,7 +201,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		if(!Tile.IsBuildable(i))
 			continue;
  
-		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 50, null, Tile.ROAD);
+		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 60, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
 		pq.insert(annotatedTile);
 		closedList[i] <- i;
@@ -170,11 +220,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 
 		// Check if this is the end already!!
 		// TODO: Rewrite!
-		if(end.HasItem(at.tile)) {
-
-			// Check we can actually end here...
-			if(!Tile.IsBuildable(at.tile))
-				continue;
+		if(end.HasItem(at.tile) && Tile.IsBuildable(at.tile)) {
 
 			// determine size...
 			local tmp = at;
@@ -186,7 +232,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 
 			// Create the result list
 			local resultList = array(tmp_size);
-			resultList[0] = [at.tile, at.type];
+			resultList[0] = at;
 
 			// We want to return a PathInfo object, we need it for later
 			// assesments! :)
@@ -197,23 +243,16 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			// Construct result list! :)
 			while(at.parentTile != at) {
 				at = at.parentTile;
-				resultList[tmp_size] = [at.tile, at.type];
+				resultList[tmp_size] = at;
 				tmp_size++;
-
-				// Check speed,
-				// TODO: FIX SLOPES!
-				if(lastDirection == at.direction)
-					avg_speed += 1;
-				else
-					avg_speed += 0.5;
 			}
-			return PathInfo(resultList, tmp_size, avg_speed / tmp_size, null);
+			return PathInfo(resultList, null, null, null);
 		}
 		
 		// Get all possible tiles from this annotated tile (North, South, West,
 		// East) and check if we're already at the end or if new roads are possible
 		// from those tiles.
-		local directions = Tile.GetTilesAround(at.tile, at.parentTile.tile - at.tile);
+		local directions = Tile.GetTilesAround(at);
 		
 		/**
 		 * neighbour is an array with 4 elements:
@@ -225,10 +264,8 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		local neighbour = 0;
 		foreach (neighbour in directions) {
 			
-			//AISign.BuildSign(neighbour[0], "N");
-			
 			// Skip if this node is already processed or if we can't build on it
-			if (closedList.rawin(neighbour[0]) || !AIRoad.BuildRoadFull(neighbour[0], at.tile)) {
+			if (closedList.rawin(neighbour[0]) || (!AIRoad.AreRoadTilesConnected (neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
 				continue;
 			}
 			
@@ -243,7 +280,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				if (length < 0) length = -length;
 				
 				if (neighbour[2] == Tile.TUNNEL) {
-					neighbour[3] = 120 * length;
+					neighbour[3] = 50 * length;
 				} else {
 					neighbour[3] = 150 * length;
 				}
@@ -254,7 +291,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				
 				// Check if the road is sloped.
 				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour[0])) {
-					neighbour[3] = 200;
+					neighbour[3] = 80;
 				}
 				
 				// Check if the road makes a turn.
@@ -278,10 +315,6 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		
 		// Done! Don't forget to put at into the closed list
 		closedList[at.tile] <- at.tile;
-		{
-			//local testAI = AIExecMode();
-			//AISign.BuildSign(at.tile, "D");
-		}
 	}
 
 	// Oh oh... No result found :(
@@ -297,9 +330,9 @@ class AnnotatedTile
 {
 	tile = null;			// Instance of AITile
 	parentTile = null;		// Needed for backtracking!
-	distanceToEnd = null;		// Distance from this tile to the end tile
-	distanceFromStart = null;	// Distance already travelled from start tile
-	direction = null;		// Which way is this road going to?
+	distanceToEnd = null;		// Estimated 'distance' from this tile to the end tile
+	distanceFromStart = null;	// 'Distance' already travelled from start tile
+	direction = null;		// The direction the road travels to this point.
 	type = null;			// What type of infrastructure is this?
 
 	// A Tile is about 612km on a side :)

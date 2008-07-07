@@ -48,14 +48,15 @@ function NoCAP::Start()
 	}
 
 	// Get max loan!
-	while(true) {
+	//while(true) {
 		local comp = AICompany();
 		comp.SetLoanAmount(comp.GetMaxLoanAmount());
 
 		local indus = IndustryManager();
 		indus.UpdateIndustry(this);
         	this.Sleep(500);
-	}
+	//}
+	print("Done! :)");
 }
 
 function NoCAP::Stop()

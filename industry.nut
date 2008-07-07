@@ -115,29 +115,28 @@ function IndustryManager::UpdateIndustry(ai) {
 
 					// Build begin and end stations
 					local roadAI = AIRoad();
-					if(!roadAI.BuildRoadStation(pathInfo.roadList[0][0], pathInfo.roadList[1][0], true, false))
+					if(!roadAI.BuildRoadStation(pathInfo.roadList[0].tile, pathInfo.roadList[1].tile, true, false))
 						print("[FATAL ERROR] Failed to build road station!");
-					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1][0], pathInfo.roadList[pathInfo.roadList.len() - 2][0], true, false))
+					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[pathInfo.roadList.len() - 2].tile, true, false))
 						print("[FATAL ERROR] Failed to build road station!");
 
-					quit();
 					// Build a road depod :)
-					/*local buildDepot = null;
+					local buildDepot = null;
 					for(local roads = 4; roads < pathInfo.roadList.len(); roads++) {
-						local depotTiles = Tile.GetTilesAround(pathInfo.roadList[roads], false, null);
+						local depotTiles = Tile.GetTilesAround2(pathInfo.roadList[roads].tile);
 						
 						// Try building one here! :)
 						foreach(tile in depotTiles) {
 							if(AITile.IsBuildable(tile) && !AIRoad.IsRoadTile(tile)) {
-								AIRoad.BuildRoad(pathInfo.roadList[roads], tile);
-								AIRoad.BuildRoadDepot(tile, pathInfo.roadList[roads]);
+								AIRoad.BuildRoad(pathInfo.roadList[roads].tile, tile);
+								AIRoad.BuildRoadDepot(tile, pathInfo.roadList[roads].tile);
 								buildDepot = tile;
 								break;
 							}
 						}
 						if(buildDepot)
 							break;
-					}*/
+					}
 				}
 			}
 		}

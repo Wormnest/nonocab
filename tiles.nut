@@ -10,12 +10,13 @@ class Tile {
 
 	}
 
-	static function GetTilesAround(currentTile, currentDirection);
+	static function GetTilesAround(currentAnnotatedTile);
 	static function GetTilesAround2(currentTile);
 	static function GetBridges(startTile, direction);
 	static function GetTunnels(startTile, direction);
 	static function IsSlopedRoad(startNode, direction);
 	static function IsBuildable(node);
+	static function ValidateTurn(startTile, dir);
 }
 
 function Tile::GetTilesAround2(currentTile) {
@@ -28,40 +29,53 @@ function Tile::GetTilesAround2(currentTile) {
  * structures. Also, we explore the possibility to build bridges and
  * tunnels and return those end points as well.
  */
-function Tile::GetTilesAround(currentTile, currentDirection) {
+function Tile::GetTilesAround(currentAnnotatedTile) {
 
 	local tileArray = [];
 
-	local offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1),
-		                 AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
+	local offsets;
+	
+	if (currentAnnotatedTile.type == Tile.ROAD)
+		offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
+	else {
+		offsets = [currentAnnotatedTile.direction];
+		if (currentAnnotatedTile.direction != 1 && currentAnnotatedTile.direction != -1 &&  
+			currentAnnotatedTile.direction != AIMap.GetMapSizeX() && currentAnnotatedTile.direction != -AIMap.GetMapSizeX())
+			Quit();
+	}
+	
 
 	foreach (offset in offsets) {
 		
 		// Don't build in the wrong direction
-		if (offset == currentDirection)
+		if (offset == -currentAnnotatedTile.direction)
+			continue;
+			
+		// Check if we can actually build in the orthogonal directions, this is impossible if
+		// currentTile is a slope which faces currentDirection.
+		if (offset != currentAnnotatedTile.direction && !Tile.ValidateTurn(currentAnnotatedTile.tile, offset))
 			continue;
 		
 		// Check for each tile if it already has a bridge / tunnel
 		// or if we could build one.
-		local nextTile = currentTile + offset;
-		
-		if (AIBridge.IsBridgeTile(nextTile)) {
+		local nextTile = currentAnnotatedTile.tile + offset;
+
+		if (AIBridge.IsBridgeTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
-		} else if (AITunnel.IsTunnelTile(nextTile)) {
+		} else if (AITunnel.IsTunnelTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			tileArray.push([AITunnel.GetOtherTunnelEnd(nextTile), offset, Tile.TUNNEL, 0]);
 		}
-		
 		
 		/** 
 		 * If it is neither a tunnel or a bridge, we try to build one
 		 * our selves.
 		 */
 		else {
-			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
-			}
+			//foreach (bridge in Tile.GetBridges(nextTile, offset)) {
+			//	tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+			//}
 			
-			foreach (tunnel in Tile.GetTunnels(nextTile, offset)) {
+			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
 				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
 			}
 			
@@ -72,6 +86,91 @@ function Tile::GetTilesAround(currentTile, currentDirection) {
 	}
 
 	return tileArray;
+}
+
+/**
+ * Validate whether a turn can be made from the startTile to the
+ * given direction.
+ */
+function Tile::ValidateTurn(startTile, direction) {
+
+	local slope1, slope2;
+	if (direction == -AIMap.GetMapSizeX() || direction == AIMap.GetMapSizeX()) {
+		slope1 = AITile.SLOPE_NW;
+		slope2 = AITile.SLOPE_SE;
+	} else if (direction == -1 || direction == 1) {
+		slope1 = AITile.SLOPE_NE;
+		slope2 = AITile.SLOPE_SW;
+	} else {
+		print("Fix terraforming123!");
+		return false;
+	}
+
+	local slope = AITile.GetSlope(startTile);
+	
+	// We can always turn on flat slopes
+	//if (slope & AITile.SLOPE_FLAT)
+	//	return true;
+	
+	// We can never turn on steep slopes
+	if ((slope & AITile.SLOPE_STEEP))
+		return false;
+		
+	// If the current road goes up or down a slope (i.e. 2 points are lower, and at 
+	// least 1 point is raised), we can't build a turn ON the slope!
+	else if (((~slope & slope1) == slope1 && (slope & slope2) != 0) || ((~slope & slope2) == slope2 && (slope & slope1) != 0))
+		return false;
+	
+	// If the tile we're turning to is flat, it is accessible at this point
+	//else if (AITile.GetSlope(startTile + direction) & AITile.SLOPE_FLAT)
+	//	return true;
+	
+	// If the current road follows a slope, we can build a turn if the tile has the same height
+	// as the slope (i.e. 2 point adjoined to the tile the road is build on is at the same height).
+	//
+	//                  N    n    W
+	//                  ^    *    ^
+	//                     -   -
+	//                 e *       * w  
+	//                     -   -
+	//                  v    *    v
+	//                  E    s    S
+	//
+	else {
+	
+		// Try to turn to the north
+		// Road runs from east to west (or visa versa)
+		// The lower part is on the north-eastern edge
+		// Higher part is on the south-western edge
+		if (direction == -AIMap.GetMapSizeX() && (~AITile.GetSlope(startTile) & AITile.SLOPE_NE) == AITile.SLOPE_NE && (AITile.GetSlope(startTile) & AITile.SLOPE_SW) != 0) {
+			return false;
+		}
+		
+		// Try to turn to the south
+		// Road runs from east to west (or visa versa)
+		// The lower part is on the south-western edge
+		// Higher part is on the north-eastern edge
+		else if (direction == AIMap.GetMapSizeX() && (~AITile.GetSlope(startTile) & AITile.SLOPE_SW) == AITile.SLOPE_SW && (AITile.GetSlope(startTile) & AITile.SLOPE_NE) != 0) {
+			return false;
+		}
+		
+		// Try to turn to the west
+		// Road runs from north to south (or visa versa)
+		// The lower part is on the north-western edge
+		// Higher part is on the south-eastern edge
+		else if (direction == -1 && (~AITile.GetSlope(startTile) & AITile.SLOPE_NW) == AITile.SLOPE_NW && (AITile.GetSlope(startTile) & AITile.SLOPE_SE) != 0) {
+			return false;
+		}
+
+		// Try to turn to the east
+		// Road runs from north to south (or visa versa)
+		// The lower part is on the south-eastern edge
+		// Higher part is on the north-western edge
+		else if (direction == 1 && (~AITile.GetSlope(startTile) & AITile.SLOPE_SE) == AITile.SLOPE_SE && (AITile.GetSlope(startTile) & AITile.SLOPE_NW) != 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
 /**
@@ -96,7 +195,7 @@ function Tile::GetBridges(startNode, direction)
 	return tiles;
 }
 	
-function Tile::GetTunnels(startNode, direction)
+function Tile::GetTunnels(startNode, previousNode)
 {
 	local slope = AITile.GetSlope(startNode);
 	if (slope == AITile.SLOPE_FLAT) return [];
@@ -108,9 +207,11 @@ function Tile::GetTunnels(startNode, direction)
 	if (!AIMap.IsValidTile(other_tunnel_end)) return tiles;
 
 	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end);
-	local prev_tile = startNode + (startNode - other_tunnel_end) / tunnel_length;
-	if (tunnel_length >= 2 && tunnel_length < 20 && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)) {
-		tiles.push(other_tunnel_end);
+	local direction = (other_tunnel_end - startNode) / tunnel_length;
+	
+	local prev_tile = startNode - direction;
+	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)) {
+		tiles.push(other_tunnel_end); //  + direction
 	}
 	return tiles;
 }
