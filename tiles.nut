@@ -50,16 +50,16 @@ function Tile::GetTilesAround(currentAnnotatedTile) {
 		// Don't build in the wrong direction
 		if (offset == -currentAnnotatedTile.direction)
 			continue;
-			
-		// Check if we can actually build in the orthogonal directions, this is impossible if
-		// currentTile is a slope which faces currentDirection.
-		if (offset != currentAnnotatedTile.direction && !Tile.ValidateTurn(currentAnnotatedTile.tile, offset))
-			continue;
 		
 		// Check for each tile if it already has a bridge / tunnel
 		// or if we could build one.
 		local nextTile = currentAnnotatedTile.tile + offset;
-
+			
+		// Check if we can actually build in the orthogonal directions, this is impossible if
+		// currentTile is a slope which faces currentDirection.
+		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
+			continue;
+			
 		if (AIBridge.IsBridgeTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
 		} else if (AITunnel.IsTunnelTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
@@ -86,91 +86,6 @@ function Tile::GetTilesAround(currentAnnotatedTile) {
 	}
 
 	return tileArray;
-}
-
-/**
- * Validate whether a turn can be made from the startTile to the
- * given direction.
- */
-function Tile::ValidateTurn(startTile, direction) {
-
-	local slope1, slope2;
-	if (direction == -AIMap.GetMapSizeX() || direction == AIMap.GetMapSizeX()) {
-		slope1 = AITile.SLOPE_NW;
-		slope2 = AITile.SLOPE_SE;
-	} else if (direction == -1 || direction == 1) {
-		slope1 = AITile.SLOPE_NE;
-		slope2 = AITile.SLOPE_SW;
-	} else {
-		print("Fix terraforming123!");
-		return false;
-	}
-
-	local slope = AITile.GetSlope(startTile);
-	
-	// We can always turn on flat slopes
-	//if (slope & AITile.SLOPE_FLAT)
-	//	return true;
-	
-	// We can never turn on steep slopes
-	if ((slope & AITile.SLOPE_STEEP))
-		return false;
-		
-	// If the current road goes up or down a slope (i.e. 2 points are lower, and at 
-	// least 1 point is raised), we can't build a turn ON the slope!
-	else if (((~slope & slope1) == slope1 && (slope & slope2) != 0) || ((~slope & slope2) == slope2 && (slope & slope1) != 0))
-		return false;
-	
-	// If the tile we're turning to is flat, it is accessible at this point
-	//else if (AITile.GetSlope(startTile + direction) & AITile.SLOPE_FLAT)
-	//	return true;
-	
-	// If the current road follows a slope, we can build a turn if the tile has the same height
-	// as the slope (i.e. 2 point adjoined to the tile the road is build on is at the same height).
-	//
-	//                  N    n    W
-	//                  ^    *    ^
-	//                     -   -
-	//                 e *       * w  
-	//                     -   -
-	//                  v    *    v
-	//                  E    s    S
-	//
-	else {
-	
-		// Try to turn to the north
-		// Road runs from east to west (or visa versa)
-		// The lower part is on the north-eastern edge
-		// Higher part is on the south-western edge
-		if (direction == -AIMap.GetMapSizeX() && (~AITile.GetSlope(startTile) & AITile.SLOPE_NE) == AITile.SLOPE_NE && (AITile.GetSlope(startTile) & AITile.SLOPE_SW) != 0) {
-			return false;
-		}
-		
-		// Try to turn to the south
-		// Road runs from east to west (or visa versa)
-		// The lower part is on the south-western edge
-		// Higher part is on the north-eastern edge
-		else if (direction == AIMap.GetMapSizeX() && (~AITile.GetSlope(startTile) & AITile.SLOPE_SW) == AITile.SLOPE_SW && (AITile.GetSlope(startTile) & AITile.SLOPE_NE) != 0) {
-			return false;
-		}
-		
-		// Try to turn to the west
-		// Road runs from north to south (or visa versa)
-		// The lower part is on the north-western edge
-		// Higher part is on the south-eastern edge
-		else if (direction == -1 && (~AITile.GetSlope(startTile) & AITile.SLOPE_NW) == AITile.SLOPE_NW && (AITile.GetSlope(startTile) & AITile.SLOPE_SE) != 0) {
-			return false;
-		}
-
-		// Try to turn to the east
-		// Road runs from north to south (or visa versa)
-		// The lower part is on the south-eastern edge
-		// Higher part is on the north-western edge
-		else if (direction == 1 && (~AITile.GetSlope(startTile) & AITile.SLOPE_SE) == AITile.SLOPE_SE && (AITile.GetSlope(startTile) & AITile.SLOPE_NW) != 0) {
-			return false;
-		}
-	}
-	return true;
 }
 
 /**
