@@ -39,9 +39,6 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 	else {
 		offsets = [currentAnnotatedTile.direction];
-		if (currentAnnotatedTile.direction != 1 && currentAnnotatedTile.direction != -1 &&  
-			currentAnnotatedTile.direction != AIMap.GetMapSizeX() && currentAnnotatedTile.direction != -AIMap.GetMapSizeX())
-			Quit();
 	}
 	
 
@@ -54,11 +51,12 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		// Check for each tile if it already has a bridge / tunnel
 		// or if we could build one.
 		local nextTile = currentAnnotatedTile.tile + offset;
-			
+
 		// Check if we can actually build in the orthogonal directions, this is impossible if
 		// currentTile is a slope which faces currentDirection.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
+			
 			
 		if (AIBridge.IsBridgeTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
@@ -71,13 +69,18 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		 * our selves.
 		 */
 		else {
-//			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-//				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
-//			}
+
+			if (offset == currentAnnotatedTile.direction) {
+				foreach (bridge in Tile.GetBridges(nextTile, offset)) {
+					tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+				}
+
+			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
 				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
 			}
+
 			
 			// Besides the tunnels and bridges, we also add the tiles
 			// adjacent to the currentTile.
@@ -98,7 +101,6 @@ function Tile::GetBridges(startNode, direction)
 	if (slope == AITile.SLOPE_FLAT) return [];
 	local tiles = [];
 
-	/** Try to build a bridge */
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;

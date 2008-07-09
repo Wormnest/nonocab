@@ -208,7 +208,6 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 60, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
 		pq.insert(annotatedTile);
-		closedList[i] <- i;
 		startList[i] <- i;
 	}
 
@@ -219,7 +218,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		// Get the node with the best utility value
 		local at = pq.remove();
 		
-		if(closedList.rawin(at.tile) && !startList.rawin(at.tile))
+		if(closedList.rawin(at.tile))
 			continue;
 
 		// Check if this is the end already!!
@@ -269,7 +268,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		foreach (neighbour in directions) {
 			
 			// Skip if this node is already processed or if we can't build on it
-			if (closedList.rawin(neighbour[0]) || (!AIRoad.AreRoadTilesConnected (neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
+			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected (neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
 				continue;
 			}
 			
@@ -284,9 +283,9 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				if (length < 0) length = -length;
 				
 				if (neighbour[2] == Tile.TUNNEL) {
-					neighbour[3] = 50 * length;
+					neighbour[3] = 75 * length;
 				} else {
-					neighbour[3] = 150 * length;
+					neighbour[3] = 120 * length;
 				}
 			}
 			
@@ -312,7 +311,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			}
 			
 			neighbour[3] += at.distanceFromStart;
-			
+
 			// Add this neighbour node to the queue.
 			pq.insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 50, neighbour[1], neighbour[2]));
 		}
