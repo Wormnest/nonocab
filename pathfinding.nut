@@ -1,3 +1,4 @@
+//import("queue.priority_queue", "PriorityQueue", 2);
 
 ////////////////////////// PATHFINDING ///////////////////////////////////////////////////
 /**
@@ -89,9 +90,14 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 				break;
 			case Tile.BRIDGE:
 				local e = AIExecMode();
-				AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "Begin");
-				AISign.BuildSign(roadList[a].tile, "End");
-				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, AIBridgeList_Length(10).Begin(), roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
+				AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "TBeg");
+				AISign.BuildSign(roadList[a].tile, "TEnd");
+				
+				local length = roadList[a].tile - roadList[a + 1].tile / roadList[a].direction;
+				if (length < 0)
+					length = -length;
+				
+				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, AIBridgeList_Length(length).Begin(), roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
 								
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
@@ -108,40 +114,6 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 	AIRoad.BuildRoad(roadList[0].tile, buildFrom);
 	return true;			
 }
-
-/*
-Might need this function later on.
-function RoadPathFinding::Terraform(startTile, dir) {
-
-	local lowSlope, highSlope;
-	local x = AIMap.GetMapSizeX();
-	local y = AIMap.GetMapSizeY();
-
-	if (dir == -AIMap.GetMapSizeX()) {
-		lowSlope = AITile.SLOPE_NW;
-		highSlope = AITile.SLOPE_SE;
-	} else if (dir == -1) {
-		lowSlope = AITile.SLOPE_NE;
-		highSlope = AITile.SLOPE_SW;
-	} else if (dir == AIMap.GetMapSizeX()) {
-		lowSlope = AITile.SLOPE_SE;
-		highSlope = AITile.SLOPE_NW;
-	} else if (dir ==  1) {
-		lowSlope = AITile.SLOPE_SW;
-		highSlope = AITile.SLOPE_NE;
-	} else {
-		print("Fix terraforming!");
-		return;
-	}
-	
-	local slope = AITile.GetSlope(startTile);
-	
-	if ((~slope & lowSlope) == 
-		lowSlope && (slope & highSlope) != 0 ) {
-		AITile.RaiseTile(startTile, lowSlope);
-		AISign.BuildSign(startTile, "Terra form!");
-	}
-}*/
 
 /**
  * Plan and check how much it cost to create the fastest route
@@ -205,7 +177,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		if(!Tile.IsBuildable(i))
 			continue;
  
-		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 60, 0, Tile.ROAD);
+		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 30, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
 		pq.insert(annotatedTile);
 		startList[i] <- i;
@@ -313,11 +285,15 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			neighbour[3] += at.distanceFromStart;
 
 			// Add this neighbour node to the queue.
-			pq.insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 50, neighbour[1], neighbour[2]));
+			pq.insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30, neighbour[1], neighbour[2]));
 		}
 		
 		// Done! Don't forget to put at into the closed list
 		closedList[at.tile] <- at.tile;
+		{
+//			local a = AIExecMode();
+//			AISign.BuildSign(at.tile, "R");
+		}
 	}
 
 	// Oh oh... No result found :(

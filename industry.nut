@@ -115,11 +115,13 @@ function IndustryManager::UpdateIndustry(ai) {
 
 					// Build begin and end stations
 					local roadAI = AIRoad();
-					if(!roadAI.BuildRoadStation(pathInfo.roadList[0].tile, pathInfo.roadList[1].tile, true, false))
+					AISign.BuildSign(pathInfo.roadList[0].tile, "Begin");
+					AISign.BuildSign(pathInfo.roadList[pathInfo.roadList.len() - 1].tile, "End");
+					/*if(!roadAI.BuildRoadStation(pathInfo.roadList[0].tile, pathInfo.roadList[1].tile, true, false))
 						print("[FATAL ERROR] Failed to build road station!");
 					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[pathInfo.roadList.len() - 2].tile, true, false))
 						print("[FATAL ERROR] Failed to build road station!");
-
+*/
 					// Build a road depod :)
 					local buildDepot = null;
 					for(local roads = 4; roads < pathInfo.roadList.len(); roads++) {

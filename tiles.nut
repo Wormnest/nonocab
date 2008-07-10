@@ -1,10 +1,10 @@
 
 class Tile {
 
-
-	static BRIDGE = 0;
-	static TUNNEL = 1;
-	static ROAD   = 2;
+	static NONE   = 0;
+	static BRIDGE = 1;
+	static TUNNEL = 2;
+	static ROAD   = 3;
 
 	constructor() {
 
@@ -52,29 +52,51 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		// or if we could build one.
 		local nextTile = currentAnnotatedTile.tile + offset;
 
-		// Check if we can actually build in the orthogonal directions, this is impossible if
-		// currentTile is a slope which faces currentDirection.
+		// Check if we can actually build this piece of road.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
+		
+		local isBridgeOrTunnelEntrance = false;
+		
+		if (AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
+			local type = Tile.NONE;
+			local otherEnd;
+			if (AIBridge.IsBridgeTile(nextTile)) {
+				type = Tile.BRIDGE;
+				otherEnd = AIBridge.GetOtherBridgeEnd(nextTile);
+				//tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
+			} else if (AITunnel.IsTunnelTile(nextTile)) {
+				type = Tile.TUNNEL;
+				otherEnd = AITunnel.GetOtherTunnelEnd(nextTile);
+				//tileArray.push([AITunnel.GetOtherTunnelEnd(nextTile), offset, Tile.TUNNEL, 0]);
+			}
 			
-			
-		if (AIBridge.IsBridgeTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
-			tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
-		} else if (AITunnel.IsTunnelTile(nextTile) && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
-			tileArray.push([AITunnel.GetOtherTunnelEnd(nextTile), offset, Tile.TUNNEL, 0]);
+			if (type != Tile.NONE) {
+				local direction = otherEnd - nextTile;
+				
+				// Make sure we're heading in the same direction as the bridge or tunnel we try
+				// to connect to, else we end up with false road pieces which try to connect to the
+				// side of a bridge.
+				if (-direction >= AIMap.GetMapSizeX()                 && offset == -AIMap.GetMapSizeX() ||	// North
+				     direction < AIMap.GetMapSizeX() && direction > 0 && offset ==  1 ||			// West
+				     direction >= AIMap.GetMapSizeX() 	 	      && offset ==  AIMap.GetMapSizeX() ||	// South
+				    -direction < AIMap.GetMapSizeX() && direction < 0 && offset == -1) {			// East
+				    	tileArray.push([otherEnd, offset, type, 0]);
+				    	isBridgeOrTunnelEntrance = true;
+				}
+			}
 		}
 		
 		/** 
 		 * If it is neither a tunnel or a bridge, we try to build one
 		 * our selves.
 		 */
-		else {
+		if (!isBridgeOrTunnelEntrance) {
 
 			if (offset == currentAnnotatedTile.direction) {
 				foreach (bridge in Tile.GetBridges(nextTile, offset)) {
 					tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
 				}
-
 			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
