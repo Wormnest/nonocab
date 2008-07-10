@@ -1,10 +1,10 @@
-class FNoCAP extends AIInfo {
+class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Corniel Nobel && Bram Ridder"; }
-      function GetName()      { return "NoCAP";	      }
+      function GetName()      { return "NoCAB";	      }
       function GetDescription()	{ return "Best AI evah"; }
-      function GetVersion()	{ return 1; }
-      function GetDate()	{ return "2008-07-05"; }
-      function CreateInstance()	{ return "NoCAP"; }
+      function GetVersion()	{ return 6; }
+      function GetDate()	{ return "2008-07-10"; }
+      function CreateInstance()	{ return "NoCAB"; }
 }
 
-RegisterAI(FNoCAP());
+RegisterAI(FNoCAB());
