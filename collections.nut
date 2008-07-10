@@ -50,17 +50,12 @@ function PriorityQueue::insert(data)
 		{
 			if(data.getHeuristic() > queue[i].getHeuristic())	// If the distance is smaller
 				queue[i + 1] = queue[i];	// shift old value upwards
-			else if(data.tile == queue[i].tile)
-				return;	// No double values!
 			else	// If the distance is equal or larger
 				break;	// Done shifting
 		}
 		queue[i + 1] = data;
 		nrElements++;
 	}
-
-//	for(local j = 0; j < nrElements; j++)
-		//print("Element after adding: " + queue[j]);
 	return true;
 }
 

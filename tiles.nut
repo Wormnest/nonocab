@@ -64,11 +64,9 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 			if (AIBridge.IsBridgeTile(nextTile)) {
 				type = Tile.BRIDGE;
 				otherEnd = AIBridge.GetOtherBridgeEnd(nextTile);
-				//tileArray.push([AIBridge.GetOtherBridgeEnd(nextTile), offset, Tile.BRIDGE, 0]);
 			} else if (AITunnel.IsTunnelTile(nextTile)) {
 				type = Tile.TUNNEL;
 				otherEnd = AITunnel.GetOtherTunnelEnd(nextTile);
-				//tileArray.push([AITunnel.GetOtherTunnelEnd(nextTile), offset, Tile.TUNNEL, 0]);
 			}
 			
 			if (type != Tile.NONE) {
@@ -141,7 +139,7 @@ function Tile::GetTunnels(startNode, previousNode)
 	local tiles = [];
 	
 	/** Try to build a tunnel */
-	if (slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SE && slope != AITile.SLOPE_NE) return tiles;
+	//if (slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SE && slope != AITile.SLOPE_NE) return tiles;
 	local other_tunnel_end = AITunnel.GetOtherTunnelEnd(startNode);
 	if (!AIMap.IsValidTile(other_tunnel_end)) return tiles;
 

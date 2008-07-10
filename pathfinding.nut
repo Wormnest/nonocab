@@ -50,6 +50,7 @@ class PathInfo
  */
 function RoadPathFinding::CreateRoad(roadList, ai)
 {
+	local b = AIExecMode();
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
@@ -60,18 +61,22 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 	{
 		local buildTo = roadList[a].tile;
 		local direction = roadList[a].direction;
+
+		
 		
 		switch (roadList[a].type) {
 			case Tile.ROAD:
 				if (direction != currentDirection) {
-					
+		
 					// Check if we need to do some terraforming
 					// Not needed ATM, as we make sure we only consider roads which
 					// don't require terraforming
 					// Terraform(buildFrom, currentDirection);
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
-						print("FATAL ERROR!");
+						local s = "Failed to build a road from " + AIMap.GetTileX(buildFrom) + ", " + AIMap.GetTileY(buildFrom) + " to " + AIMap.GetTileX(roadList[a + 1].tile) + ", " + AIMap.GetTileY(roadList[a + 1].tile);
+						print(s);
+						print(AIError.GetLastErrorString());
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -89,10 +94,6 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 					buildFrom = roadList[0].tile;
 				break;
 			case Tile.BRIDGE:
-				local e = AIExecMode();
-				AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "TBeg");
-				AISign.BuildSign(roadList[a].tile, "TEnd");
-				
 				local length = roadList[a].tile - roadList[a + 1].tile / roadList[a].direction;
 				if (length < 0)
 					length = -length;
@@ -240,7 +241,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		foreach (neighbour in directions) {
 			
 			// Skip if this node is already processed or if we can't build on it
-			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected (neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
+			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
 				continue;
 			}
 			
@@ -253,11 +254,12 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				
 				local length = (neighbour[0] - at.tile) / neighbour[1];
 				if (length < 0) length = -length;
+
 				
 				if (neighbour[2] == Tile.TUNNEL) {
-					neighbour[3] = 75 * length;
-				} else {
 					neighbour[3] = 120 * length;
+				} else {
+					neighbour[3] = 150 * length;
 				}
 			}
 			
@@ -290,10 +292,6 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		
 		// Done! Don't forget to put at into the closed list
 		closedList[at.tile] <- at.tile;
-		{
-//			local a = AIExecMode();
-//			AISign.BuildSign(at.tile, "R");
-		}
 	}
 
 	// Oh oh... No result found :(
