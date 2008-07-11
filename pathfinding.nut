@@ -6,14 +6,6 @@
  */
 class RoadPathFinding 
 {
-	road = null;	// We'll use AIRoad to manage building / managing roads
-	map = null;	// The map we're currently playing
-	
-	constructor(map, road) {
-		this.map = map;
-		this.road = road;
-	}
-
 	/**
 	 * We need functions to calibrate penalties and stuff. We want functions
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
@@ -48,7 +40,7 @@ class PathInfo
  * Create the fastest road from start to end, without altering
  * the landscape. We use the A* pathfinding algorithm.
  */
-function RoadPathFinding::CreateRoad(roadList, ai)
+function RoadPathFinding::CreateRoad(roadList)
 {
 	local b = AIExecMode();
 	if(roadList == null || roadList.len() < 2)
@@ -59,10 +51,9 @@ function RoadPathFinding::CreateRoad(roadList, ai)
 	
 	for(local a = roadList.len() - 2; -1 < a; a--)		
 	{
+		//AISign.BuildSign(roadList[a].tile, "B");
 		local buildTo = roadList[a].tile;
 		local direction = roadList[a].direction;
-
-		
 		
 		switch (roadList[a].type) {
 			case Tile.ROAD:
@@ -120,26 +111,23 @@ function RoadPathFinding::CreateRoad(roadList, ai)
  * Plan and check how much it cost to create the fastest route
  * from start to end.
  */
-function RoadPathFinding::GetCostForRoad(roadList, ai)
+function RoadPathFinding::GetCostForRoad(roadList)
 {
 	local test = AITestMode();		// Switch to test mode...
 
 	local accounting = AIAccounting();	// Start counting costs
 
-	this.CreateRoad(roadList, ai);		// Fake the construction
+	this.CreateRoad(roadList);		// Fake the construction
 
 	return accounting.GetCosts();		// Automatic memory management will kill accounting and testmode! :)
 }
 
 /**
- * A* pathfinder to find the fastest path from start to end. The allowenceSavings
- * is used to specify how much longer a road may be if it saves on the costs of
- * building roads. The value must be between [0..1], 1 meaning NO detour may be
- * made to lower the costs, 0 mean that any means must be exploited to lower the
- * cost as much as possible (existing roads are considered to be free).
- * Update X and Y values! :)
- * start and end are always an AIAbstractList.
- * The excludeList contain tiles that mustn't be evaluated during pathfinding.
+ * A* pathfinder to find the fastest path from start to end.
+ * @param start An AIAbstractList which contains all the nodes the path can start from.
+ * @param end An AIAbstractList which contains all the nodes the path can stop at. The
+ * middle point of these values will be used to guide the pathfinder to its goal.
+ * @return A PathInfo instance which contains the found path (if any).
  */
 function RoadPathFinding::FindFastestRoad(start, end)
 {
@@ -165,6 +153,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	// We must also keep track of all tiles we've already processed, we use
 	// a table for that purpose.
 	local closedList = {};
+	local closedListBridgesTunnels = {};
 
 	// We keep a separate list for start tiles
 	local startList = {};
@@ -239,8 +228,8 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		 */
 		local neighbour = 0;
 		foreach (neighbour in directions) {
-			
-			// Skip if this node is already processed or if we can't build on it
+		
+		// Skip if this node is already processed or if we can't build on it
 			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
 				continue;
 			}
@@ -254,7 +243,6 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				
 				local length = (neighbour[0] - at.tile) / neighbour[1];
 				if (length < 0) length = -length;
-
 				
 				if (neighbour[2] == Tile.TUNNEL) {
 					neighbour[3] = 120 * length;

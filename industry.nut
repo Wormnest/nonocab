@@ -28,7 +28,7 @@ class IndustryManager
 /**
  * Find industries which can be connected and build roads between them!
  */
-function IndustryManager::UpdateIndustry(ai) {
+function IndustryManager::UpdateIndustry() {
 	// Find best industries to match up! :)
 	// O(N^2 / 2) time algorithm :/
 	for(local i = 0; i < industryInfoList.len() - 1; i++) {
@@ -94,7 +94,7 @@ function IndustryManager::UpdateIndustry(ai) {
 					
 
 					local accounter = AIAccounting();
-					pathFinder.CreateRoad(pathInfo.roadList, ai);
+					pathFinder.CreateRoad(pathInfo.roadList);
 					pathInfo.roadCost = accounter.GetCosts();
 				}
 				
@@ -105,7 +105,7 @@ function IndustryManager::UpdateIndustry(ai) {
 		
 				// Calculate if it's affordable :)
 				if(pathInfo.roadCost < comp.GetBankBalance(AICompany.MY_COMPANY)) {
-					if(!pathFinder.CreateRoad(pathInfo.roadList, ai)) {
+					if(!pathFinder.CreateRoad(pathInfo.roadList)) {
 						print("[FATAL ERROR] Path creating failed!!!!");
 
 						// You may want to do some more work here ;)

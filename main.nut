@@ -7,15 +7,9 @@ require("tiles.nut");
 class NoCAB extends AIController {
       	stop = false;
       	company = null;
-      	townList = null;
-	map = null;
-	road = null;
 
       	constructor() {	
 		this.company = AICompany();
-		this.townList = AITownList();
-		this.map = AIMap();
-		this.road = AIRoad();
 	}
 
 	function Start();
@@ -46,7 +40,7 @@ function NoCAB::Start()
 		comp.SetLoanAmount(comp.GetMaxLoanAmount());
 
 		local indus = IndustryManager();
-		indus.UpdateIndustry(this);
+		indus.UpdateIndustry();
         	this.Sleep(500);
 	//}
 	print("Done! :)");

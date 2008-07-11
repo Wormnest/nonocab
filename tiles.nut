@@ -91,11 +91,11 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			if (offset == currentAnnotatedTile.direction) {
+			//if (offset == currentAnnotatedTile.direction) {
 				foreach (bridge in Tile.GetBridges(nextTile, offset)) {
 					tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
 				}
-			}
+			//}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
 				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
