@@ -167,9 +167,9 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		if(!Tile.IsBuildable(i))
 			continue;
  
-		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 30, 0, Tile.ROAD);
+		local annotatedTile = AnnotatedTile(i, null, 0, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
-		pq.Insert(annotatedTile, annotatedTile.getHeuristic());
+		pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
 		startList[i] <- i;
 	}
 
@@ -229,13 +229,10 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		local neighbour = 0;
 		foreach (neighbour in directions) {
 		
-		// Skip if this node is already processed or if we can't build on it
+			// Skip if this node is already processed or if we can't build on it
 			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
 				continue;
 			}
-			
-			// Calculate the costs for this new piece of road.
-			local cost = 0;
 			
 			// Are we dealing with a tunnel or bridge?
 			// i.e. is the distance to the next node greater then 1 tile
@@ -275,7 +272,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			neighbour[3] += at.distanceFromStart;
 
 			// Add this neighbour node to the queue.
-			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30, neighbour[1], neighbour[2]), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
+			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], neighbour[1], neighbour[2]), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
 		}
 		
 		// Done! Don't forget to put at into the closed list
@@ -295,24 +292,18 @@ class AnnotatedTile
 {
 	tile = null;			// Instance of AITile
 	parentTile = null;		// Needed for backtracking!
-	distanceToEnd = null;		// Estimated 'distance' from this tile to the end tile
 	distanceFromStart = null;	// 'Distance' already travelled from start tile
 	direction = null;		// The direction the road travels to this point.
 	type = null;			// What type of infrastructure is this?
 
 	// A Tile is about 612km on a side :)
 
-	constructor(tile, parentTile, distanceFromStart, distanceToEnd, direction, type)
+	constructor(tile, parentTile, distanceFromStart, direction, type)
 	{
 		this.tile = tile;
 		this.parentTile = parentTile;
 		this.distanceFromStart = distanceFromStart;
-		this.distanceToEnd = distanceToEnd;
 		this.direction = direction;
 		this.type = type;
-	}
-
-	function getHeuristic() {
-		return distanceToEnd + distanceFromStart;
 	}
 }

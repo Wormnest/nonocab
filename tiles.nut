@@ -91,11 +91,9 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			//if (offset == currentAnnotatedTile.direction) {
-				foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-					tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
-				}
-			//}
+			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
+				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
 				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
@@ -118,14 +116,19 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 function Tile::GetBridges(startNode, direction) 
 {
 	local slope = AITile.GetSlope(startNode);
-	if (slope == AITile.SLOPE_FLAT) return [];
+	if (slope == AITile.SLOPE_FLAT || slope == AITile.GetSlope(startNode + direction)) return [];
 	local tiles = [];
+	local foundBridge = false;
 
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
 			tiles.push(target);
+			foundBridge = true;
+		} else if (foundBridge) {
+			// If we can't build bridges any more, skip the rest
+			break;
 		}
 	}
 	
