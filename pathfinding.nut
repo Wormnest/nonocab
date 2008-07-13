@@ -1,4 +1,4 @@
-//import("queue.priority_queue", "PriorityQueue", 2);
+import("queue.priority_queue", "PriorityQueue", 2);
 
 ////////////////////////// PATHFINDING ///////////////////////////////////////////////////
 /**
@@ -160,7 +160,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	
 	// Start by constructing a priority queue and by adding all start
 	// nodes to it.
-	pq = PriorityQueue(start.Count() * 2);
+	pq = PriorityQueue();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 
 		// Check if we can actually start here!
@@ -169,16 +169,16 @@ function RoadPathFinding::FindFastestRoad(start, end)
  
 		local annotatedTile = AnnotatedTile(i, null, 0, AIMap.DistanceManhattan(i, expectedEnd) * 30, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
-		pq.insert(annotatedTile);
+		pq.Insert(annotatedTile, annotatedTile.getHeuristic());
 		startList[i] <- i;
 	}
 
 
 	// Now with the open and closed list we're ready to do some grinding!!!
-	while(pq.nrElements != 0) 
+	while (pq.Count != 0)
 	{
 		// Get the node with the best utility value
-		local at = pq.remove();
+		local at = pq.Pop();
 		
 		if(closedList.rawin(at.tile))
 			continue;
@@ -275,7 +275,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			neighbour[3] += at.distanceFromStart;
 
 			// Add this neighbour node to the queue.
-			pq.insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30, neighbour[1], neighbour[2]));
+			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30, neighbour[1], neighbour[2]), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
 		}
 		
 		// Done! Don't forget to put at into the closed list
