@@ -1,7 +1,6 @@
 require("pathfinding.nut");
 require("utils.nut");
 require("industry.nut");
-require("collections.nut");
 require("tiles.nut");
 
 class NoCAB extends AIController {

@@ -5,19 +5,16 @@
  */
 class IndustryManager
 {
-	industryInfoList = null;
+	industryInfoList = array(0);
 	industryPaths = null;
 
 	constructor() {
 
 		// Store info about ALL industries
 		local industries = AIIndustryList();
-		local industryVector = Vector(10);
 		for(local i = industries.Begin(); industries.HasNext(); i = industries.Next()) {
-			industryVector.Add(IndustryInfo(i));
+			industryInfoList.push(IndustryInfo(i));
 		}
-
-		industryInfoList = industryVector.ToArray();
 
 		industryPaths = {};
 	}
@@ -31,14 +28,14 @@ class IndustryManager
 function IndustryManager::UpdateIndustry() {
 	// Find best industries to match up! :)
 	// O(N^2 / 2) time algorithm :/
-	for(local i = 0; i < industryInfoList.len() - 1; i++) {
+	for(local i = 0; i < industryInfoList.len(); i++) {
 
 		local industry1 = industryInfoList[i];	// Could be overwritten below
 		for(local j = i + 1; j < industryInfoList.len(); j++) {
 			local industry2 = industryInfoList[j];
 
 			// Check if we're already running this route (if so, review it! :))
-			if(industryPaths.rawin(industry1.industryID + "-" + industry2.industryID)) {
+			if (industryPaths.rawin(industry1.industryID + "-" + industry2.industryID)) {
 				// Do review stuff...
 			} 
 
@@ -48,20 +45,20 @@ function IndustryManager::UpdateIndustry() {
 				local fromIndustry = null;
 				local toIndustry = null;
 
-				local cargoVector = Vector(5);
+				local cargoVector = array(0);
 				foreach(val in industry1.production) {
 					if(industry2.Requires(val)) {
-						cargoVector.Add(val);
+						cargoVector.push(val);
 					}
 				}
 
 				// We assume one way dependencies, if factory1 produces
 				// cargo required by factory2, factory2 doesn't prodcues
 				// cargo required by factory1!
-				if(cargoVector.nrElements == 0) {
+				if (cargoVector.len() == 0) {
 					foreach(val in industry2.production) {
 						if(industry1.Requires(val)) {
-							cargoVector.Add(val);
+							cargoVector.push(val);
 						}
 					}
 
@@ -72,7 +69,7 @@ function IndustryManager::UpdateIndustry() {
 					toIndustry = industry2;
 				}
 
-				if(cargoVector.nrElements == 0)
+				if(cargoVector.len() == 0)
 					continue;
 
 
@@ -162,22 +159,19 @@ class IndustryInfo
 		this.tilesAroundProducing = AITileList_IndustryProducing(industryID, AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP));
 
 		// Get production and requirements of this industry
-		production = Vector(3);
-		requirements = Vector(2);
+		production = array(0);
+		requirements = array(0);
 
 		local cargoList = AICargoList();
 		for(local i = cargoList.Begin(); cargoList.HasNext(); i = cargoList.Next()) {
 			if(AIIndustry.GetProduction(industryID, i) > 0) {
-				production.Add(i);
+				production.push(i);
 			}
 
 			if(AIIndustry.IsCargoAccepted(industryID, i)) {
-				requirements.Add(i);
+				requirements.push(i);
 			}				
 		}
-
-		production = production.ToArray();
-		requirements = requirements.ToArray();
 	}
 
 	/**
