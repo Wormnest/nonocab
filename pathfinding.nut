@@ -1,4 +1,4 @@
-import("queue.priority_queue", "PriorityQueue", 2);
+import("queue.binary_heap", "BinaryHeap", 1);
 
 ////////////////////////// PATHFINDING ///////////////////////////////////////////////////
 /**
@@ -104,7 +104,7 @@ function RoadPathFinding::CreateRoad(roadList)
 	
 	// Build the last part
 	AIRoad.BuildRoad(roadList[0].tile, buildFrom);
-	return true;			
+	return true;		
 }
 
 /**
@@ -160,7 +160,8 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	
 	// Start by constructing a priority queue and by adding all start
 	// nodes to it.
-	pq = PriorityQueue();
+	pq = BinaryHeap()
+	//pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 
 		// Check if we can actually start here!
@@ -178,7 +179,12 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	while (pq.Count != 0)
 	{
 		// Get the node with the best utility value
-		local at = pq.Pop();
+		local at = pq.Pop();	
+
+		//{
+		//	local a = AIExecMode();
+		//	AISign.BuildSign(at.tile, "A");
+		//}
 		
 		if(closedList.rawin(at.tile))
 			continue;
