@@ -1,4 +1,3 @@
-import("queue.binary_heap", "BinaryHeap", 1);
 
 ////////////////////////// PATHFINDING ///////////////////////////////////////////////////
 /**
@@ -160,8 +159,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	
 	// Start by constructing a priority queue and by adding all start
 	// nodes to it.
-	pq = BinaryHeap()
-	//pq = FibonacciHeap();
+	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 
 		// Check if we can actually start here!

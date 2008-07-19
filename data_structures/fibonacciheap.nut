@@ -42,11 +42,10 @@ function FibonacciHeap::Pop() {
 
 	local z = min;
 	
-	// If there are any children, bring them all to the root
-	// level.
-	foreach (val in z.child)
-		rootList.append(val);
+	// If there are any children, bring them all to the root level.
+	rootList.extend(z.child);
 
+	// Remove the minimum node from the rootList.
 	rootList.remove(min_index);	
 	local rootCache = {};
 
