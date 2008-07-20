@@ -1,8 +1,8 @@
-require("pathfinding.nut");
+require("data_structures/fibonacciheap.nut");
+require("pathfinding/pathfinding.nut");
+require("pathfinding/tiles.nut");
 require("utils.nut");
 require("industry.nut");
-require("tiles.nut");
-require("data_structures/fibonacciheap.nut");
 
 class NoCAB extends AIController {
       	stop = false;
