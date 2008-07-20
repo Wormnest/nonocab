@@ -195,7 +195,7 @@ function FibonacciHeap::ExistsIn(list, item) {
 		}
 	}
 
-	/* No luck, item doesn't exists in the tree rooted under _array. */
+	/* No luck, item doesn't exists in the tree rooted under list. */
 	return false;
 }
 
