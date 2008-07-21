@@ -50,7 +50,6 @@ function RoadPathFinding::CreateRoad(roadList)
 	
 	for(local a = roadList.len() - 2; -1 < a; a--)		
 	{
-		//AISign.BuildSign(roadList[a].tile, "B");
 		local buildTo = roadList[a].tile;
 		local direction = roadList[a].direction;
 		
@@ -179,10 +178,10 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		// Get the node with the best utility value
 		local at = pq.Pop();	
 
-		//{
-		//	local a = AIExecMode();
-		//	AISign.BuildSign(at.tile, "A");
-		//}
+//		{
+//			local a = AIExecMode();
+//			AISign.BuildSign(at.tile, "A");
+//		}
 		
 		if(closedList.rawin(at.tile))
 			continue;
@@ -229,23 +228,26 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		 * [1] = Direction from parent (TileIndex - Parent.TileIndex)
 		 * [2] = Type (i.e. TUNNEL, BRIDGE, or ROAD)
 		 * [3] = Utility costs
+		 * [4] = *TUNNEL and BRIDGE types only*Already built
 		 */
 		local neighbour = 0;
 		foreach (neighbour in directions) {
 		
 			// Skip if this node is already processed or if we can't build on it
-			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoadFull(neighbour[0], at.tile))) {
+			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile))) {
 				continue;
 			}
 			
 			// Are we dealing with a tunnel or bridge?
-			// i.e. is the distance to the next node greater then 1 tile
-			if (at.tile + neighbour[1] != neighbour[0]) {
+			if (neighbour[2] != Tile.ROAD) {
 				
 				local length = (neighbour[0] - at.tile) / neighbour[1];
 				if (length < 0) length = -length;
 				
-				if (neighbour[2] == Tile.TUNNEL) {
+				// Treat already build bridges and tunnels the same as already build roads.
+				if (neighbour[4]) {
+					neighbour[3] = 30 * length;
+				} else if (neighbour[2] == Tile.TUNNEL) {
 					neighbour[3] = 120 * length;
 				} else {
 					neighbour[3] = 150 * length;

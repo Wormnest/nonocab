@@ -79,11 +79,13 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 				     direction < AIMap.GetMapSizeX() && direction > 0 && offset ==  1 ||			// West
 				     direction >= AIMap.GetMapSizeX() 	 	      && offset ==  AIMap.GetMapSizeX() ||	// South
 				    -direction < AIMap.GetMapSizeX() && direction < 0 && offset == -1) {			// East
-				    	tileArray.push([otherEnd, offset, type, 0]);
+				    	tileArray.push([otherEnd, offset, type, 0, true]);
 				    	isBridgeOrTunnelEntrance = true;
 				}
 			}
 		}
+
+
 		
 		/** 
 		 * If it is neither a tunnel or a bridge, we try to build one
@@ -92,11 +94,11 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		if (!isBridgeOrTunnelEntrance) {
 
 			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-				tileArray.push([bridge, offset, Tile.BRIDGE, 0]);
+				tileArray.push([bridge, offset, Tile.BRIDGE, 0, false]);
 			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
-				tileArray.push([tunnel, offset, Tile.TUNNEL, 0]);
+				tileArray.push([tunnel, offset, Tile.TUNNEL, 0, false]);
 			}
 
 			
