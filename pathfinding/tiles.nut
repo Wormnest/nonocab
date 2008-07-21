@@ -201,7 +201,7 @@ function Tile::IsBuildable(tile) {
 		// Check if we can build a road station on this tile (then we know for sure it's
 		// save to build here :)
 		foreach(directionTile in Tile.GetTilesAround(tile)) {
-			if(AIRoad.BuildRoadStation(tile, directionTile, true, false)) {
+			if(AIRoad.BuildRoadStation(tile, directionTile, true, false, true)) {
 				return true;
 			}
 		}
