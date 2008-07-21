@@ -76,7 +76,8 @@ function RoadPathFinding::CreateRoad(roadList)
 
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
-
+				AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction);
+				
 				if (a > 0)
 					buildFrom = roadList[a - 1].tile;
 				else
@@ -91,6 +92,7 @@ function RoadPathFinding::CreateRoad(roadList)
 								
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
+				AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction);
 
 				if (a > 0)
 					buildFrom = roadList[a - 1].tile;
