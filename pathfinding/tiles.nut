@@ -97,7 +97,7 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		local nextTile = currentAnnotatedTile.tile + offset;
 
 		// Check if we can actually build this piece of road or if the slopes render this impossible.
-		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
+		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
 			continue;
 		
 		local isBridgeOrTunnelEntrance = false;
@@ -231,16 +231,13 @@ function Tile::IsBuildable(tile) {
 
 
 	// Check if we can actually build here!
-	if(AITile.IsBuildable(tile)) {
-		local test = AITestMode();
-		local isBuildable = false;
+	local test = AITestMode();
 
-		// Check if we can build a road station on this tile (then we know for sure it's
-		// save to build here :)
-		foreach(directionTile in Tile.GetTilesAround(tile)) {
-			if(AIRoad.BuildRoadStation(tile, directionTile, true, false, true)) {
-				return true;
-			}
+	// Check if we can build a road station on this tile (then we know for sure it's
+	// save to build here :)
+	foreach(directionTile in Tile.GetTilesAround(tile)) {
+		if(AIRoad.BuildRoadStation(tile, directionTile, true, false, true)) {
+			return true;
 		}
 	}
 

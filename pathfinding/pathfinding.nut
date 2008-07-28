@@ -5,6 +5,20 @@
  */
 class RoadPathFinding 
 {
+	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
+	costForNewRoad	= 50;		// Cost for building a new road.
+	costForTurn 	= 75;		// Additional cost if the road makes a turn.
+	costForBridge 	= 120;		// Cost for building a bridge.
+	costForTunnel 	= 150;		// Cost for building a tunnel.
+	costForSlope 	= 75;		// Additional cost if the road heads up or down a slope.
+	
+	toBuildLater = [];		// List of build actions which couldn't be completed the moment
+					// they were issued due to temporal problems, but should be able
+					// to complete in the (near) future.
+					// [0]: Build from
+					// [1]: Build to
+					// [2]: Tile type
+	
 	/**
 	 * We need functions to calibrate penalties and stuff. We want functions
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
@@ -36,8 +50,81 @@ class PathInfo
 }
 
 /**
+ * If an error occurs during the construction phase, this method is called
+ * to replan the road and finish what has been started.
+ * @param roadList The part of the roadlist that hasn't been build yet.
+ * @param buildFrom The tile we tried to build from before the error.
+ * @param buildTo The tile we tried to build to before the error.
+ * @param tileType The structure we tried to build; Tile.ROAD, Tile.BRIDGE, or Tile.TUNNEL.
+ * @param error The error ID of the error which was thrown.
+ * @return True if the CreateRoad method must continue with the rest of the
+ * roadList (i.e. the link between buildFrom and buildTo is solved), otherwise
+ * the CreateRoad method must be ceased as the pathfinder found a different 
+ * road and will issue a new construction command.
+ */
+function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileType, error)
+{
+	/**
+	 * First determine whether the error is of temporeral nature (i.e. lack
+	 * of money, a vehicle was in the way, etc) or a more serious one which
+	 * requires us to replan this part of the road.
+	 */
+	switch (error) {
+	
+		// Temporal onces:
+		case AIError.ERR_NOT_ENOUGH_CASH:
+		case AIError.ERR_VEHICLE_IN_THE_WAY:
+		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
+			toBuildLater.push([buildFrom, buildTo, tileType]);
+			return true;
+			
+		// Serious onces:
+		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:
+		case AIError.ERR_AREA_NOT_CLEAR:
+		case AIError.ERR_OWNED_BY_ANOTHER_COMPANY:
+		case AIError.ERR_FLAT_LAND_REQUIRED:
+		case AIError.ERR_LAND_SLOPED_WRONG:
+		case AIError.ERR_SITE_UNSUITABLE:
+		case AIError.ERR_TOO_CLOSE_TO_EDGE:
+		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
+		
+			print("Fixing: " + AIError.GetLastErrorString() + "! " + tileType);
+			{
+				local a = AIExecMode();
+				AISign.BuildSign(buildFrom, "From");
+				AISign.BuildSign(buildTo, "To");
+			}
+				
+			// Construct new start list.
+			local start_list = AIList();
+			start_list.add(buildFrom, buildFrom);
+			
+			local end_list = AIList();
+			end_list.add(buildTo, buildTo);
+			
+			// This can lead to major trouble if the process keeps on failing!
+			local pathInfo = FindFastestRoad(start_list, end_list);
+			CreateRoad(pathInfo);
+			return false;
+			
+		// Trival onces:
+		case AIError.ERR_ALREADY_BUILT:
+		case AIRoad.ERR_ROAD_CANNOT_BUILD_ON_TOWN_ROAD:
+		case AIError.ERR_PRECONDITION_FAILED:
+			return true;
+			
+		default:
+			print("Unhandled error message: " + AIError.GetLastErrorString() + "!");
+			return false;
+	}
+	
+}
+
+/**
  * Create the fastest road from start to end, without altering
  * the landscape. We use the A* pathfinding algorithm.
+ * If something goes wrong during the building process the fallBackMethod
+ * is called to handle things for us.
  */
 function RoadPathFinding::CreateRoad(roadList)
 {
@@ -68,21 +155,33 @@ function RoadPathFinding::CreateRoad(roadList)
 					// Terraform(buildFrom, currentDirection);
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
+						if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
+							return;
+						
+						
 						local s = "Failed to build a road from " + AIMap.GetTileX(buildFrom) + ", " + AIMap.GetTileY(buildFrom) + " to " + AIMap.GetTileX(roadList[a + 1].tile) + ", " + AIMap.GetTileY(roadList[a + 1].tile);
 						print(s);
 						print(AIError.GetLastErrorString());
+						
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
 				}
 				break;
 			case Tile.TUNNEL:
-				AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction);
+				if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction) && !AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction)) {
+					if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, AIError.GetLastError()))
+						return;
+				}
 
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
-				if (direction != roadList[a + 1].direction)
-					AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction);
+				if (direction != roadList[a + 1].direction) {
+					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
+						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+							return;
+					}
+				}
 				
 				if (a > 0)
 					buildFrom = roadList[a - 1].tile;
@@ -90,26 +189,46 @@ function RoadPathFinding::CreateRoad(roadList)
 					buildFrom = roadList[0].tile;
 				break;
 			case Tile.BRIDGE:
-				local length = roadList[a].tile - roadList[a + 1].tile / roadList[a].direction;
-				if (length < 0)
-					length = -length;
-				
-				// Find the cheapest and fastest bridge (i.e. 48 km/h or more).
-				local bridgeTypes = AIBridgeList_Length(length);
-				local bestBridgeType = null;
-				for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
-					local bridge = bridgeTypes.Next();
-					if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= 48)) {
-						bestBridgeType = bridge;
+			
+				if (!AIBridge.IsBridgeTile(roadList[a + 1].tile + roadList[a].direction)) {
+					local tileA = roadList[a].tile;
+					local tileA1 = roadList[a + 1].tile;
+					local direction = roadList[a].direction;
+					
+					local length = (roadList[a].tile - roadList[a + 1].tile) / roadList[a].direction;
+					if (length < 0)
+						length = -length;
+
+					// Find the cheapest and fastest bridge (i.e. 48 km/h or more).
+					local bridgeTypes = AIBridgeList_Length(length);
+					local bestBridgeType = null;
+					for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
+						local bridge = bridgeTypes.Next();
+						if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= 48)) {
+							bestBridgeType = bridge;
+						}
+					}
+					
+					if (bestBridgeType == null)
+					{
+						local a = AIExecMode();
+						AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "From");
+					}
+
+					if (!AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile)) {
+						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
+							return;
 					}
 				}
 				
-				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
-								
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
-				if (direction != roadList[a + 1].direction)
-					AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction);
+				if (direction != roadList[a + 1].direction) {
+					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
+						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+							return;
+					}
+				}
 
 				if (a > 0)
 					buildFrom = roadList[a - 1].tile;
@@ -200,7 +319,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(end.HasItem(at.tile) && Tile.IsBuildable(at.tile)) {
+		if(end.HasItem(at.tile) && AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true)) {
 
 			// determine size...
 			local tmp = at;
@@ -257,11 +376,11 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				
 				// Treat already build bridges and tunnels the same as already build roads.
 				if (neighbour[4]) {
-					neighbour[3] = 30 * length;
+					neighbour[3] = costForRoad * length;
 				} else if (neighbour[2] == Tile.TUNNEL) {
-					neighbour[3] = 120 * length;
+					neighbour[3] = costForTunnel * length;
 				} else {
-					neighbour[3] = 150 * length;
+					neighbour[3] = costForBridge * length;
 				}
 			}
 			
@@ -270,19 +389,19 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				
 				// Check if the road is sloped.
 				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour[0])) {
-					neighbour[3] = 80;
+					neighbour[3] = costForSlope;
 				}
 				
 				// Check if the road makes a turn.
 				if (at.direction != neighbour[1]) {
-					neighbour[3] += 75;
+					neighbour[3] += costForTurn;
 				}
 				
 				// Check if there is already a road here.
 				if (AIRoad.IsRoadTile(neighbour[0])) {
-					neighbour[3] += 30;
+					neighbour[3] += costForRoad;
 				} else {
-					neighbour[3] += 50;
+					neighbour[3] += costForNewRoad;
 				}
 			}
 			
