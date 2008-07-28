@@ -21,7 +21,7 @@ class RoadPathFinding
 class PathInfo
 {
 	roadList = null;		// List of all road tiles the road needs to follow
-	travelDistance = null;		// The total number of squares of road (multipy by 429 to get km)
+	travelDistance = null;		// The total number of squares of road (multipy by 612 to get km)
 	speedModifier = null;		// The 'cost' of the road (taking into account all the slopes, etc) 
 					// <-- The average velocity can be calculated by multiplying this value with 
 					// the speed of the vehicle...
@@ -55,6 +55,11 @@ function RoadPathFinding::CreateRoad(roadList)
 		
 		switch (roadList[a].type) {
 			case Tile.ROAD:
+				/**
+				 * Every time we make a call to the OpenTTD engine (i.e. build something) we hand over the
+				 * control to the next AI, therefor we try to envoke as less calls as posible by building
+				 * large segments of roads at the time instead of single tiles.
+				 */
 				if (direction != currentDirection) {
 		
 					// Check if we need to do some terraforming
@@ -133,11 +138,6 @@ function RoadPathFinding::GetCostForRoad(roadList)
  */
 function RoadPathFinding::FindFastestRoad(start, end)
 {
-	// Now, for the interesting part... :)
-	// Road can only be build from North to South and from West to East, we
-	// use the Manhattan distance as heuristic (faster and as good as squared
-	// distance) for our algorithm. Every tile is stored in a priority queue.
-
 	local pq = null;
 	local expectedEnd = null;
 
@@ -155,13 +155,11 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	// We must also keep track of all tiles we've already processed, we use
 	// a table for that purpose.
 	local closedList = {};
-	local closedListBridgesTunnels = {};
 
 	// We keep a separate list for start tiles
 	local startList = {};
 	
-	// Start by constructing a priority queue and by adding all start
-	// nodes to it.
+	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 
@@ -179,7 +177,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	// Now with the open and closed list we're ready to do some grinding!!!
 	while (pq.Count != 0)
 	{
-		// Get the node with the best utility value
+		
 		local at = pq.Pop();	
 
 //		{
@@ -187,11 +185,11 @@ function RoadPathFinding::FindFastestRoad(start, end)
 //			AISign.BuildSign(at.tile, "A");
 //		}
 		
+		// Get the node with the best utility value
 		if(closedList.rawin(at.tile))
 			continue;
 
-		// Check if this is the end already!!
-		// TODO: Rewrite!
+		// Check if this is the end already, if so we've found the shortest route.
 		if(end.HasItem(at.tile) && Tile.IsBuildable(at.tile)) {
 
 			// determine size...
@@ -206,8 +204,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 			local resultList = array(tmp_size);
 			resultList[0] = at;
 
-			// We want to return a PathInfo object, we need it for later
-			// assesments! :)
+			// We want to return a PathInfo object, we need it for later assesments! :)
 			local avg_speed = 0;
 			local lastDirection = at.direction;
 
@@ -237,7 +234,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		local neighbour = 0;
 		foreach (neighbour in directions) {
 		
-			// Skip if this node is already processed or if we can't build on it
+			// Skip if this node is already processed or if we can't build on it.
 			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile))) {
 				continue;
 			}
