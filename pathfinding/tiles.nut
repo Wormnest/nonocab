@@ -1,40 +1,86 @@
-
+/**
+ * This class provides static functions which provide information and perform
+ * searches for tiles in the world map.
+ */
 class Tile {
 
+	// Types of tile.
 	static NONE   = 0;
 	static BRIDGE = 1;
 	static TUNNEL = 2;
 	static ROAD   = 3;
 
-	constructor() {
-
-	}
-
+	/**
+	 * Search for all tiles which are reachable from the given tile, either by road or
+	 * by building bridges and tunnels or exploiting existing onces.
+	 * @param currentAnnotatedTile An instance of AnnotatedTile from where to search from.
+	 * @return An array of structs which hold all information about all tiles reachable
+	 * from the given tile: 
+	 * [0] = TileIndex
+	 * [1] = Direction from parent (TileIndex - Parent.TileIndex)
+	 * [2] = Type (i.e. TUNNEL, BRIDGE, or ROAD)
+	 * [3] = Utility costs
+	 * [4] = *TUNNEL and BRIDGE types only*Already built	 
+	 */
 	static function GetNeighbours(currentAnnotatedTile);
+	
+	/**
+	 * Get all the tile IDs from the tiles directly adjacent to the given tile ID.
+	 * @param currentTile Tile ID.
+	 * @return An array with the tile IDs of all tiles around it.
+	 * @remark This function does not boundary checking and cannot be used safely on 
+	 * border tiles.
+	 */
 	static function GetTilesAround(currentTile);
+	
+	/**
+	 * Search for all bridges which can be build.
+	 * @param startTile The start location for the bridge.
+	 * @param direction The direction the bridge must head.
+	 * @return An array of tile IDs of all possible end points.
+	 */
 	static function GetBridges(startTile, direction);
+	
+	/**
+	 * Search for all tunnels which can be build.
+	 * @param startTile The start location for the tunnel.
+	 * @param direction The direction the tunnel must head.
+	 * @return An array of tile IDs of all possible end points.
+	 */	
 	static function GetTunnels(startTile, direction);
+	
+	/**
+	 * Determine whether the road will be sloped.
+	 * @param startNode The node to build from.
+	 * @param direction The direction to build to.
+	 * @return True if the road will be sloped when building
+	 * from the startNode in the given direction, false otherwise.
+	 */
 	static function IsSlopedRoad(startNode, direction);
-	static function IsBuildable(node);
-	static function ValidateTurn(startTile, dir);
+	
+	/**
+	 * Determine if the tile is buildable.
+	 * @param node The tile ID to check.
+	 * @return True if the tile is buildable, false otherwise.
+	 */
+	static function IsBuildable(tile);
 }
 
 function Tile::GetTilesAround(currentTile) {
 	return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX()];
 }
 
-/**
- * Get all the tiles around currentTile, if these tiles happen to be a 
- * starting point of a tunnel or bridge we return the end points of these
- * structures. Also, we explore the possibility to build bridges and
- * tunnels and return those end points as well.
- */
 function Tile::GetNeighbours(currentAnnotatedTile) {
 
 	local tileArray = [];
 
 	local offsets;
 	
+	/**
+	 * If the tile we want to build from is a bridge or tunnel, the only acceptable way 
+	 * to go is foreward. If we fail to do so the pathfinder will try to build invalid
+	 * roadpieces by building over the endpoints of bridges and tunnels.
+	 */
 	if (currentAnnotatedTile.type == Tile.ROAD)
 		offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 	else {
@@ -44,20 +90,19 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 
 	foreach (offset in offsets) {
 		
-		// Don't build in the wrong direction
+		// Don't build in the wrong direction.
 		if (offset == -currentAnnotatedTile.direction)
 			continue;
 		
-		// Check for each tile if it already has a bridge / tunnel
-		// or if we could build one.
 		local nextTile = currentAnnotatedTile.tile + offset;
 
-		// Check if we can actually build this piece of road.
+		// Check if we can actually build this piece of road or if the slopes render this impossible.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
 		
 		local isBridgeOrTunnelEntrance = false;
 		
+		// Check if we can exploit exising bridges and tunnels.
 		if (AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			local type = Tile.NONE;
 			local otherEnd;
@@ -86,7 +131,6 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		}
 
 
-		
 		/** 
 		 * If it is neither a tunnel or a bridge, we try to build one
 		 * our selves.
@@ -111,10 +155,6 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 	return tileArray;
 }
 
-/**
- * Get all bridges and tunnels which can be build on the given node
- * in the given direction.
- */
 function Tile::GetBridges(startNode, direction) 
 {
 	local slope = AITile.GetSlope(startNode);
@@ -129,7 +169,7 @@ function Tile::GetBridges(startNode, direction)
 			tiles.push(target);
 			foundBridge = true;
 		} else if (foundBridge) {
-			// If we can't build bridges any more, skip the rest
+			// If we can't build bridges any more, skip the rest.
 			break;
 		}
 	}
@@ -187,9 +227,6 @@ function Tile::IsSlopedRoad(start, middle, end)
 	return false;
 }
 
-/**
- * Check if we can actually build something on this tile :).
- */
 function Tile::IsBuildable(tile) {
 
 
