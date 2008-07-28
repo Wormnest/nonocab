@@ -94,7 +94,17 @@ function RoadPathFinding::CreateRoad(roadList)
 				if (length < 0)
 					length = -length;
 				
-				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, AIBridgeList_Length(length).Begin(), roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
+				// Find the cheapest and fastest bridge (i.e. 48 km/h or more).
+				local bridgeTypes = AIBridgeList_Length(length);
+				local bestBridgeType = null;
+				for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
+					local bridge = bridgeTypes.Next();
+					if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= 48)) {
+						bestBridgeType = bridge;
+					}
+				}
+				
+				AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile);
 								
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
