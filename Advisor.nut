@@ -20,7 +20,7 @@ class Advisor
  * @return A list of reports.
  * 
  */
-function Department::getReports()
+function Advisor::getReports()
 {
 //	local reports = array(0);
 //	reports[0] = new Report();
