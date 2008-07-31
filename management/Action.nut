@@ -24,6 +24,7 @@ class BankBalanceAction extends Action
 		this.amount = change;
 	}
 }
+
 function BankBalanceAction::execute()
 {
 	AICompany.SetLoanAmount(this.amount);
@@ -42,6 +43,7 @@ class MailTruckNewOrderAction extends Action
 		this.endStation = end;
 	} 
 }
+
 function MailTruckNewOrderAction::execute()
 {
 	// TODO: full load: startStation

@@ -3,11 +3,11 @@ require("pathfinding/pathfinding.nut");
 require("pathfinding/tiles.nut");
 require("utils.nut");
 require("industry.nut");
-require("World.nut");
-require("Parlement.nut");
-require("Action.nut");
-require("Advisor.nut");
-require("Advisor_Finance.nut");
+require("management/World.nut");
+require("management/Parlement.nut");
+require("management/Action.nut");
+require("advisors/Advisor.nut");
+require("advisors/Advisor_Finance.nut");
 
 class NoCAB extends AIController {
 	stop = false;
