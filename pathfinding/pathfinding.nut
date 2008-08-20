@@ -27,6 +27,7 @@ class RoadPathFinding
 	function CreateRoad(roadList);		// Create the best road from start to end
 	function GetCostForRoad(roadList);	// Give the cost for the best road from start to end
 	function FindFastestRoad(start, end);
+	function GetTime(roadList, maxSpeed, forward);
 }
 
 /**
@@ -128,7 +129,7 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
  */
 function RoadPathFinding::CreateRoad(roadList)
 {
-	local b = AIExecMode();
+//	local b = AIExecMode();
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
@@ -259,6 +260,126 @@ function RoadPathFinding::GetCostForRoad(roadList)
 }
 
 /**
+ * Check if this road tile is a slope.
+ */
+function RoadPathFinding::GetSlope(tile)
+{
+	// 0: No slope.
+	// 1: Slope upwards.
+	// 2: Slope downwards.
+
+	local currentDirection = tile.direction;
+	if (currentDirection == 1) { 		// West
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_NE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SW != 0)) // Eastern slope must be flat and one point of the western slope must be high
+			return 1;
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NE != 0)) // Western slope must be flat and one point of the eastern slope must be high
+			return 2;
+	} else if (currentDirection == -1) {	// East
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_SW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NE != 0)) // Western slope must be flat and one point of the eastern slope must be high
+			return 1;
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SW != 0)) // Eastern slope must be flat and one point of the western slope must be high
+			return 2;
+	} else if (currentDirection == -AIMap.GetMapSizeX()) {	// North
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_SE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NW != 0)) // Southern slope must be flat and one point of the northern slope must be high
+			return 1;
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SE != 0)) // Northern slope must be flat and one point of the southern slope must be high
+			return 2;
+	} else if (currentDirection == AIMap.GetMapSizeX()) {	// South
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_NW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SE != 0)) // Northern slope must be flat and one point of the southern slope must be high
+			return 1;
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NW != 0)) // Southern slope must be flat and one point of the northern slope must be high
+			return 2;
+	} else {
+		print("ERRORRRR!");
+		exit(0);
+	}
+
+	return 0;
+}
+
+/**
+ * Get the time it takes a vehicle to travel among the given road.
+ */
+function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
+{
+	local lastDirection = roadList[0];
+	local currentSpeed = 0;
+	local carry = 0;
+	local days = 0;
+
+	for (local i = 0; i < roadList.len(); i++) {
+		local tile = roadList[i].tile;
+		local slope = GetSlope(tile);
+
+		currentDirection = tile.direction;
+
+		local tileLength = 0;
+
+		if(tile.direction != currentDirection) {	// Bend
+			tileLength = 686 - carry;
+			currentSpeed = maxSpeed / 2;
+			
+		} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
+			tileLength = 970 - carry;
+			
+			local slowDowns = 0;
+
+			while (tileLength > 0) {
+				tileLength -= currentSpeed;
+				days++;
+
+				if (currentSpeed <= 34) {
+					currentSpeed = 34;
+					break;
+				}
+				// Speed decreases 10% 4 times per tile
+				else if (tileLength < 970 - slowDowns * 242) {
+					currentSpeed *= 0.9;
+					slowDowns++;
+				}
+
+			}
+		} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
+			tileLength = 970 - carry;
+
+			while (tileLength > 0) {
+				tileLength -= currentSpeed;
+				days++;
+
+				if (currentSpeed >= maxSpeed) {
+					currentSpeed = maxSpeed;
+					break;
+				} else if (currentSpeed < maxSpeed) {
+					currentSpeed += 74;
+				}
+			}
+		} else {					// Straight
+			tileLength = 686 - carry;
+			
+			// Calculate the number of days needed to traverse the tile
+			while (tileLength > 0) {
+				tileLength -= currentSpeed;
+				days++;
+
+				currentSpeed += 74;
+				if (currentSpeed > maxSpeed) {
+					currentSpeed = maxSpeed;
+					break;
+				}
+			}
+		}
+
+		if (tileLength > 0) {
+			local div = tileLength / currentSpeed;
+			carry = tileLength - (currentSpeed * div);
+			days += div;
+		}
+		days++;
+		carry = tileLength;
+	}
+}
+
+/**
  * A* pathfinder to find the fastest path from start to end.
  * @param start An AIAbstractList which contains all the nodes the path can start from.
  * @param end An AIAbstractList which contains all the nodes the path can stop at. The
@@ -267,6 +388,7 @@ function RoadPathFinding::GetCostForRoad(roadList)
  */
 function RoadPathFinding::FindFastestRoad(start, end)
 {
+	local test = AITestMode();
 	local pq = null;
 	local expectedEnd = null;
 

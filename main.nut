@@ -8,6 +8,7 @@ require("management/Parlement.nut");
 require("management/Action.nut");
 require("advisors/Advisor.nut");
 require("advisors/Advisor_Finance.nut");
+require("advisors/Advisor_Connections.nut");
 
 class NoCAB extends AIController {
 	stop = false;
@@ -52,10 +53,13 @@ function NoCAB::Start()
 	Utils.logInfo(AICompany.GetCompanyName(8));
 	Utils.logInfo(AICompany.GetPresidentName(8));
 
+	local adv = ConnectionAdvisor();
+	adv.PrintTree();
+
 	// Do what we have to do.
 	while(true)
 	{
-		
+			
 		this.Sleep(500);
 	}
 	
