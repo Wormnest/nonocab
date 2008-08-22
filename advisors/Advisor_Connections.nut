@@ -95,9 +95,21 @@ class ConnectionAdvisor
 			local rpf = RoadPathFinding();
 
 			foreach (secondIndustry in primIndustry.industryNodeList) {
+
+
+				print("Find road from " + AIIndustry.GetName(primIndustry.industryID) + " to " + AIIndustry.GetName(secondIndustry.industryID));
 				local pathInfo = rpf.FindFastestRoad(AITileList_IndustryProducing(primIndustry.industryID, radius), AITileList_IndustryAccepting(secondIndustry.industryID, radius));
 
 				primIndustry.costToBuild = rpf.GetCostForRoad(pathInfo.roadList);
+				
+				local ic = IndustryConnection();
+				ic.timeToTravelTo = rpf.GetTime(pathInfo.roadList, 48, true);
+				ic.timeToTravelFrom = rpf.GetTime(pathInfo.roadList, 48, false);
+print(ic.timeToTravelTo + " " + ic.timeToTravelFrom);
+				ic.incomePerRun = AICargo.GetCargoIncome(primIndustry.cargoIdsProducing[0], AIMap.DistanceManhattan(pathInfo.roadList[0].tile, pathInfo.roadList[pathInfo.roadList.len() - 1].tile), ic.timeToTravelTo);
+				ic.speed = 48;
+
+				primIndustry.vehiclesOperating.push(ic);
 			}
 		}
 	}
@@ -117,6 +129,8 @@ class ConnectionAdvisor
 		}
 
 		print(string + AIIndustry.GetName(node.industryID) + "(" + node.costToBuild + ") -> ");
+		print("Vehcile travel time:" + node.vehiclesOperating.timeToTravelTo);
+		print("Vehcile income per run:" + node.vehiclesOperating.incomePerRun);
 		foreach (iNode in node.industryNodeList)
 			PrintNode(iNode, depth + 1);
 	}

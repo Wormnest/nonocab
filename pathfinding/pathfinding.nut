@@ -262,36 +262,36 @@ function RoadPathFinding::GetCostForRoad(roadList)
 /**
  * Check if this road tile is a slope.
  */
-function RoadPathFinding::GetSlope(tile)
+function RoadPathFinding::GetSlope(tile, currentDirection)
 {
 	// 0: No slope.
 	// 1: Slope upwards.
 	// 2: Slope downwards.
 
-	local currentDirection = tile.direction;
 	if (currentDirection == 1) { 		// West
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_NE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SW != 0)) // Eastern slope must be flat and one point of the western slope must be high
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_NE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
 			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NE != 0)) // Western slope must be flat and one point of the eastern slope must be high
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
 			return 2;
 	} else if (currentDirection == -1) {	// East
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_SW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NE != 0)) // Western slope must be flat and one point of the eastern slope must be high
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_SW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
 			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SW != 0)) // Eastern slope must be flat and one point of the western slope must be high
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
 			return 2;
 	} else if (currentDirection == -AIMap.GetMapSizeX()) {	// North
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_SE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NW != 0)) // Southern slope must be flat and one point of the northern slope must be high
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
 			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SE != 0)) // Northern slope must be flat and one point of the southern slope must be high
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
 			return 2;
 	} else if (currentDirection == AIMap.GetMapSizeX()) {	// South
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_NW == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_SE != 0)) // Northern slope must be flat and one point of the southern slope must be high
+		if ((AITile.GetSlope(tile) & AITile.SLOPE_NW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
+
 			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE == 0) && (AITile.GetSlope(tile) & AITile.SLOPE_NW != 0)) // Southern slope must be flat and one point of the northern slope must be high
+		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
 			return 2;
 	} else {
-		print("ERRORRRR!");
-		exit(0);
+		print("ERRORRRR! " + currentDirection);
+//		exit(0);
 	}
 
 	return 0;
@@ -306,21 +306,21 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 	local currentSpeed = 0;
 	local carry = 0;
 	local days = 0;
+	local lastDirection = 0;
 
 	for (local i = 0; i < roadList.len(); i++) {
 		local tile = roadList[i].tile;
-		local slope = GetSlope(tile);
-
-		currentDirection = tile.direction;
+		local currentDirection = roadList[i].direction;
+		local slope = GetSlope(tile, currentDirection);
 
 		local tileLength = 0;
 
-		if(tile.direction != currentDirection) {	// Bend
-			tileLength = 686 - carry;
+		if(lastDirection != currentDirection) {		// Bend
+			tileLength = 29 - carry;
 			currentSpeed = maxSpeed / 2;
 			
 		} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
-			tileLength = 970 - carry;
+			tileLength = 40 - carry;
 			
 			local slowDowns = 0;
 
@@ -340,7 +340,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 
 			}
 		} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
-			tileLength = 970 - carry;
+			tileLength = 40 - carry;
 
 			while (tileLength > 0) {
 				tileLength -= currentSpeed;
@@ -354,7 +354,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 				}
 			}
 		} else {					// Straight
-			tileLength = 686 - carry;
+			tileLength = 29 - carry;
 			
 			// Calculate the number of days needed to traverse the tile
 			while (tileLength > 0) {
@@ -374,9 +374,12 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 			carry = tileLength - (currentSpeed * div);
 			days += div;
 		}
+
+		lastDirection = currentDirection;
 		days++;
 		carry = tileLength;
 	}
+	return days.tointeger();
 }
 
 /**
