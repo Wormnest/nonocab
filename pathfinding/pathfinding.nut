@@ -18,6 +18,7 @@ class RoadPathFinding
 					// [0]: Build from
 					// [1]: Build to
 					// [2]: Tile type
+	errorHandling	= false;	// True if we are in error solving mode.
 	
 	/**
 	 * We need functions to calibrate penalties and stuff. We want functions
@@ -65,6 +66,7 @@ class PathInfo
  */
 function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileType, error)
 {
+	
 	/**
 	 * First determine whether the error is of temporeral nature (i.e. lack
 	 * of money, a vehicle was in the way, etc) or a more serious one which
@@ -89,6 +91,13 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		
+			// Make sure we don't get caught in an infinite loop because we're
+			// trying to build an unbuildable piece of road.
+			if (errorHandling) {
+				Utils.logError("Building road FAILED!");
+				return false;
+			}
+			
 			print("Fixing: " + AIError.GetLastErrorString() + "! " + tileType);
 			{
 				local a = AIExecMode();
@@ -103,9 +112,12 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 			local end_list = AIList();
 			end_list.add(buildTo, buildTo);
 			
-			// This can lead to major trouble if the process keeps on failing!
+			// Try to build it again, but only once!.
 			local pathInfo = FindFastestRoad(start_list, end_list);
+			
+			errorHandling = true;
 			CreateRoad(pathInfo);
+			errorHandling = false;
 			return false;
 			
 		// Trival onces:
@@ -115,7 +127,7 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 			return true;
 			
 		default:
-			print("Unhandled error message: " + AIError.GetLastErrorString() + "!");
+			Utils.logError("Unhandled error message: " + AIError.GetLastErrorString() + "!");
 			return false;
 	}
 	
@@ -129,7 +141,6 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
  */
 function RoadPathFinding::CreateRoad(roadList)
 {
-//	local b = AIExecMode();
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
@@ -289,9 +300,6 @@ function RoadPathFinding::GetSlope(tile, currentDirection)
 			return 1;
 		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
 			return 2;
-	} else {
-		print("ERRORRRR! " + currentDirection);
-//		exit(0);
 	}
 
 	return 0;
@@ -299,6 +307,12 @@ function RoadPathFinding::GetSlope(tile, currentDirection)
 
 /**
  * Get the time it takes a vehicle to travel among the given road.
+ * @param roadList Array of annotated tiles which compounds the road.
+ * @param maxSpeed The maximum speed of the vehicle.
+ * @param forward Traverse the roadList in the given order if true, otherwise 
+ * traverse it from back to the begin.
+ * @return The number of days it takes a vehicle to traverse the given road
+ * with the given maximum speed.
  */
 function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 {
@@ -316,7 +330,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 		local tileLength = 0;
 
 		if(lastDirection != currentDirection) {		// Bend
-			tileLength = 29 - carry;
+			tileLength = 28.5 - carry;
 			currentSpeed = maxSpeed / 2;
 			
 		} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
@@ -354,7 +368,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 				}
 			}
 		} else {					// Straight
-			tileLength = 29 - carry;
+			tileLength = 28.5 - carry;
 			
 			// Calculate the number of days needed to traverse the tile
 			while (tileLength > 0) {
