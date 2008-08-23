@@ -55,6 +55,7 @@ function NoCAB::Start()
 
 	local adv = ConnectionAdvisor();
 	adv.PrintTree();
+	adv.getReports();
 
 	// Do what we have to do.
 	while(true)

@@ -8,9 +8,10 @@
  * Iron ore        -> Steel           }-> Goods  -> Town
  * Livestock                          }
  */
-class ConnectionAdvisor
+class ConnectionAdvisor extends Advisor
 {
 	industryList = null;			// List of primary industry nodes (which only produces and accepts nothing).
+	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 
 	constructor()
 	{
@@ -20,18 +21,22 @@ class ConnectionAdvisor
 		local industryCacheAccepting = array(cargos.Count());
 		local industryCacheProducing = array(cargos.Count());
 
+		cargoTransportEngineIds = array(cargos.Count(), 0);
 		industryList = [];
 
+		// Fill the arrays with empty arrays, we can't use:
+		// local industryCacheAccepting = array(cargos.Count(), [])
+		// because it will all point to the same empty array...
 		for (local i = 0; i < cargos.Count(); i++) {
 			industryCacheAccepting[i] = [];
 			industryCacheProducing[i] = [];
 		}
+		
 
 		foreach (industry, value in industries) {
 
 			local industryNode = IndustryNode();
 			industryNode.industryID = industry;
-
 
 			// Check which cargo is accepted.
 			foreach (cargo, value in cargos) {
@@ -72,18 +77,59 @@ class ConnectionAdvisor
 		}
 
 		FillTree(industryList);
-
-
-		cargos = AICargoList();
-
-		foreach (cargo, value in cargos) {
-			print(AICargo.GetCargoLabel(cargo));
-			print(industryCacheAccepting[cargo].len());
-			print(industryCacheProducing[cargo].len());
-		}
 	}
 
+	/**
+	 * Construct a report by finding the largest subset of buildable infrastructure given
+	 * the amount of money available to us, which in turn yields the largest income.
+	 */
+	function getReports()
+	{
+		local bestOption = null;
+		local bestOptionIndustry = null;
+		local bestOptionProfit = 0;
+
+		// We want to implement an efficient subsum problem algorithm, but we'll test by choosing the best one, always.
+		foreach (industry in industryList) {
+			
+			// Check the options for this industry:
+			foreach (transport in industry.vehiclesOperating) {
+				// Calculate income per vehicle:
+				local incomePerVehicle = transport.incomePerRun - ((transport.timeToTravelTo + transport.timeToTravelFrom) * AIEngine.GetRunningCost(transport.engineID) / 364);
+
+				local production;
+				// Calculate the number of vehicles which can operate:
+				for (local i = 0; i < industry.cargoIdsProducing.len(); i++) {
+					if (transport.cargoID == industry.cargoIdsProducing[i]) {
+						production = industry.cargoProducing[i];
+						break;
+					}
+				}
+
+				local transportedCargoPerVehiclePerMonth = (30.0 / (transport.timeToTravelTo + transport.timeToTravelFrom)) * AIEngine.GetCapacity(transport.engineID);
+				local nrVehicles = production / transportedCargoPerVehiclePerMonth;
+
+				// Calculate the profit per month
+				local profitPerMonth = nrVehicles * incomePerVehicle * (30.0 / (transport.timeToTravelTo + transport.timeToTravelFrom));
+
+				print("Transported per month: " + transportedCargoPerVehiclePerMonth + "; #vehicles: " + nrVehicles + "; Profit per month: " + profitPerMonth + "; Income per vehicle: " + incomePerVehicle);
+
+				if (profitPerMonth > bestOptionProfit) {
+					bestOption = transport;
+					bestOptionIndustry = industry;
+					bestOptionProfit = profitPerMonth;
+				}
+			}
+		}
+
+		Utils.logInfo("Build transport from " + AIIndustry.GetName(bestOptionIndustry.industryID) + " to " + AIIndustry.GetName(bestOption.travelToIndustry.industryID) + " and transport " + AICargo.GetCargoLabel(bestOption.cargoID));
+	}
+
+	/**
+	 * Get the transport times and profits for all primary industries.
+	 */
 	function FillTree(iList) {
+		UpdateCargoTransportEngineIds();
 
 		local radius = AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP);
 
@@ -100,20 +146,54 @@ class ConnectionAdvisor
 				print("Find road from " + AIIndustry.GetName(primIndustry.industryID) + " to " + AIIndustry.GetName(secondIndustry.industryID));
 				local pathInfo = rpf.FindFastestRoad(AITileList_IndustryProducing(primIndustry.industryID, radius), AITileList_IndustryAccepting(secondIndustry.industryID, radius));
 
+				// No path found?
+				if (pathInfo == null)
+					continue;
 				primIndustry.costToBuild = rpf.GetCostForRoad(pathInfo.roadList);
-				
-				local ic = IndustryConnection();
-				ic.timeToTravelTo = rpf.GetTime(pathInfo.roadList, 48, true);
-				ic.timeToTravelFrom = rpf.GetTime(pathInfo.roadList, 48, false);
-print(ic.timeToTravelTo + " " + ic.timeToTravelFrom);
-				ic.incomePerRun = AICargo.GetCargoIncome(primIndustry.cargoIdsProducing[0], AIMap.DistanceManhattan(pathInfo.roadList[0].tile, pathInfo.roadList[pathInfo.roadList.len() - 1].tile), ic.timeToTravelTo);
-				ic.speed = 48;
 
-				primIndustry.vehiclesOperating.push(ic);
+
+				// Check the transport time for each seperate cargo.
+				foreach (cargo in primIndustry.cargoIdsProducing) {
+
+					local maxSpeed = AIEngine.GetMaxSpeed(cargoTransportEngineIds[cargo]);
+				
+					local ic = IndustryConnection();
+					ic.timeToTravelTo = rpf.GetTime(pathInfo.roadList, maxSpeed, true);
+					ic.timeToTravelFrom = rpf.GetTime(pathInfo.roadList, maxSpeed, false);
+					print(ic.timeToTravelTo + " " + ic.timeToTravelFrom);
+					ic.incomePerRun = AICargo.GetCargoIncome(cargo, AIMap.DistanceManhattan(pathInfo.roadList[0].tile, pathInfo.roadList[pathInfo.roadList.len() - 1].tile), ic.timeToTravelTo) * AIEngine.GetCapacity(cargoTransportEngineIds[cargo]);
+					ic.cargoID = cargo;
+					ic.travelToIndustry = secondIndustry;
+					ic.engineID = cargoTransportEngineIds[cargo];
+
+					primIndustry.vehiclesOperating.push(ic);
+				}
 			}
 		}
 	}
 
+	/**
+	 * Check all available vehicles to transport all sorts of cargos and save
+	 * the max speed of the fastest transport for each cargo.
+	 */
+	function UpdateCargoTransportEngineIds() {
+
+		local cargos = AICargoList();
+		for (local i = 0; i < cargos.Count(); i++) {
+			
+			local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
+			foreach (engine, value in engineList) {
+				if (AIEngine.GetCargoType(engine) == cargos[i] &&
+					AIEngine.GetMaxSpeed(cargoTransportEngineIds[i]) < AIEngine.GetMaxSpeed(engine)) {
+					cargoTransportEngineIds[i] = engine;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Debug purposes only.
+	 */
 	function PrintTree() {
 		print("PrintTree");
 		foreach (primIndustry in industryList) {
@@ -129,13 +209,17 @@ print(ic.timeToTravelTo + " " + ic.timeToTravelFrom);
 		}
 
 		print(string + AIIndustry.GetName(node.industryID) + "(" + node.costToBuild + ") -> ");
-		print("Vehcile travel time:" + node.vehiclesOperating.timeToTravelTo);
-		print("Vehcile income per run:" + node.vehiclesOperating.incomePerRun);
+
+		foreach (transport in node.vehiclesOperating) {
+			print("Vehcile travel time: " + transport.timeToTravelTo);
+			print("Vehcile income per run: " + transport.incomePerRun);
+			print("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
+		}
 		foreach (iNode in node.industryNodeList)
 			PrintNode(iNode, depth + 1);
 	}
-}
 
+}
 
 /**
  * Industry node which contains all information about an industry.
@@ -172,5 +256,7 @@ class IndustryConnection
 	timeToTravelTo = null;
 	timeToTravelFrom = null;
 	incomePerRun = null;
-	speed = null;
+	engineID = null;
+	cargoID = null;
+	travelToIndustry = null;
 }
