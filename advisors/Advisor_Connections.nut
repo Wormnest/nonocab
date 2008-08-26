@@ -100,7 +100,7 @@ class ConnectionAdvisor extends Advisor
 				local pathList = pathfinder.FindFastestRoad(AITileList_IndustryProducing(report.fromIndustryNode.industryID, radius), AITileList_IndustryAccepting(report.toIndustryNode.industryID, radius));
 				
 				if (pathList == null) {
-					print("No path found from " + AIIndustry.GetName(report.fromIndustryID) + " to " + AIIndustry.GetName(report.toIndustryID));
+					print("No path found from " + AIIndustry.GetName(report.fromIndustryNode.industryID) + " to " + AIIndustry.GetName(report.toIndustryNode.industryID));
 					continue;
 				}
 				// Now we know the prices, check how many vehicles we can build and what the actual income per vehicle is.
