@@ -53,8 +53,9 @@ function NoCAB::Start()
 	Utils.logInfo(AICompany.GetCompanyName(8));
 	Utils.logInfo(AICompany.GetPresidentName(8));
 
-	local adv = ConnectionAdvisor();
-	adv.PrintTree();
+	local world = World();
+	local adv = ConnectionAdvisor(world);
+	world.PrintTree();
 	adv.getReports();
 
 	// Do what we have to do.

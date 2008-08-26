@@ -5,6 +5,11 @@
  */
 class RoadPathFinding 
 {
+	// The length of various road pieces
+	static straightRoadLength 	= 28.5;
+	static bendedRoadLength 	= 28.5;
+	static upDownHillRoadLength 	= 40;
+
 	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 50;		// Cost for building a new road.
 	costForTurn 	= 75;		// Additional cost if the road makes a turn.
@@ -174,7 +179,6 @@ function RoadPathFinding::CreateRoad(roadList)
 						local s = "Failed to build a road from " + AIMap.GetTileX(buildFrom) + ", " + AIMap.GetTileY(buildFrom) + " to " + AIMap.GetTileX(roadList[a + 1].tile) + ", " + AIMap.GetTileY(roadList[a + 1].tile);
 						print(s);
 						print(AIError.GetLastErrorString());
-						
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -330,11 +334,10 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 		local tileLength = 0;
 
 		if(lastDirection != currentDirection) {		// Bend
-			tileLength = 28.5 - carry;
+			tileLength = bendedRoadLength - carry;
 			currentSpeed = maxSpeed / 2;
-			
 		} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
-			tileLength = 40 - carry;
+			tileLength = upDownHillRoadLength - carry;
 			
 			local slowDowns = 0;
 
@@ -354,7 +357,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 
 			}
 		} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
-			tileLength = 40 - carry;
+			tileLength = upDownHillRoadLength - carry;
 
 			while (tileLength > 0) {
 				tileLength -= currentSpeed;
@@ -368,7 +371,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 				}
 			}
 		} else {					// Straight
-			tileLength = 28.5 - carry;
+			tileLength = straightRoadLength - carry;
 			
 			// Calculate the number of days needed to traverse the tile
 			while (tileLength > 0) {
@@ -387,11 +390,12 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 			local div = tileLength / currentSpeed;
 			carry = tileLength - (currentSpeed * div);
 			days += div;
+		} else {
+			carry = -tileLength;
 		}
 
 		lastDirection = currentDirection;
-		days++;
-		carry = tileLength;
+
 	}
 	return days.tointeger();
 }
@@ -430,7 +434,6 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
-
 		// Check if we can actually start here!
 		if(!Tile.IsBuildable(i))
 			continue;
