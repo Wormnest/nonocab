@@ -30,11 +30,39 @@ class ConnectionAdvisor extends Advisor
 		UpdateIndustryConnections();
 	}
 	
+	/**
+	 * Build a tree of all industry nodes, where we connect each producing
+	 * industry to an industry which accepts that produced cargo. The primary
+	 * industries (ie. the industries which only produce cargo) are the root
+	 * nodes of this tree.
+	 */
 	function BuildIndustryTree();
+	
+	/**
+	 * Iterate through the industry tree and update its information.
+	 */
 	function UpdateIndustryConnections();
+	
+	/**
+	 * Check which set of industry connections yield the highest profit.
+	 */
 	function getReports();
+	
+	/**
+	 * Update the engine IDs for each cargo type and select the fastest engines.
+	 */
 	function UpdateCargoTransportEngineIds();
+	
+	/**
+	 * Debug purposes only:
+	 * Print the constructed industry node.
+	 */
 	function PrintTree();
+	
+	/**
+	 * Debug purposes only:
+	 * Print a single node in the industry tree.
+	 */
 	function PrintNode();
 }
 	
@@ -240,11 +268,14 @@ function ConnectionAdvisor::getReports()
 				local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
 				if (!industryConnectionNode) {
 					industryConnectionNode = IndustryConnection(report.fromIndustryNode, report.toIndustryNode);
+					industryConnectionNode.pathInfo = pathList;
 					report.fromIndustryNode.AddIndustryConnection(report.toIndustryNode, industryConnectionNode);
 				}
+				
+				// 
 
 				// Give the action to build the road.
-				actionList.push(BuildRoadAction(industryConnectionNode, pathList.roadList, true, true));
+				actionList.push(BuildRoadAction(pathList, true, true));
 
 				// Add the action to build the vehicles.
 				local vehicleAction = ManageVehiclesAction();

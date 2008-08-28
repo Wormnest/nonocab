@@ -48,14 +48,12 @@ class IndustryConnection
 	travelFromIndustryNode = null;		// The industry the cargo is carried from.
 	travelToIndustryNode = null;		// The industry the cargo is carried to.
 	vehiclesOperating = null;		// List of VehicleGroup instances to keep track of all vehicles on this connection.
-	costToBuild = null;			// The cost to build this connection.
-	build = null;				// Only true if this connection has been build.
+	pathInfo = null;			// PathInfo class which contains all information about the path.
 	
 	constructor(fromIndustry, toIndustry) {
 		travelFromIndustryNode = fromIndustry;
 		travelToIndustryNode = toIndustry;
 		vehiclesOperating = [];
-		build = false;
 	}
 }
 

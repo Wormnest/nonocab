@@ -65,17 +65,16 @@ function MailTruckNewOrderAction::execute()
 class BuildRoadAction extends Action
 {
 	industryConnection = null;
-	roadList = null;
+	pathList = null;
 	buildDepot = false;
 	buildRoadStations = false;
 	
 	directions = null;
 	
-	constructor(industryConnection, roadList, buildDepot, buildRoadStations)
+	constructor(pathList, buildDepot, buildRoadStations)
 	{
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
-		this.industryConnection = industryConnection;
-		this.roadList = roadList;
+		this.pathList = pathList;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
 	}
@@ -83,21 +82,21 @@ class BuildRoadAction extends Action
 
 function BuildRoadAction::execute()
 {
-	RoadPathFinding.CreateRoad(roadList);
-	industryConnection.build = true;
+	RoadPathFinding.CreateRoad(pathList);
 	
 	if (buildRoadStations) {
 		local len = roadList.len();
-		AIRoad.BuildRoadStation(roadList[0], roadList[1], true, false, true);
-		AIRoad.BuildRoadStation(roadList[len - 1], roadList[len - 2], true, false, true);
+		AIRoad.BuildRoadStation(pathList.roadList[0], roadList[1], true, false, true);
+		AIRoad.BuildRoadStation(pathList.roadList[len - 1], roadList[len - 2], true, false, true);
 	}
 	
 	if (buildDepot) {
-		for (local i = 2; i < roadList.len() - 1; i++) {
+		for (local i = 2; i < pathList.roadList.len() - 1; i++) {
 			
 			foreach (direction in directions) {
-				if (Tile.IsBuildable(roadList[i] + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i], roadList[i] + direction, roadList[i + 1])) {
-					AIRoad.BuildRoadDepot(roadList[i] + direction, roadList[i]);
+				if (Tile.IsBuildable(pathList.roadList[i] + direction) && AIRoad.CanBuildConnectedRoadPartsHere(pathList.roadList[i], pathList.roadList[i] + direction, pathList.roadList[i + 1])) {
+					pathList.depot = pathList.roadList[i] + direction, pathList.roadList[i];
+					AIRoad.BuildRoadDepot(pathList.depot);
 					break;
 				}
 			}
@@ -121,7 +120,46 @@ class ManageVehiclesAction extends Action {
 	function BuyVehicles(engineID, number, industryConnection);
 }
 
+function ManageVehicleAction::SellVehicle(vehicleID)
+{
+	vehiclesToSell.push(vehicleID);
+}
+
+function ManageVehiclesAction::BuyVehicles(engineID, number, industryConnection)
+{
+	for (local i = 0; i < number; i++) {
+		vehiclesToBuy.push([engineID, number, industryConnection]);
+	}
+}
+
 function ManageVehiclesAction::execute()
 {
-
+	foreach (engineNumber in vehiclesToBuy) {
+		
+		local vehicleGroup = null;
+		
+		// Search if there are already have a vehicle group with this engine ID.
+		foreach (vGroup in engineNumber[2].vehiclesOperating) {
+			if (vGroup.engineID == engineNumber[0]) {
+				vehicleGroup = vGroup;
+				break;
+			}
+		}
+		
+		if (vehicleGroup == null) {
+			vehicleGroup = VehicleGroup();
+			vehicleGroup.industryConnection = engineNumber[2];
+		}
+		
+		for (local i = 0; i < engineNumber[1]; i++) {
+			local vehicleID = AIVehicle.BuildVehicle(engineNumber[0], engineNumber[2].pathList.depot);
+			vehicleGroup.vehicleIDs.push(vehicleID);
+		}
+		
+		engineNumber[2].vehiclesOperating.push(vehicleGroup);
+	}
+	
+	foreach (vehicleID in vehiclesToSell) {
+		AIVehicle.SellVehicle(vehicleID);
+	}
 }

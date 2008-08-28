@@ -41,18 +41,15 @@ class RoadPathFinding
  */
 class PathInfo
 {
-	roadList = null;		// List of all road tiles the road needs to follow
-	travelDistance = null;		// The total number of squares of road (multipy by 612 to get km)
-	speedModifier = null;		// The 'cost' of the road (taking into account all the slopes, etc) 
-					// <-- The average velocity can be calculated by multiplying this value with 
-					// the speed of the vehicle...
-	roadCost = null;		// The cost to create this road
+	roadList = null;		// List of all road tiles the road needs to follow.
+	roadCost = null;		// The cost to create this road.
+	depot = null;			// The location of the depot.
+	build = null;			// Is this path build?
 
-	constructor(roadList, travelDistance, speedModifier, roadCost) {
+	constructor(roadList, roadCost) {
 		this.roadList = roadList;
-		this.travelDistance = travelDistance;
-		this.speedModifier = speedModifier;
 		this.roadCost = roadCost;
+		this.build = false;
 	}
 }
 
@@ -144,8 +141,9 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
  * If something goes wrong during the building process the fallBackMethod
  * is called to handle things for us.
  */
-function RoadPathFinding::CreateRoad(roadList)
+function RoadPathFinding::CreateRoad(pathList)
 {
+	local roadList = pathList.roadList;
 	if(roadList == null || roadList.len() < 2)
 		return false;
 		
@@ -486,7 +484,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 				resultList[tmp_size] = at;
 				tmp_size++;
 			}
-			return PathInfo(resultList, null, null, null);
+			return PathInfo(resultList, null);
 		}
 		
 		// Get all possible tiles from this annotated tile (North, South, West,
