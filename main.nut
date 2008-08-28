@@ -55,7 +55,7 @@ function NoCAB::Start()
 
 	local world = World();
 	local adv = ConnectionAdvisor(world);
-	world.PrintTree();
+	adv.PrintTree();
 	adv.getReports();
 
 	// Do what we have to do.

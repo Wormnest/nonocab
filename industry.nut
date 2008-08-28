@@ -1,207 +1,83 @@
-
-////////////////////////// INDUSTRIES ////////////////////////////////////////////////////
 /**
- * Apart from pathfinding we need industries to connect!
+ * Industry node which contains all information about an industry and its connections
+ * to other industries.
  */
-class IndustryManager
+class IndustryNode
 {
-	industryInfoList = array(0);
-	industryPaths = null;
+	industryID = null;			// The ID of the industry.
+	cargoIdsProducing = null;		// The cargo IDs which are produced.
+	cargoIdsAccepting = null;		// The cargo IDs which are accepted.
+
+	cargoProducing = null;			// The amount of cargo produced.
+	industryNodeList = null;		// All industry which accepts the products this industry produces.
+
+	industryConnections = null;		// Running connections to other industries.
 
 	constructor() {
-
-		// Store info about ALL industries
-		local industries = AIIndustryList();
-		for(local i = industries.Begin(); industries.HasNext(); i = industries.Next()) {
-			industryInfoList.push(IndustryInfo(i));
-		}
-
-		industryPaths = {};
+		cargoIdsProducing = [];
+		cargoIdsAccepting = [];
+		cargoProducing = [];
+		industryNodeList = [];
+		industryConnections = {};
 	}
-
-	function UpdateIndustry();	// Lets review our economy and build / destroy / update where needed! :)
-}
-
-/**
- * Find industries which can be connected and build roads between them!
- */
-function IndustryManager::UpdateIndustry() {
-	// Find best industries to match up! :)
-	// O(N^2 / 2) time algorithm :/
-	for(local i = 0; i < industryInfoList.len(); i++) {
-
-		local industry1 = industryInfoList[i];	// Could be overwritten below
-		for(local j = i + 1; j < industryInfoList.len(); j++) {
-			local industry2 = industryInfoList[j];
-
-			// Check if we're already running this route (if so, review it! :))
-			if (industryPaths.rawin(industry1.industryID + "-" + industry2.industryID)) {
-				// Do review stuff...
-			} 
-
-			else {
-				// Check if this is a possibility :)
-				// Check if one of the factories is making what the other can produce (if not, we continue!)
-				local fromIndustry = null;
-				local toIndustry = null;
-
-				local cargoVector = array(0);
-				foreach(val in industry1.production) {
-					if(industry2.Requires(val)) {
-						cargoVector.push(val);
-					}
-				}
-
-				// We assume one way dependencies, if factory1 produces
-				// cargo required by factory2, factory2 doesn't prodcues
-				// cargo required by factory1!
-				if (cargoVector.len() == 0) {
-					foreach(val in industry2.production) {
-						if(industry1.Requires(val)) {
-							cargoVector.push(val);
-						}
-					}
-
-					fromIndustry = industry2;
-					toIndustry = industry1;
-				} else {
-					fromIndustry = industry1;
-					toIndustry = industry2;
-				}
-
-				if(cargoVector.len() == 0)
-					continue;
-
-
-				// Fist check if we can actually afford the road :)
-				local pathInfo = null;
-
-				local pathFinder = RoadPathFinding(AIMap(), AIRoad());
-				{
-					local test = AITestMode();
-
-					print("Find path from " + AIIndustry.GetName(fromIndustry.industryID) + " to " + AIIndustry.GetName(toIndustry.industryID));
-
-					pathInfo = pathFinder.FindFastestRoad(fromIndustry.tilesAroundProducing, toIndustry.tilesAroundAccepting);
-
-					if(!pathInfo)
-						continue;
-					print("FOUND PATH! " + pathInfo.roadList.len());
-					
-					
-
-					local accounter = AIAccounting();
-					pathFinder.CreateRoad(pathInfo.roadList);
-					pathInfo.roadCost = accounter.GetCosts();
-				}
-				
-				local exec = AIExecMode();
-				// Check if we can build this (and if we can, do so!)
-				local comp = AICompany();
-				print("Cost of the road: " + pathInfo.roadCost);
-		
-				// Calculate if it's affordable :)
-				if(pathInfo.roadCost < comp.GetBankBalance(AICompany.MY_COMPANY)) {
-					if(!pathFinder.CreateRoad(pathInfo.roadList)) {
-						print("[FATAL ERROR] Path creating failed!!!!");
-
-						// You may want to do some more work here ;)
-					}
-
-					print("Build! " + pathInfo.roadList.len());
-
-					// Build begin and end stations
-					local roadAI = AIRoad();
-					AISign.BuildSign(pathInfo.roadList[0].tile, "Begin");
-					AISign.BuildSign(pathInfo.roadList[pathInfo.roadList.len() - 1].tile, "End");
-					/*if(!roadAI.BuildRoadStation(pathInfo.roadList[0].tile, pathInfo.roadList[1].tile, true, false))
-						print("[FATAL ERROR] Failed to build road station!");
-					if(roadAI.BuildRoadStation(pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[pathInfo.roadList.len() - 2].tile, true, false))
-						print("[FATAL ERROR] Failed to build road station!");
-*/
-					// Build a road depod :)
-					local buildDepot = null;
-					for(local roads = 4; roads < pathInfo.roadList.len(); roads++) {
-						local depotTiles = Tile.GetTilesAround(pathInfo.roadList[roads].tile);
-						
-						// Try building one here! :)
-						foreach(tile in depotTiles) {
-							if(AITile.IsBuildable(tile) && !AIRoad.IsRoadTile(tile)) {
-								AIRoad.BuildRoad(pathInfo.roadList[roads].tile, tile);
-								AIRoad.BuildRoadDepot(tile, pathInfo.roadList[roads].tile);
-								buildDepot = tile;
-								break;
-							}
-						}
-						if(buildDepot)
-							break;
-					}
-				}
-			}
-		}
+	
+	/**
+	 * Add a new connection from this industry to one of its children.
+	 */
+	function AddIndustryConnection(industryNode, industryConnection) {
+		industryConnections["" + industryNode.industryID] <- industryConnection;
+	}
+	
+	/**
+	 * Return the connection between two industries (if it exists).
+	 */
+	function GetIndustryConnection(industryID) {
+		if (industryConnections.rawin("" + industryID))
+			return industryConnections.rawget("" + industryID);
+		return null;
 	}
 }
 
 /**
- * Store all info about a certain industry.
+ * Information for an individual vehicle which runs a certain connection. All
+ * inforamtion is dependend on the actual speed of each individual vehicle.
  */
-class IndustryInfo
+class IndustryConnection
 {
-	tilesAroundProducing = null;		// Tiles around a building, that produce
-	tilesAroundAccepting = null;		// Tiles around a building, that accepts
-	industryID = null;		// The ID of the industry
-	production = null;		// What does this industry produces?
-	requirements = null;		// What does this industry accept as cargo?
-
-	constructor(industryID) {
-		this.industryID = industryID;
-		this.tilesAroundAccepting = AITileList_IndustryAccepting(industryID, AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP));
-		this.tilesAroundProducing = AITileList_IndustryProducing(industryID, AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP));
-
-		// Get production and requirements of this industry
-		production = array(0);
-		requirements = array(0);
-
-		local cargoList = AICargoList();
-		for(local i = cargoList.Begin(); cargoList.HasNext(); i = cargoList.Next()) {
-			if(AIIndustry.GetProduction(industryID, i) > 0) {
-				production.push(i);
-			}
-
-			if(AIIndustry.IsCargoAccepted(industryID, i)) {
-				requirements.push(i);
-			}				
-		}
-	}
-
-	/**
-	 * Check if this industry produces certain cargo.
-	 */
-	function Produces(cargo_id) {
-		return IsInArray(production, cargo_id);
-	}
-
-	/**
-	 * Check if this industry requires certain cargo.
-	 */
-	function Requires(cargo_id) {
-		return IsInArray(requirements, cargo_id);
+	cargoID = null;				// The type of cargo carried from on industry to another.
+	travelFromIndustryNode = null;		// The industry the cargo is carried from.
+	travelToIndustryNode = null;		// The industry the cargo is carried to.
+	vehiclesOperating = null;		// List of VehicleGroup instances to keep track of all vehicles on this connection.
+	costToBuild = null;			// The cost to build this connection.
+	build = null;				// Only true if this connection has been build.
+	
+	constructor(fromIndustry, toIndustry) {
+		travelFromIndustryNode = fromIndustry;
+		travelToIndustryNode = toIndustry;
+		vehiclesOperating = [];
+		build = false;
 	}
 }
 
 /**
- * Class for keeping paths between industries and vehicles in one
- * place :).
+ * In order to build and maintain connections between industries we keep track
+ * of all vehicles on those connections and their status.
  */
-class IndustryPath {
-	vehicles = null;		// Vehicle ID's
-	industry_from = null;		// IndustryInfo instances
-	industry_to = null;
-	roads = null;			// PathInfo instances
-
-	constructor(industry_from, industry_to, roads) {
-		this.industry_from = industry_from;
-		this.industry_to = industry_to;
-		this.roads = roads;
+class VehicleGroup
+{
+	timeToTravelTo = null;			// Time in days it takes all vehicles in this group to 
+						// travel from the accepting industry to the producing
+						// industry.
+	timeToTravelFrom = null;		// Time in days it takes all vehicles in this group to 
+						// travel from the producing industry to the accepting
+						// industry.
+	incomePerRun = null;			// The average income per vehicle per run.
+	engineID = null;			// The engine ID of all vehicles in this group.
+	industryConnection = null;		// The industry connection all vehicles in this group
+						// are operating on.
+	vehicleIDs = null;			// All vehicles IDs of this group.
+	
+	constructor() {
+		vehicleIDs = [];
 	}
 }
