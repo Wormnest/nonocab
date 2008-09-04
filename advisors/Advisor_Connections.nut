@@ -194,17 +194,34 @@ function ConnectionAdvisor::UpdateIndustryConnections() {
  */
 function ConnectionAdvisor::getReports()
 {
-	// The actionlist to construct.
-	local actionList = [];
-
+	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-
+	
+	// The number of connections which we've compared.
+	local comparedConnections = 0;
+	
 	// Check how much we have to spend:
 	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
+	
+	// Hold a cache of possible connections.
+	local connectionCache = BinaryHeap();
 
 	// Try to get the best subset of options.
 	local report;
 	while ((report = connectionReports.Pop()) != null) {
+
+		/**
+		 * Do an aditional check to prevent this piece of code to check all possible 
+		 * connections and just check a reasonable number until we've spend enough
+		 * money or till we've spend enough time in this function.
+		 */
+		if (comparedConnections > 10 && connectionCache.len() > 0 ||	// We've compared at least 10 connections and found at leat 1 report
+		money < 20000 && comparedConnections > 15 || // We've compared at leats 15 connections and we're low on money 
+		comparedConnections > 20) {	// We've compared at least 20 connections.
+			break;
+		}
+		
+		comparedConnections++;
 
 		// If the report is already fully calculated, check if we can afford it and execute it!
 		if (report.cost != 0 && report.cost < money) {
@@ -214,11 +231,16 @@ function ConnectionAdvisor::getReports()
 				// Check if we need to add / remove vehicles to this connection.
 
 			} else {
+				
+				connectionCache.Insert(report, -report.Utility());
 				// The cost has already been calculated, so we can build it immediatly.
 				report.print();
 				money -= report.cost;
 			}
 		} else if (report.cost == 0) {
+
+			// The actionlist to construct.
+			local actionList = [];
 
 			// If we haven't calculated yet what it cost to build this report, we do it now.
 			local pathfinder = RoadPathFinding();
@@ -258,34 +280,51 @@ function ConnectionAdvisor::getReports()
 			report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
 			report.cost = pathfinder.GetCostForRoad(pathList.roadList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
 
+			// If we can afford it, add it to the possible connection list.
 			if (report.cost < money) {
-				report.Print();
-				print("Extra information: Time to travel to: " + timeToTravelTo + ". Time to travel from: " + timeToTravelFrom);
-				print("Extra information: incomePerRun: " + incomePerRun + ". Income per vehicle: " + incomePerVehicle);
-				money -= report.cost;
-
-				// Check if the industry connection node actually exists else create it.
+				connectionCache.Insert(report, -report.Utility());
+				
+				// Check if the industry connection node actually exists else create it, and update it!
 				local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
 				if (!industryConnectionNode) {
 					industryConnectionNode = IndustryConnection(report.fromIndustryNode, report.toIndustryNode);
-					industryConnectionNode.pathInfo = pathList;
 					report.fromIndustryNode.AddIndustryConnection(report.toIndustryNode, industryConnectionNode);
 				}
 				
-				// 
-
-				// Give the action to build the road.
-				actionList.push(BuildRoadAction(pathList, true, true));
-
-				// Add the action to build the vehicles.
-				local vehicleAction = ManageVehiclesAction();
-				vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, industryConnectionNode);
-				actionList.push(vehicleAction);
+				industryConnectionNode.pathInfo = pathList;
 			}
 		}
 	}
-
-	return actionList;
+	
+	// We have a list with possible connections we can afford, we now apply
+	// a subsum algorithm to get the best profit possible with the given money.
+	local reports = [];
+	
+	local possibleConnection;
+	while ((possibleConnection = connectionCache.Pop()) != null) {
+		
+		// Check if we can afford it.
+		if (money > possibleConnection.cost) {
+			
+			local actionList = [];
+			
+			// The industryConnectionNode gives us the actual connection.
+			local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
+			
+			// Give the action to build the road.
+			actionList.push(BuildRoadAction(industryConnectionNode.pathList, true, true));
+			
+			// Add the action to build the vehicles.
+			local vehicleAction = ManageVehiclesAction();
+			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, industryConnectionNode);
+			actionList.push(vehicleAction);
+			
+			// Create a report and store it!
+			reports.push(Report(reports.ToString(), reports.cost, reports.Profit(), actionList));
+		}
+	}
+	
+	return reports;
 }
 
 /**
@@ -362,10 +401,26 @@ class ConnectionReport {
 	
 	cost = 0;			// The cost of this operation.
 	
+	
+	/**
+	 * Get the utility function, this is the profit per invested unit of money.
+	 */
+	function Utility() {
+		return cost / (profitPerMonthPerVehicle * nrVehicles);
+	}
+	
+	function Profit() {
+		return profitPerMonthPerVehicle * nrVehicles;
+	}
+	
 	function Print() {
-		print("Build a road from " + AIIndustry.GetName(fromIndustryNode.industryID) + " to " + AIIndustry.GetName(toIndustryNode.industryID) +
+		print(ToString());
+	}
+	
+	function ToString() {
+		return "Build a road from " + AIIndustry.GetName(fromIndustryNode.industryID) + " to " + AIIndustry.GetName(toIndustryNode.industryID) +
 		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " vehicles. Cost: " +
-		cost + " income per month per vehicle: " + profitPerMonthPerVehicle);
+		cost + " income per month per vehicle: " + profitPerMonthPerVehicle;
 	}
 }
 

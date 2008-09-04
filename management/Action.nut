@@ -95,9 +95,10 @@ function BuildRoadAction::execute()
 			
 			foreach (direction in directions) {
 				if (Tile.IsBuildable(pathList.roadList[i] + direction) && AIRoad.CanBuildConnectedRoadPartsHere(pathList.roadList[i], pathList.roadList[i] + direction, pathList.roadList[i + 1])) {
-					pathList.depot = pathList.roadList[i] + direction, pathList.roadList[i];
-					AIRoad.BuildRoadDepot(pathList.depot);
-					break;
+					if (AIRoad.BuildRoadDepot(pathList.roadList[i] + direction, pathList.roadList[i])) {
+						pathList.depot = pathList.roadList[i] + direction;
+						break;
+					}
 				}
 			}
 		}

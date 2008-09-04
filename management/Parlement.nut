@@ -1,10 +1,12 @@
+import("queue.binary_heap", "BinaryHeap", 1);
+
 class Parlement
 {
 	reports = null;
 	
 	constructor()
 	{
-		this.reports = array(0);
+		reports = BinaryHeap();
 	}
 }
 /**
@@ -14,12 +16,19 @@ function Parlement::ExecuteReports()
 {
 }
 
-function Parlement::AddReports(/*Report[]*/ reportlist)
+/**
+ * Select which reports to execute.
+ */
+function Parlement::SelectReports(/*Report[]*/ reportlist)
 {
-	reports.extend(reportList);
+	foreach (report in reportList) {
+		reports.Insert(report, -report.Utility());
+	}
+	
+	// Do the selection...
 }
 
 function Parlement::ClearReports()
 {
-	reports.clean();
+	reports = BinaryHeap();
 }

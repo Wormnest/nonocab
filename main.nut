@@ -13,13 +13,19 @@ require("advisors/Advisor_Connections.nut");
 class NoCAB extends AIController {
 	stop = false;
    	parlement = null;
-   	advisors = array(0);
+   	world = null;
+   	advisors = null;
 	
    	constructor() {
+   		stop = false;
 		this.parlement = Parlement();
-		this.advisors = array(1);
+		this.world = World();
 		
-		this.advisors[0] = FinanceAdvisor(World()); 
+		this.advisors = [
+			FinanceAdvisor(world),
+			ConnectionAdvisor(world)
+		];
+		 
 		
 	}
 	//function Start();
@@ -54,27 +60,27 @@ function NoCAB::Start()
 	Utils.logInfo(AICompany.GetPresidentName(8));
 
 	local world = World();
-	local adv = ConnectionAdvisor(world);
-	adv.PrintTree();
-	adv.getReports();
+	//local adv = ConnectionAdvisor(world);
+	//adv.PrintTree();
+	//adv.getReports();
 
 	// Do what we have to do.
 	while(true)
 	{
-			
+		world.Update();
+		
+		// Get all reports from our advisors.
+		local reports = [];
+		foreach (advisor in advisors) {
+			reports.extend(advisor.getReports());
+		}
+		
+		// Let the parlement decide on these reports and execute them!
+		parlement.ClearReports();
+		parlement.SelectReports(reports);
+		parlement.ExecuteReports();
+		
 		this.Sleep(500);
-	}
-	
-	
-	//	if(this.company.
-	// Get max loan!
-	while(true) {
-		local comp = AICompany();
-		AICompany.SetLoanAmount(comp.GetMaxLoanAmount());
-
-		local indus = IndustryManager();
-		indus.UpdateIndustry();
-        	this.Sleep(500);
 	}
 	Utils.logInfo("Done!");
 }
