@@ -14,6 +14,11 @@ class Parlement
  */
 function Parlement::ExecuteReports()
 {
+	foreach (report in reports) {
+		foreach (action in report.actions) {
+			action.Execute();
+		}
+	}
 }
 
 /**
@@ -21,14 +26,29 @@ function Parlement::ExecuteReports()
  */
 function Parlement::SelectReports(/*Report[]*/ reportlist)
 {
+
+	local sortedReports = BinearyHeap();
+
+	// Sort all the reports based on their utility.
 	foreach (report in reportList) {
-		reports.Insert(report, -report.Utility());
+		sortedReports.Insert(report, -report.Utility());
 	}
 	
-	// Do the selection...
+	// Do the selection, by using a greedy subsum algorithm.
+	local currentReport = null;
+	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
+
+	while ((currentReport = sortedReports.Pop()) != null) {
+		
+		// See if we can afford it.
+		if (currentReport.cost < money) {
+			reports.push(currentReport);
+			money -= currentReport.cost;
+		}
+	}
 }
 
 function Parlement::ClearReports()
 {
-	reports = BinaryHeap();
+	reports = [];
 }
