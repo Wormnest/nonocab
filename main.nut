@@ -1,14 +1,8 @@
-require("data_structures/fibonacciheap.nut");
-require("pathfinding/pathfinding.nut");
-require("pathfinding/tiles.nut");
-require("utils.nut");
+require("data_structures/include.nut");
+require("pathfinding/include.nut");
+require("management/include.nut");
+require("advisors/include.nut");
 require("industry.nut");
-require("management/World.nut");
-require("management/Parlement.nut");
-require("management/Action.nut");
-require("advisors/Advisor.nut");
-require("advisors/Advisor_Finance.nut");
-require("advisors/Advisor_Connections.nut");
 
 class NoCAB extends AIController {
 	stop = false;
@@ -38,10 +32,10 @@ function NoCAB::Start()
 	// Required by the Framwork: start with sleep.
 	this.Sleep(1);
 	AILog.Info("Starting...")
-	Utils.logDebug("Log DEBUG enabled.");
-	Utils.logInfo("Log INFO enabled.");
-	Utils.logWarning("Log WARNING enabled.");
-	Utils.logError("Log ERROR enabled.");
+	Log.logDebug("Log DEBUG enabled.");
+	Log.logInfo("Log INFO enabled.");
+	Log.logWarning("Log WARNING enabled.");
+	Log.logError("Log ERROR enabled.");
 
 	// Set president name.
 	if(!AICompany.SetPresidentName("B.C.Ridder-Nobel")) {
@@ -56,8 +50,8 @@ function NoCAB::Start()
 		local i = 2;
 		while(!AICompany.SetCompanyName("NoCAB #" + i)) { i++; }
 	}
-	Utils.logInfo(AICompany.GetCompanyName(8));
-	Utils.logInfo(AICompany.GetPresidentName(8));
+	Log.logInfo(AICompany.GetCompanyName(8));
+	Log.logInfo(AICompany.GetPresidentName(8));
 
 	local world = World();
 	//local adv = ConnectionAdvisor(world);
@@ -82,7 +76,7 @@ function NoCAB::Start()
 		
 		this.Sleep(500);
 	}
-	Utils.logInfo("Done!");
+	Log.logInfo("Done!");
 }
 
 /** Required by interface . */

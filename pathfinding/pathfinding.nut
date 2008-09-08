@@ -96,7 +96,7 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 			// Make sure we don't get caught in an infinite loop because we're
 			// trying to build an unbuildable piece of road.
 			if (errorHandling) {
-				Utils.logError("Building road FAILED!");
+				Log.logError("Building road FAILED!");
 				return false;
 			}
 			
@@ -129,7 +129,7 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 			return true;
 			
 		default:
-			Utils.logError("Unhandled error message: " + AIError.GetLastErrorString() + "!");
+			Log.logError("Unhandled error message: " + AIError.GetLastErrorString() + "!");
 			return false;
 	}
 	
