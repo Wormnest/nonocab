@@ -17,6 +17,8 @@ class World
 		industry_list = AIIndustryList();
 		connection_list = [];
 	}
+	
+	function Update() {}
 }
 
 

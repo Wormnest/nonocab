@@ -20,6 +20,6 @@ class Report
 	 * The utility for a report is the profit per month divided by the cost.
 	 */
 	function Utility() {
-		return profitPerMonth / costs;
+		return profitPerMonth / cost;
 	}
 }

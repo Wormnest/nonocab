@@ -1,5 +1,5 @@
 require("Action.nut");
 require("Department.nut");
 require("Parlement.nut");
-require("Report");
-require("World");
+require("Report.nut");
+require("World.nut");

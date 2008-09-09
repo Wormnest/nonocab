@@ -34,6 +34,7 @@ class RoadPathFinding
 	function GetCostForRoad(roadList);	// Give the cost for the best road from start to end
 	function FindFastestRoad(start, end);
 	function GetTime(roadList, maxSpeed, forward);
+	function FallBackCreateRoad(roadList, buildFrom, buildTo, tileType, error);
 }
 
 /**
@@ -170,13 +171,8 @@ function RoadPathFinding::CreateRoad(pathList)
 					// Terraform(buildFrom, currentDirection);
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
-						if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
-							return;
-						
-						
-						local s = "Failed to build a road from " + AIMap.GetTileX(buildFrom) + ", " + AIMap.GetTileY(buildFrom) + " to " + AIMap.GetTileX(roadList[a + 1].tile) + ", " + AIMap.GetTileY(roadList[a + 1].tile);
-						print(s);
-						print(AIError.GetLastErrorString());
+//						if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
+//							return;
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -184,16 +180,16 @@ function RoadPathFinding::CreateRoad(pathList)
 				break;
 			case Tile.TUNNEL:
 				if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction) && !AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction)) {
-					if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, AIError.GetLastError()))
-						return;
+//					if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, AIError.GetLastError()))
+//						return;
 				}
 
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
 				if (direction != roadList[a + 1].direction) {
 					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
-						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
-							return;
+//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+//							return;
 					}
 				}
 				
@@ -230,8 +226,8 @@ function RoadPathFinding::CreateRoad(pathList)
 					}
 
 					if (!AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile)) {
-						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
-							return;
+//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
+//							return;
 					}
 				}
 				
@@ -239,8 +235,8 @@ function RoadPathFinding::CreateRoad(pathList)
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
 				if (direction != roadList[a + 1].direction) {
 					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
-						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
-							return;
+//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+//							return;
 					}
 				}
 

@@ -215,7 +215,7 @@ function ConnectionAdvisor::getReports()
 		 * connections and just check a reasonable number until we've spend enough
 		 * money or till we've spend enough time in this function.
 		 */
-		if (comparedConnections > 10 && connectionCache.len() > 0 ||	// We've compared at least 10 connections and found at leat 1 report
+		if (comparedConnections > 10 && connectionCache.Count() > 0 ||	// We've compared at least 10 connections and found at leat 1 report
 		money < 20000 && comparedConnections > 15 || // We've compared at leats 15 connections and we're low on money 
 		comparedConnections > 20) {	// We've compared at least 20 connections.
 			break;
@@ -278,7 +278,7 @@ function ConnectionAdvisor::getReports()
 
 			// Calculate the profit per month per vehicle
 			report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
-			report.cost = pathfinder.GetCostForRoad(pathList.roadList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
+			report.cost = pathfinder.GetCostForRoad(pathList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
 
 			// If we can afford it, add it to the possible connection list.
 			if (report.cost < money) {
@@ -286,7 +286,7 @@ function ConnectionAdvisor::getReports()
 				
 				// Check if the industry connection node actually exists else create it, and update it!
 				local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
-				if (!industryConnectionNode) {
+				if (industryConnectionNode == null) {
 					industryConnectionNode = IndustryConnection(report.fromIndustryNode, report.toIndustryNode);
 					report.fromIndustryNode.AddIndustryConnection(report.toIndustryNode, industryConnectionNode);
 				}
@@ -309,18 +309,18 @@ function ConnectionAdvisor::getReports()
 			local actionList = [];
 			
 			// The industryConnectionNode gives us the actual connection.
-			local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
-			
+			local industryConnectionNode = possibleConnection.fromIndustryNode.GetIndustryConnection(possibleConnection.toIndustryNode.industryID);
+
 			// Give the action to build the road.
-			actionList.push(BuildRoadAction(industryConnectionNode.pathList, true, true));
+			actionList.push(BuildRoadAction(industryConnectionNode.pathInfo, true, true));
 			
 			// Add the action to build the vehicles.
 			local vehicleAction = ManageVehiclesAction();
-			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, industryConnectionNode);
+			vehicleAction.BuyVehicles(possibleConnection.engineID, possibleConnection.nrVehicles, industryConnectionNode);
 			actionList.push(vehicleAction);
 			
 			// Create a report and store it!
-			reports.push(Report(reports.ToString(), reports.cost, reports.Profit(), actionList));
+			reports.push(Report(possibleConnection.ToString(), possibleConnection.cost, possibleConnection.Profit(), actionList));
 		}
 	}
 	

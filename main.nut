@@ -1,3 +1,4 @@
+require("util/include.nut");
 require("data_structures/include.nut");
 require("pathfinding/include.nut");
 require("management/include.nut");

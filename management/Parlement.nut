@@ -27,10 +27,10 @@ function Parlement::ExecuteReports()
 function Parlement::SelectReports(/*Report[]*/ reportlist)
 {
 
-	local sortedReports = BinearyHeap();
+	local sortedReports = BinaryHeap();
 
 	// Sort all the reports based on their utility.
-	foreach (report in reportList) {
+	foreach (report in reportlist) {
 		sortedReports.Insert(report, -report.Utility());
 	}
 	

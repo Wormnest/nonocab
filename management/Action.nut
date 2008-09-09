@@ -17,7 +17,7 @@ class Action
 	/**
 	 * Executes the action.
 	 */
-	function execute();
+	function Execute();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ class BankBalanceAction extends Action
 	}
 }
 
-function BankBalanceAction::execute()
+function BankBalanceAction::Execute()
 {
 	AICompany.SetLoanAmount(this.amount);
 }
@@ -54,7 +54,7 @@ class MailTruckNewOrderAction extends Action
 	} 
 }
 
-function MailTruckNewOrderAction::execute()
+function MailTruckNewOrderAction::Execute()
 {
 	// TODO: full load: startStation
 	// TODO: unload: endStation
@@ -80,24 +80,27 @@ class BuildRoadAction extends Action
 	}
 }
 
-function BuildRoadAction::execute()
+function BuildRoadAction::Execute()
 {
-	RoadPathFinding.CreateRoad(pathList);
+	print("BUILD STUFFF! " + pathList.roadList.len());
+	local abc = AIExecMode();
+	if (!RoadPathFinding.CreateRoad(pathList)) print("FAILED!!!");
 	
 	if (buildRoadStations) {
-		local len = roadList.len();
-		AIRoad.BuildRoadStation(pathList.roadList[0], roadList[1], true, false, true);
-		AIRoad.BuildRoadStation(pathList.roadList[len - 1], roadList[len - 2], true, false, true);
+		local len = pathList.roadList.len();
+		local a = pathList.roadList[0];
+		AIRoad.BuildRoadStation(pathList.roadList[0].tile, pathList.roadList[1].tile, true, false, true);
+		AIRoad.BuildRoadStation(pathList.roadList[len - 1].tile, pathList.roadList[len - 2].tile, true, false, true);
 	}
 	
 	if (buildDepot) {
 		for (local i = 2; i < pathList.roadList.len() - 1; i++) {
 			
 			foreach (direction in directions) {
-				if (Tile.IsBuildable(pathList.roadList[i] + direction) && AIRoad.CanBuildConnectedRoadPartsHere(pathList.roadList[i], pathList.roadList[i] + direction, pathList.roadList[i + 1])) {
-					if (AIRoad.BuildRoadDepot(pathList.roadList[i] + direction, pathList.roadList[i])) {
-						pathList.depot = pathList.roadList[i] + direction;
-						break;
+				if (Tile.IsBuildable(pathList.roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(pathList.roadList[i].tile, pathList.roadList[i].tile + direction, pathList.roadList[i + 1].tile)) {
+					if (AIRoad.BuildRoadDepot(pathList.roadList[i].tile + direction, pathList.roadList[i].tile)) {
+						pathList.depot = pathList.roadList[i].tile + direction;
+						return;
 					}
 				}
 			}
@@ -121,7 +124,7 @@ class ManageVehiclesAction extends Action {
 	function BuyVehicles(engineID, number, industryConnection);
 }
 
-function ManageVehicleAction::SellVehicle(vehicleID)
+function ManageVehiclesAction::SellVehicle(vehicleID)
 {
 	vehiclesToSell.push(vehicleID);
 }
@@ -133,7 +136,7 @@ function ManageVehiclesAction::BuyVehicles(engineID, number, industryConnection)
 	}
 }
 
-function ManageVehiclesAction::execute()
+function ManageVehiclesAction::Execute()
 {
 	foreach (engineNumber in vehiclesToBuy) {
 		
@@ -153,7 +156,7 @@ function ManageVehiclesAction::execute()
 		}
 		
 		for (local i = 0; i < engineNumber[1]; i++) {
-			local vehicleID = AIVehicle.BuildVehicle(engineNumber[0], engineNumber[2].pathList.depot);
+			local vehicleID = AIVehicle.BuildVehicle(engineNumber[0], engineNumber[2].pathInfo.depot);
 			vehicleGroup.vehicleIDs.push(vehicleID);
 		}
 		

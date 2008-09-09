@@ -32,6 +32,11 @@ class IndustryNode
 	 * Return the connection between two industries (if it exists).
 	 */
 	function GetIndustryConnection(industryID) {
+		print("GetINdustry : " + industryID);
+		
+		foreach(a,b in industryConnections) {
+			print("- " + a + ", " + b);
+		}
 		if (industryConnections.rawin("" + industryID))
 			return industryConnections.rawget("" + industryID);
 		return null;
