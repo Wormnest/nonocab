@@ -13,45 +13,25 @@ import("queue.binary_heap", "BinaryHeap", 1);
 class ConnectionAdvisor extends Advisor
 {
 	world = null;				// Pointer to the World class.
-	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 	connectionReports = null;
-	
-	industry_tree = null;
-	industryCacheAccepting = null;
-	industryCacheProducing = null;
-	
+		
 	constructor(world)
 	{
-		this.world = world;		
-		cargoTransportEngineIds = array(AICargoList().Count(), -1);
+		this.world = world;
 		connectionReports = BinaryHeap();
 		
-		BuildIndustryTree();
 		UpdateIndustryConnections();
 	}
-	
-	/**
-	 * Build a tree of all industry nodes, where we connect each producing
-	 * industry to an industry which accepts that produced cargo. The primary
-	 * industries (ie. the industries which only produce cargo) are the root
-	 * nodes of this tree.
-	 */
-	function BuildIndustryTree();
-	
-	/**
-	 * Iterate through the industry tree and update its information.
-	 */
-	function UpdateIndustryConnections();
 	
 	/**
 	 * Check which set of industry connections yield the highest profit.
 	 */
 	function getReports();
-	
+
 	/**
-	 * Update the engine IDs for each cargo type and select the fastest engines.
+	 * Iterate through the industry tree and update its information.
 	 */
-	function UpdateCargoTransportEngineIds();
+	function UpdateIndustryConnections();
 	
 	/**
 	 * Debug purposes only:
@@ -64,128 +44,6 @@ class ConnectionAdvisor extends Advisor
 	 * Print a single node in the industry tree.
 	 */
 	function PrintNode();
-}
-	
-	
-function ConnectionAdvisor::BuildIndustryTree() {
-	// Construct complete industry node list.
-	local industries = world.industry_list;
-	local cargos = AICargoList();
-	industryCacheAccepting = array(cargos.Count());
-	industryCacheProducing = array(cargos.Count());
-
-	industry_tree = [];
-
-	// Fill the arrays with empty arrays, we can't use:
-	// local industryCacheAccepting = array(cargos.Count(), [])
-	// because it will all point to the same empty array...
-	for (local i = 0; i < cargos.Count(); i++) {
-		industryCacheAccepting[i] = [];
-		industryCacheProducing[i] = [];
-	}
-
-	// For each industry we will determine all possible connections to other
-	// industries which accept its goods. We build a tree structure in which
-	// the root nodes consist of industry nodes who only produce products but
-	// don't accept anything (the so called primary industries). The children
-	// of these nodes are indutries which only accept goods which the root nodes
-	// produce, and so on.
-	//
-	// Primary economies -> Secondary economies -> ... -> Towns
-	// Town <-> town
-	//
-	//
-	// Every industry is stored in an IndustryNode.
-	foreach (industry, value in industries) {
-
-		local industryNode = IndustryNode();
-		industryNode.industryID = industry;
-
-		// Check which cargo is accepted.
-		foreach (cargo, value in cargos) {
-
-			// Check if the industry actually accepts something.
-			if (AIIndustry.IsCargoAccepted(industry, cargo)) {
-				industryNode.cargoIdsAccepting.push(cargo);
-
-				// Add to cache.
-				industryCacheAccepting[cargo].push(industryNode);
-
-				// Check if there are producing plants which this industry accepts.
-				for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
-					industryCacheProducing[cargo][i].industryNodeList.push(industryNode);
-				}
-			}
-
-			if (AIIndustry.GetProduction(industry, cargo) != -1) {	
-
-				// Save production information.
-				industryNode.cargoIdsProducing.push(cargo);
-				industryNode.cargoProducing.push(AIIndustry.GetProduction(industry, cargo));
-
-				// Add to cache.
-				industryCacheProducing[cargo].push(industryNode);
-
-				// Check for accepting industries for these products.
-				for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
-					industryNode.industryNodeList.push(industryCacheAccepting[cargo][i]);
-				}
-			}
-		}
-
-		// If the industry doesn't accept anything we add it to the root list.
-		if (industryNode.cargoIdsAccepting.len() == 0) {
-			industry_tree.push(industryNode);
-		}
-	}
-}
-
-function ConnectionAdvisor::UpdateIndustryConnections() {
-	UpdateCargoTransportEngineIds();
-
-	// Upon initialisation we look at all possible connections in the world and try to
-	// find the most prommising once in terms of cost to build to profit ratio. We can't
-	// however get perfect information by calculating all possible routes as that will take
-	// us way to much time.
-	//
-	// Therefore we try to get an indication by taking the Manhattan distance between two
-	// industries and see what the profit would be if we would be able to build a straight
-	// road and let and vehicle operate on it.
-	//
-	// The next step would be to look at the most prommising connection nodes and do some
-	// actual pathfinding on that selection to find the best one(s).
-	foreach (primIndustry in industry_tree) {
-
-		foreach (secondIndustry in primIndustry.industryNodeList) {
-
-			// Check if this connection already exists.
-			if (primIndustry.industryConnections.rawin("" + secondIndustry)) {
-
-				// See if we need to add or remove some vehicles.
-
-			} else {
-				local manhattanDistance = AIMap.DistanceManhattan(AIIndustry.GetLocation(primIndustry.industryID), 
-					AIIndustry.GetLocation(secondIndustry.industryID));
-
-				// Take a guess at the travel time and profit for each cargo type.
-				foreach (cargo in primIndustry.cargoIdsProducing) {
-
-					local maxSpeed = AIEngine.GetMaxSpeed(cargoTransportEngineIds[cargo]);
-					local travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-					local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(cargoTransportEngineIds[cargo]);
-
-					local report = ConnectionReport();
-					report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
-					report.engineID = cargoTransportEngineIds[cargo];
-					report.fromIndustryNode = primIndustry;
-					report.toIndustryNode = secondIndustry;
-					report.cargoID = cargo;
-
-					connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
-				}
-			}
-		}
-	}
 }
 
 /**
@@ -322,26 +180,54 @@ function ConnectionAdvisor::getReports()
 	return reports;
 }
 
-/**
- * Check all available vehicles to transport all sorts of cargos and save
- * the max speed of the fastest transport for each cargo.
- */
-function ConnectionAdvisor::UpdateCargoTransportEngineIds() {
+function ConnectionAdvisor::UpdateIndustryConnections() {
+	world.UpdateCargoTransportEngineIds();
 
-	local cargos = AICargoList();
-	local i = 0;
-	foreach (cargo, value in cargos) {
+	// Upon initialisation we look at all possible connections in the world and try to
+	// find the most prommising once in terms of cost to build to profit ratio. We can't
+	// however get perfect information by calculating all possible routes as that will take
+	// us way to much time.
+	//
+	// Therefore we try to get an indication by taking the Manhattan distance between two
+	// industries and see what the profit would be if we would be able to build a straight
+	// road and let and vehicle operate on it.
+	//
+	// The next step would be to look at the most prommising connection nodes and do some
+	// actual pathfinding on that selection to find the best one(s).
+	foreach (primIndustry in world.industry_tree) {
 
-		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
-		foreach (engine, value in engineList) {
-			if (AIEngine.GetCargoType(engine) == cargo&& 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[i]) < AIEngine.GetMaxSpeed(engine)) {
-				cargoTransportEngineIds[i] = engine;
+		foreach (secondIndustry in primIndustry.industryNodeList) {
+
+			// Check if this connection already exists.
+			if (primIndustry.industryConnections.rawin("" + secondIndustry)) {
+
+				// See if we need to add or remove some vehicles.
+
+			} else {
+				local manhattanDistance = AIMap.DistanceManhattan(AIIndustry.GetLocation(primIndustry.industryID), 
+					AIIndustry.GetLocation(secondIndustry.industryID));
+
+				// Take a guess at the travel time and profit for each cargo type.
+				foreach (cargo in primIndustry.cargoIdsProducing) {
+
+					local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
+					local travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+					local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
+
+					local report = ConnectionReport();
+					report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
+					report.engineID = world.cargoTransportEngineIds[cargo];
+					report.fromIndustryNode = primIndustry;
+					report.toIndustryNode = secondIndustry;
+					report.cargoID = cargo;
+
+					connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
+				}
 			}
 		}
-		i++;
 	}
 }
+
 
 /**
  * Debug purposes only.
