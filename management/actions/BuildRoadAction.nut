@@ -16,7 +16,6 @@ class BuildRoadAction extends Action
 
 function BuildRoadAction::Execute()
 {
-	Log.logInfo("Build a road from " + AIIndustry.GetName(industryConnection.travelToIndustryNode.industryID) + " to " + AIIndustry.GetName(industryConnection.travelFromIndustryNode.industryID) + ".");
 	local abc = AIExecMode();
 	if (!RoadPathFinding.CreateRoad(pathList))
 		Log.logError("Failed to build a road");

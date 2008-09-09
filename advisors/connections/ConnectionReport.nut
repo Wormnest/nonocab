@@ -1,4 +1,4 @@
-class ConnectionReport {
+class ConnectionReport extends Report {
 
 	profitPerMonthPerVehicle = 0;	// The utility value.
 	engineID = 0;			// The vehicles to build.
@@ -12,6 +12,9 @@ class ConnectionReport {
 	
 	cost = 0;			// The cost of this operation.
 	
+	constructor() {
+		
+	}
 	
 	/**
 	 * Get the utility function, this is the profit per invested unit of money.

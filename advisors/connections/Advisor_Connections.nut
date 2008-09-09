@@ -300,28 +300,22 @@ function ConnectionAdvisor::getReports()
 	// a subsum algorithm to get the best profit possible with the given money.
 	local reports = [];
 	
-	local possibleConnection;
-	while ((possibleConnection = connectionCache.Pop()) != null) {
-		
-		// Check if we can afford it.
-		if (money > possibleConnection.cost) {
+	foreach (report in SubSum.GetSubSum(connectionCache, money)) {
+		local actionList = [];
 			
-			local actionList = [];
-			
-			// The industryConnectionNode gives us the actual connection.
-			local industryConnectionNode = possibleConnection.fromIndustryNode.GetIndustryConnection(possibleConnection.toIndustryNode.industryID);
+		// The industryConnectionNode gives us the actual connection.
+		local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode.industryID);
 
-			// Give the action to build the road.
-			actionList.push(BuildIndustryRoadAction(industryConnectionNode, true, true));
+		// Give the action to build the road.
+		actionList.push(BuildIndustryRoadAction(industryConnectionNode, true, true));
 			
-			// Add the action to build the vehicles.
-			local vehicleAction = ManageVehiclesAction();
-			vehicleAction.BuyVehicles(possibleConnection.engineID, possibleConnection.nrVehicles, industryConnectionNode);
-			actionList.push(vehicleAction);
+		// Add the action to build the vehicles.
+		local vehicleAction = ManageVehiclesAction();
+		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, industryConnectionNode);
+		actionList.push(vehicleAction);
 			
-			// Create a report and store it!
-			reports.push(Report(possibleConnection.ToString(), possibleConnection.cost, possibleConnection.Profit(), actionList));
-		}
+		// Create a report and store it!
+		reports.push(Report(report.ToString(), report.cost, report.Profit(), actionList));		
 	}
 	
 	return reports;

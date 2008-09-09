@@ -35,17 +35,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	}
 	
 	// Do the selection, by using a greedy subsum algorithm.
-	local currentReport = null;
-	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
-
-	while ((currentReport = sortedReports.Pop()) != null) {
-		
-		// See if we can afford it.
-		if (currentReport.cost < money) {
-			reports.push(currentReport);
-			money -= currentReport.cost;
-		}
-	}
+	reports = SubSum.GetSubSum(sortedReports, AICompany.GetBankBalance(AICompany.MY_COMPANY));
 }
 
 function Parlement::ClearReports()
