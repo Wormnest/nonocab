@@ -6,7 +6,9 @@ class Action
 	/**
 	 * Empty constructor.
 	 */
-	constructor() { }
+	constructor() { 
+		this.actionHandlers = [];
+	}
 	
 	/**
 	 * Constructor with the world.
@@ -34,7 +36,7 @@ class Action
 	/**
 	 * Add an action handler to this action.
 	 */
-	function AddActionHandlerFunction(handerFunction) {
+	function AddActionHandlerFunction(handlerFunction) {
 		actionHandlers.push(handlerFunction);
 	}
 	

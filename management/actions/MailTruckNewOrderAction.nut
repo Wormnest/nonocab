@@ -7,6 +7,7 @@ class MailTruckNewOrderAction extends Action
 	{
 		this.startStation = start;
 		this.endStation = end;
+		Action.constructor(null);
 	} 
 }
 
@@ -14,4 +15,6 @@ function MailTruckNewOrderAction::Execute()
 {
 	// TODO: full load: startStation
 	// TODO: unload: endStation
+	
+	CallActionHandlers();
 }

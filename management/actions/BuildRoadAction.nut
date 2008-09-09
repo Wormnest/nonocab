@@ -11,6 +11,7 @@ class BuildRoadAction extends Action
 		this.pathList = pathList;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
+		Action.constructor(null);
 	}
 }
 
@@ -32,7 +33,12 @@ function BuildRoadAction::Execute()
 			
 			foreach (direction in directions) {
 				if (Tile.IsBuildable(pathList.roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(pathList.roadList[i].tile, pathList.roadList[i].tile + direction, pathList.roadList[i + 1].tile)) {
+					
+					local test = AITestMode();
 					if (AIRoad.BuildRoadDepot(pathList.roadList[i].tile + direction, pathList.roadList[i].tile)) {
+						local test2 = AIExecMode();
+						AIRoad.BuildRoad(pathList.roadList[i].tile + direction, pathList.roadList[i].tile);
+						AIRoad.BuildRoadDepot(pathList.roadList[i].tile + direction, pathList.roadList[i].tile);
 						pathList.depot = pathList.roadList[i].tile + direction;
 						return;
 					}
@@ -40,4 +46,6 @@ function BuildRoadAction::Execute()
 			}
 		}
 	}
+	
+	CallActionHandlers();
 }
