@@ -3,7 +3,6 @@ require("data_structures/include.nut");
 require("pathfinding/include.nut");
 require("management/include.nut");
 require("advisors/include.nut");
-require("industry.nut");
 
 class NoCAB extends AIController {
 	stop = false;
