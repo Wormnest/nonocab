@@ -103,11 +103,11 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 			}
 			
 			print("Fixing: " + AIError.GetLastErrorString() + "! " + tileType);
-			{
-				local a = AIExecMode();
-				AISign.BuildSign(buildFrom, "From");
-				AISign.BuildSign(buildTo, "To");
-			}
+			//{
+			//	local a = AIExecMode();
+			//	AISign.BuildSign(buildFrom, "From");
+			//	AISign.BuildSign(buildTo, "To");
+			//}
 				
 			// Construct new start list.
 			local start_list = AIList();
@@ -223,11 +223,11 @@ function RoadPathFinding::CreateRoad(pathList)
 						}
 					}
 					
-					if (bestBridgeType == null)
-					{
-						local a = AIExecMode();
-						AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "From");
-					}
+					//if (bestBridgeType == null)
+					//{
+					//	local a = AIExecMode();
+					//	AISign.BuildSign(roadList[a + 1].tile + roadList[a].direction, "From");
+					//}
 
 					if (!AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile)) {
 						//if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
@@ -424,7 +424,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	
 	// No end points? 
 	if (end.Count() == 0)
-		return false;
+		return null;
 
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
 	
@@ -454,7 +454,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	
 	// Check if we have a node from which to build.
 	if (!hasStartPoint)
-		return false;
+		return null;
 
 
 	// Now with the open and closed list we're ready to do some grinding!!!

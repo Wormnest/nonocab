@@ -156,7 +156,9 @@ function ManageVehiclesAction::Execute()
 		}
 		
 		for (local i = 0; i < engineNumber[1]; i++) {
-			local vehicleID = AIVehicle.BuildVehicle(engineNumber[0], engineNumber[2].pathInfo.depot);
+			local vehicleID = AIVehicle.BuildVehicle(engineNumber[2].pathInfo.depot, engineNumber[0]);
+			if (!AIVehicle.IsValidVehicle(vehicleID))
+				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
 			vehicleGroup.vehicleIDs.push(vehicleID);
 		}
 		
