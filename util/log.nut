@@ -18,20 +18,20 @@ function Log::logDebug(message)
 function Log::logInfo(message)
 {
 	if(Log.getLogLevel() < 2) {
-		AILog.Info(message);
+		AILog.Info("INFO: " + message);
 	}
 }
 /** If logLevel is ok log warnings. */
 function Log::logWarning(message)
 {
 	if(Log.getLogLevel() < 3) {
-		AILog.Warning(message);
+		AILog.Warning("WARNING: " + message);
 	}
 }
 /** If logLevel is ok log errors. */
 function Log::logError(message)
 {
 	if(Log.getLogLevel() < 4) {
-		AILog.Error(message);
+		AILog.Error("ERROR: " + message);
 	}
 }
