@@ -47,12 +47,15 @@ function NoCAB::Start()
 		logWarning("Presidentname could not be set.");
 	} } } } }
 	// Set company name.
-	if(!AICompany.SetCompanyName("NoCAB")) {
+	if(!AICompany.SetName("NoCAB")) {
 		local i = 2;
-		while(!AICompany.SetCompanyName("NoCAB #" + i)) { i++; }
+		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
-	Log.logInfo(AICompany.GetCompanyName(8));
-	Log.logInfo(AICompany.GetPresidentName(8));
+	Log.logInfo(AICompany.GetName(8));
+	Log.logInfo(AICompany.GetName(8));
+
+	// Debug:
+	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 
 	local world = World();
 	//local adv = ConnectionAdvisor(world);

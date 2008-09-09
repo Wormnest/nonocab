@@ -30,11 +30,12 @@ class RoadPathFinding
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
 	 * allowed to write C++ so we need to script this information :).
 	 */
+	function FallBackCreateRoad(roadList, buildFrom, buildTo, tileType, error);
 	function CreateRoad(roadList);		// Create the best road from start to end
 	function GetCostForRoad(roadList);	// Give the cost for the best road from start to end
 	function FindFastestRoad(start, end);
 	function GetTime(roadList, maxSpeed, forward);
-	function FallBackCreateRoad(roadList, buildFrom, buildTo, tileType, error);
+	
 }
 
 /**
@@ -110,10 +111,10 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 				
 			// Construct new start list.
 			local start_list = AIList();
-			start_list.add(buildFrom, buildFrom);
+			start_list.Add(buildFrom, buildFrom);
 			
 			local end_list = AIList();
-			end_list.add(buildTo, buildTo);
+			end_list.Add(buildTo, buildTo);
 			
 			// Try to build it again, but only once!.
 			local pathInfo = FindFastestRoad(start_list, end_list);
@@ -171,8 +172,9 @@ function RoadPathFinding::CreateRoad(pathList)
 					// Terraform(buildFrom, currentDirection);
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
-//						if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
-//							return;
+						//if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
+						//	return;
+						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -180,16 +182,18 @@ function RoadPathFinding::CreateRoad(pathList)
 				break;
 			case Tile.TUNNEL:
 				if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction) && !AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, roadList[a + 1].tile + roadList[a].direction)) {
-//					if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, AIError.GetLastError()))
-//						return;
+					//if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, AIError.GetLastError()))
+					//	return;
+					Log.logError("Error: " + AIError.GetLastErrorString() + "!");
 				}
 
 				// Build road before the tunnel
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
 				if (direction != roadList[a + 1].direction) {
 					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
-//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
-//							return;
+						//if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+						//	return;
+						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
 					}
 				}
 				
@@ -226,8 +230,9 @@ function RoadPathFinding::CreateRoad(pathList)
 					}
 
 					if (!AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile)) {
-//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
-//							return;
+						//if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile + roadList[a].direction, null, Tile.BRIDGE, AIError.GetLastError()))
+						//	return;
+						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
 					}
 				}
 				
@@ -235,8 +240,9 @@ function RoadPathFinding::CreateRoad(pathList)
 				AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile);
 				if (direction != roadList[a + 1].direction) {
 					if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
-//						if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
-//							return;
+						//if (!FallBackCreateRoad(roadList.slice(a), roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, AIError.GetLastError()))
+						//	return;
+						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
 					}
 				}
 
@@ -415,6 +421,10 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
 	}
+	
+	// No end points? 
+	if (end.Count() == 0)
+		return false;
 
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
 	
@@ -425,6 +435,8 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	// We keep a separate list for start tiles
 	local startList = {};
 	
+	local hasStartPoint = false;
+	
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
@@ -432,11 +444,17 @@ function RoadPathFinding::FindFastestRoad(start, end)
 		if(!Tile.IsBuildable(i))
 			continue;
  
+ 		hasStartPoint = true;
+ 		
 		local annotatedTile = AnnotatedTile(i, null, 0, 0, Tile.ROAD);
 		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
 		pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
 		startList[i] <- i;
 	}
+	
+	// Check if we have a node from which to build.
+	if (!hasStartPoint)
+		return false;
 
 
 	// Now with the open and closed list we're ready to do some grinding!!!

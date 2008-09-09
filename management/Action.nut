@@ -37,6 +37,7 @@ class BankBalanceAction extends Action
 
 function BankBalanceAction::Execute()
 {
+	Log.logInfo("Loan " + this.amount + " from the bank!");
 	AICompany.SetLoanAmount(this.amount);
 }
 
@@ -82,7 +83,7 @@ class BuildRoadAction extends Action
 
 function BuildRoadAction::Execute()
 {
-	print("BUILD STUFFF! " + pathList.roadList.len());
+	Log.logInfo("Build a road from " + AIIndustry.GetName(industryConnection.travelToIndustryNode.industryID) + " to " + AIIndustry.GetName(industryConnection.travelFromIndustryNode.industryID) + ".");
 	local abc = AIExecMode();
 	if (!RoadPathFinding.CreateRoad(pathList)) print("FAILED!!!");
 	
@@ -131,13 +132,12 @@ function ManageVehiclesAction::SellVehicle(vehicleID)
 
 function ManageVehiclesAction::BuyVehicles(engineID, number, industryConnection)
 {
-	for (local i = 0; i < number; i++) {
-		vehiclesToBuy.push([engineID, number, industryConnection]);
-	}
+	vehiclesToBuy.push([engineID, number, industryConnection]);
 }
 
 function ManageVehiclesAction::Execute()
 {
+	Log.logInfo("Buy " + vehiclesToBuy.len() + " and sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (engineNumber in vehiclesToBuy) {
 		
 		local vehicleGroup = null;

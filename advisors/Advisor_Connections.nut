@@ -312,7 +312,9 @@ function ConnectionAdvisor::getReports()
 			local industryConnectionNode = possibleConnection.fromIndustryNode.GetIndustryConnection(possibleConnection.toIndustryNode.industryID);
 
 			// Give the action to build the road.
-			actionList.push(BuildRoadAction(industryConnectionNode.pathInfo, true, true));
+			local ac = BuildRoadAction(industryConnectionNode.pathInfo, true, true);
+			ac.industryConnection = industryConnectionNode;
+			actionList.push(ac);
 			
 			// Add the action to build the vehicles.
 			local vehicleAction = ManageVehiclesAction();
