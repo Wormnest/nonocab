@@ -51,7 +51,7 @@ function NoCAB::Start()
 		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
 	Log.logInfo(AICompany.GetName(8));
-	Log.logInfo(AICompany.GetName(8));
+	Log.logInfo(AICompany.GetPresidentName(8));
 
 	// Debug:
 	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
