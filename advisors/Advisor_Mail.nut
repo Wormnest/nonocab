@@ -6,21 +6,23 @@ class MailAdvisor extends Advisor {}
  *  There are basicly these options:
  *  - Build new mail truck.
  *  - Sell mail truck.
- *  - Add new orders to mail truck.
+ *  - Replan mail truck.
  */
 function MailAdvisor::getReports()
 {
+	local MINIMUM_CITY_SIZE = 512; 
 	local DELIVERY_PROFIT = 500;
 	local reports = array(0);
 	
-//	// Get all available mail trucks.
-//	local trucklist = this.innerWorld.GetTrucks(Mail);
-//	// Add orders for all trucks.
-//	
-//	foreach(truck in trucklist)
-//	{
-//		// If there are not more than two orders, plan a new delivery.
-//		// Search for a mail station neary by that is fully packed.
+	// Get all available mail trucks.
+	local trucklist = [];//this.innerWorld.GetTrucks(Mail);
+	
+	foreach(truck in trucklist)
+	{
+		
+	}
+		// If there are not more than two orders, plan a new delivery.
+		// Search for a mail station neary by that is fully packed.
 //		// Search for a delivery station on a 'some' distance.
 //		if(truck.orders.count < 2)
 //		{
