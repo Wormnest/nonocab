@@ -53,6 +53,9 @@ function NoCAB::Start()
 	Log.logInfo(AICompany.GetName(8));
 	Log.logInfo(AICompany.GetPresidentName(8));
 
+	// Build Head Quaters.
+	BuildHQ();
+	
 	// Debug:
 	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 
@@ -81,7 +84,14 @@ function NoCAB::Start()
 	}
 	Log.logInfo("Done!");
 }
-
+/**
+ * Build Head Quaters at the largest place available. 
+ */
+function NoCAB::BuildHQ()
+{
+	Log.logInfo("Build Head Quaters.");
+	Log.logDebug("TODO: not implemented.");
+}
 /** Required by interface . */
 function NoCAB::Stop()
 {
