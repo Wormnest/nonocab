@@ -39,23 +39,6 @@ class RoadPathFinding
 }
 
 /**
- * Store important info about a path we found! :)
- */
-class PathInfo
-{
-	roadList = null;		// List of all road tiles the road needs to follow.
-	roadCost = null;		// The cost to create this road.
-	depot = null;			// The location of the depot.
-	build = null;			// Is this path build?
-
-	constructor(roadList, roadCost) {
-		this.roadList = roadList;
-		this.roadCost = roadCost;
-		this.build = false;
-	}
-}
-
-/**
  * If an error occurs during the construction phase, this method is called
  * to replan the road and finish what has been started.
  * @param roadList The part of the roadlist that hasn't been build yet.

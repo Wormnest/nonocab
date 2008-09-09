@@ -1,6 +1,7 @@
 class Action
 {
 	world = null;
+	actionHandlers = null;
 	
 	/**
 	 * Empty constructor.
@@ -12,12 +13,51 @@ class Action
 	 */
 	constructor(world) { 
 		this.world = world;
+		this.actionHandlers = [];
 	}
 
 	/**
 	 * Executes the action.
 	 */
 	function Execute();
+	
+	/**
+	 * Call this function each time you wish the action handlers to
+	 * be informed of your actions.
+	 */
+	function CallActionHandlers() {
+		foreach (actionHandler in actionHandlers) {
+			actionHandler.HandleAction(this);
+		}
+	}
+	
+	/**
+	 * Add an action handler to this action.
+	 */
+	function AddActionHandlerFunction(handerFunction) {
+		actionHandlers.push(handlerFunction);
+	}
+	
+	/**
+	 * Remove an actionahndler from this function.
+	 */
+	function RemoveActionHandlerFunction(handerFunction) {
+		foreach (index, actionHandler in actionHandlers) {
+			if (actionHandler == handerFunction)
+				actionHanders.remove(index);
+		}
+	}
+}
+
+/**
+ * Sometimes after executing an action the effects may need to be propagated to
+ * other classes / objects.
+ *
+ * The state of the action needs to be stored in the action itself.
+ */ 
+class ActionCallbackHandler
+{
+	function HandleAction(actionClass);	
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,11 +105,9 @@ function MailTruckNewOrderAction::Execute()
 
 class BuildRoadAction extends Action
 {
-	industryConnection = null;
 	pathList = null;
 	buildDepot = false;
 	buildRoadStations = false;
-	
 	directions = null;
 	
 	constructor(pathList, buildDepot, buildRoadStations)
@@ -85,7 +123,8 @@ function BuildRoadAction::Execute()
 {
 	Log.logInfo("Build a road from " + AIIndustry.GetName(industryConnection.travelToIndustryNode.industryID) + " to " + AIIndustry.GetName(industryConnection.travelFromIndustryNode.industryID) + ".");
 	local abc = AIExecMode();
-	if (!RoadPathFinding.CreateRoad(pathList)) print("FAILED!!!");
+	if (!RoadPathFinding.CreateRoad(pathList))
+		Log.logError("Failed to build a road");
 	
 	if (buildRoadStations) {
 		local len = pathList.roadList.len();

@@ -312,9 +312,7 @@ function ConnectionAdvisor::getReports()
 			local industryConnectionNode = possibleConnection.fromIndustryNode.GetIndustryConnection(possibleConnection.toIndustryNode.industryID);
 
 			// Give the action to build the road.
-			local ac = BuildRoadAction(industryConnectionNode.pathInfo, true, true);
-			ac.industryConnection = industryConnectionNode;
-			actionList.push(ac);
+			actionList.push(BuildIndustryRoadAction(industryConnectionNode, true, true));
 			
 			// Add the action to build the vehicles.
 			local vehicleAction = ManageVehiclesAction();
@@ -348,27 +346,17 @@ function ConnectionAdvisor::UpdateCargoTransportEngineIds() {
 		}
 		i++;
 	}
-
-	for (local i = 0; i < cargoTransportEngineIds.len(); i++) {
-		print("Engines : " + cargoTransportEngineIds[i]);
-		print("Capacity : " + AIEngine.GetCapacity(cargoTransportEngineIds[i]));
-		print("Cargo : " + AICargo.GetCargoLabel(AIEngine.GetCargoType(cargoTransportEngineIds[i])));
-	}
 }
-
-
-
-
 
 /**
  * Debug purposes only.
  */
 function ConnectionAdvisor::PrintTree() {
-	print("PrintTree");
+	Log.logDebug("PrintTree");
 	foreach (primIndustry in industry_tree) {
 		PrintNode(primIndustry, 0);
 	}
-	print("Done!");
+	Log.logDebug("Done!");
 }
 
 function ConnectionAdvisor::PrintNode(node, depth) {
@@ -380,50 +368,14 @@ function ConnectionAdvisor::PrintNode(node, depth) {
 	print(string + AIIndustry.GetName(node.industryID) + " -> ");
 
 	foreach (transport in node.industryConnections) {
-		print("Vehcile travel time: " + transport.timeToTravelTo);
+		Log.logDebug("Vehcile travel time: " + transport.timeToTravelTo);
 		//print("Vehcile income per run: " + transport.incomePerRun);
-		print("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
-		print("Cost: " + node.costToBuild);
+		Log.logDebug("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
+		Log.logDebug("Cost: " + node.costToBuild);
 	}
 	foreach (iNode in node.industryNodeList)
 		PrintNode(iNode, depth + 1);
 }	
 
-class ConnectionReport {
-
-	profitPerMonthPerVehicle = 0;	// The utility value.
-	engineID = 0;			// The vehicles to build.
-	nrVehicles = 0;			// The number of vehicles to build.
-	roadList = null;		// The road to build.
-
-	fromIndustryNode = null;	// The industry which produces the cargo.
-	toIndustryNode = null;		// The industry which accepts the produced cargo.
-	
-	cargoID = 0;			// The cargo to transport.
-	
-	cost = 0;			// The cost of this operation.
-	
-	
-	/**
-	 * Get the utility function, this is the profit per invested unit of money.
-	 */
-	function Utility() {
-		return cost / (profitPerMonthPerVehicle * nrVehicles);
-	}
-	
-	function Profit() {
-		return profitPerMonthPerVehicle * nrVehicles;
-	}
-	
-	function Print() {
-		print(ToString());
-	}
-	
-	function ToString() {
-		return "Build a road from " + AIIndustry.GetName(fromIndustryNode.industryID) + " to " + AIIndustry.GetName(toIndustryNode.industryID) +
-		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " vehicles. Cost: " +
-		cost + " income per month per vehicle: " + profitPerMonthPerVehicle;
-	}
-}
 
 
