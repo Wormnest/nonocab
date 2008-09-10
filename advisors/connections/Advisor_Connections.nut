@@ -84,8 +84,8 @@ function ConnectionAdvisor::getReports()
 		// If the report is already fully calculated, check if we can afford it and execute it!
 		if (report.cost != 0 && report.cost < money) {
 
-			local otherIndustry = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode.industryID);
-			if (otherIndustry != null && otherIndustry.build == true) {
+			local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode);
+			if (otherConnection != null && otherConnection.build == true) {
 				// Check if we need to add / remove vehicles to this connection.
 
 			} else {
@@ -102,10 +102,10 @@ function ConnectionAdvisor::getReports()
 
 			// If we haven't calculated yet what it cost to build this report, we do it now.
 			local pathfinder = RoadPathFinding();
-			local pathList = pathfinder.FindFastestRoad(AITileList_IndustryProducing(report.fromIndustryNode.industryID, radius), AITileList_IndustryAccepting(report.toIndustryNode.industryID, radius));
+			local pathList = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles());
 
 			if (pathList == null) {
-				print("No path found from " + AIIndustry.GetName(report.fromIndustryNode.industryID) + " to " + AIIndustry.GetName(report.toIndustryNode.industryID));
+				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 				continue;
 			}
 			// Now we know the prices, check how many vehicles we can build and what the actual income per vehicle is.
@@ -123,10 +123,10 @@ function ConnectionAdvisor::getReports()
 
 			local productionPerMonth;
 			// Calculate the number of vehicles which can operate:
-			for (local i = 0; i < report.fromIndustryNode.cargoIdsProducing.len(); i++) {
+			for (local i = 0; i < report.fromConnectionNode.cargoIdsProducing.len(); i++) {
 
-				if (report.cargoID == report.fromIndustryNode.cargoIdsProducing[i]) {
-					productionPerMonth = report.fromIndustryNode.cargoProducing[i];
+				if (report.cargoID == report.fromConnectionNode.cargoIdsProducing[i]) {
+					productionPerMonth = report.fromConnectionNode.cargoProducing[i];
 					break;
 				}
 			}
@@ -143,13 +143,13 @@ function ConnectionAdvisor::getReports()
 				connectionCache.Insert(report, -report.Utility());
 				
 				// Check if the industry connection node actually exists else create it, and update it!
-				local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode);
-				if (industryConnectionNode == null) {
-					industryConnectionNode = IndustryConnection(report.fromIndustryNode, report.toIndustryNode);
-					report.fromIndustryNode.AddIndustryConnection(report.toIndustryNode, industryConnectionNode);
+				local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode);
+				if (connectionNode == null) {
+					connectionNode = Connection(report.fromConnectionNode, report.toConnectionNode, Connection.INDUSTRY_TO_INDUSTRY);
+					report.fromConnectionNode.AddConnection(report.toConnectionNode, connectionNode);
 				}
 				
-				industryConnectionNode.pathInfo = pathList;
+				connectionNode.pathInfo = pathList;
 			}
 		}
 	}
@@ -162,15 +162,15 @@ function ConnectionAdvisor::getReports()
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.
-		local industryConnectionNode = report.fromIndustryNode.GetIndustryConnection(report.toIndustryNode.industryID);
+		local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode);
 
 		// Give the action to build the road.
-		actionList.push(BuildIndustryRoadAction(industryConnectionNode, true, true));
+		actionList.push(BuildRoadAction(connectionNode, true, true));
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, industryConnectionNode.pathInfo);
-		vehicleAction.AddActionHandlerFunction(ConnectionManageVehiclesActionHandler(industryConnectionNode));
+		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connectionNode.pathInfo);
+		vehicleAction.AddActionHandlerFunction(ConnectionManageVehiclesActionHandler(connectionNode));
 		actionList.push(vehicleAction);
 
 		// Create a report and store it!
@@ -194,21 +194,21 @@ function ConnectionAdvisor::UpdateIndustryConnections() {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
-	foreach (primIndustry in world.industry_tree) {
+	foreach (primIndustryConnectionNode in world.industry_tree) {
 
-		foreach (secondIndustry in primIndustry.industryNodeList) {
+		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
 			// Check if this connection already exists.
-			if (primIndustry.industryConnections.rawin("" + secondIndustry)) {
+			local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode); 
+			if (connection != null) {
 
 				// See if we need to add or remove some vehicles.
 
 			} else {
-				local manhattanDistance = AIMap.DistanceManhattan(AIIndustry.GetLocation(primIndustry.industryID), 
-					AIIndustry.GetLocation(secondIndustry.industryID));
+				local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 
 				// Take a guess at the travel time and profit for each cargo type.
-				foreach (cargo in primIndustry.cargoIdsProducing) {
+				foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
 
 					local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
 					local travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
@@ -217,8 +217,8 @@ function ConnectionAdvisor::UpdateIndustryConnections() {
 					local report = ConnectionReport();
 					report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
 					report.engineID = world.cargoTransportEngineIds[cargo];
-					report.fromIndustryNode = primIndustry;
-					report.toIndustryNode = secondIndustry;
+					report.fromConnectionNode = primIndustryConnectionNode;
+					report.toConnectionNode = secondConnectionNode;
 					report.cargoID = cargo;
 
 					connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
@@ -246,11 +246,10 @@ function ConnectionAdvisor::PrintNode(node, depth) {
 		string += "      ";
 	}
 
-	print(string + AIIndustry.GetName(node.industryID) + " -> ");
+	Log.logDebug(string + AIIndustry.GetName(node.industryID) + " -> ");
 
 	foreach (transport in node.industryConnections) {
 		Log.logDebug("Vehcile travel time: " + transport.timeToTravelTo);
-		//print("Vehcile income per run: " + transport.incomePerRun);
 		Log.logDebug("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
 		Log.logDebug("Cost: " + node.costToBuild);
 	}

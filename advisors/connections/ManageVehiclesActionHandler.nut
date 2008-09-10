@@ -1,18 +1,18 @@
 /**
  * For the connections advisor we need an handler for the ManageVehiclesAction
- * because we need to add the vehicles to the IndustryConnectionNode after they
+ * because we need to add the vehicles to the ConnectionNode after they
  * have been build.
  */
 class ConnectionManageVehiclesActionHandler {
 	
-	industryConnectionNode = null;				// The industry connection node the vehicles will operate on.
+	connectionNode = null;				// The industry connection node the vehicles will operate on.
 
 	/**
-	 * @param industryConnectionNode The industry connection node where the build 
+	 * @param connectionNode The industry connection node where the build 
 	 * vehicles will operate on.
 	 */
-	constructor(industryConnectionNode) {
-		this.industryConnectionNode = industryConnectionNode;
+	constructor(connectionNode) {
+		this.connectionNode = connectionNode;
 	}
 	
 	/**
@@ -25,7 +25,7 @@ class ConnectionManageVehiclesActionHandler {
 			local vehicleGroup = null;
 			
 			// Search if there are already have a vehicle group with this engine ID.
-			foreach (vGroup in industryConnectionNode.vehiclesOperating) {
+			foreach (vGroup in connectionNode.vehiclesOperating) {
 				if (vGroup.engineID == AIVehicle.GetEngineType(vehicleNumber)) {
 					vehicleGroup = vGroup;
 					break;
@@ -35,11 +35,11 @@ class ConnectionManageVehiclesActionHandler {
 			// If there isn't a vehicles group we create one.
 			if (vehicleGroup == null) {
 				vehicleGroup = VehicleGroup();
-				vehicleGroup.industryConnection = industryConnectionNode;
+				vehicleGroup.connection = connectionNode;
 			}
 			
 			vehicleGroup.vehicleIDs.push(vehicleNumber);
-			industryConnectionNode.vehiclesOperating.push(vehicleGroup);
+			connectionNode.vehiclesOperating.push(vehicleGroup);
 		}		
 	}
 }

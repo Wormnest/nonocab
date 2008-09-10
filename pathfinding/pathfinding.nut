@@ -85,7 +85,7 @@ function RoadPathFinding::FallBackCreateRoad(roadList, buildFrom, buildTo, tileT
 				return false;
 			}
 			
-			print("Fixing: " + AIError.GetLastErrorString() + "! " + tileType);
+			Log.logDebug("Fixing: " + AIError.GetLastErrorString() + "! " + tileType);
 			//{
 			//	local a = AIExecMode();
 			//	AISign.BuildSign(buildFrom, "From");
@@ -553,7 +553,7 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	}
 
 	// Oh oh... No result found :(
-	print("No path found!");
+	Log.logWarning("No path found!");
 	return null;
 }
 

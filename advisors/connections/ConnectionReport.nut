@@ -5,8 +5,8 @@ class ConnectionReport extends Report {
 	nrVehicles = 0;			// The number of vehicles to build.
 	roadList = null;		// The road to build.
 
-	fromIndustryNode = null;	// The industry which produces the cargo.
-	toIndustryNode = null;		// The industry which accepts the produced cargo.
+	fromConnectionNode = null;	// The node which produces the cargo.
+	toConnectionNode = null;	// The node which accepts the produced cargo.
 	
 	cargoID = 0;			// The cargo to transport.
 	
@@ -28,11 +28,11 @@ class ConnectionReport extends Report {
 	}
 	
 	function Print() {
-		print(ToString());
+		Log.logDebug(ToString());
 	}
 	
 	function ToString() {
-		return "Build a road from " + AIIndustry.GetName(fromIndustryNode.industryID) + " to " + AIIndustry.GetName(toIndustryNode.industryID) +
+		return "Build a road from " + fromConnectionNode.GetName() + " to " + toConnectionNode.GetName() +
 		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " vehicles. Cost: " +
 		cost + " income per month per vehicle: " + profitPerMonthPerVehicle;
 	}

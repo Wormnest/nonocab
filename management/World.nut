@@ -71,8 +71,7 @@ function World::BuildIndustryTree() {
 	// Every industry is stored in an IndustryNode.
 	foreach (industry, value in industries) {
 
-		local industryNode = IndustryNode();
-		industryNode.industryID = industry;
+		local industryNode = IndustryConnectionNode(industry);
 
 		// Check which cargo is accepted.
 		foreach (cargo, value in cargos) {
@@ -86,7 +85,7 @@ function World::BuildIndustryTree() {
 
 				// Check if there are producing plants which this industry accepts.
 				for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
-					industryCacheProducing[cargo][i].industryNodeList.push(industryNode);
+					industryCacheProducing[cargo][i].connectionNodeList.push(industryNode);
 				}
 			}
 
@@ -101,7 +100,7 @@ function World::BuildIndustryTree() {
 
 				// Check for accepting industries for these products.
 				for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
-					industryNode.industryNodeList.push(industryCacheAccepting[cargo][i]);
+					industryNode.connectionNodeList.push(industryCacheAccepting[cargo][i]);
 				}
 			}
 		}
@@ -109,6 +108,23 @@ function World::BuildIndustryTree() {
 		// If the industry doesn't accept anything we add it to the root list.
 		if (industryNode.cargoIdsAccepting.len() == 0) {
 			industry_tree.push(industryNode);
+		}
+	}
+	
+	// Now handle the connection Industry --> Town
+	foreach (town, value in town_list) {
+		
+		local townNode = TownConnectionNode(town);
+		
+		// Check if this town accepts something an industry creates.
+		foreach (cargo, value in cargos) {
+			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
+				
+				// Check if we have an industry which actually produces this cargo.
+				foreach (industryNode in industryCacheAccepting[cargo]) {
+					industryNode.connectionNodeList.push(townNode);
+				}
+			}
 		}
 	}
 }
