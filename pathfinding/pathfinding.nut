@@ -8,7 +8,7 @@ class RoadPathFinding
 	// The length of various road pieces
 	static straightRoadLength 	= 28.5;
 	static bendedRoadLength 	= 28.5;
-	static upDownHillRoadLength 	= 40;
+	static upDownHillRoadLength = 40;
 
 	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 50;		// Cost for building a new road.
@@ -131,9 +131,18 @@ function RoadPathFinding::CreateRoad(pathList)
 	local roadList = pathList.roadList;
 	if(roadList == null || roadList.len() < 2)
 		return false;
+
+	local lastPath = null;
+	foreach (roadPart in pathList.roadList) {
+		if (lastPath != null) {
+			if (lastPath.tile == roadPart.tile)
+				sdfjslkjawet();
+		}	
+		lastPath = roadPart;
+	}
 		
 	local buildFrom = roadList[roadList.len() - 1].tile;
-	local currentDirection = roadList[roadList.len() - 1].direction;
+	local currentDirection = roadList[roadList.len() - 2].direction;
 	
 	for(local a = roadList.len() - 2; -1 < a; a--)		
 	{
@@ -154,10 +163,14 @@ function RoadPathFinding::CreateRoad(pathList)
 					// don't require terraforming
 					// Terraform(buildFrom, currentDirection);
 					
+					//if (buildFrom == roadList[a + 1].tile)
+					//	sadflkjds();
+					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
 						//if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
 						//	return;
 						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
+						Log.logError("A: " + a + "  " + roadList.len());
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -239,7 +252,7 @@ function RoadPathFinding::CreateRoad(pathList)
 	
 	// Build the last part
 	AIRoad.BuildRoad(roadList[0].tile, buildFrom);
-	return true;		
+	return true;
 }
 
 /**

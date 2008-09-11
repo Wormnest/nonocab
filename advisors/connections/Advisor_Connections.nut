@@ -66,6 +66,9 @@ function ConnectionAdvisor::getReports()
 
 	// Try to get the best subset of options.
 	local report;
+	
+	
+	local asfs = AITestMode();
 	while ((report = connectionReports.Pop()) != null) {
 
 		/**
