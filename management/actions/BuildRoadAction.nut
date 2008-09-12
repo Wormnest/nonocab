@@ -33,6 +33,7 @@ function BuildRoadAction::Execute()
 		return;
 	}
 	
+	connection.pathInfo.build = true;
 	local roadList = connection.pathInfo.roadList;
 	
 	if (buildRoadStations) {

@@ -18,7 +18,7 @@ class ConnectionAdvisor extends Advisor
 	constructor(world)
 	{
 		this.world = world;
-		connectionReports = BinaryHeap();
+		
 	}
 	
 	/**
@@ -52,8 +52,9 @@ class ConnectionAdvisor extends Advisor
 function ConnectionAdvisor::getReports()
 {
 	Log.logDebug("getReports()");
+	connectionReports = BinaryHeap();
 	UpdateIndustryConnections(world.industry_tree);
-	
+
 	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 	
@@ -148,8 +149,10 @@ function ConnectionAdvisor::getReports()
 			}
 			
 			// If we can't buy any vehicles, don't bother.
-			if (maxNrVehicles <= 0)
+			if (maxNrVehicles.tointeger() <= 0) {
+				Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
 				continue;
+			}
 			
 			report.nrVehicles = maxNrVehicles;
 			//report.nrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
@@ -175,6 +178,7 @@ function ConnectionAdvisor::getReports()
 				Log.logWarning("To expesive!");
 			}
 		}
+		Log.logDebug("done");
 	}
 	
 	// We have a list with possible connections we can afford, we now apply
@@ -197,7 +201,8 @@ function ConnectionAdvisor::getReports()
 		actionList.push(vehicleAction);
 
 		// Create a report and store it!
-		reports.push(Report(report.ToString(), report.cost, report.Profit(), actionList));		
+		reports.push(Report(report.ToString(), report.cost, report.Profit(), actionList));
+		break;	// Debug		
 	}
 	
 	return reports;
@@ -217,21 +222,19 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
-	foreach (primIndustryConnectionNode in world.industry_tree) {
+	foreach (primIndustryConnectionNode in industry_tree) {
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
 			// Check if this connection already exists.
 			local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode); 
-			if (connection != null) {
+			if (connection != null && connection.pathInfo.build) {
 
-				if (connection.pathInfo.build) {
-					// See if we need to add or remove some vehicles.
-					
-					
-					// Also check for other connection starting from this node.
-					UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
-				}
+				// See if we need to add or remove some vehicles.
+				
+				
+				// Also check for other connection starting from this node.
+				UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
 
 			} else {
 				local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());

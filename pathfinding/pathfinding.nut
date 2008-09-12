@@ -132,15 +132,6 @@ function RoadPathFinding::CreateRoad(pathList)
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
-	local lastPath = null;
-	foreach (roadPart in pathList.roadList) {
-		if (lastPath != null) {
-			if (lastPath.tile == roadPart.tile)
-				sdfjslkjawet();
-		}	
-		lastPath = roadPart;
-	}
-		
 	local buildFrom = roadList[roadList.len() - 1].tile;
 	local currentDirection = roadList[roadList.len() - 2].direction;
 	
