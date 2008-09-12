@@ -19,8 +19,6 @@ class ConnectionAdvisor extends Advisor
 	{
 		this.world = world;
 		connectionReports = BinaryHeap();
-		
-		UpdateIndustryConnections();
 	}
 	
 	/**
@@ -30,8 +28,9 @@ class ConnectionAdvisor extends Advisor
 
 	/**
 	 * Iterate through the industry tree and update its information.
+	 * @industryTree An array with connectionNode instances.
 	 */
-	function UpdateIndustryConnections();
+	function UpdateIndustryConnections(industryTree);
 	
 	/**
 	 * Debug purposes only:
@@ -52,6 +51,10 @@ class ConnectionAdvisor extends Advisor
  */
 function ConnectionAdvisor::getReports()
 {
+	Log.logDebug("getReports()");
+	world.UpdateCargoTransportEngineIds();
+	UpdateIndustryConnections(world.industry_tree);
+	
 	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 	
@@ -182,8 +185,8 @@ function ConnectionAdvisor::getReports()
 	return reports;
 }
 
-function ConnectionAdvisor::UpdateIndustryConnections() {
-	world.UpdateCargoTransportEngineIds();
+function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
+	
 
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't
@@ -204,7 +207,10 @@ function ConnectionAdvisor::UpdateIndustryConnections() {
 			local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode); 
 			if (connection != null) {
 
-				// See if we need to add or remove some vehicles.
+				if (connection.pathInfo.build) {
+					// See if we need to add or remove some vehicles.
+					UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
+				}
 
 			} else {
 				local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());

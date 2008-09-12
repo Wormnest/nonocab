@@ -33,7 +33,26 @@ function World::Update()
 {
 	this.industry_list = AIIndustryList();
 	SetGoodTownList();
+	UpdateIndustryTree(industry_tree);
 }
+
+function World::UpdateIndustryTree(industryTree)
+{
+	foreach (connectionNode in industryTree) {
+		if (connectionNode.nodeType != ConnectionNode.INDUSTRY_NODE)
+			continue;
+			
+		local i = 0;
+		foreach (cargoID in connectionNode.cargoIdsProducing) {
+			connectionNode.cargoProducing[i] = AIIndustry.GetProduction(connectionNode.id, cargoID)
+		}
+		
+		Log.logDebug("Update " + connectionNode.GetName());
+		
+		UpdateIndustryTree(connectionNode.connectionNodeList);
+	}
+}
+
 /**
  * Build a tree of all industry nodes, where we connect each producing
  * industry to an industry which accepts that produced cargo. The primary

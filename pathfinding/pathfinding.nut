@@ -162,15 +162,12 @@ function RoadPathFinding::CreateRoad(pathList)
 					// Not needed ATM, as we make sure we only consider roads which
 					// don't require terraforming
 					// Terraform(buildFrom, currentDirection);
-					
-					//if (buildFrom == roadList[a + 1].tile)
-					//	sadflkjds();
+
 					
 					if (!AIRoad.BuildRoad(buildFrom, roadList[a + 1].tile)) {
 						//if (!FallBackCreateRoad(roadList.slice(a), buildFrom, roadList[a + 1].tile, Tile.ROAD, AIError.GetLastError()))
 						//	return;
 						Log.logError("Error: " + AIError.GetLastErrorString() + "!");
-						Log.logError("A: " + a + "  " + roadList.len());
 					}
 					currentDirection = direction;
 					buildFrom = roadList[a + 1].tile;
@@ -419,8 +416,10 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	}
 	
 	// No end points? 
-	if (end.Count() == 0)
+	if (end.Count() == 0) {
+		Log.logDebug("Pathfinder: No end points for this road; Abort");
 		return null;
+	}
 
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
 	
@@ -449,8 +448,10 @@ function RoadPathFinding::FindFastestRoad(start, end)
 	}
 	
 	// Check if we have a node from which to build.
-	if (!hasStartPoint)
+	if (!hasStartPoint) {
+		Log.logDebug("Pathfinder: No start points for this road; Abort");
 		return null;
+	}
 
 
 	// Now with the open and closed list we're ready to do some grinding!!!
