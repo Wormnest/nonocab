@@ -60,9 +60,6 @@ function NoCAB::Start()
 	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 
 	local world = World();
-	//local adv = ConnectionAdvisor(world);
-	//adv.PrintTree();
-	//adv.getReports();
 
 	// Do what we have to do.
 	while(true)

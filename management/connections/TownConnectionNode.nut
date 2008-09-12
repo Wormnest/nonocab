@@ -20,13 +20,13 @@ class TownConnectionNode extends ConnectionNode
 	function GetProducingTiles() {
 		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		Log.logWarning("TownConnectionNode.GetProducingTiles not implemented yet.");
-		return [];
+		return AIList();
 	}
 	
 	function GetAcceptingTiles() {
 		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		Log.logWarning("TownConnectionNode.GetAcceptingTiles not implemented yet.");
-		return [];
+		return AIList();
 	}
 	
 	function GetName() {

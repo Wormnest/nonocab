@@ -24,10 +24,25 @@ class World
 		industry_list = AIIndustryList();
 		cargoTransportEngineIds = array(AICargoList().Count(), -1);
 		BuildIndustryTree();
+		//PrintTree();
 		InitEvents();
 		InitCargoTransportEngineIds();		
 	}
+	
+	
+	/**
+	 * Debug purposes only:
+	 * Print the constructed industry node.
+	 */
+	function PrintTree();
+	
+	/**
+	 * Debug purposes only:
+	 * Print a single node in the industry tree.
+	 */
+	function PrintNode();	
 }
+
 /**
  * Updates the view on the world.
  */
@@ -96,8 +111,6 @@ function World::BuildIndustryTree() {
 	//
 	// Every industry is stored in an IndustryNode.
 	foreach (industry, value in industries) {
-
-		
 		InsertIndustry(industry);
 	}
 	
@@ -111,8 +124,8 @@ function World::BuildIndustryTree() {
 			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
 				
 				// Check if we have an industry which actually produces this cargo.
-				foreach (industryNode in industryCacheAccepting[cargo]) {
-					industryNode.connectionNodeList.push(townNode);
+				foreach (connectionNode in industryCacheProducing[cargo]) {
+					connectionNode.connectionNodeList.push(townNode);
 				}
 			}
 		}
@@ -298,3 +311,33 @@ function World::SetGoodTownList()
 	}
 	Log.logInfo("There are " + this.good_town_list.len() + " good towns.");
 }
+
+/**
+ * Debug purposes only.
+ */
+function World::PrintTree() {
+	Log.logDebug("PrintTree");
+	foreach (primIndustry in industry_tree) {
+		PrintNode(primIndustry, 0);
+	}
+	Log.logDebug("Done!");
+}
+
+function World::PrintNode(node, depth) {
+	local string = "";
+	for (local i = 0; i < depth; i++) {
+		string += "      ";
+	}
+
+	Log.logDebug(string + node.GetName() + " -> ");
+
+	foreach (transport in node.connections) {
+		Log.logDebug("Vehcile travel time: " + transport.timeToTravelTo);
+		Log.logDebug("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
+		Log.logDebug("Cost: " + node.costToBuild);
+	}
+	foreach (iNode in node.connectionNodeList)
+		PrintNode(iNode, depth + 1);
+}	
+
+

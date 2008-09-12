@@ -31,18 +31,6 @@ class ConnectionAdvisor extends Advisor
 	 * @industryTree An array with connectionNode instances.
 	 */
 	function UpdateIndustryConnections(industryTree);
-	
-	/**
-	 * Debug purposes only:
-	 * Print the constructed industry node.
-	 */
-	function PrintTree();
-	
-	/**
-	 * Debug purposes only:
-	 * Print a single node in the industry tree.
-	 */
-	function PrintNode();
 }
 
 /**
@@ -93,7 +81,7 @@ function ConnectionAdvisor::getReports()
 		if (otherConnection != null && otherConnection.pathInfo.build == true) {
 			// Check if we need to add / remove vehicles to this connection.
 
-		
+
 		} else {
 
 			// The actionlist to construct.
@@ -155,11 +143,9 @@ function ConnectionAdvisor::getReports()
 			}
 			
 			report.nrVehicles = maxNrVehicles;
-			//report.nrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
 
 			// Calculate the profit per month per vehicle
 			report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
-			//report.cost = pathfinder.GetCostForRoad(pathList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
 			report.cost = costForRoad + costPerVehicle * maxNrVehicles;
 
 			// If we can afford it, add it to the possible connection list.
@@ -174,11 +160,8 @@ function ConnectionAdvisor::getReports()
 				}
 				
 				connectionNode.pathInfo = pathList;
-			} else {
-				Log.logWarning("To expesive!");
 			}
 		}
-		Log.logDebug("done");
 	}
 	
 	// We have a list with possible connections we can afford, we now apply
@@ -228,66 +211,34 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 			// Check if this connection already exists.
 			local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode); 
-			if (connection != null && connection.pathInfo.build) {
+			
 
-				// See if we need to add or remove some vehicles.
-				
-				
-				// Also check for other connection starting from this node.
-				UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
+			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
+			// See if we need to add or remove some vehicles.
+			// Take a guess at the travel time and profit for each cargo type.
+			foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
 
-			} else {
-				local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
+				local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
+				local travelTime = 0;
+				if (connection != null && connection.pathInfo.build)
+					travelTime = RoadPathFinding().GetTime(connection.pathInfo.roadList, maxSpeed, true);
+				else 
+					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+				local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
 
-				// Take a guess at the travel time and profit for each cargo type.
-				foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
+				local report = ConnectionReport();
+				report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
+				report.engineID = world.cargoTransportEngineIds[cargo];
+				report.fromConnectionNode = primIndustryConnectionNode;
+				report.toConnectionNode = secondConnectionNode;
+				report.cargoID = cargo;
 
-					local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
-					local travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-					local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
-
-					local report = ConnectionReport();
-					report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
-					report.engineID = world.cargoTransportEngineIds[cargo];
-					report.fromConnectionNode = primIndustryConnectionNode;
-					report.toConnectionNode = secondConnectionNode;
-					report.cargoID = cargo;
-
-					connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
-				}
+				connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
 			}
+				
+			// Also check for other connection starting from this node.
+			UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
 		}
 	}
 }
-
-
-/**
- * Debug purposes only.
- */
-function ConnectionAdvisor::PrintTree() {
-	Log.logDebug("PrintTree");
-	foreach (primIndustry in industry_tree) {
-		PrintNode(primIndustry, 0);
-	}
-	Log.logDebug("Done!");
-}
-
-function ConnectionAdvisor::PrintNode(node, depth) {
-	local string = "";
-	for (local i = 0; i < depth; i++) {
-		string += "      ";
-	}
-
-	Log.logDebug(string + AIIndustry.GetName(node.industryID) + " -> ");
-
-	foreach (transport in node.industryConnections) {
-		Log.logDebug("Vehcile travel time: " + transport.timeToTravelTo);
-		Log.logDebug("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
-		Log.logDebug("Cost: " + node.costToBuild);
-	}
-	foreach (iNode in node.industryNodeList)
-		PrintNode(iNode, depth + 1);
-}	
-
-
 
