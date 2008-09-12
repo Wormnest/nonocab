@@ -172,8 +172,7 @@ function ConnectionAdvisor::getReports()
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connectionNode.pathInfo);
-		vehicleAction.AddActionHandlerFunction(ConnectionManageVehiclesActionHandler(connectionNode));
+		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connectionNode);
 		actionList.push(vehicleAction);
 
 		// Create a report and store it!
