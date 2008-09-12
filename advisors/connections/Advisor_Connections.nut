@@ -62,7 +62,7 @@ function ConnectionAdvisor::getReports()
 	local comparedConnections = 0;
 	
 	// Check how much we have to spend:
-	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
+	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount();
 	
 	// Hold a cache of possible connections.
 	local connectionCache = BinaryHeap();
@@ -110,6 +110,7 @@ function ConnectionAdvisor::getReports()
 			local pathfinder = RoadPathFinding();
 			local pathList = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles());
 
+
 			if (pathList == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 				continue;
@@ -138,11 +139,25 @@ function ConnectionAdvisor::getReports()
 			}
 
 			local transportedCargoPerVehiclePerMonth = (30.0 / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
-			report.nrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
+			local costPerVehicle = AIEngine.GetPrice(report.engineID);
+			local costForRoad = pathfinder.GetCostForRoad(pathList);
+			local maxNrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
+			
+			if (costForRoad + costPerVehicle * maxNrVehicles > money) {
+				maxNrVehicles = (money - costForRoad) / costPerVehicle;
+			}
+			
+			// If we can't afford to buy any vehicles, don't bother.
+			if (maxNrVehicles == 0)
+				continue;
+			
+			report.nrVehicles = maxNrVehicles;
+			//report.nrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
 
 			// Calculate the profit per month per vehicle
 			report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
-			report.cost = pathfinder.GetCostForRoad(pathList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
+			//report.cost = pathfinder.GetCostForRoad(pathList) + report.nrVehicles * AIEngine.GetPrice(report.engineID);
+			report.cost = costForRoad + costPerVehicle * maxNrVehicles;
 
 			// If we can afford it, add it to the possible connection list.
 			if (report.cost < money) {
@@ -156,6 +171,8 @@ function ConnectionAdvisor::getReports()
 				}
 				
 				connectionNode.pathInfo = pathList;
+			} else {
+				Log.logWarning("To expesive!");
 			}
 		}
 	}
@@ -165,6 +182,7 @@ function ConnectionAdvisor::getReports()
 	local reports = [];
 	
 	foreach (report in SubSum.GetSubSum(connectionCache, money)) {
+		Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.

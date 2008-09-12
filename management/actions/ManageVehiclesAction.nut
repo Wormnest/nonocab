@@ -37,14 +37,12 @@ function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
 function ManageVehiclesAction::Execute()
 {
 	// Sell the vehicles.
+	Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (vehicleID in vehiclesToSell) {
 		AIVehicle.SellVehicle(vehicleID);
 	}
 	
-	
-	
 	// Buy the vehicles.
-	Log.logInfo("Buy " + vehiclesToBuy.len() + " and sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (engineInfo in vehiclesToBuy) {
 		
 		local engineID = engineInfo[0];
@@ -52,6 +50,8 @@ function ManageVehiclesAction::Execute()
 		local connectionNode = engineInfo[2];
 		local vehicleID = null;
 		local vehicleGroup = null;
+		
+		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + ".");
 		
 		// Search if there are already have a vehicle group with this engine ID.
 		foreach (vGroup in connectionNode.vehiclesOperating) {
