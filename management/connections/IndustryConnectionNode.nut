@@ -30,4 +30,8 @@ class IndustryConnectionNode extends ConnectionNode
 	function GetName() {
 		return AIIndustry.GetName(id);
 	}
+	
+	function GetProduction(cargoID) {
+		return AIIndustry.GetProduction(id, cargoID);
+	}
 }

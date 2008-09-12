@@ -32,4 +32,8 @@ class TownConnectionNode extends ConnectionNode
 	function GetName() {
 		return AITown.GetName(id);
 	}
+	
+	function GetProduction(cargoID) {
+		return AITown.GetMaxProduction(id, cargoID);
+	}
 }

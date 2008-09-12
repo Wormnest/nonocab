@@ -68,9 +68,7 @@ function World::UpdateIndustryTree(industryTree)
 		foreach (cargoID in connectionNode.cargoIdsProducing) {
 			connectionNode.cargoProducing[i] = AIIndustry.GetProduction(connectionNode.id, cargoID)
 		}
-		
-		Log.logDebug("Update " + connectionNode.GetName());
-		
+
 		UpdateIndustryTree(connectionNode.connectionNodeList);
 	}
 }

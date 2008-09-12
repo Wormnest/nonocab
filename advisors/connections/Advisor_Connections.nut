@@ -75,13 +75,59 @@ function ConnectionAdvisor::getReports()
 		
 		comparedConnections++;
 
-		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode);
+		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Check if the connection has already been build.
 		if (otherConnection != null && otherConnection.pathInfo.build == true) {
 			// Check if we need to add / remove vehicles to this connection.
+			Log.logDebug("Update cargo: " + AICargo.GetCargoLabel(report.cargoID));
+			
+			// First we check how much we already transport.
+			// Check if we already have vehicles who transport this cargo and deduce it from 
+			// the number of vehicles we need to build.
+			local cargoAlreadyTransported = 0;
+			foreach (connection in report.fromConnectionNode.connections) {
+				if (connection.cargoID == report.cargoID) {
+					foreach (vehicleGroup in connection.vehiclesOperating) {
+						cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (30.0 / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
+					}
+				}
+			}
+			
+			// Check if we need more vehicles:
+			local surplusProductionPerMonth = report.fromConnectionNode.GetProduction(report.cargoID) - cargoAlreadyTransported;
+	
+			local pathfinder = RoadPathFinding();
+			local timeToTravelTo = pathfinder.GetTime(otherConnection.pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
+			local timeToTravelFrom = pathfinder.GetTime(otherConnection.pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
+			
+			// Calculate bruto income per vehicle per run.
+			local incomePerRun = AICargo.GetCargoIncome(report.cargoID, 
+				AIMap.DistanceManhattan(otherConnection.pathInfo.roadList[0].tile, otherConnection.pathInfo.roadList[otherConnection.pathInfo.roadList.len() - 1].tile), 
+				timeToTravelTo) * AIEngine.GetCapacity(report.engineID);
 
+			// Calculate netto income per vehicle.
+			local transportedCargoPerVehiclePerMonth = (30.0 / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
+			local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / 364);
+			local maxNrVehicles = surplusProductionPerMonth / transportedCargoPerVehiclePerMonth;
+			local costPerVehicle = AIEngine.GetPrice(report.engineID);
 
+			if (costPerVehicle * maxNrVehicles > money) {
+				maxNrVehicles = money / costPerVehicle;
+			}
+
+			// If we can't buy any vehicles, don't bother.
+			if (maxNrVehicles.tointeger() <= 0) {
+				Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
+				continue;
+			}
+			
+			report.nrVehicles = maxNrVehicles;
+
+			// Calculate the profit per month per vehicle
+			report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
+			report.cost = costPerVehicle * maxNrVehicles;
+			connectionCache.Insert(report, -report.Utility());
 		} else {
 
 			// The actionlist to construct.
@@ -89,20 +135,20 @@ function ConnectionAdvisor::getReports()
 
 			// If we haven't calculated yet what it cost to build this report, we do it now.
 			local pathfinder = RoadPathFinding();
-			local pathList = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles());
+			local pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles());
 
 
-			if (pathList == null) {
+			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 				continue;
 			}
 			// Now we know the prices, check how many vehicles we can build and what the actual income per vehicle is.
-			local timeToTravelTo = pathfinder.GetTime(pathList.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
-			local timeToTravelFrom = pathfinder.GetTime(pathList.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
+			local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
+			local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
 
 			// Calculate bruto income per vehicle per run.
 			local incomePerRun = AICargo.GetCargoIncome(report.cargoID, 
-				AIMap.DistanceManhattan(pathList.roadList[0].tile, pathList.roadList[pathList.roadList.len() - 1].tile), 
+				AIMap.DistanceManhattan(pathInfo.roadList[0].tile, pathInfo.roadList[pathInfo.roadList.len() - 1].tile), 
 				timeToTravelTo) * AIEngine.GetCapacity(report.engineID);
 
 
@@ -119,21 +165,25 @@ function ConnectionAdvisor::getReports()
 				}
 			}
 
+			// Check if we already have vehicles who transport this cargo and deduce it from 
+			// the number of vehicles we need to build.
+			local cargoAlreadyTransported = 0;
+			foreach (connection in report.fromConnectionNode.connections) {
+				if (connection.cargoID == report.cargoID) {
+					foreach (vehicleGroup in connection.vehiclesOperating) {
+						cargoAlreadyTransported += (30.0 / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
+						//maxNrVehicles -= connection.vehiclesOperating.vehicleIDs.len();
+					}
+				}
+			}
+
 			local transportedCargoPerVehiclePerMonth = (30.0 / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
 			local costPerVehicle = AIEngine.GetPrice(report.engineID);
-			local costForRoad = pathfinder.GetCostForRoad(pathList);
-			local maxNrVehicles = productionPerMonth / transportedCargoPerVehiclePerMonth;
+			local costForRoad = pathfinder.GetCostForRoad(pathInfo);
+			local maxNrVehicles = (productionPerMonth - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth;
 			
 			if (costForRoad + costPerVehicle * maxNrVehicles > money) {
 				maxNrVehicles = (money - costForRoad) / costPerVehicle;
-			}
-			
-			// Check if we already have vehicles who transport this cargo and deduce it from 
-			// the number of vehicles we need to build.
-			foreach (connection in report.fromConnectionNode.connections) {
-				if (connection.cargoID == report.cargoID) {
-					maxNrVehicles -= connection.vehiclesOperating.vehicleIDs.len();
-				}
 			}
 			
 			// If we can't buy any vehicles, don't bother.
@@ -153,13 +203,13 @@ function ConnectionAdvisor::getReports()
 				connectionCache.Insert(report, -report.Utility());
 				
 				// Check if the industry connection node actually exists else create it, and update it!
-				local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode);
+				local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 				if (connectionNode == null) {
-					connectionNode = Connection(report.fromConnectionNode, report.toConnectionNode, Connection.INDUSTRY_TO_INDUSTRY);
+					connectionNode = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, false);
 					report.fromConnectionNode.AddConnection(report.toConnectionNode, connectionNode);
+				} else {
+					connectionNode.pathInfo = pathInfo;
 				}
-				
-				connectionNode.pathInfo = pathList;
 			}
 		}
 	}
@@ -173,10 +223,11 @@ function ConnectionAdvisor::getReports()
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.
-		local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode);
+		local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Give the action to build the road.
-		actionList.push(BuildRoadAction(connectionNode, true, true));
+		if (connectionNode.pathInfo.build != true)
+			actionList.push(BuildRoadAction(connectionNode, true, true));
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
@@ -209,14 +260,13 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
-			// Check if this connection already exists.
-			local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode); 
-			
-
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
+
+				// Check if this connection already exists.
+				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargo); 
 
 				local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
 				local travelTime = 0;

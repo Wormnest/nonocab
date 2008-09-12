@@ -40,7 +40,7 @@ class ConnectionNode
  * Add a new connection from this industry to one of its children.
  */
 function ConnectionNode::AddConnection(connectionNode, connection) {
-	connections[connectionNode.nodeType +  connectionNode.id] <- connection;
+	connections[connectionNode.nodeType + connectionNode.id + "_" + connection.cargoID] <- connection;
 }
 
 /**
@@ -48,9 +48,9 @@ function ConnectionNode::AddConnection(connectionNode, connection) {
  * @param connectionNode A ConnectionNode instance.
  * @return null if the connection doesn't exists, else the connection.
  */
-function ConnectionNode::GetConnection(connectionNode) {
-	if (connections.rawin(connectionNode.nodeType + connectionNode.id))
-		return connections.rawget(connectionNode.nodeType + connectionNode.id);
+function ConnectionNode::GetConnection(connectionNode, cargoID) {
+	if (connections.rawin(connectionNode.nodeType + connectionNode.id + "_" + cargoID))
+		return connections.rawget(connectionNode.nodeType + connectionNode.id + "_" + cargoID);
 	return null;
 }
 	

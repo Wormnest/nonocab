@@ -47,14 +47,20 @@ function ManageVehiclesAction::Execute()
 		
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
-		local connectionNode = engineInfo[2];
+		local connection = engineInfo[2];
 		local vehicleID = null;
 		local vehicleGroup = null;
+		
+		if (connection.cargoID != AIEngine.GetCargoType(engineID)) {
+			Log.logError("Mismatch " + AICargo.GetCargoLabel(connection.cargoID));
+			Log.logError("vs " + AICargo.GetCargoLabel(AIEngine.GetCargoType(engineID))	);
+			abc();
+		}
 		
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + ".");
 		
 		// Search if there are already have a vehicle group with this engine ID.
-		foreach (vGroup in connectionNode.vehiclesOperating) {
+		foreach (vGroup in connection.vehiclesOperating) {
 			if (vGroup.engineID == engineID) {
 				vehicleGroup = vGroup;
 				break;
@@ -64,12 +70,22 @@ function ManageVehiclesAction::Execute()
 		// If there isn't a vehicles group we create one.
 		if (vehicleGroup == null) {
 			vehicleGroup = VehicleGroup();
-			vehicleGroup.connection = connectionNode;
-			connectionNode.vehiclesOperating.push(vehicleGroup);
+			vehicleGroup.connection = connection;
+			
+			local pathfinder = RoadPathFinding();
+			vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+			vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 
+				AIMap.DistanceManhattan(connection.pathInfo.roadList[0].tile, connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), 
+				vehicleGroup.timeToTravelTo) * AIEngine.GetCapacity(engineID);	
+			vehicleGroup.engineID = engineID;
+			
+			
+			connection.vehiclesOperating.push(vehicleGroup);
 		}		
 		
 		for (local i = 0; i < vehicleNumbers; i++) {
-			local vehicleID = AIVehicle.BuildVehicle(connectionNode.pathInfo.depot,	engineID);
+			local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot,	engineID);
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
 				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
 				continue;
@@ -78,7 +94,7 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup.vehicleIDs.push(vehicleID);
 			
 			// Send the vehicles on their way.
-			local roadList = connectionNode.pathInfo.roadList;
+			local roadList = connection.pathInfo.roadList;
 			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 			AIVehicle.StartStopVehicle(vehicleID);

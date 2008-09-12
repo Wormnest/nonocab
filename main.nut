@@ -59,8 +59,6 @@ function NoCAB::Start()
 	// Debug:
 	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 
-	local world = World();
-
 	// Do what we have to do.
 	while(true)
 	{
