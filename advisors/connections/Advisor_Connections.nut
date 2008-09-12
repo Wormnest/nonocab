@@ -52,7 +52,6 @@ class ConnectionAdvisor extends Advisor
 function ConnectionAdvisor::getReports()
 {
 	Log.logDebug("getReports()");
-	world.UpdateCargoTransportEngineIds();
 	UpdateIndustryConnections(world.industry_tree);
 	
 	// The report list to construct.

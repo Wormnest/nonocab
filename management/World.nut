@@ -24,6 +24,8 @@ class World
 		industry_list = AIIndustryList();
 		cargoTransportEngineIds = array(AICargoList().Count(), -1);
 		BuildIndustryTree();
+		InitEvents();
+		InitCargoTransportEngineIds();		
 	}
 }
 /**
@@ -31,11 +33,16 @@ class World
  */
 function World::Update()
 {
-	this.industry_list = AIIndustryList();
+	UpdateEvents();
 	SetGoodTownList();
 	UpdateIndustryTree(industry_tree);
 }
 
+/**
+ * Update the industry tree by updating the production rates
+ * of all industries.
+ * @param industryTree An array of connection nodes which need to be updated.
+ */
 function World::UpdateIndustryTree(industryTree)
 {
 	foreach (connectionNode in industryTree) {
@@ -90,44 +97,8 @@ function World::BuildIndustryTree() {
 	// Every industry is stored in an IndustryNode.
 	foreach (industry, value in industries) {
 
-		local industryNode = IndustryConnectionNode(industry);
-
-		// Check which cargo is accepted.
-		foreach (cargo, value in cargos) {
-
-			// Check if the industry actually accepts something.
-			if (AIIndustry.IsCargoAccepted(industry, cargo)) {
-				industryNode.cargoIdsAccepting.push(cargo);
-
-				// Add to cache.
-				industryCacheAccepting[cargo].push(industryNode);
-
-				// Check if there are producing plants which this industry accepts.
-				for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
-					industryCacheProducing[cargo][i].connectionNodeList.push(industryNode);
-				}
-			}
-
-			if (AIIndustry.GetProduction(industry, cargo) != -1) {	
-
-				// Save production information.
-				industryNode.cargoIdsProducing.push(cargo);
-				industryNode.cargoProducing.push(AIIndustry.GetProduction(industry, cargo));
-
-				// Add to cache.
-				industryCacheProducing[cargo].push(industryNode);
-
-				// Check for accepting industries for these products.
-				for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
-					industryNode.connectionNodeList.push(industryCacheAccepting[cargo][i]);
-				}
-			}
-		}
-
-		// If the industry doesn't accept anything we add it to the root list.
-		if (industryNode.cargoIdsAccepting.len() == 0) {
-			industry_tree.push(industryNode);
-		}
+		
+		InsertIndustry(industry);
 	}
 	
 	// Now handle the connection Industry --> Town
@@ -149,27 +120,141 @@ function World::BuildIndustryTree() {
 }
 
 /**
+ * Insert an industryNode in the industryList.
+ * @industryID The id of the industry which needs to be added.
+ */
+function World::InsertIndustry(industryID)
+{
+	local cargos = AICargoList();
+	local industryNode = IndustryConnectionNode(industryID);
+	
+	// Check which cargo is accepted.
+	foreach (cargo, value in cargos) {
+
+		// Check if the industry actually accepts something.
+		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
+			industryNode.cargoIdsAccepting.push(cargo);
+
+			// Add to cache.
+			industryCacheAccepting[cargo].push(industryNode);
+
+			// Check if there are producing plants which this industry accepts.
+			for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
+				industryCacheProducing[cargo][i].connectionNodeList.push(industryNode);
+			}
+		}
+
+		if (AIIndustry.GetProduction(industryID, cargo) != -1) {	
+
+			// Save production information.
+			industryNode.cargoIdsProducing.push(cargo);
+			industryNode.cargoProducing.push(AIIndustry.GetProduction(industryID, cargo));
+
+			// Add to cache.
+			industryCacheProducing[cargo].push(industryNode);
+
+			// Check for accepting industries for these products.
+			for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
+				industryNode.connectionNodeList.push(industryCacheAccepting[cargo][i]);
+			}
+		}
+	}
+
+	// If the industry doesn't accept anything we add it to the root list.
+	if (industryNode.cargoIdsAccepting.len() == 0) {
+		industry_tree.push(industryNode);
+	}	
+}
+
+/**
+ * Remove an industryNode from the industryList.
+ * @industryID The id of the industry which needs to be removed.
+ */
+function World::RemoveIndustry(industryID) {
+	Log.logWarning("World::RemoveIndustry is not yet implemented!");
+}
+
+/**
  * Check all available vehicles to transport all sorts of cargos and save
  * the max speed of the fastest transport for each cargo.
  *
  * Update the engine IDs for each cargo type and select the fastest engines.
  */
-function World::UpdateCargoTransportEngineIds() {
+function World::InitCargoTransportEngineIds() {
 
 	local cargos = AICargoList();
-	local i = 0;
 	foreach (cargo, value in cargos) {
 
 		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
 		foreach (engine, value in engineList) {
-			if (AIEngine.GetCargoType(engine) == cargo&& 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[i]) < AIEngine.GetMaxSpeed(engine)) {
-				cargoTransportEngineIds[i] = engine;
+			if (AIEngine.GetCargoType(engine) == cargo && 
+				AIEngine.GetMaxSpeed(cargoTransportEngineIds[cargo]) < AIEngine.GetMaxSpeed(engine)) {
+				cargoTransportEngineIds[cargo] = engine;
 			}
 		}
-		i++;
+	}
+	
+	// Check
+	for(local i = 0; i < cargoTransportEngineIds.len(); i++) {
+		Log.logDebug("Use engine: " + AIEngine.GetName(cargoTransportEngineIds[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
 	}
 }
+
+/**
+ * Enable the event system and mark which events we want to be notified about.
+ */
+function World::InitEvents() {
+	AIEventController.DisableAllEvents();
+	AIEventController.EnableEvent(AIEvent.AI_ET_ENGINE_AVAILABLE);
+	AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_OPEN);
+	AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_CLOSE);
+}
+
+/**
+ * Check all events which are waiting and handle them properly.
+ */
+function World::UpdateEvents() {
+	while (AIEventController.IsEventWaiting()) {
+		local e = AIEventController.GetNextEvent();
+		switch (e.GetEventType()) {
+			
+			/**
+			 * As a new engine becomes available, consider if we want to use it.
+			 */
+			case AIEvent.AI_ET_ENGINE_AVAILABLE:
+				local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
+				local cargoID = AIEngine.GetCargoType(newEngineID);
+				local oldEngineID = cargoTransportEngineIds[cargoID];
+				
+				if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
+					Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(newEngineID));
+					cargoTransportEngineIds[cargoID] = newEngineID;
+				}
+				break;
+				
+			/**
+			 * Add a new industry to the industry list.
+			 */
+			case AIEvent.AI_ET_INDUSTRY_OPEN:
+				industry_list = AIIndustryList();
+				local industryID = AIEventIndustryOpen.Convert(e).GetIndustryID();
+				InsertIndustry(industryID);
+				Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
+				break;
+				
+			/**
+			 * Remove a new industry to the industry list.
+			 */
+			case AIEvent.AI_ET_INDUSTRY_CLOSE:
+				industry_list = AIIndustryList();
+				local industryID = AIEventIndustryClose.Convert(e).GetIndustryID();
+				RemoveIndustry(industryID);
+				break;
+		}
+	}
+}
+
+
 /**
  * Analizes all available towns and updates the list with good ones.  
  */

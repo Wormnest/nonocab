@@ -76,6 +76,12 @@ function ManageVehiclesAction::Execute()
 			}
 			
 			vehicleGroup.vehicleIDs.push(vehicleID);
+			
+			// Send the vehicles on their way.
+			local roadList = connectionNode.pathInfo.roadList;
+			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+			AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+			AIVehicle.StartStopVehicle(vehicleID);
 		}			
 	}
 	CallActionHandlers();
