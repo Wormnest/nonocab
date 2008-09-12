@@ -86,21 +86,14 @@ function ConnectionAdvisor::getReports()
 		
 		comparedConnections++;
 
-		// If the report is already fully calculated, check if we can afford it and execute it!
-		if (report.cost != 0 && report.cost < money) {
+		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode);
 
-			local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode);
-			if (otherConnection != null && otherConnection.build == true) {
-				// Check if we need to add / remove vehicles to this connection.
+		// Check if the connection has already been build.
+		if (otherConnection != null && otherConnection.pathInfo.build == true) {
+			// Check if we need to add / remove vehicles to this connection.
 
-			} else {
-				
-				connectionCache.Insert(report, -report.Utility());
-				// The cost has already been calculated, so we can build it immediatly.
-				report.print();
-				money -= report.cost;
-			}
-		} else if (report.cost == 0) {
+		
+		} else {
 
 			// The actionlist to construct.
 			local actionList = [];
@@ -146,8 +139,16 @@ function ConnectionAdvisor::getReports()
 				maxNrVehicles = (money - costForRoad) / costPerVehicle;
 			}
 			
-			// If we can't afford to buy any vehicles, don't bother.
-			if (maxNrVehicles == 0)
+			// Check if we already have vehicles who transport this cargo and deduce it from 
+			// the number of vehicles we need to build.
+			foreach (connection in report.fromConnectionNode.connections) {
+				if (connection.cargoID == report.cargoID) {
+					maxNrVehicles -= connection.vehiclesOperating.vehicleIDs.len();
+				}
+			}
+			
+			// If we can't buy any vehicles, don't bother.
+			if (maxNrVehicles <= 0)
 				continue;
 			
 			report.nrVehicles = maxNrVehicles;
@@ -226,6 +227,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				if (connection.pathInfo.build) {
 					// See if we need to add or remove some vehicles.
+					
+					
+					// Also check for other connection starting from this node.
 					UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
 				}
 
