@@ -9,6 +9,7 @@ class Tile {
 	static BRIDGE = 1;
 	static TUNNEL = 2;
 	static ROAD   = 3;
+	static ROAD_POST_TUNNEL_OR_BRIDGE = 4;
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or

@@ -7,6 +7,7 @@ class BuildRoadAction extends Action
 	buildDepot = false;			// Should we create a depot?
 	buildRoadStations = false;	// Should we build road stations?
 	directions = null;			// A list with all directions.
+	pathfinder = null;			// The pathfinder to use.
 	
 	/**
 	 * @param pathList A PathInfo object, the road to be build.
@@ -19,6 +20,7 @@ class BuildRoadAction extends Action
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
+		this.pathfinder = RoadPathFinding();
 		Action.constructor(null);
 	}
 }
@@ -28,19 +30,23 @@ function BuildRoadAction::Execute()
 {
 	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
 	local abc = AIExecMode();
-	if (!RoadPathFinding.CreateRoad(connection.pathInfo)) {
+	if (!pathfinder.CreateRoad(connection)) {
 		Log.logError("Failed to build a road");
 		return;
 	}
 	
 	connection.pathInfo.build = true;
 	local roadList = connection.pathInfo.roadList;
+	local len = roadList.len();
 	
 	if (buildRoadStations) {
-		local len = connection.pathInfo.roadList.len();
-		local a = connection.pathInfo.roadList[0];
-		AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true);
-		AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true);
+		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
+			Log.logError("Road station couldn't be build! Not handled yet!");
+		}
+		
+		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true)) {
+			Log.logError("Road station couldn't be build! Not handled yet!");
+		}
 	}
 
 	// Check if we need to build a depot.	
@@ -49,7 +55,7 @@ function BuildRoadAction::Execute()
 		local depotFront = null;
 		
 		// Look for a suitable spot and test if we can build there.
-		for (local i = 2; i < roadList.len() - 1; i++) {
+		for (local i = 2; i < len - 1; i++) {
 			
 			foreach (direction in directions) {
 				if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
@@ -75,9 +81,9 @@ function BuildRoadAction::Execute()
 		// If we found the correct location switch to exec mode and build it.
 		// Note that we need to build the road first, else we are unable to do
 		// so again in the future.
-		local test = AIExecMode();
-		AIRoad.BuildRoad(depotLocation, depotFront);
-		AIRoad.BuildRoadDepot(depotLocation, depotFront);
+		if (!AIRoad.BuildRoad(depotLocation, depotFront) ||	!AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
+			Log.logError("Depot couldn't be build! Not handled yet!");
+		}
 	}
 	
 	CallActionHandlers();

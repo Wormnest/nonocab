@@ -237,7 +237,7 @@ function World::UpdateEvents() {
 				local cargoID = AIEngine.GetCargoType(newEngineID);
 				local oldEngineID = cargoTransportEngineIds[cargoID];
 				
-				if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
+				if (AIEngine.GetVehicleType(newEngineID) == AIEngine.GetVehicleType(oldEngineID) && AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
 					Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(newEngineID));
 					cargoTransportEngineIds[cargoID] = newEngineID;
 				}

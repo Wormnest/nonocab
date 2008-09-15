@@ -102,7 +102,7 @@ function ConnectionAdvisor::getReports()
 			pathInfo = otherConnection.pathInfo;
 		} else {
 			// Find a new path.
-			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles());
+			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles(), true);
 			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 				continue;
