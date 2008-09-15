@@ -42,6 +42,8 @@ function BuildRoadAction::Execute()
 	if (buildRoadStations) {
 		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
 			Log.logError("Road station couldn't be build! Not handled yet!");
+
+			
 		}
 		
 		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true)) {
@@ -61,28 +63,35 @@ function BuildRoadAction::Execute()
 				if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
 					
 					// Switch to test mode so we don't build the depot, but just test its location.
-					local test = AITestMode();
-					if (AIRoad.BuildRoadDepot(roadList[i].tile + direction, roadList[i].tile)) {
-						
-						// We can't build the depot instantly, because OpenTTD crashes if we
-						// switch to exec mode at this point (stupid bug...).
-						depotLocation = roadList[i].tile + direction;
-						depotFront = roadList[i].tile;
-						connection.pathInfo.depot = depotLocation;
-						break;
+					{
+						local test = AITestMode();
+						if (AIRoad.BuildRoadDepot(roadList[i].tile + direction, roadList[i].tile)) {
+							
+							// We can't build the depot instantly, because OpenTTD crashes if we
+							// switch to exec mode at this point (stupid bug...).
+							depotLocation = roadList[i].tile + direction;
+							depotFront = roadList[i].tile;
+							connection.pathInfo.depot = depotLocation;
+						}
+					}
+					
+					if (depotLocation) {
+						local test = AIExecMode();
+						// If we found the correct location switch to exec mode and build it.
+						// Note that we need to build the road first, else we are unable to do
+						// so again in the future.
+						if (!AIRoad.BuildRoad(depotLocation, depotFront) ||	!AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
+							depotLocation = null;
+							depotFront = null;
+						} else {
+							break;
+						}
 					}
 				}
 			}
 			
-			if (depotFront != null)
+			if (depotLocation != null)
 				break;
-		}
-		
-		// If we found the correct location switch to exec mode and build it.
-		// Note that we need to build the road first, else we are unable to do
-		// so again in the future.
-		if (!AIRoad.BuildRoad(depotLocation, depotFront) ||	!AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
-			Log.logError("Depot couldn't be build! Not handled yet!");
 		}
 	}
 	
