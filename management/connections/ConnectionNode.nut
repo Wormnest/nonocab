@@ -14,6 +14,7 @@ class ConnectionNode
 
 	cargoProducing = null;			// The amount of cargo produced.
 	connectionNodeList = null;		// All nodes which accepts the products this node produces.
+	connectionNodeListReversed = null;	// All nodes which this noded accepts cargo from.
 
 	connections = null;				// Running connections to other nodes.
 
@@ -24,6 +25,7 @@ class ConnectionNode
 		cargoIdsAccepting = [];
 		cargoProducing = [];
 		connectionNodeList = [];
+		connectionNodeListReversed = [];
 		connections = {};
 	}
 	/**

@@ -178,6 +178,7 @@ function World::InsertIndustry(industryID)
 			// Check if there are producing plants which this industry accepts.
 			for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
 				industryCacheProducing[cargo][i].connectionNodeList.push(industryNode);
+				industryNode.connectionNodeListReversed.push(industryCacheProducing[cargo][i]);
 			}
 		}
 
@@ -193,6 +194,7 @@ function World::InsertIndustry(industryID)
 			// Check for accepting industries for these products.
 			for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
 				industryNode.connectionNodeList.push(industryCacheAccepting[cargo][i]);
+				industryCacheAccepting[cargo][i].connectionNodeListReversed.push(industryNode);
 			}
 		}
 	}
@@ -208,7 +210,56 @@ function World::InsertIndustry(industryID)
  * @industryID The id of the industry which needs to be removed.
  */
 function World::RemoveIndustry(industryID) {
-	Log.logWarning("World::RemoveIndustry is not yet implemented!");
+	
+	
+	if (!industry_table.rawin(industryID)) {
+		Log.logWarning("Industry removed which wasn't in our tree!");
+	}
+	
+	local industryNode = industry_table.rawget(industryID);
+	
+	// Remove the industry from the caches.
+	foreach (cargo in industryNode.cargoIdsProducing) {
+		for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
+			local producingIndustryNode = industryCacheProducing[cargo][i];
+			if (producingIndustryNode.id == industryNode.id) {
+				industryCacheProducing[cargo].remove(i);
+				break;
+			}
+		}
+	}
+	
+	foreach (cargo in industryNode.cargoIdsAccepting) {
+		for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
+			local acceptingIndustryNode = industryCacheAccepting[cargo][i];
+			if (acceptingIndustryNode.id == industryNode.id) {
+				industryCacheAccepting[cargo].remove(i);
+				break;
+			}
+		}
+	}
+	
+	// Remove the industry from the root list (if it's there).
+	if (industryNode.cargoIdsAccepting.len() == 0) {
+		for (local i = 0; i < industry_tree.len(); i++) {
+			if (industry_tree[i].id == industryNode.id) {
+				industry_tree.remove(i);
+				break;
+			}
+		}
+	}
+	
+	// Now we need to remove this industry from all industry nodes which produces
+	// cargo this industry used to accept.
+	foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
+		for (local i = 0; i < producingIndustryNode.connectionNodeList.len(); i++) {
+			if (producingIndustryNode.connectionNodeList[i].nodeType == industryNode.nodeType &&
+				producingIndustryNode.connectionNodeList[i].id == industryNode.id) {
+					producingIndustryNode.connectionNodeList.remove(i);
+					break;
+			}
+		}
+	}
 }
 
 /**
