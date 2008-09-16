@@ -72,7 +72,7 @@ function ConnectionAdvisor::getReports()
 			break;
 		}
 		
-		comparedConnections++;
+		//comparedConnections++;
 
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
@@ -96,10 +96,12 @@ function ConnectionAdvisor::getReports()
 		// Check if we already know the path or need to calculate it.
 		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		
-		if (otherConnection != null && otherConnection.pathInfo.build) {
+		// Use the already calculated pathInfo if it is already calculated.
+		if (otherConnection != null /* && otherConnection.pathInfo.build */) {
 			// Use the already build path.
 			pathInfo = otherConnection.pathInfo;
 		} else {
+			comparedConnections++;
 			// Find a new path.
 			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles(), true, true);
 			if (pathInfo == null) {
@@ -160,7 +162,7 @@ function ConnectionAdvisor::getReports()
 		// Check if this industry has already been processed, if this is the
 		// case, we won't add it to the reports because we want to prevent
 		// an industry from being exploited by different connections which
-		// interfere with eachoter. i.e. 1 connection should suffise to bring
+		// interfere with eachother. i.e. 1 connection should suffise to bring
 		// all cargo from 1 producing industry to 1 accepting industry.
 		local UID = report.fromConnectionNode.nodeType + report.fromConnectionNode.id + "_" + report.cargoID;
 		if (processedProcessingIndustries.rawin(UID))

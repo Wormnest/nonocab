@@ -15,12 +15,17 @@ class World
 	industry_tree = null;
 	industryCacheAccepting = null;
 	industryCacheProducing = null;
+	
+	starting_year = null;
+	years_passed = null;
 
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
 	constructor()
 	{
+		this.starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
+		this.years_passed = 0;
 		this.town_list = AITownList();
 		this.good_town_list = [];
 		industry_table = {};
@@ -42,8 +47,7 @@ class World
 			industryCacheProducing[i] = [];
 		}		
 		
-		
-		BuildIndustryTree(32);
+		BuildIndustryTree(16);
 		//PrintTree();
 		InitEvents();
 		InitCargoTransportEngineIds();		
@@ -68,6 +72,13 @@ class World
  */
 function World::Update()
 {
+	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
+	
+	// Update the industry every year!
+	if (years != years_passed) {
+		BuildIndustryTree(16 * (1 + years_passed));
+		years_passed = years;
+	}
 	UpdateEvents();
 	SetGoodTownList();
 	UpdateIndustryTree(industry_tree);
@@ -104,7 +115,7 @@ function World::UpdateIndustryTree(industryTree)
  */
 function World::BuildIndustryTree(maxDistance) {
 
-
+	Log.logDebug("Build industry tree, max distance: " + maxDistance);
 	// For each industry we will determine all possible connections to other
 	// industries which accept its goods. We build a tree structure in which
 	// the root nodes consist of industry nodes who only produce products but
