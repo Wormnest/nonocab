@@ -17,6 +17,7 @@ class NoCAB extends AIController {
 		
 		this.advisors = [
 			FinanceAdvisor(world),
+			//CityBusAdvisor(world),
 			ConnectionAdvisor(world)
 		];
 		 
@@ -56,9 +57,6 @@ function NoCAB::Start()
 	// Build Head Quaters.
 	BuildHQ();
 	
-	// Debug:
-	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
-
 	// Do what we have to do.
 	while(true)
 	{

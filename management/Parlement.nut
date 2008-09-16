@@ -14,8 +14,11 @@ class Parlement
  */
 function Parlement::ExecuteReports()
 {
-	foreach (report in reports) {
-		foreach (action in report.actions) {
+	foreach (report in reports)
+	{
+		Log.logInfo(report.message);
+		foreach (action in report.actions)
+		{
 			action.Execute();
 		}
 	}
