@@ -12,7 +12,6 @@ class ConnectionNode
 	cargoIdsProducing = null;		// The cargo IDs which are produced.
 	cargoIdsAccepting = null;		// The cargo IDs which are accepted.
 
-	cargoProducing = null;			// The amount of cargo produced.
 	connectionNodeList = null;		// All nodes which accepts the products this node produces.
 	connectionNodeListReversed = null;	// All nodes which this noded accepts cargo from.
 
@@ -23,7 +22,6 @@ class ConnectionNode
 		this.id = id;
 		cargoIdsProducing = [];
 		cargoIdsAccepting = [];
-		cargoProducing = [];
 		connectionNodeList = [];
 		connectionNodeListReversed = [];
 		connections = {};

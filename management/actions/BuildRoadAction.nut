@@ -131,13 +131,15 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide) {
 	 * in the first place!
 	 */
 	local end_list = AIList();
-	
+	local max = 10;
+	if (originalRoadListLen < max + 1)
+		max = originalRoadListLen - 1;
 	if (isProducingSide) {		
-		for (local i = 0; i < 10; i++) {
+		for (local i = 0; i < max; i++) {
 			end_list.AddItem(originalRoadList[originalRoadListLen - (i + 2)].tile, originalRoadList[originalRoadListLen - (i + 2)].tile);
 		}
 	} else {
-		for (local i = 0; i < 10; i++) {
+		for (local i = 0; i < max; i++) {
 			end_list.AddItem(originalRoadList[i + 1].tile, originalRoadList[i + 1].tile); 
 		}		
 	}

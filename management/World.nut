@@ -81,30 +81,10 @@ function World::Update()
 	}
 	UpdateEvents();
 	SetGoodTownList();
-	UpdateIndustryTree(industry_tree);
+	//UpdateIndustryTree(industry_tree);
 	
 	local pf = RoadPathFinding();
 	pf.FixBuildLater();
-}
-
-/**
- * Update the industry tree by updating the production rates
- * of all industries.
- * @param industryTree An array of connection nodes which need to be updated.
- */
-function World::UpdateIndustryTree(industryTree)
-{
-	foreach (connectionNode in industryTree) {
-		if (connectionNode.nodeType != ConnectionNode.INDUSTRY_NODE)
-			continue;
-			
-		local i = 0;
-		foreach (cargoID in connectionNode.cargoIdsProducing) {
-			connectionNode.cargoProducing[i] = AIIndustry.GetProduction(connectionNode.id, cargoID)
-		}
-
-		UpdateIndustryTree(connectionNode.connectionNodeList);
-	}
 }
 
 /**
@@ -186,7 +166,6 @@ function World::InsertIndustry(industryID)
 
 			// Save production information.
 			industryNode.cargoIdsProducing.push(cargo);
-			industryNode.cargoProducing.push(AIIndustry.GetProduction(industryID, cargo));
 
 			// Add to cache.
 			industryCacheProducing[cargo].push(industryNode);

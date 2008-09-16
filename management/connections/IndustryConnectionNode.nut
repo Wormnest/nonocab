@@ -32,6 +32,6 @@ class IndustryConnectionNode extends ConnectionNode
 	}
 	
 	function GetProduction(cargoID) {
-		return AIIndustry.GetProduction(id, cargoID);
+		return AIIndustry.GetLastMonthProduction(id, cargoID);
 	}
 }

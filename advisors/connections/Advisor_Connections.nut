@@ -72,8 +72,6 @@ function ConnectionAdvisor::getReports()
 			break;
 		}
 		
-		//comparedConnections++;
-
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
 		// the number of vehicles we need to build.
@@ -109,7 +107,7 @@ function ConnectionAdvisor::getReports()
 				continue;
 			}
 		}
-
+		
 		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
 		local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
 			
@@ -210,7 +208,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
-				
+	
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
@@ -235,10 +233,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
 			}
-				
-			// Also check for other connection starting from this node.
-			UpdateIndustryConnections(secondConnectionNode.connectionNodeList);
 		}
+		
+		// Also check for other connection starting from this node.
+		UpdateIndustryConnections(primIndustryConnectionNode.connectionNodeList);
 	}
 }
 
