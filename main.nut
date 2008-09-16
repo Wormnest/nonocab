@@ -17,7 +17,7 @@ class NoCAB extends AIController {
 		
 		this.advisors = [
 			FinanceAdvisor(world),
-			//CityBusAdvisor(world),
+			CityBusAdvisor(world),
 			ConnectionAdvisor(world)
 		];
 		 
