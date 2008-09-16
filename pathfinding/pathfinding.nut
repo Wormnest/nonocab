@@ -35,7 +35,7 @@ class RoadPathFinding
 	function GetCostForRoad(roadList);			// Give the cost for the best road from start to end
 	function GetSlope(tile, currentDirection);
 	function GetTime(roadList, maxSpeed, forward);
-	function FindFastestRoad(start, end, checkBuildability);
+	function FindFastestRoad(start, end, checkStartPositions, checkEndPositions);
 }
 
 /**
@@ -106,7 +106,7 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
  */
 function RoadPathFinding::CreateRoad(connection)
 {
-	local result = BuildRoad(connection);
+	local result = BuildRoad(connection.pathInfo.roadList);
 	
 	// If we were unsuccessful in building the road (and the fallback option failed,
 	// we might need to recalculate a part or the whole path.
@@ -174,9 +174,9 @@ class RoadPathBuildResult {
  * If something goes wrong during the building process the fallBackMethod
  * is called to handle things for us.
  */
-function RoadPathFinding::BuildRoad(connection)
+function RoadPathFinding::BuildRoad(roadList)
 {
-	local roadList = connection.pathInfo.roadList;
+	//local roadList = connection.pathInfo.roadList;
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
@@ -435,7 +435,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  * @param checkBuildability Check the start and end points before finding a road.
  * @return A PathInfo instance which contains the found path (if any).
  */
-function RoadPathFinding::FindFastestRoad(start, end, checkBuildability)
+function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions)
 {
 	local test = AITestMode();
 	local pq = null;
@@ -471,7 +471,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkBuildability)
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 		// Check if we can actually start here!
-		if(checkBuildability && !Tile.IsBuildable(i))
+		if(checkStartPositions && !Tile.IsBuildable(i))
 			continue;
  
  		hasStartPoint = true;
@@ -505,8 +505,19 @@ function RoadPathFinding::FindFastestRoad(start, end, checkBuildability)
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(end.HasItem(at.tile) && (!checkBuildability || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true))) {
+		if(end.HasItem(at.tile) && (!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true))) {
 
+			local resultList = [];
+			
+			local resultTile = at;
+			
+			while (resultTile.parentTile != resultTile) {
+				resultList.push(resultTile);
+				resultTile = resultTile.parentTile;
+			}
+			
+			resultList.push(resultTile);
+/*
 			// determine size...
 			local tmp = at;
 			local tmp_size = 1;
@@ -529,7 +540,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkBuildability)
 				at = at.parentTile;
 				resultList[tmp_size] = at;
 				tmp_size++;
-			}
+			}*/
 			return PathInfo(resultList, null);
 		}
 		

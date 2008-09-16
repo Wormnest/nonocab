@@ -43,12 +43,85 @@ function BuildRoadAction::Execute()
 		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
 			Log.logError("Road station couldn't be build! Not handled yet!");
 
+			// Find a new way to connect the industry:
+			local start_list = connection.toIndustryNode.GetAcceptingTiles();
+			start_list.RemoveItem(roadList[0].tile);
+			local end_list = AIList();
 			
-		}
+			for (local i = 0; i < 10; i++) {
+				end_list.AddItem(roadList[i + 1].tile, roadList[i + 1].tile); 
+			}
+			
+			local pathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false);
+			
+			if (pathInfo == null) {
+				Log.logError("couldn't build the road station, aborting!");
+				return false;
+			}
+			
+			// Try to build it.
+			local buildResult = pathfinder.BuildRoad(pathInfo.roadList);
+			
+			if (buildResult.success && AIRoad.BuildRoadStation(pathInfo.roadList[0].tile, pathInfo.roadList[1].tile, true, false, true)) {
+				// We're done so update the connection.
+				local connectionTile = null;
+				
+				for (local i = 0; i < 10; i++) {
+					if (roadList[i + 1].tile == pathInfo.roadList[0].tile) {
+						connectionTile = i + 1;
+						break;
+					}
+				}
+			 
+			 	// Update connection info.
+			 	connection.pathInfo.roadList = pathInfo.roadList.extend(connection.pathInfo.roadList.splice(connectionTile));
+			} else {
+				Log.logError("couldn't build the road station, aborting!");
+				return false;
+			}	
+		} 
 		
 		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true)) {
 			Log.logError("Road station couldn't be build! Not handled yet!");
-		}
+			
+			// Find a new way to connect the industry:
+			local start_list = connection.fromIndustryNode.GetProducingTiles();
+			start_list.RemoveItem(roadList[len - 1].tile);
+			local end_list = AIList();
+			
+			for (local i = 0; i < 10; i++) {
+				end_list.AddItem(roadList[len - (i + 2)].tile, roadList[len - (i + 2)].tile); 
+			}
+			
+			local pathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false);			
+			
+			if (pathInfo == null) {
+				Log.logError("couldn't build the road station, aborting!");
+				return false;
+			}
+			
+			// Try to build it.
+			local buildResult = pathfinder.BuildRoad(pathInfo.roadList);
+			local len2 = pathInfo.roadList.len();
+			
+			if (buildResult.success && AIRoad.BuildRoadStation(pathInfo.roadList[len2 - 1].tile, pathInfo.roadList[len2 - 2].tile, true, false, true)) {
+				// We're done so update the connection.
+				local connectionTile = null;
+				
+				for (local i = 0; i < 10; i++) {
+					if (roadList[len - (i + 2)].tile == pathInfo.roadList[len2 - 1].tile) {
+						connectionTile = len - (i + 2);
+						break;
+					}
+				}
+			 
+			 	// Update connection info.
+			 	connection.pathInfo.roadList = connection.pathInfo.roadList.splice(0, connectionTile).extend(pathInfo.roadList);
+			} else {
+				Log.logError("couldn't build the road station, aborting!");
+				return false;
+			}
+		} 
 	}
 
 	// Check if we need to build a depot.	
