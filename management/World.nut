@@ -51,6 +51,9 @@ function World::Update()
 	UpdateEvents();
 	SetGoodTownList();
 	UpdateIndustryTree(industry_tree);
+	
+	local pf = RoadPathFinding();
+	pf.FixBuildLater();
 }
 
 /**
