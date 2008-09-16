@@ -39,7 +39,6 @@ class ConnectionAdvisor extends Advisor
  */
 function ConnectionAdvisor::getReports()
 {
-	Log.logDebug("getReports()");
 	connectionReports = BinaryHeap();
 	UpdateIndustryConnections(world.industry_tree);
 
@@ -130,7 +129,7 @@ function ConnectionAdvisor::getReports()
 
 		// If we can't buy any vehicles, don't bother.
 		if (maxNrVehicles.tointeger() <= 0) {
-			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
+			//Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
 			continue;
 		}
 		
@@ -154,8 +153,19 @@ function ConnectionAdvisor::getReports()
 	// We have a list with possible connections we can afford, we now apply
 	// a subsum algorithm to get the best profit possible with the given money.
 	local reports = [];
+	local processedProcessingIndustries = {};
 	
 	foreach (report in SubSum.GetSubSum(connectionCache, money)) {
+		
+		// Check if this industry has already been processed, if this is the
+		// case, we won't add it to the reports because we want to prevent
+		// an industry from being exploited by different connections which
+		// interfere with eachoter. i.e. 1 connection should suffise to bring
+		// all cargo from 1 producing industry to 1 accepting industry.
+		local UID = report.fromConnectionNode.nodeType + report.fromConnectionNode.id + "_" + report.cargoID;
+		if (processedProcessingIndustries.rawin(UID))
+			continue;
+			
 		Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 		local actionList = [];
 			
@@ -173,7 +183,7 @@ function ConnectionAdvisor::getReports()
 
 		// Create a report and store it!
 		reports.push(Report(report.ToString(), report.cost, report.Profit(), actionList));
-		break;	// Debug		
+		processedProcessingIndustries[UID] <- UID;
 	}
 	
 	return reports;
@@ -198,6 +208,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
+				
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {

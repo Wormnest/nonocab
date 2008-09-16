@@ -144,9 +144,6 @@ function RoadPathFinding::CreateRoad(connection)
 		
 		// Merge new result with already existing roadlist.
 		local newRoadList = [];
-		//if (result.buildFromIndex > result.buildToIndex) {
-		//	quit();
-		//}
 		
 		newRoadList.extend(roadList.slice(0, result.buildToIndex));
 		newRoadList.extend(pathInfo.roadList);
@@ -162,9 +159,7 @@ function RoadPathFinding::CreateRoad(connection)
 		}		
 		
 		connection.pathInfo.roadList = newRoadList;
-		Log.logWarning("lets go!");
-		local tmpResult = BuildRoad(pathInfo.roadList);
-		Log.logWarning("done!");
+		local tmpResult = BuildRoad(newRoadList);
 		
 		// Check if we don't hit the same error (if we do, quit!).
 		if (!tmpResult.success && result.buildFromIndex == tmpResult.buildFromIndex) {
@@ -173,7 +168,6 @@ function RoadPathFinding::CreateRoad(connection)
 		}
 		
 		result = tmpResult;
-		Log.logDebug(" let's go! :)");
 	}
 	return true;
 }

@@ -5,8 +5,10 @@ class World
 {
 
 	town_list = null;				// List with all towns.
-	good_town_list = null;			    // List with intressing towns.
+	good_town_list = null;			// List with intressing towns.
 	industry_list = null;			// List with all industries.
+	industry_table = null;			// Table with all industries.
+	cargo_list = null;				// List with all cargos.
 
 	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 
@@ -21,9 +23,27 @@ class World
 	{
 		this.town_list = AITownList();
 		this.good_town_list = [];
+		industry_table = {};
 		industry_list = AIIndustryList();
 		cargoTransportEngineIds = array(AICargoList().Count(), -1);
-		BuildIndustryTree();
+		
+		// Construct complete industry node list.
+		cargo_list = AICargoList();
+		industryCacheAccepting = array(cargo_list.Count());
+		industryCacheProducing = array(cargo_list.Count());
+	
+		industry_tree = [];
+	
+		// Fill the arrays with empty arrays, we can't use:
+		// local industryCacheAccepting = array(cargos.Count(), [])
+		// because it will all point to the same empty array...
+		for (local i = 0; i < cargo_list.Count(); i++) {
+			industryCacheAccepting[i] = [];
+			industryCacheProducing[i] = [];
+		}		
+		
+		
+		BuildIndustryTree(32);
 		//PrintTree();
 		InitEvents();
 		InitCargoTransportEngineIds();		
@@ -82,22 +102,8 @@ function World::UpdateIndustryTree(industryTree)
  * industries (ie. the industries which only produce cargo) are the root
  * nodes of this tree.
  */
-function World::BuildIndustryTree() {
-	// Construct complete industry node list.
-	local industries = industry_list;
-	local cargos = AICargoList();
-	industryCacheAccepting = array(cargos.Count());
-	industryCacheProducing = array(cargos.Count());
+function World::BuildIndustryTree(maxDistance) {
 
-	industry_tree = [];
-
-	// Fill the arrays with empty arrays, we can't use:
-	// local industryCacheAccepting = array(cargos.Count(), [])
-	// because it will all point to the same empty array...
-	for (local i = 0; i < cargos.Count(); i++) {
-		industryCacheAccepting[i] = [];
-		industryCacheProducing[i] = [];
-	}
 
 	// For each industry we will determine all possible connections to other
 	// industries which accept its goods. We build a tree structure in which
@@ -111,7 +117,7 @@ function World::BuildIndustryTree() {
 	//
 	//
 	// Every industry is stored in an IndustryNode.
-	foreach (industry, value in industries) {
+	foreach (industry, value in industry_list) {
 		InsertIndustry(industry);
 	}
 	
@@ -121,7 +127,7 @@ function World::BuildIndustryTree() {
 		local townNode = TownConnectionNode(town);
 		
 		// Check if this town accepts something an industry creates.
-		foreach (cargo, value in cargos) {
+		foreach (cargo, value in cargo_list) {
 			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
 				
 				// Check if we have an industry which actually produces this cargo.
@@ -139,11 +145,17 @@ function World::BuildIndustryTree() {
  */
 function World::InsertIndustry(industryID)
 {
-	local cargos = AICargoList();
 	local industryNode = IndustryConnectionNode(industryID);
 	
+	// Make sure this industry hasn't already been added.
+	if (!industry_table.rawin(industryID)) {
+		industry_table[industryID] <- industryNode;
+	} else {
+		return;
+	}
+	
 	// Check which cargo is accepted.
-	foreach (cargo, value in cargos) {
+	foreach (cargo, value in cargo_list) {
 
 		// Check if the industry actually accepts something.
 		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
@@ -196,8 +208,7 @@ function World::RemoveIndustry(industryID) {
  */
 function World::InitCargoTransportEngineIds() {
 
-	local cargos = AICargoList();
-	foreach (cargo, value in cargos) {
+	foreach (cargo, value in cargo_list) {
 
 		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
 		foreach (engine, value in engineList) {

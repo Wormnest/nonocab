@@ -29,10 +29,12 @@ class BuildRoadAction extends Action
 function BuildRoadAction::Execute()
 {
 	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
-	local abc = AIExecMode();
-	if (!pathfinder.CreateRoad(connection)) {
-		Log.logError("Failed to build a road");
-		return;
+	{
+		local abc = AIExecMode();
+		if (!pathfinder.CreateRoad(connection)) {
+			Log.logError("Failed to build a road");
+			return;
+		}
 	}
 	
 	connection.pathInfo.build = true;
@@ -40,6 +42,7 @@ function BuildRoadAction::Execute()
 	local len = roadList.len();
 	
 	if (buildRoadStations) {
+		local abc = AIExecMode();
 		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
 			Log.logError("Road station couldn't be build! Not handled yet!");
 			BuildRoadStation(connection, false);
@@ -76,6 +79,7 @@ function BuildRoadAction::Execute()
 					}
 					
 					if (depotLocation) {
+						local abc = AIExecMode();
 						// If we found the correct location switch to exec mode and build it.
 						// Note that we need to build the road first, else we are unable to do
 						// so again in the future.
@@ -194,11 +198,6 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide) {
 		} else {
 			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(0, connectionTile);
 			connection.pathInfo.roadList.extend(roadStationPathInfo.roadList);
-		}
-		
-		if (connection.pathInfo.roadList == null) {
-			Log.logError("the road list is 0000!");
-			quit();
 		}
 	} else {
 		Log.logError("couldn't build the road station, aborting!");
