@@ -14,6 +14,16 @@ function Log::logDebug(message)
 		AILog.Info("DEBUG: " + message);
 	}
 }
+function Log::logDebugTile(tile, message)
+{
+	Log.logDebug("tile(" + AIMap.GetTileX(tile)+ ", "+ AIMap.GetTileY(tile) + ") " +  message);
+}
+function Log::buildDebugSign(tile, message)
+{
+	if(Log.getLogLevel() < 1) {
+		AISign.BuildSign(tile, "DEBUG: " + message);
+	}
+}
 /** If logLevel is ok log info. */
 function Log::logInfo(message)
 {
