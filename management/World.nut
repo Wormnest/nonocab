@@ -5,7 +5,6 @@ class World
 {
 
 	town_list = null;				// List with all towns.
-	good_town_list = null;			// List with intressing towns.
 	industry_list = null;			// List with all industries.
 	industry_table = null;			// Table with all industries.
 	cargo_list = null;				// List with all cargos.
@@ -84,7 +83,6 @@ function World::Update()
 		years_passed = years;
 	}
 	UpdateEvents();
-//	SetGoodTownList();
 	
 	local pf = RoadPathFinding();
 	pf.FixBuildLater();
@@ -322,52 +320,6 @@ function World::UpdateEvents() {
 		}
 	}
 }
-
-
-/**
- * Analizes all available towns and updates the list with good ones.  
- */
-function World::SetGoodTownList()
-{
-	local MINIMUM_CITY_SIZE = 512;
-	local MINIMUM_PASS_PRODUCTION = 50;
-	local MINIMUM_MAIL_PRODUCTION = 50;
-	local MINIMUM_ARMO_PRODUCTION = 25;
-	
-	Log.logInfo("Add new towns.");
-	
-	// TODO rest for debuging;
-	// CN: ik heb geen idee waarom Is InArray faalt. Daarom, tijderlijk elke keer opnieuw :S
-	this.good_town_list = [];
-	
-	Log.logInfo("There are " + this.town_list.Count() + " available towns.");
-
-	foreach(town, value in this.town_list)
-	{
-		//Log.logDebug(town);
-		//Log.logDebug(value);
-		// Only check cities who are big enough.
-		if(AITown.GetPopulation(town) > MINIMUM_CITY_SIZE &&
-			/*!IsInArray(this.good_town_list, town) && */(
-			// If we have a statue they should like us
-			AITown.HasStatue(town) ||
-			// we like to deliver something anyway.
-			AITown.GetMaxProduction(town, AICargo.CC_PASSENGERS ) > MINIMUM_PASS_PRODUCTION ||
-			AITown.GetMaxProduction(town, AICargo.CC_MAIL) > MINIMUM_MAIL_PRODUCTION ||
-			AITown.GetMaxProduction(town, AICargo.CC_ARMOURED) > MINIMUM_ARMO_PRODUCTION
-			))
-		{
-			Log.logDebug(AITown.GetName(town) + " (" +
-			AITown.GetPopulation(town) +
-				"), Pass: " + AITown.GetMaxProduction(town, AICargo.CC_PASSENGERS) +
-				", Mail: " + AITown.GetMaxProduction(town, AICargo.CC_MAIL) +
-				", Armo: " + AITown.GetMaxProduction(town, AICargo.CC_ARMOURED));
-			this.good_town_list.push(town);
-		}
-	}
-	Log.logInfo("There are " + this.good_town_list.len() + " good towns.");
-}
-
 /**
  * Debug purposes only.
  */
