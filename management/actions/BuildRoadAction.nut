@@ -63,6 +63,8 @@ function BuildRoadAction::Execute()
 		for (local i = 2; i < len - 1; i++) {
 			
 			foreach (direction in directions) {
+				if (direction == roadList[i].direction || direction == -roadList[i].direction)
+					continue;
 				if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
 					
 					// Switch to test mode so we don't build the depot, but just test its location.

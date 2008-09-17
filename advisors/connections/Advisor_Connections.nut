@@ -39,7 +39,10 @@ class ConnectionAdvisor extends Advisor
  */
 function ConnectionAdvisor::getReports()
 {
+	Log.logDebug("ConnectionAdvisor::getReports()");
 	connectionReports = BinaryHeap();
+	
+	Log.logDebug("Update industry connections.");
 	UpdateIndustryConnections(world.industry_tree);
 
 	// The report list to construct.
@@ -57,7 +60,7 @@ function ConnectionAdvisor::getReports()
 	// Try to get the best subset of options.
 	local report;
 	
-	
+	Log.logDebug("Check all connections");
 	local asfs = AITestMode();
 	while ((report = connectionReports.Pop()) != null) {
 
@@ -71,6 +74,8 @@ function ConnectionAdvisor::getReports()
 		comparedConnections > 20) {	// We've compared at least 20 connections.
 			break;
 		}
+///		if (connectionCache.Count() > 5)
+///			break;
 		
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
@@ -129,7 +134,7 @@ function ConnectionAdvisor::getReports()
 
 		// If we can't buy any vehicles, don't bother.
 		if (maxNrVehicles.tointeger() <= 0) {
-			//Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
+			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
 			continue;
 		}
 		
@@ -140,6 +145,7 @@ function ConnectionAdvisor::getReports()
 		
 		// Add the report to the list.
 		connectionCache.Insert(report, -report.Utility());
+		Log.logDebug("Insert road from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache");
 		
 		// Check if the industry connection node actually exists else create it, and update it!
 		if (otherConnection == null) {
@@ -149,6 +155,7 @@ function ConnectionAdvisor::getReports()
 			otherConnection.pathInfo = pathInfo;
 		}
 	}
+	Log.logDebug("Subsum");
 	
 	// We have a list with possible connections we can afford, we now apply
 	// a subsum algorithm to get the best profit possible with the given money.
@@ -186,6 +193,7 @@ function ConnectionAdvisor::getReports()
 		processedProcessingIndustries[UID] <- UID;
 	}
 	
+	Log.logDebug("Return reports");
 	return reports;
 }
 
@@ -203,12 +211,17 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
+	local industriesToCheck = [];
 	foreach (primIndustryConnectionNode in industry_tree) {
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
+			if (manhattanDistance > world.max_distance_between_nodes) continue;
+			
+			local checkIndustry = false;
+			
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargo in primIndustryConnectionNode.cargoIdsProducing) {
@@ -218,8 +231,11 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				local maxSpeed = AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[cargo]);
 				local travelTime = 0;
-				if (connection != null && connection.pathInfo.build)
+
+				if (connection != null && connection.pathInfo.build) {
 					travelTime = RoadPathFinding().GetTime(connection.pathInfo.roadList, maxSpeed, true);
+					checkIndustry = true;
+				}
 				else 
 					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 				local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
@@ -233,10 +249,15 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				connectionReports.Insert(report, -report.profitPerMonthPerVehicle);
 			}
+			
+			if (checkIndustry) {
+				industriesToCheck.push(secondConnectionNode);
+			}
 		}
 		
 		// Also check for other connection starting from this node.
-		UpdateIndustryConnections(primIndustryConnectionNode.connectionNodeList);
+		if (industriesToCheck.len() > 0)
+			UpdateIndustryConnections(industriesToCheck);
 	}
 }
 

@@ -18,6 +18,8 @@ class World
 	
 	starting_year = null;
 	years_passed = null;
+	
+	max_distance_between_nodes = null;		// The maximum distance between industries.
 
 	/**
 	 * Initializes a repesentation of the 'world'.
@@ -47,7 +49,8 @@ class World
 			industryCacheProducing[i] = [];
 		}		
 		
-		BuildIndustryTree(16);
+		BuildIndustryTree();
+		max_distance_between_nodes = 32;
 		//PrintTree();
 		InitEvents();
 		InitCargoTransportEngineIds();		
@@ -72,16 +75,16 @@ class World
  */
 function World::Update()
 {
+	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount());
 	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
 	
-	// Update the industry every year!
+	// Update the max distance every year!
 	if (years != years_passed) {
-		BuildIndustryTree(16 * (1 + years_passed));
+		max_distance_between_nodes = 32 * (1 + years_passed);
 		years_passed = years;
 	}
 	UpdateEvents();
-	SetGoodTownList();
-	//UpdateIndustryTree(industry_tree);
+//	SetGoodTownList();
 	
 	local pf = RoadPathFinding();
 	pf.FixBuildLater();
@@ -93,9 +96,9 @@ function World::Update()
  * industries (ie. the industries which only produce cargo) are the root
  * nodes of this tree.
  */
-function World::BuildIndustryTree(maxDistance) {
+function World::BuildIndustryTree() {
 
-	Log.logDebug("Build industry tree, max distance: " + maxDistance);
+	Log.logDebug("Build industry tree");
 	// For each industry we will determine all possible connections to other
 	// industries which accept its goods. We build a tree structure in which
 	// the root nodes consist of industry nodes who only produce products but
