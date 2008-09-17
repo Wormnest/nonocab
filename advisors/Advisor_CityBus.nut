@@ -6,32 +6,39 @@ class CityBusAdvisor extends Advisor {}
  * for each interesting city:
  * - build two stations
  * - build an depot
- * - build n busses (n E {1, })
+ * - build n busses (2,3,4)
  * - add route to busses 
  *
  */
 function CityBusAdvisor::getReports()
 {
-	// AICargo.CC_PASSENGERS = 0 but should be AICargo.CC_COVERED
+	local MAXIMUM_BUS_COUNT = 4;
+	// AICargo.CC_PASSENGERS = 1 but should be AICargo.CC_COVERED
 	local AICargo_CC_PASSENGERS = AICargo.CC_COVERED;
-	// TODO: make not static.
-	//local engine_id = innerWorld.
-	//local CityBusCapacity = AIEngine.GetCapacity(innerWorld.cargoTransportEngineIds[]);
-	// At least two busses should ride.
-	local CityBusCapacity = 37*2;
-	//Log.logDebug("	CityBusCapacity: " + CityBusCapacity);
+	// First is bus.
+	local engine_id = innerWorld.cargoTransportEngineIds[0];
+	Log.logDebug("Bus: "+AIEngine.GetName(engine_id));
+	local CityBusCapacity = AIEngine.GetCapacity(engine_id);
+	Log.logDebug("CityBus Capacity: " + CityBusCapacity);
 	
 	local reports = [];
 	
 	foreach(town_id, value in innerWorld.town_list)
 	{
-		if(AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) >= CityBusCapacity)
+		// At least two busses should ride.
+		if(AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) >= CityBusCapacity * 2)
 		{
 			Log.logDebug(AITown.GetName(town_id) + " (" + AITown.GetPopulation(town_id) + "), MaxPass: " + AITown.GetMaxProduction(town_id,AICargo_CC_PASSENGERS));
 
+			local options = 0;
 	 		local stationE = FindStationTile(town_id, 0);
 	 		local stationW = FindStationTile(town_id, 2);
-	 		local options = 0;
+	 		local reportEW = null;
+	 		local reportNS = null;
+	 		
+	 		// Maximum 4 busses.
+	 		local busCount = AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) / CityBusCapacity;
+	 		if( busCount > MAXIMUM_BUS_COUNT) {busCount = MAXIMUM_BUS_COUNT; }
 			
 			if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
 			{
@@ -41,6 +48,7 @@ function CityBusAdvisor::getReports()
 				}
 				else
 				{
+					reportEW = Report("Build E-W Busline.", 0, 500, []);
 					Log.logDebug("E-W possible");
 					options++;
 				}
@@ -57,6 +65,7 @@ function CityBusAdvisor::getReports()
 				}
 				else
 				{
+					reportEW = Report("Build N-S Busline.", 0, 500, []);
 					Log.logDebug("N-S possible");
 					options++;
 				}
@@ -66,16 +75,21 @@ function CityBusAdvisor::getReports()
 				if(AIMap.DistanceSquare(stationN, stationS) > AIMap.DistanceSquare(stationE, stationW))
 				{
 					Log.logDebug("N-S is preferable");
-					Log.buildDebugSign(stationN, "station N");
-					Log.buildDebugSign(stationS, "station S");
+					//Log.buildDebugSign(stationN, "station N");
+					//Log.buildDebugSign(stationS, "station S");
+					reportEW = null;
 				}
 				else
 				{
 					Log.logDebug("E-W is preferable");
-					Log.buildDebugSign(stationE, "station E");
-					Log.buildDebugSign(stationW, "station W");
+					//Log.buildDebugSign(stationE, "station E");
+					//Log.buildDebugSign(stationW, "station W");
+					reportNS = null;
 				}
 			}
+			// Add reports if not null.
+			if(reportNS != null){ reports.push(reportNS); }
+			if(reportEW != null){ reports.push(reportEW); }
 		}
 	}
 	return reports;
@@ -115,9 +129,6 @@ function CityBusAdvisor::FindStationTile(/*in32*/town_id, /*int32*/ direction)
 	}
 	// INVALID_TILE
 	return -1;
-}
-function CityBusAdvisor::FindDepot()
-{
 }
 function CityBusAdvisor::GetPathInfo(/* tile */ station0, /* tile */ station1)
 {
