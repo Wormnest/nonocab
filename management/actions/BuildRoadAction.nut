@@ -44,13 +44,15 @@ function BuildRoadAction::Execute()
 	if (buildRoadStations) {
 		local abc = AIExecMode();
 		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
-			Log.logError("Road station couldn't be build! Not handled yet!");
-			BuildRoadStation(connection, false);
+			
+			if (!BuildRoadStation(connection, false))
+				Log.logError("Road station couldn't be build! Not handled yet!");
 		} 
 		
 		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true)) {
-			Log.logError("Road station couldn't be build! Not handled yet!");
-			BuildRoadStation(connection, true);
+			
+			if (!BuildRoadStation(connection, true))
+				Log.logError("Road station couldn't be build! Not handled yet!");
 		} 
 	}
 
@@ -203,6 +205,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide) {
 			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(0, connectionTile);
 			connection.pathInfo.roadList.extend(roadStationPathInfo.roadList);
 		}
+		return true;
 	} else {
 		Log.logError("couldn't build the road station, aborting!");
 		Log.logError(AIError.GetLastErrorString());
