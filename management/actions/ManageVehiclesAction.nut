@@ -95,8 +95,16 @@ function ManageVehiclesAction::Execute()
 			
 			// Send the vehicles on their way.
 			local roadList = connection.pathInfo.roadList;
-			AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
-			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+			if(connection.bilateralConnection)
+			{
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_TRANSFER);
+				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_TRANSFER);
+			}
+			else
+			{
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+			}
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 			AIVehicle.StartStopVehicle(vehicleID);
 		}			

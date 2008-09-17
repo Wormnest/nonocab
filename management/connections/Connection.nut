@@ -7,6 +7,7 @@ class Connection
 	static INDUSTRY_TO_INDUSTRY = 1;
 	static INDUSTRY_TO_TOWN = 2;
 	static TOWN_TO_TOWN = 3;
+	static TOWN_TO_SELF = 4;
 	
 	connectionType = null;		// The type of connection (one of above).
 	cargoID = null;				// The type of cargo carried from one node to another.
@@ -29,8 +30,14 @@ class Connection
 			} else {
 				connectionType = INDUSTRY_TO_TOWN;
 			}
-		} else {
-			connectionType = TOWN_TO_TOWN;
+		}
+		else {
+			if(travelFromNode == travelToNode) {
+				connectionType = TOWN_TO_SELF;	
+			}
+			else{
+				connectionType = TOWN_TO_TOWN;
+			}
 		}
 		vehiclesOperating = [];
 	}

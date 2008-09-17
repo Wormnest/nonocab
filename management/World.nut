@@ -8,6 +8,7 @@ class World
 	industry_list = null;			// List with all industries.
 	industry_table = null;			// Table with all industries.
 	cargo_list = null;				// List with all cargos.
+	townConnectionNodes = null;
 
 	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 
@@ -25,6 +26,7 @@ class World
 	 */
 	constructor()
 	{
+		this.townConnectionNodes = [];
 		this.starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		this.years_passed = 0;
 		this.town_list = AITownList();
@@ -127,6 +129,7 @@ function World::BuildIndustryTree() {
 				}
 			}
 		}
+		townConnectionNodes.push(townNode);
 	}
 }
 

@@ -15,59 +15,95 @@ function CityBusAdvisor::getReports()
 	local MAXIMUM_BUS_COUNT = 4;
 	// AICargo.CC_PASSENGERS = 1 but should be AICargo.CC_COVERED
 	local AICargo_CC_PASSENGERS = AICargo.CC_COVERED;
+	local CARGO_ID_PASS = 0;
+	
 	// First is bus.
 	local engine_id = innerWorld.cargoTransportEngineIds[0];
-	Log.logDebug("Bus: "+AIEngine.GetName(engine_id));
 	local CityBusCapacity = AIEngine.GetCapacity(engine_id);
-	Log.logDebug("CityBus Capacity: " + CityBusCapacity);
 	
 	local reports = [];
+	local options = 0;
 	
+	// Stations
+	local stationE = null;
+	local stationW = null;
+	local stationN = null;
+	local stationS = null;
+	
+	// Reports
+	local reportEW = null;
+	local reportNS = null;
+	
+	// report helpers
+	local path_info = null;
+	local connection = null;
+	local town_node = null;
+	local build_action = null;
+	local drive_action = null;
+	
+	foreach(town_node in innerWorld.townConnectionNodes)
+	{
+		connection = town_node.GetConnection(town_node, CARGO_ID_PASS);
+		if(connection == null)
+		{
+			if(town_node.GetProduction(AICargo_CC_PASSENGERS) >= CityBusCapacity * 2)
+			{
+				// Search for spots.
+				stationE = FindStationTile(town_node.id, 0);
+		 		stationW = FindStationTile(town_node.id, 2);
+				//stationN = FindStationTile(town_node.id, 1);
+				//stationS = FindStationTile(town_node.id, 3);
+				
+				// Research East-West.
+			if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
+			{
+				path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
+				
+				if(path_info != null)
+				{
+					connection = Connection(CARGO_ID_PASS, town_node, town_node, path_info, true);
+					town_node.AddConnection(town_node, connection);
+					build_action = BuildRoadAction(connection, true, true);
+					drive_action = ManageVehiclesAction();
+					drive_action.BuyVehicles(engine_id, 4, connection);
+					reportEW = Report("CityBus", -10, 10000, [build_action, drive_action]);
+					reports.push(reportEW);
+				}
+			}
+		}
+		// Update connection.
+		else
+		{
+			
+		}
+	}
+	/*
 	foreach(town_id, value in innerWorld.town_list)
 	{
+		Log.logDebug(AITown.GetName(town_id) + " (" + AITown.GetPopulation(town_id) + "), MaxPass: " + AITown.GetMaxProduction(town_id,AICargo_CC_PASSENGERS));
+		
 		// At least two busses should ride.
 		if(AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) >= CityBusCapacity * 2)
 		{
-			Log.logDebug(AITown.GetName(town_id) + " (" + AITown.GetPopulation(town_id) + "), MaxPass: " + AITown.GetMaxProduction(town_id,AICargo_CC_PASSENGERS));
-
-			local options = 0;
-	 		local stationE = FindStationTile(town_id, 0);
-	 		local stationW = FindStationTile(town_id, 2);
-	 		local reportEW = null;
-	 		local reportNS = null;
-	 		
-	 		// Maximum 4 busses.
-	 		local busCount = AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) / CityBusCapacity;
-	 		if( busCount > MAXIMUM_BUS_COUNT) {busCount = MAXIMUM_BUS_COUNT; }
+			stationE = FindStationTile(town_id, 0);
+	 		stationW = FindStationTile(town_id, 2);
+			stationN = FindStationTile(town_id, 1);
+			stationS = FindStationTile(town_id, 3);
 			
+			// Research East-West.
 			if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
 			{
-				if(GetPathInfo(stationE, stationW) == null)
+				path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
+				
+				if(path_info != null)
 				{
-					Log.logDebug("E-W inpossible");
-				}
-				else
-				{
-					reportEW = Report("Build E-W Busline.", 0, 500, []);
-					Log.logDebug("E-W possible");
-					options++;
-				}
-			} 
-			
-			local stationN = FindStationTile(town_id, 1);
-			local stationS = FindStationTile(town_id, 3);
-			
-			if(AIMap.IsValidTile(stationN) && AIMap.IsValidTile(stationS))
-			{
-				if(GetPathInfo(stationN, stationS) == null)
-				{
-					Log.logDebug("N-S inpossible");
-				}
-				else
-				{
-					reportEW = Report("Build N-S Busline.", 0, 500, []);
-					Log.logDebug("N-S possible");
-					options++;
+					town_node = TownConnectionNode(town_id);
+					connection = Connection(0, town_node, town_node, path_info, true);
+					Log.logDebug(connection.connectionType);
+					local build_action = BuildRoadAction(connection, true, true);
+					local drive_action = ManageVehiclesAction();
+					drive_action.BuyVehicles(engine_id, 4, connection);
+					reports.push(Report("CityBus", -10, 10000, [build_action, drive_action]));
 				}
 			}
 			if(options == 2)
@@ -75,22 +111,13 @@ function CityBusAdvisor::getReports()
 				if(AIMap.DistanceSquare(stationN, stationS) > AIMap.DistanceSquare(stationE, stationW))
 				{
 					Log.logDebug("N-S is preferable");
-					//Log.buildDebugSign(stationN, "station N");
-					//Log.buildDebugSign(stationS, "station S");
-					reportEW = null;
 				}
 				else
 				{
 					Log.logDebug("E-W is preferable");
-					//Log.buildDebugSign(stationE, "station E");
-					//Log.buildDebugSign(stationW, "station W");
-					reportNS = null;
 				}
 			}
-			// Add reports if not null.
-			if(reportNS != null){ reports.push(reportNS); }
-			if(reportEW != null){ reports.push(reportEW); }
-		}
+		}*/
 	}
 	return reports;
 }
@@ -130,14 +157,10 @@ function CityBusAdvisor::FindStationTile(/*in32*/town_id, /*int32*/ direction)
 	// INVALID_TILE
 	return -1;
 }
-function CityBusAdvisor::GetPathInfo(/* tile */ station0, /* tile */ station1)
+function CityBusAdvisor::GetPathInfo(/* AIList */ station0, /* AIList */ station1)
 {
 	local rpf = RoadPathFinding();
-	local startlist = AIList();
-	startlist.AddItem(station0, station0);
-	local endlist = AIList();
-	endlist.AddItem(station1, station1);
-	return rpf.FindFastestRoad(startlist, endlist, true, true);
+	return rpf.FindFastestRoad(station0, station1, true, true);
 }
 /**
  *
@@ -158,4 +181,10 @@ function CityBusAdvisor::IsValidStationTile(tile)
 		(AITile.GetOwner(tile) != AICompany.INVALID_COMPANY && AITile.GetOwner(tile) != AICompany.MY_COMPANY)
 		){ return false; }
 	return true;
+}
+function CityBusAdvisor::TileAsAIList(/* tile */ tile)
+{
+	local list = AIList();
+	list.AddItem(tile, tile);
+	return list;
 }

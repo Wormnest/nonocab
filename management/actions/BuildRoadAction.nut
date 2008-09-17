@@ -43,15 +43,16 @@ function BuildRoadAction::Execute()
 	
 	if (buildRoadStations) {
 		local abc = AIExecMode();
-		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true)) {
+		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
+		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, false))
+			if (!BuildRoadStation(connection, false, isTruck))
 				Log.logError("Road station couldn't be build! Not handled yet!");
 		} 
 		
-		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, true, false, true)) {
+		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, true))
+			if (!BuildRoadStation(connection, true, isTruck))
 				Log.logError("Road station couldn't be build! Not handled yet!");
 		} 
 	}
@@ -106,7 +107,7 @@ function BuildRoadAction::Execute()
 }
 
 
-function BuildRoadAction::BuildRoadStation(connection, isProducingSide) {
+function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck) {
 	Log.logError(AIError.GetLastErrorString());
 	
 
@@ -169,7 +170,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide) {
 	// very last item on the roadList!
 	local buildResult = pathfinder.BuildRoad(roadStationPathInfo.roadList);
 	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station!");
-	if (buildResult.success && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, true, false, true)) {
+	if (buildResult.success && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
 		// We're done so update the connection.
 		local connectionTile = -1;
 		
