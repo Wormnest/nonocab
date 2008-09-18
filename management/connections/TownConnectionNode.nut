@@ -91,6 +91,7 @@ function TownConnectionNode::GetTownTiles(){
 			}
 		}
 	}
-	Log.logDebug(GetName() + ": x {" + x_min + ", " + x_max + "}, y {" + y_min + ", " + y_max + "}");
+	//Log.logInfo("Tiles in GetTownTiles(): " + list.Count());
+	//Log.logDebug(GetName() + ": x {" + x_min + ", " + x_max + "}, y {" + y_min + ", " + y_max + "}");
 	return list;
 }

@@ -26,13 +26,13 @@ class RoadPathFinding
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
 	 * allowed to write C++ so we need to script this information :).
 	 */
-	function FallBackCreateRoad(buildResult);
-	function CreateRoad(connection);			// Create the best road from start to end
-	function BuildRoad(roadList);
-	function GetCostForRoad(roadList);			// Give the cost for the best road from start to end
-	function GetSlope(tile, currentDirection);
-	function GetTime(roadList, maxSpeed, forward);
-	function FindFastestRoad(start, end, checkStartPositions, checkEndPositions);
+	//function FallBackCreateRoad(buildResult);
+	//function CreateRoad(connection);			// Create the best road from start to end
+	//function BuildRoad(roadList);
+	//function GetCostForRoad(roadList);			// Give the cost for the best road from start to end
+	//function GetSlope(tile, currentDirection);
+	//function GetTime(roadList, maxSpeed, forward);
+	//function FindFastestRoad(start, end, checkStartPositions, checkEndPositions);
 }
 
 function RoadPathFinding::FixBuildLater()
@@ -460,6 +460,16 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  */
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions)
 {
+	if(start.IsEmpty())
+	{
+		Log.logError("Could not find a fasted road for an empty startlist.");
+		return null;
+	}
+	if(end.IsEmpty())
+	{
+		Log.logError("Could not find a fasted road for an empty endlist.");
+		return null;
+	}
 	local test = AITestMode();
 	local pq = null;
 	local expectedEnd = null;

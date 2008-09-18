@@ -24,13 +24,13 @@ class ConnectionAdvisor extends Advisor
 	/**
 	 * Check which set of industry connections yield the highest profit.
 	 */
-	function getReports();
+	//function getReports();
 
 	/**
 	 * Iterate through the industry tree and update its information.
 	 * @industryTree An array with connectionNode instances.
 	 */
-	function UpdateIndustryConnections(industryTree);
+	//function UpdateIndustryConnections(industryTree);
 }
 
 /**
