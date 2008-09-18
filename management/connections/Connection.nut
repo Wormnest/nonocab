@@ -17,12 +17,12 @@ class Connection
 	pathInfo = null;			// PathInfo class which contains all information about the path.
 	bilateralConnection = null;	// If this is true, cargo is carried in both directions.
 	
-	constructor(cargoID, travelFromNode, travelToNode, pathInfo, bilateralConnection) {
-		this.cargoID = cargoID;
-		this.travelFromNode = travelFromNode;
-		this.travelToNode = travelToNode;
-		this.pathInfo = pathInfo;
-		this.bilateralConnection = bilateralConnection;
+	constructor(cargo_id, travel_from_node, travel_to_node, path_info, bilateral_connection) {
+		cargoID = cargo_id;
+		travelFromNode = travel_from_node;
+		travelToNode = travel_to_node;
+		pathInfo = path_info;
+		bilateralConnection = bilateral_connection;
 		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 			if (travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE) {

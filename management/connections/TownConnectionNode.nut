@@ -43,7 +43,7 @@ class TownConnectionNode extends ConnectionNode
  * Scans tiles who are within town influence.
  */
 function TownConnectionNode::GetTownTiles(){
-	local list = AIList();
+	local list = AITileList();
 	local tile = GetLocation();
 	local x = AIMap.GetTileX(tile);
 	local y = AIMap.GetTileY(tile);
