@@ -16,6 +16,8 @@ function CityBusAdvisor::getReports()
 {
 	local MINIMUM_BUS_COUNT = 2;
 	local MAXIMUM_BUS_COUNT = 5;
+	local MINIMUM_DISTANCE = 9;
+	local RENDAMENT_OF_CITY = 1.0;
 	// AICargo.CC_PASSENGERS = 1 but should be AICargo.CC_COVERED
 	local AICargo_CC_PASSENGERS = AICargo.CC_COVERED;
 	local CARGO_ID_PASS = 0;
@@ -44,13 +46,16 @@ function CityBusAdvisor::getReports()
 	local town_node = null;
 	local build_action = null;
 	local drive_action = null;
+	local distance = 0;
+	local city_capicity = 0;
 	
 	foreach(town_node in innerWorld.townConnectionNodes)
 	{
 		connection = town_node.GetConnection(town_node, CARGO_ID_PASS);
 		if(connection == null)
 		{
-			if(town_node.GetProduction(AICargo_CC_PASSENGERS) >= CityBusCapacity * MINIMUM_BUS_COUNT)
+			city_capicity = town_node.GetProduction(AICargo_CC_PASSENGERS) * RENDAMENT_OF_CITY;
+			if(city_capicity >= CityBusCapacity * MINIMUM_BUS_COUNT)
 			{
 				// Search for spots.
 				stationE = FindStationTile(town_node, 0);
@@ -60,31 +65,32 @@ function CityBusAdvisor::getReports()
 			
 				if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
 				{
-					path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
-					
-					if(path_info != null)
+					local distance = AIMap.DistanceManhattan(stationE, stationW);
+					if(distance >= MINIMUM_DISTANCE)
 					{
-						busses = town_node.GetProduction(AICargo_CC_PASSENGERS) / CityBusCapacity;
-						if(busses > MAXIMUM_BUS_COUNT){ busses = MAXIMUM_BUS_COUNT; }
+						path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
 						
-						connection = Connection(CARGO_ID_PASS, town_node, town_node, path_info, true);
-						town_node.AddConnection(town_node, connection);
-						build_action = BuildRoadAction(connection, true, true);
-						drive_action = ManageVehiclesAction();
-						drive_action.BuyVehicles(engine_id, busses, connection);
-						
-						local rpf = RoadPathFinding()
-						local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection);
-						local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true);
-						local distance = AIMap.DistanceManhattan(path_info.roadList[0].tile, path_info.roadList[path_info.roadList.len() - 1].tile);
-						local income = AICargo.GetCargoIncome(CARGO_ID_PASS, distance, time);
-						local profit = CityBusCapacity * income / 30.0; // 30 days.
-						local utility = cost / profit;
-						
-						Log.logDebug("Cost: " + cost + ", time: " + time + ", dist: " + distance + ", income: " + income + ", util: " + utility);  
-						
-						reportEW = Report("CityBus", cost, utility, [build_action, drive_action]);
-						reports.push(reportEW);
+						if(path_info != null)
+						{
+							busses = city_capicity / CityBusCapacity;
+							if(busses > MAXIMUM_BUS_COUNT){ busses = MAXIMUM_BUS_COUNT; }
+							
+							connection = Connection(CARGO_ID_PASS, town_node, town_node, path_info, true);
+							town_node.AddConnection(town_node, connection);
+							build_action = BuildRoadAction(connection, true, true);
+							drive_action = ManageVehiclesAction();
+							drive_action.BuyVehicles(engine_id, busses, connection);
+							
+							local rpf = RoadPathFinding()
+							local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection);
+							local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true);
+							local income = AICargo.GetCargoIncome(CARGO_ID_PASS, distance, time);
+							local profit = busses * CityBusCapacity * income * (time / 30.0); // 30 days.
+							local desc = "Build citybus in " + town_node.GetName() + ".";
+							reportEW = Report(desc, cost, profit, [build_action, drive_action]);
+							//Log.logDebug("Cost: " + cost + ", time: " + time + ", dist: " + distance + ", income: " + income + ", util: " + reportEW.Utility());
+							reports.push(reportEW);
+						}
 					}
 				}
 			}

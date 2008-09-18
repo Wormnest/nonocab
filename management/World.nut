@@ -61,15 +61,24 @@ class World
 	 * Debug purposes only:
 	 * Print the constructed industry node.
 	 */
-	function PrintTree();
+	//function PrintTree();
 	
 	/**
 	 * Debug purposes only:
 	 * Print a single node in the industry tree.
 	 */
-	function PrintNode();	
+	//function PrintNode();	
 }
-
+function World::GetMonthsRemaining()
+{
+	// TODO: Get from Game.
+	return 12*10;//return  AIGameSettings.GetValue()
+}
+function World::GetBankInterestRate()
+{
+	// TODO: Get from Game.
+	return 1.04;//return  AIGameSettings.GetValue()
+}
 /**
  * Updates the view on the world.
  */
