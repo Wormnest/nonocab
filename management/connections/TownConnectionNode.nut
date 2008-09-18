@@ -87,7 +87,7 @@ function TownConnectionNode::GetTownTiles(){
 			tile = AIMap.GetTileIndex(x, y);
 			if(AITile.IsWithinTownInfluence(tile, id))
 			{
-				list.AddItem(tile, tile);
+				list.AddTile(tile);
 			}
 		}
 	}
