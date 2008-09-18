@@ -9,9 +9,12 @@ class CityBusAdvisor extends Advisor {}
  * - build n busses (2,3,4)
  * - add route to busses 
  *
+ * TODO: Aslo implement N-S.
+ * NOTE: At the moment only give an adivse if 4 busses can be build.
  */
 function CityBusAdvisor::getReports()
 {
+	local MINIMUM_BUS_COUNT = 2;
 	local MAXIMUM_BUS_COUNT = 4;
 	// AICargo.CC_PASSENGERS = 1 but should be AICargo.CC_COVERED
 	local AICargo_CC_PASSENGERS = AICargo.CC_COVERED;
@@ -23,16 +26,17 @@ function CityBusAdvisor::getReports()
 	
 	local reports = [];
 	local options = 0;
+	local busses = 0;
 	
 	// Stations
 	local stationE = null;
 	local stationW = null;
-	local stationN = null;
-	local stationS = null;
+	//local stationN = null;
+	//local stationS = null;
 	
 	// Reports
 	local reportEW = null;
-	local reportNS = null;
+	//local reportNS = null;
 	
 	// report helpers
 	local path_info = null;
@@ -46,78 +50,37 @@ function CityBusAdvisor::getReports()
 		connection = town_node.GetConnection(town_node, CARGO_ID_PASS);
 		if(connection == null)
 		{
-			if(town_node.GetProduction(AICargo_CC_PASSENGERS) >= CityBusCapacity * 2)
+			if(town_node.GetProduction(AICargo_CC_PASSENGERS) >= CityBusCapacity * MAXIMUM_BUS_COUNT) //MINIMUM_BUS_COUNT
 			{
 				// Search for spots.
-				stationE = FindStationTile(town_node.id, 0);
-		 		stationW = FindStationTile(town_node.id, 2);
+				stationE = FindStationTile(town_node, 0);
+		 		stationW = FindStationTile(town_node, 2);
 				//stationN = FindStationTile(town_node.id, 1);
 				//stationS = FindStationTile(town_node.id, 3);
-				
-				// Research East-West.
-			if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
-			{
-				path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
-				
-				if(path_info != null)
+			
+				if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
 				{
-					connection = Connection(CARGO_ID_PASS, town_node, town_node, path_info, true);
-					town_node.AddConnection(town_node, connection);
-					build_action = BuildRoadAction(connection, true, true);
-					drive_action = ManageVehiclesAction();
-					drive_action.BuyVehicles(engine_id, 4, connection);
-					reportEW = Report("CityBus", -10, 10000, [build_action, drive_action]);
-					reports.push(reportEW);
+					path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
+					
+					if(path_info != null)
+					{
+						busses = town_node.GetProduction(AICargo_CC_PASSENGERS) / CityBusCapacity;
+						if(busses > MAXIMUM_BUS_COUNT){ busses = MAXIMUM_BUS_COUNT; }
+						
+						connection = Connection(CARGO_ID_PASS, town_node, town_node, path_info, true);
+						town_node.AddConnection(town_node, connection);
+						build_action = BuildRoadAction(connection, true, true);
+						drive_action = ManageVehiclesAction();
+						drive_action.BuyVehicles(engine_id, busses, connection);
+						reportEW = Report("CityBus", -10, 10000, [build_action, drive_action]);
+						reports.push(reportEW);
+					}
 				}
 			}
 		}
 		// Update connection.
-		else
-		{
-			
+		else {
 		}
-	}
-	/*
-	foreach(town_id, value in innerWorld.town_list)
-	{
-		Log.logDebug(AITown.GetName(town_id) + " (" + AITown.GetPopulation(town_id) + "), MaxPass: " + AITown.GetMaxProduction(town_id,AICargo_CC_PASSENGERS));
-		
-		// At least two busses should ride.
-		if(AITown.GetMaxProduction(town_id, AICargo_CC_PASSENGERS) >= CityBusCapacity * 2)
-		{
-			stationE = FindStationTile(town_id, 0);
-	 		stationW = FindStationTile(town_id, 2);
-			stationN = FindStationTile(town_id, 1);
-			stationS = FindStationTile(town_id, 3);
-			
-			// Research East-West.
-			if(AIMap.IsValidTile(stationE) && AIMap.IsValidTile(stationW))
-			{
-				path_info = GetPathInfo(TileAsAIList(stationE),TileAsAIList(stationW));
-				
-				if(path_info != null)
-				{
-					town_node = TownConnectionNode(town_id);
-					connection = Connection(0, town_node, town_node, path_info, true);
-					Log.logDebug(connection.connectionType);
-					local build_action = BuildRoadAction(connection, true, true);
-					local drive_action = ManageVehiclesAction();
-					drive_action.BuyVehicles(engine_id, 4, connection);
-					reports.push(Report("CityBus", -10, 10000, [build_action, drive_action]));
-				}
-			}
-			if(options == 2)
-			{
-				if(AIMap.DistanceSquare(stationN, stationS) > AIMap.DistanceSquare(stationE, stationW))
-				{
-					Log.logDebug("N-S is preferable");
-				}
-				else
-				{
-					Log.logDebug("E-W is preferable");
-				}
-			}
-		}*/
 	}
 	return reports;
 }
@@ -130,17 +93,14 @@ function CityBusAdvisor::getReports()
  *       S
  *      (3)
  */
-function CityBusAdvisor::FindStationTile(/*in32*/town_id, /*int32*/ direction)
+function CityBusAdvisor::FindStationTile(/*TownConnectionNode*/ town_node, /*int32*/ direction)
 {
-	local towntile = AITown.GetLocation(town_id);
-	local tile = towntile;
+	local tile = town_node.GetLocation();
 	local x = AIMap.GetTileX(tile);
 	local y = AIMap.GetTileY(tile);
 
-	while(AITile.IsWithinTownInfluence(tile, town_id))
-	{
-		switch(direction)
-		{
+	while(AITile.IsWithinTownInfluence(tile, town_node.id)) {
+		switch(direction) {
 			case 0: x = x - 1; break;
 			case 1: y = y - 1; break;
 			case 2: x = x + 1; break;
@@ -148,9 +108,8 @@ function CityBusAdvisor::FindStationTile(/*in32*/town_id, /*int32*/ direction)
 			default: Log.logError("Invalid direction: " + direction); return null;
 		}
 		tile = AIMap.GetTileIndex(x, y);
-		
-		if(IsValidStationTile(tile))
-		{
+
+		if(IsValidStationTile(tile)) {
 			return tile; 
 		} 
 	}
