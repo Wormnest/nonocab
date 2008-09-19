@@ -1,21 +1,13 @@
 class Action
 {
-	world = null;
 	actionHandlers = null;
-	
-	/**
-	 * Empty constructor.
-	 */
-	constructor() { 
-		this.actionHandlers = [];
-	}
 	
 	/**
 	 * Constructor with the world.
 	 */
-	constructor(world) { 
-		this.world = world;
-		this.actionHandlers = [];
+	constructor()
+	{ 
+		actionHandlers = [];
 	}
 
 	/**

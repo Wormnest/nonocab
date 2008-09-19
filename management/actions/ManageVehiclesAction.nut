@@ -6,29 +6,23 @@ class ManageVehiclesAction extends Action {
 	constructor() { 
 		vehiclesToSell = [];
 		vehiclesToBuy = [];
-		Action.constructor(null);
+		Action.constructor();
 	}
-	
-	/**
-	 * Sell a vehicle when this action is executed.
-	 * @param vehicleID The vehicle ID of the vehicle which needs to be sold.
-	 */
-	function SellVehicle(vehicleID);
-	
-	/**
-	 * Buy a certain number of vehicles when this action is executed.
-	 * @param engineID The engine ID of the vehicles which need to be build.
-	 * @param number The number of vehicles to build.
-	 * @param connection The connection where the vehicles are to operate on.
-	 */
-	function BuyVehicles(engineID, number, connection);
 }
-
+/**
+ * Sell a vehicle when this action is executed.
+ * @param vehicleID The vehicle ID of the vehicle which needs to be sold.
+ */
 function ManageVehiclesAction::SellVehicle(vehicleID)
 {
 	vehiclesToSell.push(vehicleID);
 }
-
+/**
+ * Buy a certain number of vehicles when this action is executed.
+ * @param engineID The engine ID of the vehicles which need to be build.
+ * @param number The number of vehicles to build.
+ * @param connection The connection where the vehicles are to operate on.
+ */
 function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
 {
 	vehiclesToBuy.push([engineID, number, connection]);

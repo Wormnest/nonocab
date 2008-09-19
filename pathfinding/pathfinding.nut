@@ -98,8 +98,12 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
-			Log.logError("/me slaps developer! ;)");
-			quit();
+			// In DEBUG mode, this should CRACK horably.
+			if(Log.isDebug())
+			{
+				Log.logError("/me slaps developer! ;)");
+				quit();
+			}
 			return false;
 			
 		default:

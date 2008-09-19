@@ -101,3 +101,12 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 	//Log.logDebug(GetName() + ": x {" + x_min + ", " + x_max + "}, y {" + y_min + ", " + y_max + "}");
 	return list;
 }
+function TownConnectionNode::GetPopulation()
+{
+	return AITown.GetPopulation(id);
+}
+
+function TownConnectionNode::ToString()
+{
+	return GetName() + " (" + GetPopulation() + ")";
+}

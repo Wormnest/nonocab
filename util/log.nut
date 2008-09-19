@@ -7,6 +7,10 @@ function Log::getLogLevel()
 	//return 2; // WARNING = 2
 	//return 3; // ERROR   = 3
 }
+function Log::isDebug()
+{
+	return getLogLevel() == 0;
+}
 /** If logLevel is ok log debug. */
 function Log::logDebug(message)
 {

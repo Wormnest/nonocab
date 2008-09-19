@@ -21,7 +21,7 @@ class BuildRoadAction extends Action
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
 		this.pathfinder = RoadPathFinding();
-		Action.constructor(null);
+		Action.constructor();
 	}
 }
 
