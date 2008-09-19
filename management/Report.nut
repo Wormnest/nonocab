@@ -20,9 +20,6 @@ class Report
 	 * The utility for a report is the profit per month divided by the cost.
 	 */
 	function Utility() {
-		
-		//return (profitPerMonth * World.GetMonthsRemaining() - cost * World.GetBankInterestRate()) * -cost;
-		if(profitPerMonth != null){ return 0; }
 		return profitPerMonth / cost;
 	}
 }

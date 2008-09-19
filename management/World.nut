@@ -83,18 +83,14 @@ function World::GetBankInterestRate()
  */
 function World::Update()
 {
-	{
-		local pf = RoadPathFinding();
-		pf.FixBuildLater();
-	}
-	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
+//	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
 	
 	// Update the max distance every year!
-	if (years > years_passed) {
-		IncreaseMaxDistanceBetweenNodes();
+//	if (years > years_passed) {
+//		IncreaseMaxDistanceBetweenNodes();
 		//max_distance_between_nodes += 32;// * (1 + years_passed);
-		years_passed = years;
-	}
+//		years_passed = years;
+//	}
 	UpdateEvents();
 	
 
@@ -107,7 +103,11 @@ function World::Update()
  */
 function World::IncreaseMaxDistanceBetweenNodes()
 {
-	max_distance_between_nodes += 32;
+	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) {
+		Log.logDebug("Max distance reached its max!");
+		return;
+	}
+	max_distance_between_nodes += 16;
 	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
 	
 	// Overwrite the default increase each year.

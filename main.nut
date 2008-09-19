@@ -69,6 +69,12 @@ function NoCAB::Start()
 		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
+		
+		{
+			local pf = RoadPathFinding();
+			pf.FixBuildLater();
+		}
+		
 		parlement.SelectReports(reports);
 		parlement.ExecuteReports();
 		

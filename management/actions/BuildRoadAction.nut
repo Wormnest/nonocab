@@ -32,9 +32,13 @@ function BuildRoadAction::Execute()
 	
 	// Check if this path isn't already build.
 	if (!connection.pathInfo.build) {
-		if (pathfinder.GetCostForRoad(connection.pathInfo.roadList) > AICompany.GetBankBalance(AICompany.MY_COMPANY))
+		local roadCost = pathfinder.GetCostForRoad(connection.pathInfo.roadList);
+		local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
+		if (pathfinder.GetCostForRoad(connection.pathInfo.roadList) > AICompany.GetBankBalance(AICompany.MY_COMPANY)) {
+			Log.logWarning("Not enough money(" + money + ") to build the road (cost = " + roadCost +").");
 			return false;
-
+		}
+		
 		local abc = AIExecMode();
 		if (!pathfinder.CreateRoad(connection)) {
 			connection.pathInfo.forceReplan = true;

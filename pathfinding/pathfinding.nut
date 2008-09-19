@@ -71,8 +71,9 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 		case AIError.ERR_NOT_ENOUGH_CASH:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
-			toBuildLater.push(buildResult);
-			return true;
+			//toBuildLater.push(buildResult);
+			///return true;
+			return false;
 			
 		// Serious onces:
 		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:

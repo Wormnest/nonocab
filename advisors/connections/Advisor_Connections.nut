@@ -105,13 +105,9 @@ function ConnectionAdvisor::getReports()
 			// Find a new path.
 			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true);
 			if (pathInfo == null) {
-				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
+				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 				continue;
 			}
-		}
-		
-		if (!pathInfo.build) {
-			possibleConnections++;
 		}
 		
 		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
@@ -129,13 +125,18 @@ function ConnectionAdvisor::getReports()
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
 
+		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
+		if (!pathInfo.build && maxNrVehicles >= 2) {
+			possibleConnections++;
+		}
+
 		// If we can't pay for all vehicle consider a number we can afford.
 		if (costPerVehicle * maxNrVehicles > (money - roadCost)) {
 			maxNrVehicles = (money - roadCost) / costPerVehicle;
 		}
 
-		// If we can't buy any vehicles, don't bother.
-		if (maxNrVehicles <= 0) {
+		// If we can't buy any vehicles (or to few), don't bother.
+		if (maxNrVehicles <= 0 || maxNrVehicles < 2 && !pathInfo.build) {
 			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + " (or not enough cash to build new ones)!");
 			continue;
 		}
@@ -226,10 +227,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			if (manhattanDistance > world.max_distance_between_nodes) continue;
 			
 			local checkIndustry = false;
-			if (primIndustryConnectionNode.cargoIdsProducing.len() > 3) {
-				Log.logError(primIndustryConnectionNode + " has more then 3 types of cargo!?");
-				quit();
-			}
 			
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
