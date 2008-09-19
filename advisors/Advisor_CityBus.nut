@@ -85,7 +85,7 @@ function CityBusAdvisor::getReports()
 							local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection.pathInfo.roadList);
 							local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true);
 							local income = AICargo.GetCargoIncome(CARGO_ID_PASS, distance, time);
-							local profit = busses * CityBusCapacity * income * (time / 30.0); // 30 days.
+							local profit = busses * CityBusCapacity * income * (World.DAYS_PER_MONTH / time); // 30 days.
 							local desc = "Build citybus in " + town_node.GetName() + ".";
 							reportEW = Report(desc, cost, profit, [build_action, drive_action]);
 							//Log.logDebug("Cost: " + cost + ", time: " + time + ", dist: " + distance + ", income: " + income + ", util: " + reportEW.Utility());

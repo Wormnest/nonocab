@@ -81,7 +81,7 @@ function ConnectionAdvisor::getReports()
 		foreach (connection in report.fromConnectionNode.connections) {
 			if (connection.cargoID == report.cargoID) {
 				foreach (vehicleGroup in connection.vehiclesOperating) {
-					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (30.0 / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
+					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
 				}
 			}
 		}
@@ -119,8 +119,8 @@ function ConnectionAdvisor::getReports()
 			timeToTravelTo) * AIEngine.GetCapacity(report.engineID);
 
 		// Calculate netto income per vehicle.
-		local transportedCargoPerVehiclePerMonth = (30.0 / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
-		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / 364);
+		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
+		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / World.DAYS_PER_YEAR);
 		local maxNrVehicles = surplusProductionPerMonth / transportedCargoPerVehiclePerMonth;
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
@@ -143,7 +143,7 @@ function ConnectionAdvisor::getReports()
 		
 		// Compile the report.
 		report.nrVehicles = maxNrVehicles;
-		report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
+		report.profitPerMonthPerVehicle = incomePerVehicle * (World.DAYS_PER_MONTH / (timeToTravelTo + timeToTravelFrom));
 		report.cost = (costPerVehicle * maxNrVehicles) + roadCost;
 		
 		// Add the report to the list.
@@ -247,7 +247,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
 
 				local report = ConnectionReport();
-				report.profitPerMonthPerVehicle = (30.0 / travelTime) * incomePerRun;
+				report.profitPerMonthPerVehicle = (World.DAYS_PER_MONTH / travelTime) * incomePerRun;
 				report.engineID = world.cargoTransportEngineIds[cargo];
 				report.fromConnectionNode = primIndustryConnectionNode;
 				report.toConnectionNode = secondConnectionNode;

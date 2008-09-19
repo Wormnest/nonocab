@@ -3,7 +3,9 @@
  */
 class World
 {
-
+	static DAYS_PER_MONTH = 30.0;
+	static DAYS_PER_YEAR = 364.0;
+	
 	town_list = null;				// List with all towns.
 	industry_list = null;			// List with all industries.
 	industry_table = null;			// Table with all industries.
