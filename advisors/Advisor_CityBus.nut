@@ -82,7 +82,7 @@ function CityBusAdvisor::getReports()
 							drive_action.BuyVehicles(engine_id, busses, connection);
 							
 							local rpf = RoadPathFinding()
-							local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection);
+							local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection.pathInfo.roadList);
 							local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true);
 							local income = AICargo.GetCargoIncome(CARGO_ID_PASS, distance, time);
 							local profit = busses * CityBusCapacity * income * (time / 30.0); // 30 days.

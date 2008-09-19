@@ -52,7 +52,7 @@ class World
 		BuildIndustryTree();
 		max_distance_between_nodes = 32;
 		InitEvents();
-		InitCargoTransportEngineIds();		
+		InitCargoTransportEngineIds();
 	}
 	
 	
@@ -83,22 +83,35 @@ function World::GetBankInterestRate()
  */
 function World::Update()
 {
-	local pf = RoadPathFinding();
-	pf.FixBuildLater();
-	
 	{
-		local loan = AIExecMode();
-		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+		local pf = RoadPathFinding();
+		pf.FixBuildLater();
 	}
 	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
 	
 	// Update the max distance every year!
-	if (years != years_passed) {
-		max_distance_between_nodes = 32 * (1 + years_passed);
+	if (years > years_passed) {
+		IncreaseMaxDistanceBetweenNodes();
+		//max_distance_between_nodes += 32;// * (1 + years_passed);
 		years_passed = years;
 	}
 	UpdateEvents();
 	
+
+}
+
+/**
+ * Manually increase the maximum distance between industries / towns. We need
+ * this because sometimes the advisors have already build all possible connections
+ * and are eager for more!
+ */
+function World::IncreaseMaxDistanceBetweenNodes()
+{
+	max_distance_between_nodes += 32;
+	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
+	
+	// Overwrite the default increase each year.
+	//years_passed = (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year) + 1;	
 }
 
 /**

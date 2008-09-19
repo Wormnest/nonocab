@@ -32,6 +32,9 @@ function BuildRoadAction::Execute()
 	
 	// Check if this path isn't already build.
 	if (!connection.pathInfo.build) {
+		if (pathfinder.GetCostForRoad(connection.pathInfo.roadList) > AICompany.GetBankBalance(AICompany.MY_COMPANY))
+			return false;
+
 		local abc = AIExecMode();
 		if (!pathfinder.CreateRoad(connection)) {
 			connection.pathInfo.forceReplan = true;
@@ -39,9 +42,7 @@ function BuildRoadAction::Execute()
 			return false;
 		}
 	}
-	
-	connection.pathInfo.build = true;	
-	
+		
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 	
@@ -116,6 +117,10 @@ function BuildRoadAction::Execute()
 		if (depotLocation == null)
 			return false;
 	}
+	
+	// We only specify a connection as build if both the depots and the roads are build.
+	connection.pathInfo.build = true;
+	
 	
 	CallActionHandlers();
 	return true;

@@ -14,6 +14,11 @@ class Parlement
  */
 function Parlement::ExecuteReports()
 {
+	// Get as much money as possible.
+	{
+		local loan = AIExecMode();
+		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+	}	
 	foreach (report in reports)
 	{
 		Log.logInfo(report.message);
@@ -24,6 +29,14 @@ function Parlement::ExecuteReports()
 				return;
 		}
 	}
+	
+	// Pay back as much load as possible.
+	{
+		local loan = AIExecMode();
+		local loanInterval = AICompany.GetLoanInterval();
+		while (AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
+		//AICompany.SetLoanAmount(AICompany.GetLoanAmount() - (AICompany.GetBankBalance(AICompany.MY_COMPANY) / AICompany.GetLoanInterval()));
+	}	
 }
 
 /**

@@ -60,7 +60,9 @@ function ConnectionAdvisor::getReports()
 	// Try to get the best subset of options.
 	local report;
 	
-	Log.logDebug("Check all connections");
+	// Keep track of the number of connections we could build, if we had the money.
+	local possibleConnections = 0;
+
 	local asfs = AITestMode();
 	while ((report = connectionReports.Pop()) != null) {
 
@@ -69,13 +71,8 @@ function ConnectionAdvisor::getReports()
 		 * connections and just check a reasonable number until we've spend enough
 		 * money or till we've spend enough time in this function.
 		 */
-		if (comparedConnections > 10 && connectionCache.Count() > 0 ||	// We've compared at least 10 connections and found at leat 1 report
-		money < 20000 && comparedConnections > 15 || // We've compared at leats 15 connections and we're low on money 
-		comparedConnections > 20) {	// We've compared at least 20 connections.
+		if (connectionCache.Count() > 5)
 			break;
-		}
-///		if (connectionCache.Count() > 5)
-///			break;
 		
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
@@ -113,6 +110,10 @@ function ConnectionAdvisor::getReports()
 			}
 		}
 		
+		if (!pathInfo.build) {
+			possibleConnections++;
+		}
+		
 		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
 		local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
 			
@@ -126,22 +127,23 @@ function ConnectionAdvisor::getReports()
 		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / 364);
 		local maxNrVehicles = surplusProductionPerMonth / transportedCargoPerVehiclePerMonth;
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
+		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
 
 		// If we can't pay for all vehicle consider a number we can afford.
-		if (costPerVehicle * maxNrVehicles > money) {
-			maxNrVehicles = money / costPerVehicle;
+		if (costPerVehicle * maxNrVehicles > (money - roadCost)) {
+			maxNrVehicles = (money - roadCost) / costPerVehicle;
 		}
 
 		// If we can't buy any vehicles, don't bother.
-		if (maxNrVehicles.tointeger() <= 0) {
-			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + "!");
+		if (maxNrVehicles <= 0) {
+			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + " (or not enough cash to build new ones)!");
 			continue;
 		}
 		
 		// Compile the report.
 		report.nrVehicles = maxNrVehicles;
 		report.profitPerMonthPerVehicle = incomePerVehicle * (30.0 / (timeToTravelTo + timeToTravelFrom));
-		report.cost = costPerVehicle * maxNrVehicles;
+		report.cost = (costPerVehicle * maxNrVehicles) + roadCost;
 		
 		// Add the report to the list.
 		connectionCache.Insert(report, -report.Utility());
@@ -155,7 +157,6 @@ function ConnectionAdvisor::getReports()
 			otherConnection.pathInfo = pathInfo;
 		}
 	}
-	Log.logDebug("Subsum");
 	
 	// We have a list with possible connections we can afford, we now apply
 	// a subsum algorithm to get the best profit possible with the given money.
@@ -173,7 +174,7 @@ function ConnectionAdvisor::getReports()
 		if (processedProcessingIndustries.rawin(UID))
 			continue;
 			
-		Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
+		Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles!");
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.
@@ -193,6 +194,10 @@ function ConnectionAdvisor::getReports()
 		processedProcessingIndustries[UID] <- UID;
 	}
 	
+	// If we find no other possible connections, extend our range!
+	if (possibleConnections == 0)
+		world.IncreaseMaxDistanceBetweenNodes();
+	
 	Log.logDebug("Return reports");
 	return reports;
 }
@@ -211,7 +216,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
-	local industriesToCheck = [];
+	local industriesToCheck = {};
 	foreach (primIndustryConnectionNode in industry_tree) {
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
@@ -221,6 +226,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			if (manhattanDistance > world.max_distance_between_nodes) continue;
 			
 			local checkIndustry = false;
+			if (primIndustryConnectionNode.cargoIdsProducing.len() > 3) {
+				Log.logError(primIndustryConnectionNode + " has more then 3 types of cargo!?");
+				quit();
+			}
 			
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
@@ -251,13 +260,14 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			}
 			
 			if (checkIndustry) {
-				industriesToCheck.push(secondConnectionNode);
+				if (!industriesToCheck.rawin(secondConnectionNode))
+					industriesToCheck[secondConnectionNode] <- secondConnectionNode;
 			}
 		}
-		
-		// Also check for other connection starting from this node.
-		if (industriesToCheck.len() > 0)
-			UpdateIndustryConnections(industriesToCheck);
 	}
+	
+	// Also check for other connection starting from this node.
+	if (industriesToCheck.len() > 0)
+		UpdateIndustryConnections(industriesToCheck);
 }
 

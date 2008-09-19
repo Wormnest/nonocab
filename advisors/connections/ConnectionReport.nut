@@ -20,7 +20,7 @@ class ConnectionReport extends Report {
 	 * Get the utility function, this is the profit per invested unit of money.
 	 */
 	function Utility() {
-		return cost / (profitPerMonthPerVehicle * nrVehicles);
+		return (profitPerMonthPerVehicle * nrVehicles) / cost;
 	}
 	
 	function Profit() {

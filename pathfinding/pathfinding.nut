@@ -319,7 +319,7 @@ function RoadPathFinding::GetCostForRoad(roadList)
 
 	local accounting = AIAccounting();	// Start counting costs
 
-	this.CreateRoad(roadList);		// Fake the construction
+	this.BuildRoad(roadList);		// Fake the construction
 
 	return accounting.GetCosts();		// Automatic memory management will kill accounting and testmode! :)
 }
