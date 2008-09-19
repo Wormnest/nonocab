@@ -17,18 +17,18 @@ class TownConnectionNode extends ConnectionNode
 		return AITown.GetLocation(id);
 	}
 	
-	function GetProducingTiles() {
+	function GetProducingTiles(cargoID) {
 		//local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		//Log.logWarning("TownConnectionNode.GetProducingTiles not implemented yet.");
 		//return AIList();
-		return GetTownTiles();
+		return GetTownTiles(false, cargoID);
 	}
 	
-	function GetAcceptingTiles() {
+	function GetAcceptingTiles(cargoID) {
 		//local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		//Log.logWarning("TownConnectionNode.GetAcceptingTiles not implemented yet.");
 		//return AIList();
-		return GetTownTiles();
+		return GetTownTiles(true, cargoID);
 	}
 	
 	function GetName() {
@@ -42,7 +42,7 @@ class TownConnectionNode extends ConnectionNode
 /**
  * Scans tiles who are within town influence.
  */
-function TownConnectionNode::GetTownTiles(){
+function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 	local list = AITileList();
 	local tile = GetLocation();
 	local x = AIMap.GetTileX(tile);
@@ -79,6 +79,9 @@ function TownConnectionNode::GetTownTiles(){
 			tile = AIMap.GetTileIndex(x, y);
 		}
 	}
+	
+	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
+	
 	// loop through square.
 	for(x = x_min; x <= x_max; x++)
 	{
@@ -87,7 +90,10 @@ function TownConnectionNode::GetTownTiles(){
 			tile = AIMap.GetTileIndex(x, y);
 			if(AITile.IsWithinTownInfluence(tile, id))
 			{
-				list.AddTile(tile);
+				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > 8 ||
+				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > 0) {
+					list.AddTile(tile);
+				}
 			}
 		}
 	}

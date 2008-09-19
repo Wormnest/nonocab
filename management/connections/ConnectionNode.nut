@@ -31,8 +31,8 @@ class ConnectionNode
 	 * @return The tile location of this node.
 	 */
 	function GetLocation();
-	function GetProducingTiles();
-	function GetAcceptingTiles();
+	function GetProducingTiles(cargoID);
+	function GetAcceptingTiles(cargoID);
 	function GetName();	
 }
 	

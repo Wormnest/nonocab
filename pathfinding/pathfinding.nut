@@ -138,7 +138,7 @@ function RoadPathFinding::CreateRoad(connection)
 		local pathInfo = FindFastestRoad(start_list, end_list, false, false);
 		
 		if (pathInfo == null) {
-			Log.logError("Fallback function for a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " failed!!!");
+			Log.logWarning("Fallback function for a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " failed!!!");
 			return false;
 		}
 		
@@ -163,7 +163,7 @@ function RoadPathFinding::CreateRoad(connection)
 		
 		// Check if we don't hit the same error (if we do, quit!).
 		if (!tmpResult.success && result.buildFromIndex == tmpResult.buildFromIndex) {
-			Log.logError("Fallback function for a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " failed!!!");
+			Log.logWarning("Fallback function for a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " failed!!!");
 			return false;
 		}
 		

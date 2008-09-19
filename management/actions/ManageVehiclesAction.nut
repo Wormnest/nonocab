@@ -117,4 +117,5 @@ function ManageVehiclesAction::Execute()
 		}			
 	}
 	CallActionHandlers();
+	return true;
 }

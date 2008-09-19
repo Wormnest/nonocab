@@ -51,7 +51,6 @@ class World
 		
 		BuildIndustryTree();
 		max_distance_between_nodes = 32;
-		//PrintTree();
 		InitEvents();
 		InitCargoTransportEngineIds();		
 	}
@@ -84,7 +83,13 @@ function World::GetBankInterestRate()
  */
 function World::Update()
 {
-	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount());
+	local pf = RoadPathFinding();
+	pf.FixBuildLater();
+	
+	{
+		local loan = AIExecMode();
+		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+	}
 	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
 	
 	// Update the max distance every year!
@@ -94,8 +99,6 @@ function World::Update()
 	}
 	UpdateEvents();
 	
-	local pf = RoadPathFinding();
-	pf.FixBuildLater();
 }
 
 /**

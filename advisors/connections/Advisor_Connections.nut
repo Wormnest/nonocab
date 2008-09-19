@@ -99,14 +99,14 @@ function ConnectionAdvisor::getReports()
 		// Check if we already know the path or need to calculate it.
 		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		
-		// Use the already calculated pathInfo if it is already calculated.
-		if (otherConnection != null /* && otherConnection.pathInfo.build */) {
+		// Use the already calculated pathInfo if it is already calculated and the forceReplan flag isn't set!
+		if (otherConnection != null && !otherConnection.pathInfo.forceReplan) {
 			// Use the already build path.
 			pathInfo = otherConnection.pathInfo;
 		} else {
 			comparedConnections++;
 			// Find a new path.
-			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(), report.toConnectionNode.GetAcceptingTiles(), true, true);
+			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true);
 			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName());
 				continue;

@@ -17,12 +17,12 @@ class IndustryConnectionNode extends ConnectionNode
 		return AIIndustry.GetLocation(id);
 	}
 	
-	function GetProducingTiles() {
+	function GetProducingTiles(cargoID) {
 		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		return AITileList_IndustryProducing(id, radius)
 	}
 	
-	function GetAcceptingTiles() {
+	function GetAcceptingTiles(cargoID) {
 		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 		return AITileList_IndustryAccepting(id, radius)
 	}

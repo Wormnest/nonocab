@@ -29,36 +29,46 @@ class BuildRoadAction extends Action
 function BuildRoadAction::Execute()
 {
 	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
-	{
+	
+	// Check if this path isn't already build.
+	if (!connection.pathInfo.build) {
 		local abc = AIExecMode();
 		if (!pathfinder.CreateRoad(connection)) {
+			connection.pathInfo.forceReplan = true;
 			Log.logError("Failed to build a road");
-			return;
+			return false;
 		}
 	}
 	
-	connection.pathInfo.build = true;
+	connection.pathInfo.build = true;	
+	
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 	
 	if (buildRoadStations) {
 		local abc = AIExecMode();
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
+		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, false, isTruck))
+			if (!BuildRoadStation(connection, false, isTruck)) {
 				Log.logError("Road station couldn't be build! Not handled yet!");
+				connection.pathInfo.forceReplan = true;
+				return false;
+			}
 		} 
 		
-		if (!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
+		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, true, isTruck))
+			if (!BuildRoadStation(connection, true, isTruck)) {
 				Log.logError("Road station couldn't be build! Not handled yet!");
+				connection.pathInfo.forceReplan = true;
+				return false;
+			}
 		} 
 	}
 
 	// Check if we need to build a depot.	
-	if (buildDepot) {
+	if (buildDepot && connection.pathInfo.depot == null) {
 		local depotLocation = null;
 		local depotFront = null;
 		
@@ -101,9 +111,14 @@ function BuildRoadAction::Execute()
 			if (depotLocation != null)
 				break;
 		}
+		
+		// Check if we could actualy build a depot:
+		if (depotLocation == null)
+			return false;
 	}
 	
 	CallActionHandlers();
+	return true;
 }
 
 
@@ -120,11 +135,11 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 		// The road is calculated from the producition side to the accepting side.
 		// However, the road is stored from the accepting side to the production
 		// side!
-		start_list = connection.travelFromNode.GetProducingTiles();
+		start_list = connection.travelFromNode.GetProducingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[originalRoadListLen - 1].tile);
 		AISign.BuildSign(originalRoadList[originalRoadListLen - 1].tile, "Here!");
 	} else {
-		start_list = connection.travelToNode.GetAcceptingTiles();
+		start_list = connection.travelToNode.GetAcceptingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[0].tile);
 		AISign.BuildSign(originalRoadList[0].tile, "Here!");		
 	}

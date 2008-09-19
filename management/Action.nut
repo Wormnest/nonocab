@@ -20,6 +20,7 @@ class Action
 
 	/**
 	 * Executes the action.
+	 * @return True if the action was successful, false otherwise.
 	 */
 	function Execute();
 	

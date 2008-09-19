@@ -19,7 +19,9 @@ function Parlement::ExecuteReports()
 		Log.logInfo(report.message);
 		foreach (action in report.actions)
 		{
-			action.Execute();
+			// Break if one of the action fails!
+			if (!action.Execute())
+				return;
 		}
 	}
 }

@@ -22,7 +22,7 @@ class Report
 	function Utility() {
 		
 		//return (profitPerMonth * World.GetMonthsRemaining() - cost * World.GetBankInterestRate()) * -cost;
-		if(profitPerMonth!= null){ return 0; }
-		return profitPerMonth / cost;
+		if(profitPerMonth == null){ return 0; }
+		return cost / profitPerMonth;
 	}
 }
