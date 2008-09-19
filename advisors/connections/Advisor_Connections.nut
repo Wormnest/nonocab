@@ -110,8 +110,8 @@ function ConnectionAdvisor::getReports()
 			}
 		}
 		
-		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true);
-		local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false);
+		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true)  + LOAD_UNLOAD_PENALTY_IN_DAYS;
+		local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false) + LOAD_UNLOAD_PENALTY_IN_DAYS;
 			
 		// Calculate bruto income per vehicle per run.
 		local incomePerRun = AICargo.GetCargoIncome(report.cargoID, 
@@ -239,11 +239,11 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				local travelTime = 0;
 
 				if (connection != null && connection.pathInfo.build) {
-					travelTime = RoadPathFinding().GetTime(connection.pathInfo.roadList, maxSpeed, true);
+					travelTime = RoadPathFinding().GetTime(connection.pathInfo.roadList, maxSpeed, true) + LOAD_UNLOAD_PENALTY_IN_DAYS;
 					checkIndustry = true;
 				}
 				else 
-					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed + LOAD_UNLOAD_PENALTY_IN_DAYS;
 				local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
 
 				local report = ConnectionReport();

@@ -146,11 +146,11 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 		// side!
 		start_list = connection.travelFromNode.GetProducingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[originalRoadListLen - 1].tile);
-		AISign.BuildSign(originalRoadList[originalRoadListLen - 1].tile, "Here!");
+		Log.buildDebugSign(originalRoadList[originalRoadListLen - 1].tile, "!");
 	} else {
 		start_list = connection.travelToNode.GetAcceptingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[0].tile);
-		AISign.BuildSign(originalRoadList[0].tile, "Here!");		
+		Log.buildDebugSign(originalRoadList[0].tile, "!");		
 	}
 	
 	/**
@@ -186,14 +186,14 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	
 	// Debug; Show the calculated route.
 	foreach (at in roadStationPathInfo.roadList) {
-		AISign.BuildSign(at.tile, "X");
+		Log.buildDebugSign(at.tile, "X");
 	}
 			
 	// Try to build it, remember that the start position is the location for the new
 	// road station. But the path is stored backwards, so the new location is the
 	// very last item on the roadList!
 	local buildResult = pathfinder.BuildRoad(roadStationPathInfo.roadList);
-	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station!");
+	Log.buildDebugSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");
 	if (buildResult.success && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
 		// We're done so update the connection.
 		local connectionTile = -1;

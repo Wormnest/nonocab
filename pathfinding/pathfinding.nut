@@ -152,11 +152,11 @@ function RoadPathFinding::CreateRoad(connection)
 			newRoadList.extend(roadList.slice(result.buildFromIndex + 1));
 		
 		foreach (at in connection.pathInfo.roadList) {
-			AISign.BuildSign(at.tile, "Old");
+			Log.buildDebugSign(at.tile, "Old");
 		}
 		
 		foreach (at in newRoadList) {
-			AISign.BuildSign(at.tile, "New");
+			Log.buildDebugSign(at.tile, "New");
 		}		
 		
 		connection.pathInfo.roadList = newRoadList;

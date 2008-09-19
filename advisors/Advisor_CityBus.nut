@@ -14,10 +14,10 @@ class CityBusAdvisor extends Advisor {}
  */
 function CityBusAdvisor::getReports()
 {
-	local MINIMUM_BUS_COUNT = 2;
+	local MINIMUM_BUS_COUNT = 3;
 	local MAXIMUM_BUS_COUNT = 5;
 	local MINIMUM_DISTANCE = 9;
-	local RENDAMENT_OF_CITY = 1.0;
+	local RENDAMENT_OF_CITY = 0.6;
 	// AICargo.CC_PASSENGERS = 1 but should be AICargo.CC_COVERED
 	local AICargo_CC_PASSENGERS = AICargo.CC_COVERED;
 	local CARGO_ID_PASS = 0;
@@ -83,9 +83,10 @@ function CityBusAdvisor::getReports()
 							
 							local rpf = RoadPathFinding()
 							local cost = busses * AIEngine.GetPrice(engine_id) + rpf.GetCostForRoad(connection.pathInfo.roadList);
-							local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true);
+							local time = rpf.GetTime(path_info.roadList, AIEngine.GetMaxSpeed(engine_id), true) + Advisor.LOAD_UNLOAD_PENALTY_IN_DAYS;
 							local income = AICargo.GetCargoIncome(CARGO_ID_PASS, distance, time);
-							local profit = busses * CityBusCapacity * income * (World.DAYS_PER_MONTH / time); // 30 days.
+							local profit = busses * CityBusCapacity * income * (World.DAYS_PER_MONTH / time) - 
+											AIEngine.GetRunningCost(engine_id) / World.MONTHS_PER_YEAR;
 							local desc = "Build citybus in " + town_node.GetName() + ".";
 							reportEW = Report(desc, cost, profit, [build_action, drive_action]);
 							//Log.logDebug("Cost: " + cost + ", time: " + time + ", dist: " + distance + ", income: " + income + ", util: " + reportEW.Utility());
