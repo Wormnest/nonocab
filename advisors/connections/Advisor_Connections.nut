@@ -126,7 +126,7 @@ function ConnectionAdvisor::getReports()
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
 
 		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
-		if (!pathInfo.build && maxNrVehicles >= 2) {
+		if (!pathInfo.build || maxNrVehicles >= 2) {
 			possibleConnections++;
 		}
 
