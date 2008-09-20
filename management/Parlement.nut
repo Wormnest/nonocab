@@ -2,7 +2,9 @@ import("queue.binary_heap", "BinaryHeap", 1);
 
 class Parlement
 {
+	static MINIMUM_BALANCE = 7300;
 	reports = null;
+	balance = null;
 	
 	constructor()
 	{
@@ -16,7 +18,7 @@ function Parlement::ExecuteReports()
 {
 	// Get as much money as possible.
 	{
-		local loan = AIExecMode();
+		local loanMode = AIExecMode();
 		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 	}
 	foreach (report in reports)
@@ -34,7 +36,7 @@ function Parlement::ExecuteReports()
 	
 	// Pay back as much load as possible.
 	{
-		local loan = AIExecMode();
+		local loanMode = AIExecMode();
 		local loanInterval = AICompany.GetLoanInterval();
 		while (AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
 		//AICompany.SetLoanAmount(AICompany.GetLoanAmount() - (AICompany.GetBankBalance(AICompany.MY_COMPANY) / AICompany.GetLoanInterval()));
@@ -51,25 +53,35 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	local orderby = 0;
 	//local exprected_profit = 0;
 
+	UpdateFinance();
+	local potentinal_balance = balance + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount()
 	// Sort all the reports based on their utility.
 	foreach (report in reportlist)
 	{
 		//exprected_profit = report.profitPerMonth * World.GetMonthsRemaining() - report.cost * World.GetBankInterestRate();
 		local utility = report.Utility();
-		Log.logDebug(utility + " for " + report.message);
+		//Log.logDebug(utility + " for " + report.message);
 		// Only add when whe think that they will be profitable in the end.
-		if(utility > 0)
+		// Don't look for things if they are to expensive.
+		if(utility > 0 && (report.cost <=0 || potentinal_balance > MINIMUM_BALANCE))
 		{
 			//Log.logDebug(report.message);
 			//orderby = exprected_profit * report.cost;
 			sortedReports.Insert(report, -utility);
 		}
+		else
+		{
+			Log.logWarning("Util: " + utility + ", cost: " + report.cost + ", " + report.message);
+		}
 	}
-	
+	UpdateFinance();
 	// Do the selection, by using a greedy subsum algorithm.
-	reports = SubSum.GetSubSum(sortedReports, AICompany.GetBankBalance(AICompany.MY_COMPANY) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount());
+	reports = SubSum.GetSubSum(sortedReports, potentinal_balance);
 }
-
+function Parlement::UpdateFinance()
+{
+	balance = AICompany.GetBankBalance(AICompany.MY_COMPANY);
+}
 function Parlement::ClearReports()
 {
 	reports = [];
