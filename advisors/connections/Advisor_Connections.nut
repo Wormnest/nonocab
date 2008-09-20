@@ -39,7 +39,7 @@ class ConnectionAdvisor extends Advisor
  */
 function ConnectionAdvisor::getReports()
 {
-	Log.logDebug("ConnectionAdvisor::getReports()");
+	Log.logInfo("ConnectionAdvisor::getReports()");
 	connectionReports = BinaryHeap();
 	
 	Log.logDebug("Update industry connections.");
@@ -137,7 +137,7 @@ function ConnectionAdvisor::getReports()
 
 		// If we can't buy any vehicles (or to few), don't bother.
 		if (maxNrVehicles <= 0 || maxNrVehicles < 2 && !pathInfo.build) {
-			Log.logDebug("To many vehicles already operating on " + report.fromConnectionNode.GetName() + " (or not enough cash to build new ones)!");
+			//Log.logDebug("Too many vehicles already operating on " + report.fromConnectionNode.GetName() + " (or not enough cash to build new ones)!");
 			continue;
 		}
 		
@@ -175,7 +175,7 @@ function ConnectionAdvisor::getReports()
 		if (processedProcessingIndustries.rawin(UID))
 			continue;
 			
-		Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles!");
+		//Log.logDebug("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles!");
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.

@@ -530,13 +530,13 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	// Now with the open and closed list we're ready to do some grinding!!!
 	while (pq.Count != 0)
 	{
-		
 		local at = pq.Pop();	
-
-//		{
-//			local a = AIExecMode();
-//			AISign.BuildSign(at.tile, "A");
-//		}
+		/*
+		if(Log.isDebug)
+		{
+			local a = AIExecMode();
+			Log.buildDebugSign(at.tile, "A");
+		}*/
 		
 		// Get the node with the best utility value
 		if(closedList.rawin(at.tile))
