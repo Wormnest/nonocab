@@ -38,7 +38,7 @@ function NoCAB::Start()
 	Log.logError("Log ERROR enabled.");
 
 	// Set president name.
-	if(!AICompany.SetPresidentName("B.C.Riddernobel")) {
+	if(!AICompany.SetPresidentName("B.C.Ridder Nobel")) {
 	if(!AICompany.SetPresidentName("B.Ridder")) {
 	if(!AICompany.SetPresidentName("C.Nobel")) {
 	if(!AICompany.SetPresidentName("B.Ridder jr.")) {
