@@ -21,8 +21,6 @@ class NoCAB extends AIController {
 		 
 		
 	}
-	//function Start();
-	//function Stop();
 }
 function NoCAB::Save() { return {};}
 function NoCAB::Load() {}
