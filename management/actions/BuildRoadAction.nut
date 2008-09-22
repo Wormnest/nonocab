@@ -42,7 +42,7 @@ function BuildRoadAction::Execute()
 		local abc = AIExecMode();
 		if (!pathfinder.CreateRoad(connection)) {
 			connection.pathInfo.forceReplan = true;
-			Log.logError("Failed to build a road");
+			Log.logError("BuildRoadAction: Failed to build a road");
 			return false;
 		}
 	}
@@ -56,7 +56,7 @@ function BuildRoadAction::Execute()
 		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
 			if (!BuildRoadStation(connection, false, isTruck)) {
-				Log.logError("Road station couldn't be build! Not handled yet!");
+				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
 				connection.pathInfo.forceReplan = true;
 				return false;
 			}
@@ -65,7 +65,7 @@ function BuildRoadAction::Execute()
 		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
 			
 			if (!BuildRoadStation(connection, true, isTruck)) {
-				Log.logError("Road station couldn't be build! Not handled yet!");
+				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
 				connection.pathInfo.forceReplan = true;
 				return false;
 			}

@@ -86,17 +86,7 @@ function World::GetBankInterestRate()
  */
 function World::Update()
 {
-//	local years = AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year;
-	
-	// Update the max distance every year!
-//	if (years > years_passed) {
-//		IncreaseMaxDistanceBetweenNodes();
-		//max_distance_between_nodes += 32;// * (1 + years_passed);
-//		years_passed = years;
-//	}
 	UpdateEvents();
-	
-
 }
 
 /**

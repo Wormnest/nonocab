@@ -9,11 +9,42 @@ class PathInfo
 	build = null;			// Is this path build?
 	forceReplan = null;		// This is a failsafe option, if the road has been build but depots and road
 							// stations are impossible to build, we force a replanning of the path.
+							
+	travelTimesForward = null;		// An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesBackward = null;		// An array containing the travel times in days for vehicles with a certain speed.
 
-	constructor(roadList, roadCost) {
-		this.roadList = roadList;
-		this.roadCost = roadCost;
-		this.build = false;
+	constructor(_roadList, _roadCost) {
+		roadList = _roadList;
+		roadCost = _roadCost;
+		build = false;
+		travelTimesForward = [];
+		travelTimesBackward = [];
 	}
+	
+	/**
+	 * Get the traveltime for a vehicle with a certain maxSpeed for this road.
+	 * @maxSpeed The maximum speed of the engine in question.
+	 * @forward If true, we calculate the time from the start point to the end point
+	 * (as calculated by the pathfinder).
+	 * return The number of days it takes to traverse a certain road.
+	 */
+	function GetTravelTime(maxSpeed, forward);
 }
 
+function PathInfo::GetTravelTime(maxSpeed, forward) {
+	
+	if (roadList == null)
+		return -1;
+		
+	// Check if we don't have this in our cache.
+	local cache = (forward ? travelTimesForward : travelTimesBackward);
+	foreach (time in cache) {
+		if (time[0] == maxSpeed) 
+			return time[1];
+	}
+	
+	local pathfinder = RoadPathFinding();
+	local time = pathfinder.GetTime(roadList, maxSpeed, forward);
+	cache.push([maxSpeed, time]);
+	return time;
+}

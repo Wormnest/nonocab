@@ -1,6 +1,5 @@
 class Advisor
 {
-	static LOAD_UNLOAD_PENALTY_IN_DAYS = 2;
 	/** Gets and sets the inner representation of the 'world'. */
 	innerWorld = null;
 	

@@ -2,7 +2,6 @@ import("queue.binary_heap", "BinaryHeap", 1);
 
 class Parlement
 {
-	static MINIMUM_BALANCE = 7300;
 	reports = null;
 	balance = null;
 	
@@ -60,10 +59,10 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	{
 		//exprected_profit = report.profitPerMonth * World.GetMonthsRemaining() - report.cost * World.GetBankInterestRate();
 		local utility = report.Utility();
-		//Log.logDebug(utility + " for " + report.message);
+		Log.logDebug(utility + " for " + report.message);
 		// Only add when whe think that they will be profitable in the end.
 		// Don't look for things if they are to expensive.
-		if(utility > 0 && (report.cost <=0 || potentinal_balance > MINIMUM_BALANCE))
+		if(utility > 0)
 		{
 			//Log.logDebug(report.message);
 			//orderby = exprected_profit * report.cost;

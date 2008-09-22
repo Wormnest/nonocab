@@ -103,15 +103,17 @@ function ConnectionAdvisor::getReports()
 		} else {
 			comparedConnections++;
 			// Find a new path.
-			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true);
+			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP);
 			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 				continue;
 			}
 		}
 		
-		local timeToTravelTo = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), true)  + LOAD_UNLOAD_PENALTY_IN_DAYS;
-		local timeToTravelFrom = pathfinder.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(report.engineID), false) + LOAD_UNLOAD_PENALTY_IN_DAYS;
+		// Calculate the travel times for the prospected engine ID.
+		local maxSpeed = AIEngine.GetMaxSpeed(report.engineID);
+		local timeToTravelTo = pathInfo.GetTravelTime(maxSpeed, true);
+		local timeToTravelFrom = pathInfo.GetTravelTime(maxSpeed, true);
 			
 		// Calculate bruto income per vehicle per run.
 		local incomePerRun = AICargo.GetCargoIncome(report.cargoID, 
@@ -121,7 +123,7 @@ function ConnectionAdvisor::getReports()
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
 		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / World.DAYS_PER_YEAR);
-		local maxNrVehicles = surplusProductionPerMonth / transportedCargoPerVehiclePerMonth;
+		local maxNrVehicles = (1 + (surplusProductionPerMonth / transportedCargoPerVehiclePerMonth)).tointeger();
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
 
@@ -132,11 +134,11 @@ function ConnectionAdvisor::getReports()
 
 		// If we can't pay for all vehicle consider a number we can afford.
 		if (costPerVehicle * maxNrVehicles > (money - roadCost)) {
-			maxNrVehicles = (money - roadCost) / costPerVehicle;
+			maxNrVehicles = ((money - roadCost) / costPerVehicle).tointeger();
 		}
 
 		// If we can't buy any vehicles (or to few), don't bother.
-		if (maxNrVehicles <= 0 || maxNrVehicles < 2 && !pathInfo.build) {
+		if (maxNrVehicles <= 0 || maxNrVehicles <= 2 && !pathInfo.build) {
 			//Log.logDebug("Too many vehicles already operating on " + report.fromConnectionNode.GetName() + " (or not enough cash to build new ones)!");
 			continue;
 		}
@@ -179,15 +181,15 @@ function ConnectionAdvisor::getReports()
 		local actionList = [];
 			
 		// The industryConnectionNode gives us the actual connection.
-		local connectionNode = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Give the action to build the road.
-		if (connectionNode.pathInfo.build != true)
-			actionList.push(BuildRoadAction(connectionNode, true, true));
+		if (connection.pathInfo.build != true)
+			actionList.push(BuildRoadAction(connection, true, true));
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connectionNode);
+		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		actionList.push(vehicleAction);
 
 		// Create a report and store it!
@@ -199,7 +201,7 @@ function ConnectionAdvisor::getReports()
 	if (possibleConnections == 0)
 		world.IncreaseMaxDistanceBetweenNodes();
 	
-	Log.logDebug("Return reports");
+	Log.logDebug("Return reports " + possibleConnections);
 	return reports;
 }
 
@@ -239,11 +241,12 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				local travelTime = 0;
 
 				if (connection != null && connection.pathInfo.build) {
-					travelTime = RoadPathFinding().GetTime(connection.pathInfo.roadList, maxSpeed, true) + LOAD_UNLOAD_PENALTY_IN_DAYS;
+					travelTime = connection.pathInfo.GetTravelTime(maxSpeed, true);
 					checkIndustry = true;
+				} else { 
+					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 				}
-				else 
-					travelTime = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed + LOAD_UNLOAD_PENALTY_IN_DAYS;
+				
 				local incomePerRun = AICargo.GetCargoIncome(cargo, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargo]);
 
 				local report = ConnectionReport();

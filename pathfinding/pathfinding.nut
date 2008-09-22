@@ -68,12 +68,10 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 	switch (buildResult.errorMessage) {
 	
 		// Temporal onces:
-		case AIError.ERR_NOT_ENOUGH_CASH:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
-			//toBuildLater.push(buildResult);
-			///return true;
-			return false;
+			toBuildLater.push(buildResult);
+			return true;
 			
 		// Serious onces:
 		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:
@@ -84,7 +82,7 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 		case AIError.ERR_SITE_UNSUITABLE:
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
-		
+		case AIError.ERR_NOT_ENOUGH_CASH:		
 			/**
 			 * We handle these kind of errors elsewhere.
 			 */
@@ -98,12 +96,8 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
-			// In DEBUG mode, this should CRACK horably.
-			if(Log.isDebug())
-			{
-				Log.logError("/me slaps developer! ;)");
-				quit();
-			}
+			Log.logError("/me slaps developer! ;)");
+			quit();
 			return false;
 			
 		default:
@@ -128,6 +122,8 @@ function RoadPathFinding::CreateRoad(connection)
 	
 	// TODO: This part fails if we try to cuild more than 1 connection per tick.
 	while (!result.success) {
+		return false;
+		/*
 		Log.logDebug("Fixing: " + AIError.GetLastErrorString() + "!");
 		
 		local roadList = connection.pathInfo.roadList;
@@ -172,7 +168,7 @@ function RoadPathFinding::CreateRoad(connection)
 			return false;
 		}
 		
-		result = tmpResult;
+		result = tmpResult;*/
 	}
 	return true;
 }
@@ -463,7 +459,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  * @param checkBuildability Check the start and end points before finding a road.
  * @return A PathInfo instance which contains the found path (if any).
  */
-function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions)
+function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType)
 {
 	if(start.IsEmpty())
 	{
@@ -486,12 +482,6 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	for(local i = end.Begin(); end.HasNext(); i = end.Next()) {
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
-	}
-	
-	// No end points? 
-	if (end.Count() == 0) {
-		Log.logDebug("Pathfinder: No end points for this road; Abort");
-		return null;
 	}
 
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
@@ -531,22 +521,20 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	while (pq.Count != 0)
 	{
 		local at = pq.Pop();	
-		/*
-		if(Log.isDebug)
-		{
-			local a = AIExecMode();
-			Log.buildDebugSign(at.tile, "A");
-		}*/
 		
 		// Get the node with the best utility value
 		if(closedList.rawin(at.tile))
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(end.HasItem(at.tile) && (!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true))) {
-
+		if(end.HasItem(at.tile) && 
+		
+			// If we need to check the end positions then we either have to be able to build a road station
+			(!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) ||
+			// or a roadstation must already be in place, facing the correct direction and be ours.
+			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
+				
 			local resultList = [];
-			
 			local resultTile = at;
 			
 			while (resultTile.parentTile != resultTile) {

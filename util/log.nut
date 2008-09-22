@@ -2,15 +2,12 @@ class Log { }
 
 function Log::getLogLevel()
 {
-	return 0; // DEBUG   = 0
-	//return 1; // INFO    = 1
+	//return 0; // DEBUG   = 0
+	return 1; // INFO    = 1
 	//return 2; // WARNING = 2
 	//return 3; // ERROR   = 3
 }
-function Log::isDebug()
-{
-	return getLogLevel() == 0;
-}
+
 /** If logLevel is ok log debug. */
 function Log::logDebug(message)
 {
@@ -18,16 +15,7 @@ function Log::logDebug(message)
 		AILog.Info("DEBUG: " + message);
 	}
 }
-function Log::logDebugTile(tile, message)
-{
-	Log.logDebug("tile(" + AIMap.GetTileX(tile)+ ", "+ AIMap.GetTileY(tile) + ") " +  message);
-}
-function Log::buildDebugSign(tile, message)
-{
-	if(Log.getLogLevel() < 1) {
-		AISign.BuildSign(tile, "DEBUG: " + message);
-	}
-}
+
 /** If logLevel is ok log info. */
 function Log::logInfo(message)
 {
@@ -35,6 +23,7 @@ function Log::logInfo(message)
 		AILog.Info("INFO: " + message);
 	}
 }
+
 /** If logLevel is ok log warnings. */
 function Log::logWarning(message)
 {
@@ -42,6 +31,7 @@ function Log::logWarning(message)
 		AILog.Warning("WARNING: " + message);
 	}
 }
+
 /** If logLevel is ok log errors. */
 function Log::logError(message)
 {

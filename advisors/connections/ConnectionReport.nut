@@ -1,16 +1,15 @@
 class ConnectionReport extends Report {
 
 	profitPerMonthPerVehicle = 0;	// The utility value.
-	engineID = 0;			// The vehicles to build.
-	nrVehicles = 0;			// The number of vehicles to build.
-	roadList = null;		// The road to build.
+	engineID = 0;					// The vehicles to build.
+	nrVehicles = 0;					// The number of vehicles to build.
+	roadList = null;				// The road to build.
 
 	fromConnectionNode = null;	// The node which produces the cargo.
 	toConnectionNode = null;	// The node which accepts the produced cargo.
 	
 	cargoID = 0;			// The cargo to transport.
-	
-	cost = 0;			// The cost of this operation.
+	cost = 0;				// The cost of this operation.
 	
 	constructor() {
 		
