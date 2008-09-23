@@ -2,8 +2,8 @@ class Log { }
 
 function Log::getLogLevel()
 {
-	//return 0; // DEBUG   = 0
-	return 1; // INFO    = 1
+	return 0; // DEBUG   = 0
+	//return 1; // INFO    = 1
 	//return 2; // WARNING = 2
 	//return 3; // ERROR   = 3
 }

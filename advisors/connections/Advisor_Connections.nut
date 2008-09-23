@@ -18,7 +18,6 @@ class ConnectionAdvisor extends Advisor
 	constructor(world)
 	{
 		this.world = world;
-		
 	}
 	
 	/**
@@ -126,7 +125,7 @@ function ConnectionAdvisor::getReports()
 		local maxNrVehicles = (1 + (surplusProductionPerMonth / transportedCargoPerVehiclePerMonth)).tointeger();
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
-
+		
 		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
 		if (!pathInfo.build || maxNrVehicles >= 2) {
 			possibleConnections++;
@@ -143,14 +142,21 @@ function ConnectionAdvisor::getReports()
 			continue;
 		}
 		
+		// Calculate the number of road stations which need to be build
+		local daysBetweenVehicles = ((timeToTravelTo + timeToTravelFrom) + 2 * 5) / maxNrVehicles.tofloat();
+		local numberOfRoadStations = 5 / daysBetweenVehicles;
+		if (numberOfRoadStations < 1) numberOfRoadStations = 1;
+		else numberOfRoadStations = numberOfRoadStations.tointeger();
+		
 		// Compile the report.
+		report.nrRoadStatations = numberOfRoadStations;
 		report.nrVehicles = maxNrVehicles;
 		report.profitPerMonthPerVehicle = incomePerVehicle * (World.DAYS_PER_MONTH / (timeToTravelTo + timeToTravelFrom));
 		report.cost = (costPerVehicle * maxNrVehicles) + roadCost;
 		
 		// Add the report to the list.
 		connectionCache.Insert(report, -report.Utility());
-		Log.logDebug("Insert road from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache");
+		Log.logDebug("Insert road from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache (travel time: " + (timeToTravelTo + timeToTravelFrom) +").");
 		
 		// Check if the industry connection node actually exists else create it, and update it!
 		if (otherConnection == null) {

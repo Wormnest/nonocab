@@ -6,9 +6,9 @@
 class RoadPathFinding 
 {
 	// The length of various road pieces
-	static straightRoadLength 	= 28.5;
+	static straightRoadLength 	= 28.5;					// Road length / 24 (easier to calculate km/h)
 	static bendedRoadLength 	= 28.5;
-	static upDownHillRoadLength = 40;
+	static upDownHillRoadLength = 28.5;
 
 	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 50;		// Cost for building a new road.
@@ -95,6 +95,7 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 			
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
+			Log.logError("Build from " + buildResult.buildFromIndex + " to " + buildResult.buildToIndex + " tileType: " + buildResult.tileType);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
 			quit();
@@ -119,8 +120,6 @@ function RoadPathFinding::CreateRoad(connection)
 	
 	// If we were unsuccessful in building the road (and the fallback option failed),
 	// we might need to recalculate a part or the whole path.
-	
-	// TODO: This part fails if we try to cuild more than 1 connection per tick.
 	while (!result.success) {
 		return false;
 		/*
@@ -305,7 +304,7 @@ function RoadPathFinding::BuildRoad(roadList)
 	if (buildFromIndex > 0 && !AIRoad.BuildRoad(roadList[buildFromIndex].tile, roadList[0].tile)) {
 		local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), buildFromIndex, 0, Tile.ROAD, roadList); 
 		if (!FallBackCreateRoad(buildResult))
-			return buildResult 
+			return buildResult;
 	}
 	return RoadPathBuildResult(true, null, null, null, null, null);
 }
@@ -392,33 +391,36 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 			
 			local slowDowns = 0;
 
-			while (tileLength > 0) {
-				tileLength -= currentSpeed;
-				days++;
-
-				if (currentSpeed <= 34) {
+			local quarterTileLength = tileLength / 4;
+			local qtl_carry = 0;
+			
+			// Speed decreases 10% 4 times per tile
+			for (local j = 0; j < 4; j++) {
+				local qtl = quarterTileLength - qtl_carry;
+				while (qtl > 0) {
+					qtl -= currentSpeed;
+					days++;
+				}
+				
+				currentSpeed *= 0.9;
+				qtl_carry = -qtl;
+				if (currentSpeed < 34) {
 					currentSpeed = 34;
 					break;
 				}
-				// Speed decreases 10% 4 times per tile
-				else if (tileLength < 970 - slowDowns * 242) {
-					currentSpeed *= 0.9;
-					slowDowns++;
-				}
-
 			}
+			
 		} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
 			tileLength = upDownHillRoadLength - carry;
 
 			while (tileLength > 0) {
 				tileLength -= currentSpeed;
 				days++;
-
+				
+				currentSpeed += 74;
 				if (currentSpeed >= maxSpeed) {
 					currentSpeed = maxSpeed;
 					break;
-				} else if (currentSpeed < maxSpeed) {
-					currentSpeed += 74;
 				}
 			}
 		} else {					// Straight
@@ -429,7 +431,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 				tileLength -= currentSpeed;
 				days++;
 
-				currentSpeed += 74;
+				currentSpeed += 34;
 				if (currentSpeed > maxSpeed) {
 					currentSpeed = maxSpeed;
 					break;
@@ -439,7 +441,11 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 
 		if (tileLength > 0) {
 			local div = tileLength / currentSpeed;
-			carry = tileLength - (currentSpeed * div);
+			
+			if (div * currentSpeed != tileLength) {
+				div++;
+			}
+			carry = -(tileLength - (currentSpeed * div));
 			days += div;
 		} else {
 			carry = -tileLength;
@@ -515,7 +521,6 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		Log.logDebug("Pathfinder: No start points for this road; Abort");
 		return null;
 	}
-
 
 	// Now with the open and closed list we're ready to do some grinding!!!
 	while (pq.Count != 0)

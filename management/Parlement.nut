@@ -57,7 +57,6 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	// Sort all the reports based on their utility.
 	foreach (report in reportlist)
 	{
-		//exprected_profit = report.profitPerMonth * World.GetMonthsRemaining() - report.cost * World.GetBankInterestRate();
 		local utility = report.Utility();
 		Log.logDebug(utility + " for " + report.message);
 		// Only add when whe think that they will be profitable in the end.

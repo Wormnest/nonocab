@@ -11,6 +11,8 @@ class ConnectionReport extends Report {
 	cargoID = 0;			// The cargo to transport.
 	cost = 0;				// The cost of this operation.
 	
+	nrRoadStatations = 0;	// The number of road stations which need to be build on each side.
+	
 	constructor() {
 		
 	}

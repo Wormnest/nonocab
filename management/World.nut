@@ -53,7 +53,7 @@ class World
 		}		
 		
 		BuildIndustryTree();
-		max_distance_between_nodes = 32;
+		max_distance_between_nodes = 64;
 		InitEvents();
 		InitCargoTransportEngineIds();
 	}
@@ -71,16 +71,7 @@ class World
 	 */
 	//function PrintNode();	
 }
-function World::GetMonthsRemaining()
-{
-	// TODO: Get from Game.
-	return 12*10;//return  AIGameSettings.GetValue()
-}
-function World::GetBankInterestRate()
-{
-	// TODO: Get from Game.
-	return 1.04;//return  AIGameSettings.GetValue()
-}
+
 /**
  * Updates the view on the world.
  */
@@ -100,7 +91,7 @@ function World::IncreaseMaxDistanceBetweenNodes()
 		Log.logDebug("Max distance reached its max!");
 		return;
 	}
-	max_distance_between_nodes += 16;
+	max_distance_between_nodes += 32;
 	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
 	
 	// Overwrite the default increase each year.
