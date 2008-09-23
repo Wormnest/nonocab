@@ -293,7 +293,7 @@ function RoadPathFinding::BuildRoad(roadList)
 		if (roadList[a].type != Tile.ROAD) {
 
 			// Build road before the tunnel or bridge.
-			if (!AIRoad.BuildRoad(roadList[buildFromIndex].tile, roadList[a + 1].tile)) {
+			if ((buildFromIndex != a + 1) && !AIRoad.BuildRoad(roadList[buildFromIndex].tile, roadList[a + 1].tile)) {
 				local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), buildFromIndex, a + 1, Tile.BRIDGE, roadList); 
 				if (!FallBackCreateRoad(buildResult))
 					return buildResult;
@@ -402,61 +402,102 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 
 		local tileLength = 0;
 
-		if(lastDirection != currentDirection) {		// Bend
-			tileLength = bendedRoadLength - carry;
-			currentSpeed = maxSpeed / 2;
-		} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
-			tileLength = upDownHillRoadLength - carry;
-			
-			local slowDowns = 0;
-
-			local quarterTileLength = tileLength / 4;
-			local qtl_carry = 0;
-			
-			// Speed decreases 10% 4 times per tile
-			for (local j = 0; j < 4; j++) {
-				local qtl = quarterTileLength - qtl_carry;
-				while (qtl > 0) {
-					qtl -= currentSpeed;
+		switch (roadList[i].type) {
+			case Tile.ROAD:
+				if(lastDirection != currentDirection) {		// Bend
+					tileLength = bendedRoadLength - carry;
+					currentSpeed = maxSpeed / 2;
+				} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
+					tileLength = upDownHillRoadLength - carry;
+					
+					local slowDowns = 0;
+		
+					local quarterTileLength = tileLength / 4;
+					local qtl_carry = 0;
+					
+					// Speed decreases 10% 4 times per tile
+					for (local j = 0; j < 4; j++) {
+						local qtl = quarterTileLength - qtl_carry;
+						while (qtl > 0) {
+							qtl -= currentSpeed;
+							days++;
+						}
+						
+						currentSpeed *= 0.9;
+						qtl_carry = -qtl;
+						if (currentSpeed < 34) {
+							currentSpeed = 34;
+							break;
+						}
+					}
+					
+				} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
+					tileLength = upDownHillRoadLength - carry;
+		
+					while (tileLength > 0) {
+						tileLength -= currentSpeed;
+						days++;
+						
+						currentSpeed += 74;
+						if (currentSpeed >= maxSpeed) {
+							currentSpeed = maxSpeed;
+							break;
+						}
+					}
+				} else {					// Straight
+					tileLength = straightRoadLength - carry;
+					
+					// Calculate the number of days needed to traverse the tile
+					while (tileLength > 0) {
+						tileLength -= currentSpeed;
+						days++;
+		
+						currentSpeed += 34;
+						if (currentSpeed > maxSpeed) {
+							currentSpeed = maxSpeed;
+							break;
+						}
+					}
+				}
+				break;
+			case Tile.BRIDGE:
+				local length = (tile - AIBridge.GetOtherBridgeEnd(tile)) / currentDirection;
+				if (length < 0) length = -length;
+				 
+				tileLength = straightRoadLength * length - carry;
+				
+				while (tileLength > 0) {
+					tileLength -= currentSpeed;
 					days++;
+					
+					currentSpeed += 34;
+					if (currentSpeed > maxSpeed) {
+						currentSpeed = maxSpeed;
+						break;
+					}
 				}
+				break;
 				
-				currentSpeed *= 0.9;
-				qtl_carry = -qtl;
-				if (currentSpeed < 34) {
-					currentSpeed = 34;
-					break;
-				}
-			}
-			
-		} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
-			tileLength = upDownHillRoadLength - carry;
-
-			while (tileLength > 0) {
-				tileLength -= currentSpeed;
-				days++;
+			case Tile.TUNNEL:
+				local length = (tile - AITunnel.GetOtherTunnelEnd(tile)) / currentDirection;
+				if (length < 0) length = -length;
+				 
+				tileLength = straightRoadLength * length - carry;
 				
-				currentSpeed += 74;
-				if (currentSpeed >= maxSpeed) {
-					currentSpeed = maxSpeed;
-					break;
+				while (tileLength > 0) {
+					tileLength -= currentSpeed;
+					days++;
+					
+					currentSpeed += 34;
+					if (currentSpeed > maxSpeed) {
+						currentSpeed = maxSpeed;
+						break;
+					}
 				}
-			}
-		} else {					// Straight
-			tileLength = straightRoadLength - carry;
-			
-			// Calculate the number of days needed to traverse the tile
-			while (tileLength > 0) {
-				tileLength -= currentSpeed;
-				days++;
-
-				currentSpeed += 34;
-				if (currentSpeed > maxSpeed) {
-					currentSpeed = maxSpeed;
-					break;
-				}
-			}
+				break;
 		}
+			
+	
 
 		if (tileLength > 0) {
 			local div = tileLength / currentSpeed;
