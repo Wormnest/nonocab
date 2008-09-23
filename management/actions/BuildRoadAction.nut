@@ -146,11 +146,11 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 		// side!
 		start_list = connection.travelFromNode.GetProducingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[originalRoadListLen - 1].tile);
-		Log.buildDebugSign(originalRoadList[originalRoadListLen - 1].tile, "!");
+		AISign.BuildSign(originalRoadList[originalRoadListLen - 1].tile, "!");
 	} else {
 		start_list = connection.travelToNode.GetAcceptingTiles(connection.cargoID);
 		start_list.RemoveTile(originalRoadList[0].tile);
-		Log.buildDebugSign(originalRoadList[0].tile, "!");		
+		AISign.BuildSign(originalRoadList[0].tile, "!");		
 	}
 	
 	/**
@@ -177,7 +177,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	Log.logError("End tiles: " + end_list.Count());
 
 	// We try to build a path to connect the disconnected road station.
-	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false);
+	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP);
 			
 	if (roadStationPathInfo == null) {
 		Log.logError("couldn't build the road station, aborting! (null)");
@@ -186,14 +186,14 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	
 	// Debug; Show the calculated route.
 	foreach (at in roadStationPathInfo.roadList) {
-		Log.buildDebugSign(at.tile, "X");
+		AISign.BuildSign(at.tile, "X");
 	}
 			
 	// Try to build it, remember that the start position is the location for the new
 	// road station. But the path is stored backwards, so the new location is the
 	// very last item on the roadList!
 	local buildResult = pathfinder.BuildRoad(roadStationPathInfo.roadList);
-	Log.buildDebugSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");
+	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");
 	if (buildResult.success && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
 		// We're done so update the connection.
 		local connectionTile = -1;

@@ -103,7 +103,7 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		
 		local isBridgeOrTunnelEntrance = false;
 		
-		// Check if we can exploit exising bridges and tunnels.
+		// Check if we can exploit excising bridges and tunnels.
 		if (AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			local type = Tile.NONE;
 			local otherEnd;
@@ -166,7 +166,7 @@ function Tile::GetBridges(startNode, direction)
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
-		if (!bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
+		if (!bridge_list.IsEmpty() && (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)  || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
 			tiles.push(target);
 			foundBridge = true;
 		} else if (foundBridge) {
@@ -193,7 +193,7 @@ function Tile::GetTunnels(startNode, previousNode)
 	local direction = (other_tunnel_end - startNode) / tunnel_length;
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)) {
+	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
 		tiles.push(other_tunnel_end);
 	}
 	return tiles;
@@ -237,10 +237,9 @@ function Tile::IsBuildable(tile) {
 	// Check if we can build a road station on this tile (then we know for sure it's
 	// save to build here :)
 	foreach(directionTile in Tile.GetTilesAround(tile)) {
-		if(AIRoad.BuildRoadStation(tile, directionTile, true, false, true)) {
+		if(AIRoad.BuildRoadStation(tile, directionTile, true, false, true) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH) {
 			return true;
 		}
 	}
-
 	return false;
 }

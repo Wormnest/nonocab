@@ -7,7 +7,7 @@ class RoadPathFinding
 {
 	// The length of various road pieces
 	static straightRoadLength 	= 28.5;					// Road length / 24 (easier to calculate km/h)
-	static bendedRoadLength 	= 28.5;
+	static bendedRoadLength 	= 20;//28.5;
 	static upDownHillRoadLength = 28.5;
 
 	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
@@ -151,11 +151,11 @@ function RoadPathFinding::CreateRoad(connection)
 			newRoadList.extend(roadList.slice(result.buildFromIndex + 1));
 		
 		foreach (at in connection.pathInfo.roadList) {
-			Log.buildDebugSign(at.tile, "Old");
+			AISign.BuildSign(at.tile, "Old");
 		}
 		
 		foreach (at in newRoadList) {
-			Log.buildDebugSign(at.tile, "New");
+			AISign.BuildSign(at.tile, "New");
 		}		
 		
 		connection.pathInfo.roadList = newRoadList;
@@ -477,7 +477,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		Log.logError("Could not find a fasted road for an empty endlist.");
 		return null;
 	}
+
 	local test = AITestMode();
+
 	local pq = null;
 	local expectedEnd = null;
 
@@ -505,8 +507,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
 		// Check if we can actually start here!
-		if(checkStartPositions && !Tile.IsBuildable(i))
+		if(checkStartPositions && !Tile.IsBuildable(i)) {
 			continue;
+		}
  
  		hasStartPoint = true;
  		
@@ -518,7 +521,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	
 	// Check if we have a node from which to build.
 	if (!hasStartPoint) {
-		Log.logDebug("Pathfinder: No start points for this road; Abort");
+		Log.logDebug("Pathfinder: No start points for this road; Abort: original #start points: " + start.Count());
 		return null;
 	}
 
@@ -535,7 +538,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		if(end.HasItem(at.tile) && 
 		
 			// If we need to check the end positions then we either have to be able to build a road station
-			(!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) ||
+			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
 			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
 				
@@ -568,7 +571,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		foreach (neighbour in directions) {
 		
 			// Skip if this node is already processed or if we can't build on it.
-			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile))) {
+			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile) && AIError.GetLastError() == AIError.ERR_AREA_NOT_CLEAR )) {
 				continue;
 			}
 			
