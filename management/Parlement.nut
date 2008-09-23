@@ -38,7 +38,6 @@ function Parlement::ExecuteReports()
 		local loanMode = AIExecMode();
 		local loanInterval = AICompany.GetLoanInterval();
 		while (AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
-		//AICompany.SetLoanAmount(AICompany.GetLoanAmount() - (AICompany.GetBankBalance(AICompany.MY_COMPANY) / AICompany.GetLoanInterval()));
 	}	
 }
 

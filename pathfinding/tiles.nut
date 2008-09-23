@@ -166,7 +166,7 @@ function Tile::GetBridges(startNode, direction)
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
-		if (!bridge_list.IsEmpty() && (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)  || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
+		if (!bridge_list.IsEmpty() && (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
 			tiles.push(target);
 			foundBridge = true;
 		} else if (foundBridge) {

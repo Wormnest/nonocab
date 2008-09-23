@@ -47,9 +47,6 @@ function ConnectionAdvisor::getReports()
 	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 	
-	// The number of connections which we've compared.
-	local comparedConnections = 0;
-	
 	// Check how much we have to spend:
 	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount();
 	
@@ -100,7 +97,6 @@ function ConnectionAdvisor::getReports()
 			// Use the already build path.
 			pathInfo = otherConnection.pathInfo;
 		} else {
-			comparedConnections++;
 			// Find a new path.
 			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP);
 			if (pathInfo == null) {
@@ -121,7 +117,7 @@ function ConnectionAdvisor::getReports()
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / (timeToTravelTo + timeToTravelFrom)) * AIEngine.GetCapacity(report.engineID);
-		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * AIEngine.GetRunningCost(report.engineID) / World.DAYS_PER_YEAR);
+		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * (AIEngine.GetRunningCost(report.engineID) / World.DAYS_PER_YEAR));
 		local maxNrVehicles = (1 + (surplusProductionPerMonth / transportedCargoPerVehiclePerMonth)).tointeger();
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
 		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
@@ -129,6 +125,12 @@ function ConnectionAdvisor::getReports()
 		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
 		if (!pathInfo.build || maxNrVehicles >= 2) {
 			possibleConnections++;
+		}
+		
+		// Check if we need to sell vehicles.
+		if (maxNrVehicles < 0) {
+			Log.logWarning("Sell " + maxNrVehicles + " vehicles!");
+			continue;
 		}
 
 		// If we can't pay for all vehicle consider a number we can afford.

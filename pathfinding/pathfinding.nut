@@ -95,15 +95,15 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 			
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
-			Log.logError("Build from " + buildResult.buildFromIndex + " to " + buildResult.buildToIndex + " tileType: " + buildResult.tileType);
+			Log.logError("Build from " + buildResult.roadList[buildResult.buildFromIndex].tile + " to " + buildResult.roadList[buildResult.buildToIndex].tile + " tileType: " + buildResult.tileType);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
 			quit();
-			return false;
+			return true;
 			
 		default:
 			Log.logError("Unhandled error message: " + AIError.GetLastErrorString() + "!");
-			return true;
+			return false;
 	}
 }
 
@@ -199,7 +199,6 @@ class RoadPathBuildResult {
  */
 function RoadPathFinding::BuildRoad(roadList)
 {
-	//local roadList = connection.pathInfo.roadList;
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
@@ -241,6 +240,14 @@ function RoadPathFinding::BuildRoad(roadList)
 				local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), a + 1, null, Tile.TUNNEL, roadList); 
 				if (!FallBackCreateRoad(buildResult))
 					return buildResult;
+			} else {
+				// If the bridge is already build, make sure the road before the bridge is connected to the
+				// already build bridge. (the part after the bridge is handled in the next part).
+				if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
+					local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), a + 1, a + 1, Tile.ROAD, roadList); 
+					if (!FallBackCreateRoad(buildResult))
+						return buildResult;	
+				}
 			}
 		} 
 		
@@ -270,6 +277,14 @@ function RoadPathFinding::BuildRoad(roadList)
 					if (!FallBackCreateRoad(buildResult))
 						return buildResult;
 				}
+			} else {
+				// If the bridge is already build, make sure the road before the bridge is connected to the
+				// already build bridge. (the part after the bridge is handled in the next part).
+				if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
+					local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), a + 1, a + 1, Tile.ROAD, roadList); 
+					if (!FallBackCreateRoad(buildResult))
+						return buildResult;	
+				}
 			}
 		}
 		
@@ -284,19 +299,23 @@ function RoadPathFinding::BuildRoad(roadList)
 					return buildResult;
 			}
 			
-			// Build the road after the tunnel or bridge.
-			if (direction != roadList[a + 1].direction) {
-				if (!AIRoad.BuildRoad(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction)) {
-					local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), a + 1, null, Tile.ROAD_POST_TUNNEL_OR_BRIDGE, roadList); 
+			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
+			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
+			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {		
+				if (!AIRoad.BuildRoad(roadList[a].tile, roadList[a - 1].tile)) {
+					local buildResult = RoadPathBuildResult(false, AIError.GetLastError(), buildFromIndex, a + 1, Tile.BRIDGE, roadList); 
 					if (!FallBackCreateRoad(buildResult))
 						return buildResult;
 				}
-			} 
-				
-			if (a > 0)
-				buildFromIndex = a - 1;
-			else
+			}
+
+			if (a > 0) {
+				buildFromIndex = a;
+				currentDirection = roadList[a].direction;
+			}
+			else {
 				buildFromIndex = 0;
+			}
 		}
 	}
 	
@@ -538,7 +557,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		if(end.HasItem(at.tile) && 
 		
 			// If we need to check the end positions then we either have to be able to build a road station
-			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH) ||
+			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true)/* || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH*/) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
 			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
 				
@@ -571,7 +590,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		foreach (neighbour in directions) {
 		
 			// Skip if this node is already processed or if we can't build on it.
-			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile) && AIError.GetLastError() == AIError.ERR_AREA_NOT_CLEAR )) {
+			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile)/* && AIError.GetLastError() == AIError.ERR_AREA_NOT_CLEAR */)) {
 				continue;
 			}
 			
