@@ -36,13 +36,8 @@ function NoCAB::Start()
 	Log.logError("Log ERROR enabled.");
 
 	// Set president name.
-	if(!AICompany.SetPresidentName("B.C.Ridder Nobel")) {
-	if(!AICompany.SetPresidentName("B.Ridder")) {
-	if(!AICompany.SetPresidentName("C.Nobel")) {
-	if(!AICompany.SetPresidentName("B.Ridder jr.")) {
-	if(!AICompany.SetPresidentName("C.Nobel jr.")) {
-		logWarning("Presidentname could not be set.");
-	} } } } }
+	AICompany.SetPresidentName("B.C.Ridder Nobel");
+	
 	// Set company name.
 	if(!AICompany.SetName("NoCAB")) {
 		local i = 2;

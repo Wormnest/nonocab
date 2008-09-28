@@ -48,7 +48,7 @@ function ConnectionAdvisor::getReports()
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 	
 	// Check how much we have to spend:
-	local money = AICompany.GetBankBalance(AICompany.MY_COMPANY) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount();
+	local money = Finance.GetMaxMoneyToSpend();
 	
 	// Hold a cache of possible connections.
 	local connectionCache = BinaryHeap();
@@ -129,7 +129,7 @@ function ConnectionAdvisor::getReports()
 		
 		// Check if we need to sell vehicles.
 		if (maxNrVehicles < 0) {
-			Log.logWarning("Sell " + maxNrVehicles + " vehicles!");
+			Log.logWarning("Sell " + maxNrVehicles + " vehicles on the connection from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + "!");
 			continue;
 		}
 

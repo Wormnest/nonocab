@@ -98,7 +98,7 @@ function RoadPathFinding::FallBackCreateRoad(buildResult)
 			Log.logError("Build from " + buildResult.roadList[buildResult.buildFromIndex].tile + " to " + buildResult.roadList[buildResult.buildToIndex].tile + " tileType: " + buildResult.tileType);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
-			quit();
+			assert(false);
 			return true;
 			
 		default:
@@ -501,15 +501,14 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 
 		if (tileLength > 0) {
 			local div = tileLength / currentSpeed;
-			
-			if (div * currentSpeed != tileLength) {
-				div++;
-			}
-			carry = -(tileLength - (currentSpeed * div));
+
+			carry = tileLength - (currentSpeed * div);
 			days += div;
 		} else {
 			carry = -tileLength;
 		}
+
+		assert (carry >= 0);
 
 		lastDirection = currentDirection;
 

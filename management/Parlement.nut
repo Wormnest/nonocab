@@ -16,10 +16,8 @@ class Parlement
 function Parlement::ExecuteReports()
 {
 	// Get as much money as possible.
-	{
-		local loanMode = AIExecMode();
-		AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
-	}
+	Finance.GetMaxLoan();
+	
 	foreach (report in reports)
 	{
 		Log.logInfo(report.message);
@@ -34,11 +32,7 @@ function Parlement::ExecuteReports()
 	}
 	
 	// Pay back as much load as possible.
-	{
-		local loanMode = AIExecMode();
-		local loanInterval = AICompany.GetLoanInterval();
-		while (AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
-	}	
+	Finance.RepayLoan();	
 }
 
 /**
@@ -51,8 +45,6 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	local orderby = 0;
 	//local exprected_profit = 0;
 
-	UpdateFinance();
-	local potentinal_balance = balance + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount()
 	// Sort all the reports based on their utility.
 	foreach (report in reportlist)
 	{
@@ -71,14 +63,11 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 			Log.logWarning("Util: " + utility + ", cost: " + report.cost + ", " + report.message);
 		}
 	}
-	UpdateFinance();
+
 	// Do the selection, by using a greedy subsum algorithm.
-	reports = SubSum.GetSubSum(sortedReports, potentinal_balance);
+	reports = SubSum.GetSubSum(sortedReports, Finance.GetMaxMoneyToSpend());
 }
-function Parlement::UpdateFinance()
-{
-	balance = AICompany.GetBankBalance(AICompany.MY_COMPANY);
-}
+
 function Parlement::ClearReports()
 {
 	reports = [];

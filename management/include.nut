@@ -1,4 +1,5 @@
 require("Action.nut");
+require("Finance.nut");
 require("Parlement.nut");
 require("Report.nut");
 require("World.nut");
