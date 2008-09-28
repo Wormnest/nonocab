@@ -20,7 +20,7 @@ class RoadPathFinding
 	static toBuildLater = [];		// List of build actions which couldn't be completed the moment
 									// they were issued due to temporal problems, but should be able
 									// to complete in the (near) future.
-	
+									
 	/**
 	 * We need functions to calibrate penalties and stuff. We want functions
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
@@ -216,7 +216,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  * @param checkBuildability Check the start and end points before finding a road.
  * @return A PathInfo instance which contains the found path (if any).
  */
-function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType)
+function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength)
 {
 	if(start.IsEmpty())
 	{
@@ -264,8 +264,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
  
  		hasStartPoint = true;
  		
-		local annotatedTile = AnnotatedTile(i, null, 0, 0, Tile.ROAD);
-		annotatedTile.parentTile = annotatedTile;		// Small hack ;)
+		local annotatedTile = AnnotatedTile(i, null, 0, 0, Tile.ROAD, 0);
+		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 		pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
 		startList[i] <- i;
 	}
@@ -282,7 +282,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		local at = pq.Pop();	
 		
 		// Get the node with the best utility value
-		if(closedList.rawin(at.tile))
+		if(at.length > maxPathLength || closedList.rawin(at.tile))
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
@@ -366,7 +366,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			neighbour[3] += at.distanceFromStart;
 
 			// Add this neighbour node to the queue.
-			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], neighbour[1], neighbour[2]), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
+			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], neighbour[1], neighbour[2], at.length + 1), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
 		}
 		
 		// Done! Don't forget to put at into the closed list
@@ -389,15 +389,17 @@ class AnnotatedTile
 	distanceFromStart = null;	// 'Distance' already travelled from start tile
 	direction = null;		// The direction the road travels to this point.
 	type = null;			// What type of infrastructure is this?
+	length = null;			// The length of the path.
 
 	// A Tile is about 612km on a side :)
 
-	constructor(tile, parentTile, distanceFromStart, direction, type)
+	constructor(tile, parentTile, distanceFromStart, direction, type, length)
 	{
 		this.tile = tile;
 		this.parentTile = parentTile;
 		this.distanceFromStart = distanceFromStart;
 		this.direction = direction;
 		this.type = type;
+		this.length = length;
 	}
 }

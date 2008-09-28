@@ -183,7 +183,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	Log.logError("End tiles: " + end_list.Count());
 
 	// We try to build a path to connect the disconnected road station.
-	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP);
+	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 3);
 			
 	if (roadStationPathInfo == null) {
 		Log.logError("couldn't build the road station, aborting! (null)");
@@ -198,9 +198,11 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	// Try to build it, remember that the start position is the location for the new
 	// road station. But the path is stored backwards, so the new location is the
 	// very last item on the roadList!
-	local buildResult = pathfinder.BuildRoad(roadStationPathInfo.roadList);
+	local pathBuilder = PathBuilder(null, AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[connection.cargoID]));
+	local buildResult = pathBuilder.BuildPath(roadStationPathInfo.roadList, false);
+	
 	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");
-	if (buildResult.success && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
+	if (buildResult && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
 		// We're done so update the connection.
 		local connectionTile = -1;
 		

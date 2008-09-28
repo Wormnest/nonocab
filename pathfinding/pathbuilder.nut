@@ -223,7 +223,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 			} else {
 				// If the tunnel is already build, make sure the road before the bridge is connected to the
 				// already build tunnel. (the part after the tunnel is handled in the next part).
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tunnel.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, ignoreError))
 					return false;
 			}
 		} 
@@ -242,7 +242,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 
 				// If the bridge is already build, make sure the road before the bridge is connected to the
 				// already build bridge. (the part after the bridge is handled in the next part).			
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction. Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, ignoreError))
 					return false;
 			}
 		}

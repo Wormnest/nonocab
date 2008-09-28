@@ -46,10 +46,7 @@ function ConnectionAdvisor::getReports()
 
 	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-	
-	// Check how much we have to spend:
-	local money = Finance.GetMaxMoneyToSpend();
-	
+		
 	// Hold a cache of possible connections.
 	local connectionCache = BinaryHeap();
 
@@ -97,12 +94,15 @@ function ConnectionAdvisor::getReports()
 			pathInfo = otherConnection.pathInfo;
 		} else {
 			// Find a new path.
-			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP);
+			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 3);
 			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 				continue;
 			}
 		}
+			
+		// Check how much we have to spend:
+		local money = Finance.GetMaxMoneyToSpend();		
 		
 		// Calculate the travel times for the prospected engine ID.
 		local maxSpeed = AIEngine.GetMaxSpeed(report.engineID);
@@ -173,7 +173,7 @@ function ConnectionAdvisor::getReports()
 	local reports = [];
 	local processedProcessingIndustries = {};
 	
-	foreach (report in SubSum.GetSubSum(connectionCache, money)) {
+	foreach (report in SubSum.GetSubSum(connectionCache, Finance.GetMaxMoneyToSpend())) {
 		
 		// Check if this industry has already been processed, if this is the
 		// case, we won't add it to the reports because we want to prevent
