@@ -192,7 +192,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 	
 
 		if (tileLength > 0) {
-			local div = tileLength / currentSpeed;
+			local div = (tileLength / currentSpeed).tointeger();
 
 			carry = tileLength - (currentSpeed * div);
 			days += div;
