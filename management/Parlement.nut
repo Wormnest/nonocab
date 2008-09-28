@@ -17,7 +17,7 @@ function Parlement::ExecuteReports()
 {
 	// Get as much money as possible.
 	Finance.GetMaxLoan();
-	
+
 	foreach (report in reports)
 	{
 		Log.logInfo(report.message);

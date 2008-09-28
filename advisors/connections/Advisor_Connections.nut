@@ -23,13 +23,13 @@ class ConnectionAdvisor extends Advisor
 	/**
 	 * Check which set of industry connections yield the highest profit.
 	 */
-	//function getReports();
+	function getReports();
 
 	/**
 	 * Iterate through the industry tree and update its information.
 	 * @industryTree An array with connectionNode instances.
 	 */
-	//function UpdateIndustryConnections(industryTree);
+	function UpdateIndustryConnections(industryTree);
 }
 
 /**
@@ -59,7 +59,6 @@ function ConnectionAdvisor::getReports()
 	// Keep track of the number of connections we could build, if we had the money.
 	local possibleConnections = 0;
 
-	local asfs = AITestMode();
 	while ((report = connectionReports.Pop()) != null) {
 
 		/**
@@ -120,7 +119,7 @@ function ConnectionAdvisor::getReports()
 		local incomePerVehicle = incomePerRun - ((timeToTravelTo + timeToTravelFrom) * (AIEngine.GetRunningCost(report.engineID) / World.DAYS_PER_YEAR));
 		local maxNrVehicles = (1 + (surplusProductionPerMonth / transportedCargoPerVehiclePerMonth)).tointeger();
 		local costPerVehicle = AIEngine.GetPrice(report.engineID);
-		local roadCost = (!pathInfo.build ? pathfinder.GetCostForRoad(pathInfo.roadList) : 0);
+		local roadCost = (!pathInfo.build ? PathBuilder.GetCostForRoad(pathInfo.roadList) : 0);
 		
 		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
 		if (!pathInfo.build || maxNrVehicles >= 2) {
@@ -193,7 +192,7 @@ function ConnectionAdvisor::getReports()
 
 		// Give the action to build the road.
 		if (connection.pathInfo.build != true)
-			actionList.push(BuildRoadAction(connection, true, true));
+			actionList.push(BuildRoadAction(connection, true, true, world));
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();

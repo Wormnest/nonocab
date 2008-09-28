@@ -8,19 +8,21 @@ class BuildRoadAction extends Action
 	buildRoadStations = false;	// Should we build road stations?
 	directions = null;			// A list with all directions.
 	pathfinder = null;			// The pathfinder to use.
+	world = null;				// The world.
 	
 	/**
 	 * @param pathList A PathInfo object, the road to be build.
 	 * @buildDepot Should a depot be build?
 	 * @param buildRoadStaions Should road stations be build?
 	 */
-	constructor(connection, buildDepot, buildRoadStations)
+	constructor(connection, buildDepot, buildRoadStations, world)
 	{
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
 		this.pathfinder = RoadPathFinding();
+		this.world = world;
 		Action.constructor();
 	}
 }
@@ -32,15 +34,17 @@ function BuildRoadAction::Execute()
 	
 	// Check if this path isn't already build.
 	if (!connection.pathInfo.build) {
-		local roadCost = pathfinder.GetCostForRoad(connection.pathInfo.roadList);
+	
+		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID]);
+	
+		local roadCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
 		local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
-		if (pathfinder.GetCostForRoad(connection.pathInfo.roadList) > AICompany.GetBankBalance(AICompany.MY_COMPANY)) {
+		if (roadCost > money) {
 			Log.logWarning("Not enough money(" + money + ") to build the road (cost = " + roadCost +").");
 			return false;
 		}
 		
-		local abc = AIExecMode();
-		if (!pathfinder.CreateRoad(connection)) {
+		if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 			connection.pathInfo.forceReplan = true;
 			Log.logError("BuildRoadAction: Failed to build a road");
 			return false;
@@ -49,9 +53,11 @@ function BuildRoadAction::Execute()
 		
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
-	
+
 	if (buildRoadStations) {
-		local abc = AIExecMode();
+	
+		// This breaks?!
+		//local abc = AIExecMode();
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
 		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
@@ -69,7 +75,7 @@ function BuildRoadAction::Execute()
 				connection.pathInfo.forceReplan = true;
 				return false;
 			}
-		} 
+		}
 	}
 
 	// Check if we need to build a depot.	

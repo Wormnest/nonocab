@@ -29,25 +29,18 @@ function NoCAB::Start()
 {
 	// Required by the Framwork: start with sleep.
 	this.Sleep(1);
-	AILog.Info("Starting...")
-	Log.logDebug("Log DEBUG enabled.");
-	Log.logInfo("Log INFO enabled.");
-	Log.logWarning("Log WARNING enabled.");
-	Log.logError("Log ERROR enabled.");
 
 	// Set president name.
-	AICompany.SetPresidentName("B.C.Ridder Nobel");
+	AICompany.SetPresidentName("B.C. Ridder");
 	
 	// Set company name.
 	if(!AICompany.SetName("NoCAB")) {
 		local i = 2;
 		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
-	Log.logInfo(AICompany.GetName(8));
-	Log.logInfo(AICompany.GetPresidentName(8));
-
-	// Build Head Quaters.
-	BuildHQ();
+	
+	AICompany.SetAutoRenewMonths(12 * 12);
+	AICompany.SetAutoRenewStatus(true);
 	
 	// Do what we have to do.
 	while(true)
@@ -62,16 +55,14 @@ function NoCAB::Start()
 		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		
+		/*
 		{
 			local pf = RoadPathFinding();
 			pf.FixBuildLater();
 		}
-		
+		*/
 		parlement.SelectReports(reports);
 		parlement.ExecuteReports();
-		
-		this.Sleep(500);
 	}
 	Log.logInfo("Done!");
 }
