@@ -39,9 +39,6 @@ function NoCAB::Start()
 		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
 	
-	AICompany.SetAutoRenewMonths(12 * 12);
-	AICompany.SetAutoRenewStatus(true);
-	
 	// Do what we have to do.
 	while(true)
 	{

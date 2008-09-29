@@ -2,24 +2,15 @@ class Report
 {
 	message = null;
 	actions = null;
-	cost = null;
-	profitPerMonth = null;
-    	
-	/**
-	 * Constructs a report.
-	 */
-	constructor(/*string*/ mess, /*int*/ costs, /*int*/ prof, /*Action[]*/ act)
-	{
-		message = mess;
-		cost = costs;
-		profitPerMonth = prof;
-		actions = act;
-	}
 	
 	/**
 	 * The utility for a report is the profit per month divided by the cost.
 	 */
 	function Utility() {
-		return profitPerMonth / cost;
+		alert(false);
+	}
+	
+	function ToString() {
+		return "No description";
 	}
 }

@@ -21,9 +21,9 @@
 		while ((report = reportList.Pop()) != null) {
 			
 			// Check if we can afford it.
-			if (max > report.cost) {
+			if (max > report.costForRoad + report.costPerVehicle) {
 				subsumList.push(report);
-				max -= report.cost;
+				max -= report.costForRoad + report.costPerVehicle * report.nrVehicles;
 			}
 		}
  		return subsumList;

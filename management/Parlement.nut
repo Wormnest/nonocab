@@ -20,7 +20,7 @@ function Parlement::ExecuteReports()
 
 	foreach (report in reports)
 	{
-		Log.logInfo(report.message);
+		Log.logInfo(report.ToString());
 		foreach (action in report.actions)
 		{
 			// Break if one of the action fails!
@@ -49,7 +49,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	foreach (report in reportlist)
 	{
 		local utility = report.Utility();
-		Log.logDebug(utility + " for " + report.message);
+		Log.logDebug(utility + " for " + report.ToString());
 		// Only add when whe think that they will be profitable in the end.
 		// Don't look for things if they are to expensive.
 		if(utility > 0)
@@ -57,10 +57,6 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 			//Log.logDebug(report.message);
 			//orderby = exprected_profit * report.cost;
 			sortedReports.Insert(report, -utility);
-		}
-		else
-		{
-			Log.logWarning("Util: " + utility + ", cost: " + report.cost + ", " + report.message);
 		}
 	}
 

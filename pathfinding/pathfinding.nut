@@ -10,9 +10,9 @@ class RoadPathFinding
 	static bendedRoadLength 	= 20;//28.5;
 	static upDownHillRoadLength = 28.5;
 
-	costForRoad 	= 30;		// Cost for utilizing an existing road, bridge, or tunnel.
+	costForRoad 	= 20;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 50;		// Cost for building a new road.
-	costForTurn 	= 75;		// Additional cost if the road makes a turn.
+	costForTurn 	= 60;		// Additional cost if the road makes a turn.
 	costForBridge 	= 120;		// Cost for building a bridge.
 	costForTunnel 	= 150;		// Cost for building a tunnel.
 	costForSlope 	= 75;		// Additional cost if the road heads up or down a slope.

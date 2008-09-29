@@ -6,6 +6,7 @@ class World
 	static DAYS_PER_MONTH = 30.0;
 	static DAYS_PER_YEAR = 364.0;
 	static MONTHS_PER_YEAR = 12.0;
+	static MONTHS_BEFORE_AUTORENEW = 144; // 12 years
 	
 	town_list = null;				// List with all towns.
 	industry_list = null;			// List with all industries.
@@ -56,6 +57,9 @@ class World
 		max_distance_between_nodes = 64;
 		InitEvents();
 		InitCargoTransportEngineIds();
+		
+		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
+		AICompany.SetAutoRenewStatus(true);
 	}
 	
 	

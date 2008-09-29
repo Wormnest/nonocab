@@ -13,9 +13,9 @@ class ManageVehiclesAction extends Action {
  * Sell a vehicle when this action is executed.
  * @param vehicleID The vehicle ID of the vehicle which needs to be sold.
  */
-function ManageVehiclesAction::SellVehicle(vehicleID)
+function ManageVehiclesAction::SellVehicle(engineID, number, connection)
 {
-	vehiclesToSell.push(vehicleID);
+	vehiclesToSell.push([engineID, number, connection]);
 }
 /**
  * Buy a certain number of vehicles when this action is executed.
@@ -30,18 +30,63 @@ function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
 
 function ManageVehiclesAction::Execute()
 {
+
+
+	
 	// Sell the vehicles.
 	Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
-	foreach (vehicleID in vehiclesToSell) {
-		AIVehicle.SellVehicle(vehicleID);
+	foreach (engineInfo in vehiclesToSell) {
+		local engineID = engineInfo[0];
+		local vehicleNumbers = engineInfo[1];
+		local connection = engineInfo[2];	
+		
+		// First of all we need to find suitable candidates to remove.
+		local vehicleList = AIList();
+		local vehicleArray = null;
+		
+		foreach (vehicleGroup in connection.vehiclesOperating) {
+		
+			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetEngineID(vehicleGroup.vehicleIDs[0]) == engineID) {
+				foreach (vehicleID in vehicleGroup.vehicleIDs) {
+					vehicleList.AddItem(vehicleID, vehicleID);
+				}
+				vehicleArray = vehicleGroup.vehicleIDs;
+				break;
+			}
+		}
+		vehicleList.Valuate(AIVehicle.GetLastYearProfit);
+		vehicleList.Sort(AIAbsentList.SORT_BY_VALUE, true);
+		
+		foreach (vehicleID, value in vehicldeList) {
+		
+			if (AIVehicle.GetAge(vehicleID) < World.DAYS_PER_YEAR)
+				continue;
+				
+			// First remove all order of this vehicle.
+			while (AIOrder.RemoveOrder(vehicleID, 0));
+			if (!AIRoad.IsRoadDepotTile(AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER))) {
+	        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
+	        		AIVehicle.ReverseVehicle(vehicleID);
+					AIController.Sleep(50);
+					AIVehicle.SendVehicleToDepot(vehicleID);
+				}
+			}
+			
+			foreach (id, value in vehicleArray) {
+				if (value == vehicleID) {
+					vehicleArray.remove(id);
+					break;
+				}
+			} 
+		}
 	}
 	
 	// Buy the vehicles.
 	foreach (engineInfo in vehiclesToBuy) {
-		
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
 		local connection = engineInfo[2];
+
 		local vehicleID = null;
 		local vehicleGroup = null;
 		

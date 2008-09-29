@@ -41,4 +41,28 @@ class Connection
 		}
 		vehiclesOperating = [];
 	}
+	
+	/**
+	 * Based on this connection get a report which tells how many vehicles
+	 * of type engineID are supported on top of the already existing fleet of
+	 * vehicles.
+	 * @param world The world.
+	 * @param enginID The engine id to build.
+	 * @return A ConnectionReport instance.
+	 */
+	function CompileReport(world, engineID) {
+		// First we check how much we already transport.
+		// Check if we already have vehicles who transport this cargo and deduce it from 
+		// the number of vehicles we need to build.
+		local cargoAlreadyTransported = 0;
+		foreach (connection in travelFromNode.connections) {
+			if (connection.cargoID == cargoID) {
+				foreach (vehicleGroup in connection.vehiclesOperating) {
+					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
+				}
+			}
+		}
+	
+		return ConnectionReport(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
+	}			
 }

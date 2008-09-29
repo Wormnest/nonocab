@@ -84,7 +84,7 @@ function BuildRoadAction::Execute()
 		local depotFront = null;
 		
 		// Look for a suitable spot and test if we can build there.
-		for (local i = 2; i < len - 1; i++) {
+		for (local i = len - 4; i > 1; i--) {
 			
 			foreach (direction in directions) {
 				if (direction == roadList[i].direction || direction == -roadList[i].direction)
