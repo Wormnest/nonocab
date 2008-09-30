@@ -110,11 +110,6 @@ function ConnectionAdvisor::getReports()
 			continue;
 			if (pathInfo.build && maxNrVehicles < -1) {
 				Log.logWarning("Sell " + maxNrVehicles + " vehicles on the connection from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + "!");
-				
-				local vehicleID = otherConnection.vehiclesOperating[0].vehicleIDs[0];
-				report.nrVehicles = maxNrVehicles;
-				report.cost = -(maxNrVehicles * AIVehicle.GetCurrentValue(vehicleID));
-				report.profitPerMonthPerVehicle = AIVehicle.GetRunningCost(vehicleID);
 			} else {
 				continue;
 			}

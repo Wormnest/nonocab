@@ -1,6 +1,5 @@
 class ConnectionReport extends Report {
 
-	profitPerMonthPerVehicle = 0;	// The utility value.
 	engineID = 0;					// The vehicles to build.
 	nrVehicles = 0;					// The number of vehicles to build.
 	roadList = null;				// The road to build.
@@ -15,7 +14,7 @@ class ConnectionReport extends Report {
 	nrRoadStations = 0;	// The number of road stations which need to be build on each side.
 	
 	/**
-	 * Get the maximum vehicles which this connection supports.
+	 * Construct a connection report.
 	 * @param world The world.
 	 * @param travelFromNode The connection node the connection comes from (the producing side).
 	 * @param travelToNode The connection node the connection goes to (the accepting side).
@@ -46,41 +45,21 @@ class ConnectionReport extends Report {
 			travelTime = 2 * (manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed);
 			costForRoad = 500 * manhattanDistance;
 		}
+
+		nrVehicles = maxNrVehicles;
+		costPerVehicle = AIEngine.GetPrice(engineID);
 			
 		// Calculate netto income per vehicle.
-		local incomePerRun = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTime.tointeger()) * AIEngine.GetCapacity(world.cargoTransportEngineIds[cargoID]);
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / travelTime) * AIEngine.GetCapacity(engineID);
-		local incomePerVehicle = incomePerRun - ((travelTime) * (AIEngine.GetRunningCost(engineID) / World.DAYS_PER_YEAR));
 		local maxNrVehicles = (1 + ((AIIndustry.GetProduction(travelFromNode.id, cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth)).tointeger();
 
-		profitPerMonthPerVehicle = (World.DAYS_PER_MONTH / travelTime) * incomePerRun;
+		brutoIncomePerMonth = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTime.tointeger()) * transportedCargoPerVehiclePerMonth * nrVehicles;
+		brutoCostPerMonth = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(engineID) * nrVehicles / World.DAYS_PER_YEAR;
+		initialCost = costForRoad + nrVehicles * costPerVehicle;
+		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
 		
 		nrVehicles = maxNrVehicles;
 		costPerVehicle = AIEngine.GetPrice(engineID);		
-	}	
-
-	/**
-	 * Get the utility function, this is the total profit generated before the vehicles
-	 * are autorenewed.
-	 */
-	function Utility() {
-		local initialCost = costForRoad + costPerVehicle * nrVehicles;
-		local profitPerMonth = profitPerMonthPerVehicle * nrVehicles;
-		local timeToBreakPoint = initialCost / profitPerMonth;
-		
-		local netProfit = (World.MONTHS_BEFORE_AUTORENEW - timeToBreakPoint) * profitPerMonth;
-		local netProfitPerMonth = netProfit / World.MONTHS_BEFORE_AUTORENEW;
-	//	Log.logInfo("Report details:");
-	//	Print(); 
-	//	Log.logInfo("Initial cost: " + initialCost + "; profit per month: " + profitPerMonth + "; timeToBreakPoint: " + timeToBreakPoint + "; net profit: " + netProfit + ";  net profit per month: " + netProfitPerMonth);
-		return netProfitPerMonth;
-		
-		//return profitPerMonthPerVehicle * nrVehicles / initialCost;
-	}
-	
-	function Profit() {
-		return Utility();
-		//return profitPerMonthPerVehicle * nrVehicles;
 	}
 	
 	function Print() {
@@ -90,6 +69,6 @@ class ConnectionReport extends Report {
 	function ToString() {
 		return "Build a road from " + fromConnectionNode.GetName() + " to " + toConnectionNode.GetName() +
 		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " vehicles. Cost for the road: " +
-		costForRoad + " income per month per vehicle: " + profitPerMonthPerVehicle;
+		costForRoad + ".";
 	}
 }
