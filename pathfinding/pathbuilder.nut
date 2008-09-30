@@ -69,7 +69,7 @@ class PathFixer {
 		local toRemoveIndexes = [];
 		
 		foreach (index, piece in buildPiecesToFix) {
-			if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], false))
+			if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true))
 				toRemoveIndexes.push(index);
 		}
 		

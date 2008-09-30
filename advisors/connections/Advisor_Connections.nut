@@ -122,12 +122,12 @@ function ConnectionAdvisor::getReports()
 			if (report.costPerVehicle * maxNrVehicles > (money - report.costForRoad)) {
 				local affordableMaxNrVehicles = ((money - report.costForRoad) / report.costPerVehicle).tointeger();
 				
-				if (!pathInfo.build && affordableMaxNrVehicles < 5) {
+				if (affordableMaxNrVehicles < 1) {
 					continue;
 				}				
 			}
-		
-			if (!pathInfo.build && maxNrVehicles < 5 || maxNrVehicles == 0) {
+
+			if (maxNrVehicles < 1) {
 				continue;
 			}					
 						
