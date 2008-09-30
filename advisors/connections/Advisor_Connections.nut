@@ -72,13 +72,13 @@ function ConnectionAdvisor::getReports()
 		local pathInfo = null;
 		
 		// Check if we already know the path or need to calculate it.
-		local otherConnection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		
 		// Use the already calculated pathInfo if it is already calculated and the forceReplan flag isn't set!
-//		if (otherConnection != null && !otherConnection.pathInfo.forceReplan) {
-		if (otherConnection != null && otherConnection.pathInfo.build) {
+//		if (connection != null && !connection.pathInfo.forceReplan) {
+		if (connection != null && connection.pathInfo.build) {
 			// Use the already build path.
-			pathInfo = otherConnection.pathInfo;
+			pathInfo = connection.pathInfo;
 		} else {
 			// Find a new path.
 			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
@@ -89,15 +89,15 @@ function ConnectionAdvisor::getReports()
 		}
 		
 		// Check if the industry connection node actually exists else create it, and update it!
-		if (otherConnection == null) {
-			otherConnection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, false);
-			report.fromConnectionNode.AddConnection(report.toConnectionNode, otherConnection);
+		if (connection == null) {
+			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, false);
+			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
 		} else {
-			otherConnection.pathInfo = pathInfo;
+			connection.pathInfo = pathInfo;
 		}		
 						
 		// Compile the report :)
-		report = otherConnection.CompileReport(world, report.engineID);
+		report = connection.CompileReport(world, report.engineID);
 		
 		// Check how much we have to spend:
 		local money = Finance.GetMaxMoneyToSpend();
@@ -143,7 +143,7 @@ function ConnectionAdvisor::getReports()
 		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
 		if (report.Utility() > 0) {
 		
-			if (money > report.costForRoad + report.costPerVehicle) {
+			if (!connection.pathInfo.build) {
 				possibleConnections++;
 			}
 				

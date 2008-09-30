@@ -125,34 +125,32 @@ function ManageVehiclesAction::Execute()
 		
 		for (local i = 0; i < vehicleNumbers; i++) {
 			// DEBUG: What's goes wrong?
-			if(connection.pathInfo.depot == null)
+			assert(connection.pathInfo.depot != null);
+		
+			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0)
+				break;
+					
+			local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot,	engineID);
+			if (!AIVehicle.IsValidVehicle(vehicleID)) {
+				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
+				continue;
+			}
+			vehicleGroup.vehicleIDs.push(vehicleID);
+			
+			// Send the vehicles on their way.
+			local roadList = connection.pathInfo.roadList;
+			if(connection.bilateralConnection)
 			{
-				Log.logError("No Depot available to build engine");
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_TRANSFER);
+				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_TRANSFER);
 			}
 			else
 			{
-				local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot,	engineID);
-				if (!AIVehicle.IsValidVehicle(vehicleID)) {
-					Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
-					continue;
-				}
-				vehicleGroup.vehicleIDs.push(vehicleID);
-				
-				// Send the vehicles on their way.
-				local roadList = connection.pathInfo.roadList;
-				if(connection.bilateralConnection)
-				{
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_TRANSFER);
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_TRANSFER);
-				}
-				else
-				{
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
-				}
-				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
-				AIVehicle.StartStopVehicle(vehicleID);
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
+			AIVehicle.StartStopVehicle(vehicleID);
 		}			
 	}
 	CallActionHandlers();

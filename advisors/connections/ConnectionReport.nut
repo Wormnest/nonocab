@@ -46,19 +46,17 @@ class ConnectionReport extends Report {
 			costForRoad = 500 * manhattanDistance;
 		}
 
-		nrVehicles = maxNrVehicles;
 		costPerVehicle = AIEngine.GetPrice(engineID);
 			
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / travelTime) * AIEngine.GetCapacity(engineID);
-		local maxNrVehicles = (1 + ((AIIndustry.GetProduction(travelFromNode.id, cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth)).tointeger();
+		nrVehicles = (1 + ((AIIndustry.GetProduction(travelFromNode.id, cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth)).tointeger();
 
 		brutoIncomePerMonth = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTime.tointeger()) * transportedCargoPerVehiclePerMonth * nrVehicles;
 		brutoCostPerMonth = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(engineID) * nrVehicles / World.DAYS_PER_YEAR;
 		initialCost = costForRoad + nrVehicles * costPerVehicle;
 		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
-		
-		nrVehicles = maxNrVehicles;
+
 		costPerVehicle = AIEngine.GetPrice(engineID);		
 	}
 	

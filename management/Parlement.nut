@@ -56,7 +56,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 		{
 			//Log.logDebug(report.message);
 			//orderby = exprected_profit * report.cost;
-			sortedReports.Insert(report, -utility);
+			sortedReports.Insert(report, -utility / report.initialCost);
 		}
 	}
 
