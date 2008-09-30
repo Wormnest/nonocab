@@ -35,7 +35,7 @@ function BuildRoadAction::Execute()
 	// Check if this path isn't already build.
 	if (!connection.pathInfo.build) {
 	
-		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID]);
+		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
 	
 		local roadCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
 		local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
@@ -198,7 +198,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	// Try to build it, remember that the start position is the location for the new
 	// road station. But the path is stored backwards, so the new location is the
 	// very last item on the roadList!
-	local pathBuilder = PathBuilder(null, AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[connection.cargoID]));
+	local pathBuilder = PathBuilder(null, AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[connection.cargoID]), world.pathFixer);
 	local buildResult = pathBuilder.BuildPath(roadStationPathInfo.roadList, false);
 	
 	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");

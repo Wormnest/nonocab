@@ -5,17 +5,17 @@ class PathBuilder {
 
 	connection = null;
 	maxSpeed = null;
-	
-	toBuildLater = null;	// To remove :P
+	pathFixer = null;
 	
 	/**
 	 * @param connection The connection to be realised.
 	 * @param maxSpeed The max speed of the vehicles which are going to use this connection.
+	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(connection, maxSpeed) {
+	constructor(connection, maxSpeed, pathFixer) {
 		this.connection = connection;
 		this.maxSpeed = maxSpeed;
-		toBuildLater = [];
+		this.pathFixer = pathFixer;
 	}
 
 	/**
@@ -51,9 +51,36 @@ class PathBuilder {
 	function CheckError(buildResult);
 }
 
-function PathBuilder::FixPath() {
-	// TODO
+/**
+ * Singleton class which tries to repair paths which couldn't be completed in a
+ * previous point in time due to a temporal problem.
+ */
+class PathFixer {
+
+	buildPiecesToFix = null;
+	
+	constructor() {
+		buildPiecesToFix = [];
+	}
+
+	function FixPaths() {
+		
+		// Keep track which indexes we want to remove.
+		local toRemoveIndexes = [];
+		
+		foreach (index, piece in buildPiecesToFix) {
+			if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], false))
+				toRemoveIndexes.push(index);
+		}
+		
+		// Reverse the list so we don't remove the wrong items!
+		toRemoveIndexes.reverse();
+		foreach (index in toRemoveIndexes) {
+			buildPiecesToFix.remove(index);
+		}
+	}
 }
+
 
 function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreError) {
 
@@ -126,7 +153,7 @@ function PathBuilder::CheckError(buildResult)
 		// Temporal onces:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
-			toBuildLater.push(buildResult);
+			pathFixer.buildPiecesToFix.push(buildResult);
 			return true;
 			
 		// Serious onces:
@@ -289,7 +316,7 @@ function PathBuilder::GetCostForRoad(roadList)
 
 	local accounting = AIAccounting();	// Start counting costs
 	
-	local pathBuilder = PathBuilder(null, null);
+	local pathBuilder = PathBuilder(null, null, null);
 
 	pathBuilder.BuildPath(roadList, true);			// Fake the construction
 

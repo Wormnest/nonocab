@@ -24,6 +24,9 @@ class World
 	years_passed = null;
 	
 	max_distance_between_nodes = null;		// The maximum distance between industries.
+	
+	// Does this belong here!?!?!
+	pathFixer = null;						// The instance to call when paths needs to be fixed.
 
 	/**
 	 * Initializes a repesentation of the 'world'.
@@ -60,6 +63,8 @@ class World
 		
 		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
 		AICompany.SetAutoRenewStatus(true);
+		
+		pathFixer = PathFixer();
 	}
 	
 	
