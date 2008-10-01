@@ -157,8 +157,8 @@ function PathBuilder::CheckError(buildResult)
 			// We make a special exception for the very first and last piece of the road,
 			// these are critical because without these we will be unable to build road
 			// stations!
-			if (buildResult[0] == connection.pathInfo.roadList[0].tile || buildResult[0] == connection.pathInfo.roadList[roadList.len() - 1].tile ||
-			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[roadList.len() - 1].tile) {
+			if (buildResult[0] == connection.pathInfo.roadList[0].tile || buildResult[0] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile ||
+			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile) {
 				return false;
 			}
 			pathFixer.buildPiecesToFix.push(buildResult);
