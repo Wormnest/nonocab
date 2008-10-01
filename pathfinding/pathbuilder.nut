@@ -153,6 +153,14 @@ function PathBuilder::CheckError(buildResult)
 		// Temporal onces:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
+		
+			// We make a special exception for the very first and last piece of the road,
+			// these are critical because without these we will be unable to build road
+			// stations!
+			if (buildResult[0] == connection.pathInfo.roadList[0].tile || buildResult[0] == connection.pathInfo.roadList[roadList.len() - 1].tile ||
+			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[roadList.len() - 1].tile) {
+				return false;
+			}
 			pathFixer.buildPiecesToFix.push(buildResult);
 			return true;
 			

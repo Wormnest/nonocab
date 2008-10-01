@@ -9,6 +9,7 @@ class Connection
 	static TOWN_TO_TOWN = 3;
 	static TOWN_TO_SELF = 4;
 	
+	lastChecked = null;			// The latest date this connection was inspected.
 	connectionType = null;		// The type of connection (one of above).
 	cargoID = null;				// The type of cargo carried from one node to another.
 	travelFromNode = null;		// The node the cargo is carried from.
@@ -57,6 +58,7 @@ class Connection
 		local cargoAlreadyTransported = 0;
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
+					
 				foreach (vehicleGroup in connection.vehiclesOperating) {
 					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
 				}
@@ -64,5 +66,47 @@ class Connection
 		}
 	
 		return ConnectionReport(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
-	}			
+	}
+	
+	
+	// Everything below this line is just a toy implementation designed to test :)
+	function GetLocationsForNewStation(atStart) {
+		if (!pathInfo.build)
+			return AIList();
+	
+		local tileList = AIList();	
+		local excludeList = AIList();	
+		local tile = null;
+		if (atStart) {
+			tile = pathInfo.roadList[0].tile;
+		} else {
+			tile = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
+		}
+		excludeList.AddItem(tile, tile);
+		GetSurroundingTiles(tile, tileList, excludeList);
+		
+		return tileList;
+	}
+	
+	function GetSurroundingTiles(tile, tileList, excludeList) {
+
+		foreach (surroundingTile in GetTilesAround(tile)) {
+			if (excludeList.HasItem(surroundingTile)) continue;
+
+			if (AIStation.IsValidStation(AIStation.GetStationID(surroundingTile))) {
+				excludeList.AddItem(surroundingTile, surroundingTile);
+				GetSurroundingTiles(surroundingTile, tileList, excludeList);
+				continue;
+			}
+
+			if (!tileList.HasItem(surroundingTile)) {
+				tileList.AddItem(surroundingTile, surroundingTile);
+			}
+		}
+	}
+	
+	function GetTilesAround(currentTile) {
+		return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX(),
+		currentTile - AIMap.GetMapSizeX() + 1, currentTile - AIMap.GetMapSizeX() - 1, currentTile - AIMap.GetMapSizeY() + 1, currentTile - AIMap.GetMapSizeY() - 1];
+	}	
 }

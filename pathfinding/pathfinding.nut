@@ -213,7 +213,10 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  * @param start An AIAbstractList which contains all the nodes the path can start from.
  * @param end An AIAbstractList which contains all the nodes the path can stop at. The
  * middle point of these values will be used to guide the pathfinder to its goal.
- * @param checkBuildability Check the start and end points before finding a road.
+ * @param checkStartPoints Check the start points before finding a road.
+ * @param checkEndPoints Check the end points before finding a road.
+ * @param stationType The station type to build.
+ * @param maxPathLength The maximum length of the path (stop afterwards!).
  * @return A PathInfo instance which contains the found path (if any).
  */
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength)

@@ -103,20 +103,24 @@ function ConnectionAdvisor::getReports()
 		local money = Finance.GetMaxMoneyToSpend();
 		local maxNrVehicles = report.nrVehicles;
 		
-		// Check if we need to sell vehicles.
-		if (maxNrVehicles < 0) {
+		// Check if the road is already build, in that case: micro manage! :)
+		if (connection.pathInfo.build) {
+			Log.logWarning("Micro management not implemented yet!");
+			
+			// Lets have some fun :)
+//			pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+//			if (pathInfo != null) {
+//				connection.pathInfo = pathInfo;
+				
+//				BuildRoadAction(connection, false, true, world).Execute();
+//			}
+		} 
 		
-			Log.logWarning("Selling vehicles not implemented yet!\n");
-			continue;
-			if (pathInfo.build && maxNrVehicles < -1) {
-				Log.logWarning("Sell " + maxNrVehicles + " vehicles on the connection from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + "!");
-			} else {
-				continue;
-			}
-		}
-		
-		// Actually buy vehicles!
+		// Check the requirements for a new connection!
 		else {
+			// With less then 1 vehicle there is no point of making this connection.
+			if (maxNrVehicles < 1)
+				continue;
 	
 			// If we can't pay for all vehicle consider a number we can afford and check if it's worth while.
 			if (report.costPerVehicle * maxNrVehicles > (money - report.costForRoad)) {
@@ -126,21 +130,9 @@ function ConnectionAdvisor::getReports()
 					continue;
 				}				
 			}
-
-			if (maxNrVehicles < 1) {
-				continue;
-			}					
-						
-						/*
-			// Calculate the number of road stations which need to be build
-			local daysBetweenVehicles = ((timeToTravelTo + timeToTravelFrom) + 2 * 5) / maxNrVehicles.tofloat();
-			local numberOfRoadStations = 5 / daysBetweenVehicles;
-			if (numberOfRoadStations < 1) numberOfRoadStations = 1;
-			else numberOfRoadStations = numberOfRoadStations.tointeger();
-			*/
 		}
 		
-		// If we need to build the path in question or we can add at least 2 vehicles we don't expand our search tree.
+		// If the report yields a positive result we add it to the list of possible connections.
 		if (report.Utility() > 0) {
 		
 			if (!connection.pathInfo.build) {
@@ -151,8 +143,6 @@ function ConnectionAdvisor::getReports()
 			connectionCache.Insert(report, -report.Utility());
 			Log.logDebug("Insert road from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache. Build " + report.nrVehicles + " vehicles! Utility: " + report.Utility() + ".");
 		}
-		
-
 	}
 	
 	// We have a list with possible connections we can afford, we now apply
