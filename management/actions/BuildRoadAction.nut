@@ -39,6 +39,8 @@ function BuildRoadAction::Execute()
 			// Replan the route.
 			local pathFinder = RoadPathFinding();
 			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+			if (connection.pathInfo == null)
+				return false;
 		}
 		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
 	

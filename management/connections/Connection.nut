@@ -61,6 +61,10 @@ class Connection
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
 				
+				// This shouldn't happen!
+				if (connection.pathInfo == null)
+					continue;
+				
 				// We don't want multiple connections use the same source! (need rewrite..)
 				if (connection.pathInfo.build && connection.travelToNode != travelToNode)
 					return null;

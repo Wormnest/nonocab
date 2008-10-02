@@ -55,6 +55,7 @@ function ConnectionAdvisor::getReports()
 	
 	// Keep track of the number of connections we could build, if we had the money.
 	local possibleConnections = 0;
+	local newPath = 0;
 
 	while ((report = connectionReports.Pop()) != null) {
 
@@ -64,7 +65,7 @@ function ConnectionAdvisor::getReports()
 		 * money or till we've spend enough time in this function.
 		 */
 		//if (possibleConnections > 5 && connectionCache.Count() > 5)
-		if (connectionCache.Count() > 4)
+		if (connectionCache.Count() > 4 && newPath > 0)
 			break;
 			
 		// If we haven't calculated yet what it cost to build this report, we do it now.
@@ -82,6 +83,7 @@ function ConnectionAdvisor::getReports()
 		} else {
 			// Find a new path.
 			pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+			newPath++;
 			if (pathInfo == null) {
 				Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 				continue;
@@ -166,13 +168,15 @@ function ConnectionAdvisor::getReports()
 				continue;
 	
 			// If we can't pay for all vehicle consider a number we can afford and check if it's worth while.
-			if (report.initialCostPerVehicle * maxNrVehicles > (money - report.initialCostPerVehicle)) {
+/*			if (report.initialCostPerVehicle * maxNrVehicles > (money - report.initialCostPerVehicle)) {
 				local affordableMaxNrVehicles = ((money - report.initialCost) / report.initialCostPerVehicle).tointeger();
 				
 				if (affordableMaxNrVehicles < 1) {
+					if (report.Utility() > 0)
+						possibleconnections++;
 					continue;
 				}				
-			}
+			}*/
 		}
 		
 		// If the report yields a positive result we add it to the list of possible connections.
@@ -264,7 +268,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
-			if (manhattanDistance > world.max_distance_between_nodes) continue;
+			if (manhattanDistance > world.max_distance_between_nodes) continue;			
 			
 			local checkIndustry = false;
 			
@@ -274,7 +278,24 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				// Check if this connection already exists.
 				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
-				if (connection != null)
+
+				// Make sure the producing side isn't already served, we don't want more then
+				// 1 connection on 1 production facility per cargo type.
+				local otherConnections = primIndustryConnectionNode.GetConnections(cargoID);
+				local skip = false;
+				foreach (otherConnection in otherConnections) {
+					if (otherConnection.pathInfo.build && otherConnection != connection) {
+						skip = true;
+						break;
+					}
+				}
+				
+				if (skip)
+					continue;
+
+				// Make sure we only check the accepting side for possible connections if
+				// and only if it has a connection to it.
+				if (connection != null && connection.pathInfo.build)
 					checkIndustry = true; 
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);

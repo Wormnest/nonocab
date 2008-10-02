@@ -54,5 +54,17 @@ function ConnectionNode::GetConnection(connectionNode, cargoID) {
 	return null;
 }
 	
-
-
+/**
+ * Return an array of connections.
+ * @param cargoID The type of cargo of those connections.
+ * @return An array with connections which transport the given cargoID.
+ */
+function ConnectionNode::GetConnections(cargoID) {
+	local connectionArray = [];
+	
+	foreach (connection in connections)
+		if (connection.cargoID == cargoID)
+			connectionArray.push(connection);
+	
+	return connectionArray;
+}
