@@ -57,7 +57,7 @@ class World
 		}		
 		
 		BuildIndustryTree();
-		max_distance_between_nodes = 64;
+		max_distance_between_nodes = 128;
 		InitEvents();
 		InitCargoTransportEngineIds();
 		
@@ -87,6 +87,14 @@ class World
 function World::Update()
 {
 	UpdateEvents();
+	
+	// Check if we have any vehicles to sell! :)
+	local vehicleList = AIVehicleList();
+	foreach (vehicleID, value in vehicleList) {
+		if (AIVehicle.IsStoppedInDepot(vehicleID)) {
+			AIVehicle.SellVehicle(vehicleID);
+		}
+	}
 }
 
 /**

@@ -35,6 +35,11 @@ function BuildRoadAction::Execute()
 	// Check if this path isn't already build.
 	if (!connection.pathInfo.build) {
 	
+		{
+			// Replan the route.
+			local pathFinder = RoadPathFinding();
+			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		}
 		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
 	
 		local roadCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
@@ -61,20 +66,26 @@ function BuildRoadAction::Execute()
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
 		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, false, isTruck)) {
+			//if (!BuildRoadStation(connection, false, isTruck)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
 				connection.pathInfo.forceReplan = true;
 				return false;
-			}
-		} 
+			//}
+		} else {
+			connection.travelToNodeStationID = AIStation.GetStationID(roadList[0].tile);
+			assert(AIStation.GetStationID(connection.travelToNodeStationID));
+		}
 		
 		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
 			
-			if (!BuildRoadStation(connection, true, isTruck)) {
+			//if (!BuildRoadStation(connection, true, isTruck)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
 				connection.pathInfo.forceReplan = true;
 				return false;
-			}
+			//}
+		} else {
+			connection.travelFromNodeStationID = AIStation.GetStationID(roadList[len - 1].tile);
+			assert(AIStation.GetStationID(connection.travelFromNodeStationID));		
 		}
 	}
 
@@ -130,7 +141,7 @@ function BuildRoadAction::Execute()
 	
 	// We only specify a connection as build if both the depots and the roads are build.
 	connection.pathInfo.build = true;
-	
+	connection.lastChecked = AIDate.GetCurrentDate();
 	
 	CallActionHandlers();
 	return true;

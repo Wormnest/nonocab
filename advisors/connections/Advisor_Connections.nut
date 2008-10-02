@@ -64,7 +64,7 @@ function ConnectionAdvisor::getReports()
 		 * money or till we've spend enough time in this function.
 		 */
 		//if (possibleConnections > 5 && connectionCache.Count() > 5)
-		if (connectionCache.Count() > 10)
+		if (connectionCache.Count() > 4)
 			break;
 			
 		// If we haven't calculated yet what it cost to build this report, we do it now.
@@ -75,8 +75,8 @@ function ConnectionAdvisor::getReports()
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		
 		// Use the already calculated pathInfo if it is already calculated and the forceReplan flag isn't set!
-//		if (connection != null && !connection.pathInfo.forceReplan) {
-		if (connection != null && connection.pathInfo.build) {
+		if (connection != null && !connection.pathInfo.forceReplan) {
+//		if (connection != null && connection.pathInfo.build) {
 			// Use the already build path.
 			pathInfo = connection.pathInfo;
 		} else {
@@ -98,15 +98,58 @@ function ConnectionAdvisor::getReports()
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.engineID);
-		
+		if (report == null)
+			continue;
+			
 		// Check how much we have to spend:
 		local money = Finance.GetMaxMoneyToSpend();
 		local maxNrVehicles = report.nrVehicles;
 		
 		// Check if the road is already build, in that case: micro manage! :)
 		if (connection.pathInfo.build) {
-			Log.logWarning("Micro management not implemented yet!");
 			
+			// Make sure we don't update a connection to often!
+			local currentDate = AIDate.GetCurrentDate();
+			if (Date.GetDaysBetween(connection.lastChecked, currentDate) < 15)
+				continue;
+			
+			connection.lastChecked = currentDate;
+			report.nrVehicles = 0;
+			
+			// Now, we have maxNrVehicles as the maximum number of additional vehicles 
+			// which is supported by this connection.
+			
+			// First we check whether the rating is good or bad.
+			if (connection.vehiclesOperating.len() == 0 || AIStation.GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 67 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
+			
+				// It's bad so we need more vehicles! :)
+				report.nrVehicles = 2;
+			} else {
+			
+				// If our rating is alright, make sure we don't have to many vehicles!
+				local tileToCheck = connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 3].tile;
+				
+				report.nrVehicles = 0;
+				local travelToTile = AIStation.GetLocation(connection.travelFromNodeStationID);
+				
+				// Check if there are any vehicles waiting on this tile and if so, sell them!
+				foreach (vehicleGroup in connection.vehiclesOperating) {
+					foreach (vehicleID in vehicleGroup.vehicleIDs) {
+						if (AIMap.DistanceManhattan(AIVehicle.GetLocation(vehicleID), AIStation.GetLocation(connection.travelFromNodeStationID)) > 2 && 
+							AIMap.DistanceManhattan(AIVehicle.GetLocation(vehicleID), AIStation.GetLocation(connection.travelFromNodeStationID)) < 10 &&
+							AIVehicle.GetCurrentSpeed(vehicleID) < 10 && 
+							AIVehicle.GetAge(vehicleID) > World.DAYS_PER_YEAR / 2 &&
+							AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER) == travelToTile) {
+							report.nrVehicles--;
+						}
+					}
+				}
+				
+				// We always want a little overhead (to be keen ;)).
+				if (report.nrVehicles > -2)
+					continue;
+			}
+
 			// Lets have some fun :)
 //			pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 //			if (pathInfo != null) {
@@ -123,8 +166,8 @@ function ConnectionAdvisor::getReports()
 				continue;
 	
 			// If we can't pay for all vehicle consider a number we can afford and check if it's worth while.
-			if (report.costPerVehicle * maxNrVehicles > (money - report.costForRoad)) {
-				local affordableMaxNrVehicles = ((money - report.costForRoad) / report.costPerVehicle).tointeger();
+			if (report.initialCostPerVehicle * maxNrVehicles > (money - report.initialCostPerVehicle)) {
+				local affordableMaxNrVehicles = ((money - report.initialCost) / report.initialCostPerVehicle).tointeger();
 				
 				if (affordableMaxNrVehicles < 1) {
 					continue;
@@ -141,7 +184,7 @@ function ConnectionAdvisor::getReports()
 				
 			// Add the report to the list.
 			connectionCache.Insert(report, -report.Utility());
-			Log.logDebug("Insert road from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache. Build " + report.nrVehicles + " vehicles! Utility: " + report.Utility() + ".");
+			Log.logDebug("Insert " + (connection.pathInfo.build ? "update" : "road") + " from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " in cache. Build " + report.nrVehicles + " vehicles! Utility: " + report.Utility() + ".");
 		}
 	}
 	
@@ -167,7 +210,7 @@ function ConnectionAdvisor::getReports()
 				continue;
 		}
 			
-		Log.logInfo("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logInfo("Report a" + (connection.pathInfo.build ? "n update" : " connection") + " from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 			
 
@@ -177,10 +220,14 @@ function ConnectionAdvisor::getReports()
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
+		
+		// Buy only half of the vehicles needed, build the rest gradualy.
 		if (report.nrVehicles > 0)
-			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
-		else if(report.nrVehicles < 0)
+			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles / 2, connection);
+		else if(report.nrVehicles < 0) {
 			vehicleAction.SellVehicles(report.engineID, -report.nrVehicles, connection);
+			Log.logWarning("Jeej! Sell it :D");
+		}
 		actionList.push(vehicleAction);
 		report.actions = actionList;
 

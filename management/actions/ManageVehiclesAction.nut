@@ -13,7 +13,7 @@ class ManageVehiclesAction extends Action {
  * Sell a vehicle when this action is executed.
  * @param vehicleID The vehicle ID of the vehicle which needs to be sold.
  */
-function ManageVehiclesAction::SellVehicle(engineID, number, connection)
+function ManageVehiclesAction::SellVehicles(engineID, number, connection)
 {
 	vehiclesToSell.push([engineID, number, connection]);
 }
@@ -30,9 +30,6 @@ function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
 
 function ManageVehiclesAction::Execute()
 {
-
-
-	
 	// Sell the vehicles.
 	Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (engineInfo in vehiclesToSell) {
@@ -46,24 +43,22 @@ function ManageVehiclesAction::Execute()
 		
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 		
-			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetEngineID(vehicleGroup.vehicleIDs[0]) == engineID) {
+			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetEngineType(vehicleGroup.vehicleIDs[0]) == engineID) {
 				foreach (vehicleID in vehicleGroup.vehicleIDs) {
+					// Check if the vehicle is going to the delivery tile.
 					vehicleList.AddItem(vehicleID, vehicleID);
 				}
 				vehicleArray = vehicleGroup.vehicleIDs;
 				break;
 			}
 		}
-		vehicleList.Valuate(AIVehicle.GetLastYearProfit);
-		vehicleList.Sort(AIAbsentList.SORT_BY_VALUE, true);
+		vehicleList.Valuate(AIVehicle.GetAge);
+		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		
-		foreach (vehicleID, value in vehicldeList) {
-		
-			if (AIVehicle.GetAge(vehicleID) < World.DAYS_PER_YEAR)
-				continue;
+		foreach (vehicleID, value in vehicleList) {
 				
 			// First remove all order of this vehicle.
-			while (AIOrder.RemoveOrder(vehicleID, 0));
+			//while (AIOrder.RemoveOrder(vehicleID, 0));
 			if (!AIRoad.IsRoadDepotTile(AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER))) {
 	        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
 	        		AIVehicle.ReverseVehicle(vehicleID);
@@ -121,7 +116,7 @@ function ManageVehiclesAction::Execute()
 			
 			
 			connection.vehiclesOperating.push(vehicleGroup);
-		}		
+		}
 		
 		for (local i = 0; i < vehicleNumbers; i++) {
 			// DEBUG: What's goes wrong?

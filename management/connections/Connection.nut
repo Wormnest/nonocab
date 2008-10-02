@@ -17,6 +17,8 @@ class Connection
 	vehiclesOperating = null;	// List of VehicleGroup instances to keep track of all vehicles on this connection.
 	pathInfo = null;			// PathInfo class which contains all information about the path.
 	bilateralConnection = null;	// If this is true, cargo is carried in both directions.
+	travelFromNodeStationID = null;	// The station ID which is build at the producing side.
+	travelToNodeStationID = null;	// The station ID which is build at the accepting side.
 	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info, bilateral_connection) {
 		cargoID = cargo_id;
@@ -58,6 +60,10 @@ class Connection
 		local cargoAlreadyTransported = 0;
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
+				
+				// We don't want multiple connections use the same source! (need rewrite..)
+				if (connection.pathInfo.build && connection.travelToNode != travelToNode)
+					return null;
 					
 				foreach (vehicleGroup in connection.vehiclesOperating) {
 					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
