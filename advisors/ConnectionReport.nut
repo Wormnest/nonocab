@@ -1,10 +1,10 @@
 class ConnectionReport extends Report {
 
 	engineID = 0;					// The vehicles to build.
-	roadList = null;				// The road to build.
 
 	fromConnectionNode = null;	// The node which produces the cargo.
 	toConnectionNode = null;	// The node which accepts the produced cargo.
+	connection = null;			// The proposed connection.
 	
 	cargoID = 0;			// The cargo to transport.
 	
@@ -31,12 +31,11 @@ class ConnectionReport extends Report {
 		
 		// Get the distances (real or guessed).
 		local travelTime;
-		local connection = travelFromNode.GetConnection(travelToNode, cargoID);
+		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
 		if (connection != null) {
 			travelTime = connection.pathInfo.GetTravelTime(maxSpeed, true) + connection.pathInfo.GetTravelTime(maxSpeed, false);
-			roadList = connection.pathInfo.roadList;
 			initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
 		} else { 
 			travelTime = 2 * (manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed);

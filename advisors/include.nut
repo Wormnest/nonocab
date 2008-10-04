@@ -1,2 +1,5 @@
 require("Advisor.nut");
-require("connections/include.nut");
+require("ConnectionReport.nut");
+require("ConnectionsAdvisor.nut");
+require("VehiclesAdvisor.nut");
+

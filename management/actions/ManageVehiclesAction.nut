@@ -30,6 +30,7 @@ function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
 
 function ManageVehiclesAction::Execute()
 {
+	AIExecMode();
 	// Sell the vehicles.
 	Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (engineInfo in vehiclesToSell) {

@@ -63,8 +63,6 @@ class World
 		
 		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
 		AICompany.SetAutoRenewStatus(true);
-		
-		pathFixer = PathFixer();
 	}
 	
 	
@@ -94,6 +92,10 @@ function World::Update()
 		if (AIVehicle.IsStoppedInDepot(vehicleID)) {
 			AIVehicle.SellVehicle(vehicleID);
 		}
+		
+		// Check if the vehicle is profitable.
+		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0)
+			AIVehicle.SendVehicleToDepot(vehicleID);
 	}
 }
 

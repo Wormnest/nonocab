@@ -55,20 +55,30 @@ class PathBuilder {
  * Singleton class which tries to repair paths which couldn't be completed in a
  * previous point in time due to a temporal problem.
  */
-class PathFixer {
+class PathFixer extends Thread {
 
 	buildPiecesToFix = null;
 	
 	constructor() {
 		buildPiecesToFix = [];
 	}
+	
+	/**
+	 * Add an additional piece of road which couldn't be build due to 
+	 * temporal issues.
+	 * @param toFix An array containing all information for a new road piece.
+	 */
+	function AddBuildPieceToFix(toFix) {
+		buildPiecesToFix.push(toFix);
+	}
 
-	function FixPaths() {
+	function Update(loopCounter) {
 		
 		// Keep track which indexes we want to remove.
 		local toRemoveIndexes = [];
 		
 		foreach (index, piece in buildPiecesToFix) {
+			local test = AIExecMode();
 			if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true))
 				toRemoveIndexes.push(index);
 		}
@@ -161,7 +171,7 @@ function PathBuilder::CheckError(buildResult)
 			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile) {
 				return false;
 			}
-			pathFixer.buildPiecesToFix.push(buildResult);
+			pathFixer.AddBuildPieceToFix(buildResult);
 			return true;
 			
 		// Serious onces:

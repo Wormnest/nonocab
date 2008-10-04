@@ -78,7 +78,7 @@ function BuildRoadAction::Execute()
 			assert(AIStation.GetStationID(connection.travelToNodeStationID));
 		}
 		
-		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true)) {
+		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, false)) {
 			
 			//if (!BuildRoadStation(connection, true, isTruck)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
@@ -196,7 +196,7 @@ function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck)
 	Log.logError("End tiles: " + end_list.Count());
 
 	// We try to build a path to connect the disconnected road station.
-	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 3);
+	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 			
 	if (roadStationPathInfo == null) {
 		Log.logError("couldn't build the road station, aborting! (null)");

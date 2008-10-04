@@ -40,7 +40,7 @@ class ConnectionNode
  * Add a new connection from this industry to one of its children.
  */
 function ConnectionNode::AddConnection(connectionNode, connection) {
-	connections[connectionNode.nodeType + connectionNode.id + "_" + connection.cargoID] <- connection;
+	connections[connectionNode.GetUID(connection.cargoID)] <- connection;
 }
 
 /**
@@ -49,8 +49,8 @@ function ConnectionNode::AddConnection(connectionNode, connection) {
  * @return null if the connection doesn't exists, else the connection.
  */
 function ConnectionNode::GetConnection(connectionNode, cargoID) {
-	if (connections.rawin(connectionNode.nodeType + connectionNode.id + "_" + cargoID))
-		return connections.rawget(connectionNode.nodeType + connectionNode.id + "_" + cargoID);
+	if (connections.rawin(connectionNode.GetUID(cargoID)))
+		return connections.rawget(connectionNode.GetUID(cargoID));
 	return null;
 }
 	
@@ -67,4 +67,14 @@ function ConnectionNode::GetConnections(cargoID) {
 			connectionArray.push(connection);
 	
 	return connectionArray;
+}
+
+/**
+ * Get the unique name of this connectionNode which is used for a connection
+ * to this node with a certain cargoID.
+ * @param cargoID The cargo ID which is transported to this connection node.
+ * @return The string which is unique for this connection.
+ */
+function ConnectionNode::GetUID(cargoID) {
+	return nodeType + id + "_" + cargoID;
 }

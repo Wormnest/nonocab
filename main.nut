@@ -1,14 +1,15 @@
 require("util/include.nut");
 require("data_structures/include.nut");
-require("pathfinding/include.nut");
 require("management/include.nut");
 require("advisors/include.nut");
+require("pathfinding/include.nut");
 
 class NoCAB extends AIController {
 	stop = false;
    	parlement = null;
    	world = null;
    	advisors = null;
+   	planner = null;
 	
    	constructor() {
    		stop = false;
@@ -16,10 +17,11 @@ class NoCAB extends AIController {
 		this.world = World();
 		
 		this.advisors = [
-			ConnectionAdvisor(world)
+			ConnectionAdvisor(world),
+			VehiclesAdvisor(world)			
 		];
-		 
 		
+		planner = Planner(world);
 	}
 }
 
@@ -39,24 +41,31 @@ function NoCAB::Start()
 		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
 	
+	// Start the threads!
+	local pathFixer = PathFixer();
+	world.pathFixer = pathFixer;
+	planner.AddThread(pathFixer);
+	
+	
+	foreach (advisor in advisors) {
+		planner.AddThread(advisor);
+	}
+	
 	// Do what we have to do.
 	while(true)
 	{
 		world.Update();
 		
+		planner.ScheduleAndExecute();
+		
 		// Get all reports from our advisors.
 		local reports = [];
 		foreach (advisor in advisors) {
-			reports.extend(advisor.getReports());
-		}
+			reports.extend(advisor.GetReports());
+		}		
 		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		
-		{
-			local test = AIExecMode();
-			world.pathFixer.FixPaths();
-		}
 		
 		parlement.SelectReports(reports);
 		parlement.ExecuteReports();

@@ -118,5 +118,9 @@ class Connection
 	function GetTilesAround(currentTile) {
 		return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX(),
 		currentTile - AIMap.GetMapSizeX() + 1, currentTile - AIMap.GetMapSizeX() - 1, currentTile - AIMap.GetMapSizeY() + 1, currentTile - AIMap.GetMapSizeY() - 1];
-	}	
+	}
+	
+	function GetUID() {
+		return travelFromNode.GetUID(cargoID);
+	}
 }
