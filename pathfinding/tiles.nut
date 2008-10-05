@@ -157,19 +157,14 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 
 function Tile::GetBridges(startNode, direction) 
 {
-	local slope = AITile.GetSlope(startNode);
-	if (slope == AITile.SLOPE_FLAT || slope == AITile.GetSlope(startNode + direction)) return [];
+	if (RoadPathFinding.GetSlope(startNode, direction) != 2) return [];
 	local tiles = [];
-	local foundBridge = false;
 
 	for (local i = 2; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
-		if (!bridge_list.IsEmpty() && (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
+		if (RoadPathFinding.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
 			tiles.push(target);
-			foundBridge = true;
-		} else if (foundBridge) {
-			// If we can't build bridges any more, skip the rest.
 			break;
 		}
 	}
@@ -192,7 +187,7 @@ function Tile::GetTunnels(startNode, previousNode)
 	local direction = (other_tunnel_end - startNode) / tunnel_length;
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH)) {
+	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) &&  (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode))) {
 		tiles.push(other_tunnel_end);
 	}
 	return tiles;

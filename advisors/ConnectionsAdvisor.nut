@@ -73,12 +73,11 @@ function ConnectionAdvisor::Update(loopCounter)
 		reportTable.len() < maxNrReports + loopCounter &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 5) {
 
-		
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Check if this path hasn't been build yet, update later to incorporate dates!
-		if (connection != null)
+		if (connection != null && connection.pathInfo.build)
 			continue;
 
 		// Check if this connection has already been checked.
@@ -109,7 +108,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		report = connection.CompileReport(world, report.engineID);
 		if (report == null)
 			continue;
-					
+
 		// If the report yields a positive result we add it to the list of possible connections.
 		if (report.Utility() > 0) {
 		
@@ -246,4 +245,5 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 /*function ConnectionAdvisor::HaltPlanner() {
 	return Finance.GetMaxMoneyToSpend() > 250000 && reportTable.len() > 5;
-}*/
+}
+*/

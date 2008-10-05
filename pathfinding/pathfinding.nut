@@ -7,15 +7,15 @@ class RoadPathFinding
 {
 	// The length of various road pieces
 	static straightRoadLength 	= 28.5;					// Road length / 24 (easier to calculate km/h)
-	static bendedRoadLength 	= 20;//28.5;
+	static bendedRoadLength 	= 20;
 	static upDownHillRoadLength = 28.5;
 
 	costForRoad 	= 20;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 50;		// Cost for building a new road.
 	costForTurn 	= 60;		// Additional cost if the road makes a turn.
-	costForBridge 	= 120;		// Cost for building a bridge.
-	costForTunnel 	= 150;		// Cost for building a tunnel.
-	costForSlope 	= 75;		// Additional cost if the road heads up or down a slope.
+	costForBridge 	= 65;		// Cost for building a bridge.
+	costForTunnel 	= 65;		// Cost for building a tunnel.
+	costForSlope 	= 85;		// Additional cost if the road heads up or down a slope.
 	
 	static toBuildLater = [];		// List of build actions which couldn't be completed the moment
 									// they were issued due to temporal problems, but should be able
@@ -61,7 +61,6 @@ function RoadPathFinding::GetSlope(tile, currentDirection)
 			return 2;
 	} else if (currentDirection == AIMap.GetMapSizeX()) {	// South
 		if ((AITile.GetSlope(tile) & AITile.SLOPE_NW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
-
 			return 1;
 		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
 			return 2;
@@ -152,30 +151,12 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 					}
 				}
 				break;
+				
 			case Tile.BRIDGE:
-				local length = (tile - AIBridge.GetOtherBridgeEnd(tile)) / currentDirection;
-				if (length < 0) length = -length;
-				 
-				tileLength = straightRoadLength * length - carry;
-				
-				while (tileLength > 0) {
-					tileLength -= currentSpeed;
-					days++;
-					
-					currentSpeed += 34;
-					if (currentSpeed > maxSpeed) {
-						currentSpeed = maxSpeed;
-						break;
-					}
-				}
-				break;
-				
 			case Tile.TUNNEL:
-				local length = (tile - AITunnel.GetOtherTunnelEnd(tile)) / currentDirection;
+				local length = (tile - roadList[i + 1].tile) / currentDirection;
 				if (length < 0) length = -length;
-				 
 				tileLength = straightRoadLength * length - carry;
-				
 				while (tileLength > 0) {
 					tileLength -= currentSpeed;
 					days++;
@@ -189,8 +170,6 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 				break;
 		}
 			
-	
-
 		if (tileLength > 0) {
 			local div = (tileLength / currentSpeed).tointeger();
 

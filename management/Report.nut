@@ -30,7 +30,7 @@ class Report
 	function Utility() {
 		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoIncomePerMonthPerVehicle);
 		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
-		local totalInitialCost = initialCost + nrVehicles * initialCostPerVehicle;
+		local totalInitialCost = initialCost + nrVehicles * initialCostPerVehicle; 
 		return (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) * runningTimeBeforeReplacement - totalInitialCost;
 	}
 	

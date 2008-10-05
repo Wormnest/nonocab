@@ -69,7 +69,7 @@ function BuildRoadAction::Execute()
 		// This breaks?!
 		//local abc = AIExecMode();
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
+		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, false)) {
 			
 			//if (!BuildRoadStation(connection, false, isTruck)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
