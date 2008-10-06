@@ -272,6 +272,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		// Check if this is the end already, if so we've found the shortest route.
 		if(end.HasItem(at.tile) && 
 		
+			// Either the slope is flat or it is downhill, othersie we can't build a depot here
+			(checkEndPositions ? GetSlope(at.tile, at.direction) != 1 : true) &&
+		
 			// If we need to check the end positions then we either have to be able to build a road station
 			(!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
@@ -285,7 +288,26 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				resultTile = resultTile.parentTile;
 			}
 			
-			resultList.push(resultTile);
+			// Now we need to make sure we can also build at the start node, else we invoke
+			// the pathfinder again to solve this.
+			if (GetSlope(resultTile.tile, -resultTile.direction) == 1) {
+				Log.logWarning("Find extended path!!!");
+				local startList = AIList();
+				startList.AddItem(resultTile.tile, resultTile.tile);
+				local startPathInfo = FindFastestPath(startList, end, false, true, stationType, 10);
+				local resultList2 = startPathInfo.roadList.reverse();
+				
+				{
+					local bla = AIExecMode();
+					foreach (a in resultList2) {
+						AISign.BuildSign(a.tile, "!!!");
+					}
+				}
+				
+				resultList = resultList2.expand(resultList);
+			} else {
+				resultList.push(resultTile);
+			}
 			return PathInfo(resultList, null);
 		}
 		

@@ -114,7 +114,7 @@ function VehiclesAdvisor::GetReports() {
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
 		if (report.nrVehicles > 0)
-			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles / 2, connection);
+			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.engineID, -report.nrVehicles, connection);
 

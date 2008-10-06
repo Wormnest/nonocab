@@ -12,14 +12,16 @@ import("queue.binary_heap", "BinaryHeap", 1);
  */
 class ConnectionAdvisor extends Advisor
 {
-	reportTable = null;
-	maxNrReports = 5;
-	connectionReports = null;
+	reportTable = null;				// The table where all good reports are stored in.
+	ignoreTable = null;				// A table with all connections which should be ignored because the algorithm already found better onces!
+	maxNrReports = 5;				// The minimum number of reports this report should have.
+	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 		
 	constructor(world)
 	{
 		Advisor.constructor(world);
 		reportTable = {};
+		ignoreTable = {};
 	}
 	
 	/**
@@ -118,10 +120,21 @@ function ConnectionAdvisor::Update(loopCounter)
 				
 			// Add the report to the list.
 			if (reportTable.rawin(connection.GetUID())) {
+				
 				// Check if the report in the table is actually better.
 				local rep = reportTable.rawget(connection.GetUID());
-				if (rep.Utility() >= report.Utility())
-					continue;
+				if (rep.Utility() >= report.Utility()) {
+					
+					// Add this entry to the ignore table.
+					ignoreTable[connection.travelFromNode.GetUID(connection.cargoID) + "_" + connection.travelToNode.GetUID(connection.cargoID)] <- null;
+					continue;				
+				}
+				
+				// If the new one is better, add the original one to the ignore list.
+				local originalReport = reportTable.rawget(connection.GetUID());
+				ignoreTable[originalReport.fromConnectionNode.GetUID(originalReport.cargoID) + "_" + originalReport.toConnectionNode.GetUID(originalReport.cargoID)] <- null;
+				Log.logDebug("Replace: " + report.Utility() " > " + orignialReport.Utility());
+				reportTable.rawdelete(connection.GetUID());
 			}
 			
 			Log.logInfo("[" + (maxNrReports + loopCounter) + "/" + reportTable.len() + "] " + report.ToString());
@@ -163,8 +176,11 @@ function ConnectionAdvisor::GetReports() {
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
 		
+		// TEST!
+		report.nrVehicles = report.nrVehicles / 2;
+		
 		// Buy only half of the vehicles needed, build the rest gradualy.
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles / 2, connection);
+		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		
 		actionList.push(vehicleAction);
 		report.actions = actionList;
@@ -207,6 +223,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				// Check if this connection already exists.
 				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
+
+				// Check if this connection isn't in the ignore table.
+				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))
+					continue;
 
 				// Make sure the producing side isn't already served, we don't want more then
 				// 1 connection on 1 production facility per cargo type.
