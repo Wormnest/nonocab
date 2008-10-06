@@ -196,7 +196,7 @@ function PathBuilder::CheckError(buildResult)
 			
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
-			Log.logError("Build from " + buildResult.roadList[buildResult.buildFromIndex].tile + " to " + buildResult.roadList[buildResult.buildToIndex].tile + " tileType: " + buildResult.tileType);
+			Log.logError("Build from " + buildResult[0] + " to " + buildResult[1] + " tileType: " + buildResult[2]);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
 			assert(false);

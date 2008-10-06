@@ -270,13 +270,12 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(end.HasItem(at.tile) && 
-		
-			// Either the slope is flat or it is downhill, othersie we can't build a depot here
-			(checkEndPositions ? GetSlope(at.tile, at.direction) != 1 : true) &&
+		if(at.type == Tile.ROAD && end.HasItem(at.tile) && 
 		
 			// If we need to check the end positions then we either have to be able to build a road station
-			(!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) ||
+			// Either the slope is flat or it is downhill, othersie we can't build a depot here
+			// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
+			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) && GetSlope(at.tile, at.direction) != 1 && at.parentTile.type != Tile.TUNNEL) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
 			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
 				
@@ -290,21 +289,31 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			
 			// Now we need to make sure we can also build at the start node, else we invoke
 			// the pathfinder again to solve this.
-			if (GetSlope(resultTile.tile, -resultTile.direction) == 1) {
-				Log.logWarning("Find extended path!!!");
+			if (GetSlope(resultTile.tile, -resultList[resultList.len() - 1].direction) == 1) {
+			
+				// We start our pathfinder 1 tile before the very last tile, this will make sure
+				// the pathfinder doesn't makes turns where it cannot do so.
+				local startTile = resultList[resultList.len() - 2].tile;
 				local startList = AIList();
-				startList.AddItem(resultTile.tile, resultTile.tile);
-				local startPathInfo = FindFastestPath(startList, end, false, true, stationType, 10);
-				local resultList2 = startPathInfo.roadList.reverse();
+				startList.AddItem(startTile, startTile);
 				
-				{
-					local bla = AIExecMode();
-					foreach (a in resultList2) {
-						AISign.BuildSign(a.tile, "!!!");
-					}
+				// We invoke the pathfinder again with the task to find a suitable start location.
+				local startPathInfo = FindFastestRoad(startList, start, false, true, stationType, 10);
+				
+				// If the function fails, bail out!
+				if (startPathInfo == null) {
+					Log.logError("Find extended start point failed, bailing out!");
+					return null;
 				}
 				
-				resultList = resultList2.expand(resultList);
+				// In order to fit the resultList we need to invert our start list.
+				startPathInfo.roadList.reverse();
+				
+				// Remove the tile at the bottom, this is the tile which is already build
+				// and used as starting point for the previous process.
+				startPathInfo.roadList.remove(0);
+				resultList.extend(startPathInfo.roadList);
+
 			} else {
 				resultList.push(resultTile);
 			}

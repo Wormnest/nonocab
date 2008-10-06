@@ -133,7 +133,7 @@ function ConnectionAdvisor::Update(loopCounter)
 				// If the new one is better, add the original one to the ignore list.
 				local originalReport = reportTable.rawget(connection.GetUID());
 				ignoreTable[originalReport.fromConnectionNode.GetUID(originalReport.cargoID) + "_" + originalReport.toConnectionNode.GetUID(originalReport.cargoID)] <- null;
-				Log.logDebug("Replace: " + report.Utility() " > " + orignialReport.Utility());
+				Log.logDebug("Replace: " + report.Utility() + " > " + originalReport.Utility());
 				reportTable.rawdelete(connection.GetUID());
 			}
 			
