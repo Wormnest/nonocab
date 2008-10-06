@@ -246,7 +246,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
  
  		hasStartPoint = true;
  		
-		local annotatedTile = AnnotatedTile(i, null, 0, 0, Tile.ROAD, 0);
+		local annotatedTile = AnnotatedTile();//i, null, 0, 0, Tile.ROAD, 0);
+		annotatedTile.tile = i;
+		annotatedTile.type = Tile.ROAD;
 		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 		pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
 		startList[i] <- i;
@@ -264,14 +266,14 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		local at = pq.Pop();	
 		
 		// Get the node with the best utility value
-		if(at.length > maxPathLength || closedList.rawin(at.tile))
+		if(closedList.rawin(at.tile) || at.length > maxPathLength)
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
 		if(end.HasItem(at.tile) && 
 		
 			// If we need to check the end positions then we either have to be able to build a road station
-			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true)/* || AIError.GetLastError() == AIError.ERR_NOT_ENOUGH_CASH*/) ||
+			(!checkEndPositions || AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
 			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
 				
@@ -292,63 +294,56 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		// from those tiles.
 		local directions = Tile.GetNeighbours(at);
 		
-		/**
-		 * neighbour is an array with 4 elements:
-		 * [0] = TileIndex
-		 * [1] = Direction from parent (TileIndex - Parent.TileIndex)
-		 * [2] = Type (i.e. TUNNEL, BRIDGE, or ROAD)
-		 * [3] = Utility costs
-		 * [4] = *TUNNEL and BRIDGE types only*Already built
-		 */
+		// Get alle tiles surrounding the current tile and check if we must inspect it.
 		local neighbour = 0;
 		foreach (neighbour in directions) {
 		
 			// Skip if this node is already processed or if we can't build on it.
-			if (closedList.rawin(neighbour[0]) || (neighbour[2] == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour[0], at.tile) && !AIRoad.BuildRoad(neighbour[0], at.tile)/* && AIError.GetLastError() == AIError.ERR_AREA_NOT_CLEAR */)) {
+			if (closedList.rawin(neighbour.tile) || (neighbour.type == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour.tile, at.tile) && !AIRoad.BuildRoad(neighbour.tile, at.tile)))
 				continue;
-			}
-			
-			// Are we dealing with a tunnel or bridge?
-			if (neighbour[2] != Tile.ROAD) {
 				
-				local length = (neighbour[0] - at.tile) / neighbour[1];
+			if (neighbour.type != Tile.ROAD) {
+				
+				local length = (neighbour.tile - at.tile) / neighbour.direction;
 				if (length < 0) length = -length;
 				
 				// Treat already build bridges and tunnels the same as already build roads.
-				if (neighbour[4]) {
-					neighbour[3] = costForRoad * length;
-				} else if (neighbour[2] == Tile.TUNNEL) {
-					neighbour[3] = costForTunnel * length;
+				if (neighbour.bridgeOrTunnelAlreadyBuild) {
+					neighbour.distanceFromStart = costForRoad * length;
+				} else if (neighbour.type == Tile.TUNNEL) {
+					neighbour.distanceFromStart = costForTunnel * length;
 				} else {
-					neighbour[3] = costForBridge * length;
+					neighbour.distanceFromStart = costForBridge * length;
 				}
-			}
+			}			
 			
 			// This is a normal road
 			else {
 				
 				// Check if the road is sloped.
-				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour[0])) {
-					neighbour[3] = costForSlope;
+				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour.tile)) {
+					neighbour.distanceFromStart = costForSlope;
 				}
 				
 				// Check if the road makes a turn.
-				if (at.direction != neighbour[1]) {
-					neighbour[3] += costForTurn;
+				if (at.direction != neighbour.direction) {
+					neighbour.distanceFromStart += costForTurn;
 				}
 				
 				// Check if there is already a road here.
-				if (AIRoad.IsRoadTile(neighbour[0])) {
-					neighbour[3] += costForRoad;
+				if (AIRoad.IsRoadTile(neighbour.tile)) {
+					neighbour.distanceFromStart += costForRoad;
 				} else {
-					neighbour[3] += costForNewRoad;
+					neighbour.distanceFromStart += costForNewRoad;
 				}
 			}
 			
-			neighbour[3] += at.distanceFromStart;
-
+			neighbour.distanceFromStart += at.distanceFromStart;
+			neighbour.parentTile = at;
+			neighbour.length = at.length + 1;
+			
 			// Add this neighbour node to the queue.
-			pq.Insert(AnnotatedTile(neighbour[0], at, neighbour[3], neighbour[1], neighbour[2], at.length + 1), neighbour[3] + AIMap.DistanceManhattan(neighbour[0], expectedEnd) * 30);
+			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 30);
 		}
 		
 		// Done! Don't forget to put at into the closed list
@@ -366,22 +361,11 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
  */
 class AnnotatedTile 
 {
-	tile = null;			// Instance of AITile
+	tile = 0;				// Instance of AITile
 	parentTile = null;		// Needed for backtracking!
-	distanceFromStart = null;	// 'Distance' already travelled from start tile
-	direction = null;		// The direction the road travels to this point.
+	distanceFromStart = 0;	// 'Distance' already travelled from start tile
+	direction = 0;			// The direction the road travels to this point.
 	type = null;			// What type of infrastructure is this?
-	length = null;			// The length of the path.
-
-	// A Tile is about 612km on a side :)
-
-	constructor(tile, parentTile, distanceFromStart, direction, type, length)
-	{
-		this.tile = tile;
-		this.parentTile = parentTile;
-		this.distanceFromStart = distanceFromStart;
-		this.direction = direction;
-		this.type = type;
-		this.length = length;
-	}
+	length = 0;				// The length of the path.
+	bridgeOrTunnelAlreadyBuild = false;	// Is the bridge or tunnel already build?
 }

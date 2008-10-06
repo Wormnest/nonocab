@@ -115,6 +115,7 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 			}
 			
 			if (type != Tile.NONE) {
+
 				local direction = otherEnd - nextTile;
 				
 				// Make sure we're heading in the same direction as the bridge or tunnel we try
@@ -124,8 +125,15 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 				     direction < AIMap.GetMapSizeX() && direction > 0 && offset ==  1 ||			// West
 				     direction >= AIMap.GetMapSizeX() 	 	      && offset ==  AIMap.GetMapSizeX() ||	// South
 				    -direction < AIMap.GetMapSizeX() && direction < 0 && offset == -1) {			// East
-				    	tileArray.push([otherEnd, offset, type, 0, true]);
-				    	isBridgeOrTunnelEntrance = true;
+				    
+				    local annotatedTile = AnnotatedTile();
+					annotatedTile.type = type;
+					annotatedTile.direction = offset;
+					annotatedTile.tile = otherEnd;
+					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
+					tileArray.push(annotatedTile);
+				   // 	tileArray.push([otherEnd, offset, type, 0, true]);
+				    isBridgeOrTunnelEntrance = true;
 				}
 			}
 		}
@@ -138,17 +146,35 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 		if (!isBridgeOrTunnelEntrance) {
 
 			foreach (bridge in Tile.GetBridges(nextTile, offset)) {
-				tileArray.push([bridge, offset, Tile.BRIDGE, 0, false]);
+			    local annotatedTile = AnnotatedTile();
+				annotatedTile.type = Tile.BRIDGE;
+				annotatedTile.direction = offset;
+				annotatedTile.tile = bridge;
+				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+				tileArray.push(annotatedTile);			
+				//tileArray.push([bridge, offset, Tile.BRIDGE, 0, false]);
 			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
-				tileArray.push([tunnel, offset, Tile.TUNNEL, 0, false]);
+			    local annotatedTile = AnnotatedTile();
+				annotatedTile.type = Tile.TUNNEL;
+				annotatedTile.direction = offset;
+				annotatedTile.tile = tunnel;
+				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+				tileArray.push(annotatedTile);
+//				tileArray.push([tunnel, offset, Tile.TUNNEL, 0, false]);
 			}
 
 			
 			// Besides the tunnels and bridges, we also add the tiles
 			// adjacent to the currentTile.
-			tileArray.push([nextTile, offset, Tile.ROAD, 0]);
+		    local annotatedTile = AnnotatedTile();
+			annotatedTile.type = Tile.ROAD;
+			annotatedTile.direction = offset;
+			annotatedTile.tile = nextTile;
+			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+			tileArray.push(annotatedTile);			
+//			tileArray.push([nextTile, offset, Tile.ROAD, 0]);
 		}
 	}
 
