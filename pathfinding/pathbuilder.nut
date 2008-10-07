@@ -58,8 +58,9 @@ class PathBuilder {
 class PathFixer extends Thread {
 
 	buildPiecesToFix = null;
+	controller = null;
 	
-	constructor() {
+	constructor(controller) {
 		buildPiecesToFix = [];
 	}
 	
@@ -79,8 +80,17 @@ class PathFixer extends Thread {
 		
 		foreach (index, piece in buildPiecesToFix) {
 			local test = AIExecMode();
-			if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true))
-				toRemoveIndexes.push(index);
+			
+			AISign.BuildSign(piece[0], "FROM!");
+			AISign.BuildSign(piece[1], "TO!");
+			for (local i = 0; i < 5; i++) {
+				if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
+					toRemoveIndexes.push(index);
+					break;
+				}
+				
+				controller.sleep(50);
+			}
 		}
 		
 		// Reverse the list so we don't remove the wrong items!

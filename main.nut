@@ -42,7 +42,7 @@ function NoCAB::Start()
 	}
 	
 	// Start the threads!
-	local pathFixer = PathFixer();
+	local pathFixer = PathFixer(this);
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
 	
