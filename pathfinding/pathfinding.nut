@@ -293,7 +293,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			
 				// We start our pathfinder 1 tile before the very last tile, this will make sure
 				// the pathfinder doesn't makes turns where it cannot do so.
-				local startTile = resultList[resultList.len() - 2].tile;
+				local startTile = resultList[resultList.len() - 1].tile;
 				local startList = AIList();
 				startList.AddItem(startTile, startTile);
 				
