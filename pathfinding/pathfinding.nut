@@ -246,7 +246,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
  
  		hasStartPoint = true;
  		
-		local annotatedTile = AnnotatedTile();//i, null, 0, 0, Tile.ROAD, 0);
+		local annotatedTile = AnnotatedTile();
 		annotatedTile.tile = i;
 		annotatedTile.type = Tile.ROAD;
 		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
@@ -291,8 +291,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			// the pathfinder again to solve this.
 			if (GetSlope(resultTile.tile, -resultList[resultList.len() - 1].direction) == 1) {
 			
-				// We start our pathfinder 1 tile before the very last tile, this will make sure
-				// the pathfinder doesn't makes turns where it cannot do so.
+				// We start the pathfinder at the location where the other roadstation couldn't be
+				// build.
 				local startTile = resultList[resultList.len() - 1].tile;
 				local startList = AIList();
 				startList.AddItem(startTile, startTile);
@@ -306,13 +306,49 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 					return null;
 				}
 				
-				// In order to fit the resultList we need to invert our start list.
-				startPathInfo.roadList.reverse();
+				local newStartLocation = startPathInfo.roadList[0].tile;
+				
+				// Now we invoke the pathfinder again to get a correct path! (the pathbuilder expects te
+				// path to be build in a certain way, because we invoked the pathfinder in the wrong
+				// direction we have to fix that now!
+				local foundStartTile = AIList();
+				foundStartTile.AddItem(newStartLocation, newStartLocation);
+				local foundEndTile = AIList();
+				foundEndTile.AddItem(at.tile, at.tile);
+				
+				// Very expensive and impractical!!!! (fix pathfinder).
+				local tmp = FindFastestRoad(foundStartTile, foundEndTile, false, false, stationType, maxPathLength);
+				if (tmp == null) {
+					Log.logError("Find extended start point failed, bailing out!");
+					return null;
+				}
+				return tmp;
+				
+				
+				/*
+				startPathInfo = FindFastestRoad(foundStartTile, startList, true, false, stationType, 10);
+				
+				if (startPathInfo == null) {
+					Log.logError("Recreating the start list failed!");
+					return null;
+				}
+				
+				// Now that we have the correct list, we must make some minor modifications to let it fit in
+				// the ordinary format.
+				for (local i = 0; i < startPathInfo.roadList.len(); i++) {
+					Log.logWarning("After completion: " + AIMap.GetTileX(startPathInfo.roadList[i].tile) + ", " + AIMap.GetTileY(startPathInfo.roadList[i].tile));
+				}
 				
 				// Remove the tile at the bottom, this is the tile which is already build
 				// and used as starting point for the previous process.
+				Log.logWarning("Remove: " + AIMap.GetTileX(startPathInfo.roadList[0].tile) + ", " + AIMap.GetTileY(startPathInfo.roadList[0].tile));
 				startPathInfo.roadList.remove(0);
+
 				resultList.extend(startPathInfo.roadList);
+				
+				for (local i = resultList.len() - 1; i > resultList.len() - 25; i--) {
+					Log.logWarning("Extra list: " + AIMap.GetTileX(resultList[i].tile) + ", " + AIMap.GetTileY(resultList[i].tile) + "; type: " + resultList[i].type);
+				}*/
 
 			} else {
 				resultList.push(resultTile);

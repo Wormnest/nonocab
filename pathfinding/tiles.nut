@@ -132,7 +132,6 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 					annotatedTile.tile = otherEnd;
 					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
 					tileArray.push(annotatedTile);
-				   // 	tileArray.push([otherEnd, offset, type, 0, true]);
 				    isBridgeOrTunnelEntrance = true;
 				}
 			}
@@ -151,8 +150,7 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 				annotatedTile.direction = offset;
 				annotatedTile.tile = bridge;
 				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-				tileArray.push(annotatedTile);			
-				//tileArray.push([bridge, offset, Tile.BRIDGE, 0, false]);
+				tileArray.push(annotatedTile);
 			}
 			
 			foreach (tunnel in Tile.GetTunnels(nextTile, currentAnnotatedTile.tile)) {
@@ -162,7 +160,6 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 				annotatedTile.tile = tunnel;
 				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 				tileArray.push(annotatedTile);
-//				tileArray.push([tunnel, offset, Tile.TUNNEL, 0, false]);
 			}
 
 			
@@ -173,8 +170,7 @@ function Tile::GetNeighbours(currentAnnotatedTile) {
 			annotatedTile.direction = offset;
 			annotatedTile.tile = nextTile;
 			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-			tileArray.push(annotatedTile);			
-//			tileArray.push([nextTile, offset, Tile.ROAD, 0]);
+			tileArray.push(annotatedTile);
 		}
 	}
 
