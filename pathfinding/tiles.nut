@@ -187,7 +187,7 @@ function Tile::GetBridges(startNode, direction)
 	local tiles = [];
 
 	for (local i = 2; i < 20; i++) {
-		local bridge_list = AIBridgeList_Length(i + 1);
+		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
 		if (RoadPathFinding.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
 			tiles.push(target);
