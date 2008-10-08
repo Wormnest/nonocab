@@ -89,7 +89,7 @@ class PathFixer extends Thread {
 					break;
 				}
 				
-				controller.sleep(50);
+				controller.Sleep(50);
 			}
 		}
 		
