@@ -58,9 +58,8 @@ class PathBuilder {
 class PathFixer extends Thread {
 
 	buildPiecesToFix = null;
-	controller = null;
 	
-	constructor(controller) {
+	constructor() {
 		buildPiecesToFix = [];
 	}
 	
@@ -89,7 +88,7 @@ class PathFixer extends Thread {
 					break;
 				}
 				
-				controller.Sleep(50);
+				for (local j = 0; j < 100; j++);
 			}
 		}
 		
