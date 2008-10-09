@@ -80,8 +80,6 @@ class PathFixer extends Thread {
 		foreach (index, piece in buildPiecesToFix) {
 			local test = AIExecMode();
 			
-			AISign.BuildSign(piece[0], "FROM!");
-			AISign.BuildSign(piece[1], "TO!");
 			for (local i = 0; i < 5; i++) {
 				if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
 					toRemoveIndexes.push(index);
@@ -272,7 +270,6 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 		else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
-				AISign.BuildSign(roadList[a+1].tile, "begin tunnel");
 				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, null, ignoreError))
 					return false;
 			} else {
@@ -308,8 +305,6 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 
 			// Build road before the tunnel or bridge.
 			if (buildFromIndex != a + 1) {
-				AISign.BuildSign(roadList[buildFromIndex].tile, "r before tunnel begin");
-				AISign.BuildSign(roadList[a+1].tile, "r before tunnel end");
 				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, ignoreError))
 					return false;
 			}
@@ -317,8 +312,6 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
 			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
 			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {
-				AISign.BuildSign(roadList[a].tile, "r after tunnel begin");
-				AISign.BuildSign(roadList[a-1].tile, "r after tunnel end");
 				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, Tile.ROAD, null, ignoreError))
 					return false;
 			}
