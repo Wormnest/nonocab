@@ -21,7 +21,7 @@ class BuildRoadAction extends Action
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
-		this.pathfinder = RoadPathFinding();
+		this.pathfinder = RoadPathFinding(Tile.GetNeighbours);
 		this.world = world;
 		Action.constructor();
 	}
@@ -37,7 +37,7 @@ function BuildRoadAction::Execute()
 	
 		{
 			// Replan the route.
-			local pathFinder = RoadPathFinding();
+			local pathFinder = RoadPathFinding(Tile.GetNeighbours);
 			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 			if (connection.pathInfo == null) {
 				connection.pathInfo = PathInfo(null, 0);

@@ -21,6 +21,20 @@ class RoadPathFinding
 									// they were issued due to temporal problems, but should be able
 									// to complete in the (near) future.
 									
+	// Functions to be used by the algorithm.
+	expandFunction = null;			// func(annotatedTile) -> [annoratedTile]
+								
+	/**
+	 * Create a pathfinder by inserting a couple of utility functions which
+	 * will help the A-star algorithm:
+	 * @param expandFunction The function which is used to expand the search tree
+	 * the parameter provided will be an annotated tile and the algorithm expects
+	 * an array of annotated tiles which will be used in the search algorithm.
+	 */
+	constructor(expandFunction) {
+		this.expandFunction = expandFunction;
+	}
+								
 	/**
 	 * We need functions to calibrate penalties and stuff. We want functions
 	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
@@ -270,7 +284,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(at.type == Tile.ROAD && end.HasItem(at.tile) && 
+		if(end.HasItem(at.tile) && at.type == Tile.ROAD && 
 		
 			// If we need to check the end positions then we either have to be able to build a road station
 			// Either the slope is flat or it is downhill, othersie we can't build a depot here
@@ -359,7 +373,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		// Get all possible tiles from this annotated tile (North, South, West,
 		// East) and check if we're already at the end or if new roads are possible
 		// from those tiles.
-		local directions = Tile.GetNeighbours(at);
+		//local directions = Tile.GetNeighbours(at);
+		local test = expandFunction;
+		local directions = expandFunction(at);
 		
 		// Get alle tiles surrounding the current tile and check if we must inspect it.
 		local neighbour = 0;
