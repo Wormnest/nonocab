@@ -43,7 +43,7 @@ function PathInfo::GetTravelTime(maxSpeed, forward) {
 			return time[1];
 	}
 	
-	local pathfinder = RoadPathFinding(Tile.GetNeighbours);
+	local pathfinder = RoadPathFinding(PathFinderHelper());
 	local time = pathfinder.GetTime(roadList, maxSpeed, forward);
 	cache.push([maxSpeed, time]);
 	return time;

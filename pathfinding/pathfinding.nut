@@ -21,8 +21,8 @@ class RoadPathFinding
 									// they were issued due to temporal problems, but should be able
 									// to complete in the (near) future.
 									
-	// Functions to be used by the algorithm.
-	expandFunction = null;			// func(annotatedTile) -> [annoratedTile]
+	// Utility class which helps the pathfinder to reach its goal.
+	pathFinderHelper = null;
 								
 	/**
 	 * Create a pathfinder by inserting a couple of utility functions which
@@ -31,8 +31,8 @@ class RoadPathFinding
 	 * the parameter provided will be an annotated tile and the algorithm expects
 	 * an array of annotated tiles which will be used in the search algorithm.
 	 */
-	constructor(expandFunction) {
-		this.expandFunction = expandFunction;
+	constructor(pathFinderHelper) {
+		this.pathFinderHelper = pathFinderHelper;
 	}
 								
 	/**
@@ -46,41 +46,6 @@ class RoadPathFinding
 	//function GetSlope(tile, currentDirection);
 	//function GetTime(roadList, maxSpeed, forward);
 	//function FindFastestRoad(start, end, checkStartPositions, checkEndPositions);
-}
-
-
-/**
- * Check if this road tile is a slope.
- */
-function RoadPathFinding::GetSlope(tile, currentDirection)
-{
-	// 0: No slope.
-	// 1: Slope upwards.
-	// 2: Slope downwards.
-
-	if (currentDirection == 1) { 		// West
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_NE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
-			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
-			return 2;
-	} else if (currentDirection == -1) {	// East
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_SW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
-			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
-			return 2;
-	} else if (currentDirection == -AIMap.GetMapSizeX()) {	// North
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
-			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_NW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
-			return 2;
-	} else if (currentDirection == AIMap.GetMapSizeX()) {	// South
-		if ((AITile.GetSlope(tile) & AITile.SLOPE_NW) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
-			return 1;
-		else if ((AITile.GetSlope(tile) & AITile.SLOPE_SE) == 0 && (AITile.GetSlope(tile) & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
-			return 2;
-	}
-
-	return 0;
 }
 
 /**
@@ -103,7 +68,7 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
 	for (local i = 0; i < roadList.len(); i++) {
 		local tile = roadList[i].tile;
 		local currentDirection = roadList[i].direction;
-		local slope = GetSlope(tile, currentDirection);
+		local slope = Tile.GetSlope(tile, currentDirection);
 
 		local tileLength = 0;
 
@@ -245,31 +210,50 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	// a table for that purpose.
 	local closedList = {};
 
-	// We keep a separate list for start tiles
-	local startList = {};
-	
-	local hasStartPoint = false;
-	
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
 	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
-		// Check if we can actually start here!
-		if(checkStartPositions && !Tile.IsBuildable(i)) {
-			continue;
-		}
- 
- 		hasStartPoint = true;
- 		
+	
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.tile = i;
 		annotatedTile.type = Tile.ROAD;
 		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
-		pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
-		startList[i] <- i;
+		
+		
+		// Check if we can actually start here!
+		if(checkStartPositions) {
+		
+			if (!Tile.IsBuildable(i))
+				continue;
+			
+			// We preprocess all start nodes to see if a road station can be build on them.
+			local neighbours = pathFinderHelper.GetNeighbours(annotatedTile);
+			
+			// We only consider roads which don't go down hill because we can't build road stations
+			// on them!
+			foreach (neighbour in neighbours) {
+				local slope = Tile.GetSlope(i, neighbour.direction);
+				if (neighbour.type != Tile.ROAD || slope == 2)
+					continue;
+					
+				neighbour.distanceFromStart += (slope == 0 ? costForRoad : costForSlope);
+				neighbour.parentTile = annotatedTile;
+				neighbour.length = 1;
+				
+				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 30);
+			}
+		} else {
+	 		
+	 		local annotatedTile = AnnotatedTile();
+			annotatedTile.tile = i;
+			annotatedTile.type = Tile.ROAD;
+			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
+			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
+		}
 	}
 	
 	// Check if we have a node from which to build.
-	if (!hasStartPoint) {
+	if (!pq.Count == 0) {
 		Log.logDebug("Pathfinder: No start points for this road; Abort: original #start points: " + start.Count());
 		return null;
 	}
@@ -289,7 +273,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			// If we need to check the end positions then we either have to be able to build a road station
 			// Either the slope is flat or it is downhill, othersie we can't build a depot here
 			// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) && GetSlope(at.tile, at.direction) != 1 && at.parentTile.type != Tile.TUNNEL) ||
+			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) && Tile.GetSlope(at.tile, at.direction) != 1 && at.parentTile.type != Tile.TUNNEL) ||
 			// or a roadstation must already be in place, facing the correct direction and be ours.
 			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
 				
@@ -300,86 +284,18 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				resultList.push(resultTile);
 				resultTile = resultTile.parentTile;
 			}
-			
-			// Now we need to make sure we can also build at the start node, else we invoke
-			// the pathfinder again to solve this.
-			if (GetSlope(resultTile.tile, -resultList[resultList.len() - 1].direction) == 1) {
-			
-				// We start the pathfinder at the location where the other roadstation couldn't be
-				// build.
-				local startTile = resultList[resultList.len() - 1].tile;
-				local startList = AIList();
-				startList.AddItem(startTile, startTile);
-				
-				// We invoke the pathfinder again with the task to find a suitable start location.
-				local startPathInfo = FindFastestRoad(startList, start, false, true, stationType, 10);
-				
-				// If the function fails, bail out!
-				if (startPathInfo == null) {
-					Log.logError("Find extended start point failed, bailing out!");
-					return null;
-				}
-				
-				local newStartLocation = startPathInfo.roadList[0].tile;
-				
-				// Now we invoke the pathfinder again to get a correct path! (the pathbuilder expects te
-				// path to be build in a certain way, because we invoked the pathfinder in the wrong
-				// direction we have to fix that now!
-				local foundStartTile = AIList();
-				foundStartTile.AddItem(newStartLocation, newStartLocation);
-				local foundEndTile = AIList();
-				foundEndTile.AddItem(at.tile, at.tile);
-				
-				// Very expensive and impractical!!!! (fix pathfinder).
-				local tmp = FindFastestRoad(foundStartTile, foundEndTile, false, false, stationType, maxPathLength);
-				if (tmp == null) {
-					Log.logError("Find extended start point failed, bailing out!");
-					return null;
-				}
-				return tmp;
-				
-				
-				/*
-				startPathInfo = FindFastestRoad(foundStartTile, startList, true, false, stationType, 10);
-				
-				if (startPathInfo == null) {
-					Log.logError("Recreating the start list failed!");
-					return null;
-				}
-				
-				// Now that we have the correct list, we must make some minor modifications to let it fit in
-				// the ordinary format.
-				for (local i = 0; i < startPathInfo.roadList.len(); i++) {
-					Log.logWarning("After completion: " + AIMap.GetTileX(startPathInfo.roadList[i].tile) + ", " + AIMap.GetTileY(startPathInfo.roadList[i].tile));
-				}
-				
-				// Remove the tile at the bottom, this is the tile which is already build
-				// and used as starting point for the previous process.
-				Log.logWarning("Remove: " + AIMap.GetTileX(startPathInfo.roadList[0].tile) + ", " + AIMap.GetTileY(startPathInfo.roadList[0].tile));
-				startPathInfo.roadList.remove(0);
-
-				resultList.extend(startPathInfo.roadList);
-				
-				for (local i = resultList.len() - 1; i > resultList.len() - 25; i--) {
-					Log.logWarning("Extra list: " + AIMap.GetTileX(resultList[i].tile) + ", " + AIMap.GetTileY(resultList[i].tile) + "; type: " + resultList[i].type);
-				}*/
-
-			} else {
-				resultList.push(resultTile);
-			}
+		
+			resultList.push(resultTile);
 			return PathInfo(resultList, null);
 		}
+		
+
 		
 		// Get all possible tiles from this annotated tile (North, South, West,
 		// East) and check if we're already at the end or if new roads are possible
 		// from those tiles.
-		//local directions = Tile.GetNeighbours(at);
-		local test = expandFunction;
-		local directions = expandFunction(at);
-		
-		// Get alle tiles surrounding the current tile and check if we must inspect it.
-		local neighbour = 0;
-		foreach (neighbour in directions) {
+		local neighbour = null;
+		foreach (neighbour in pathFinderHelper.GetNeighbours(at)) {
 		
 			// Skip if this node is already processed or if we can't build on it.
 			if (closedList.rawin(neighbour.tile) || (neighbour.type == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour.tile, at.tile) && !AIRoad.BuildRoad(neighbour.tile, at.tile)))
@@ -391,34 +307,30 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				if (length < 0) length = -length;
 				
 				// Treat already build bridges and tunnels the same as already build roads.
-				if (neighbour.bridgeOrTunnelAlreadyBuild) {
+				if (neighbour.bridgeOrTunnelAlreadyBuild)
 					neighbour.distanceFromStart = costForRoad * length;
-				} else if (neighbour.type == Tile.TUNNEL) {
+				else if (neighbour.type == Tile.TUNNEL)
 					neighbour.distanceFromStart = costForTunnel * length;
-				} else {
+				else
 					neighbour.distanceFromStart = costForBridge * length;
-				}
 			}			
 			
 			// This is a normal road
 			else {
 				
 				// Check if the road is sloped.
-				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour.tile)) {
+				if (Tile.IsSlopedRoad(at.parentTile, at.tile, neighbour.tile))
 					neighbour.distanceFromStart = costForSlope;
-				}
 				
 				// Check if the road makes a turn.
-				if (at.direction != neighbour.direction) {
+				if (at.direction != neighbour.direction)
 					neighbour.distanceFromStart += costForTurn;
-				}
 				
 				// Check if there is already a road here.
-				if (AIRoad.IsRoadTile(neighbour.tile)) {
+				if (AIRoad.IsRoadTile(neighbour.tile))
 					neighbour.distanceFromStart += costForRoad;
-				} else {
+				else
 					neighbour.distanceFromStart += costForNewRoad;
-				}
 			}
 			
 			neighbour.distanceFromStart += at.distanceFromStart;

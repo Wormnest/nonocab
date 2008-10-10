@@ -88,7 +88,7 @@ function ConnectionAdvisor::Update(loopCounter)
 				continue;
 
 		// If we haven't calculated yet what it cost to build this report, we do it now.
-		local pathfinder = RoadPathFinding(Tile.GetNeighbours);
+		local pathfinder = RoadPathFinding(PathFinderHelper());
 		local pathInfo = null;
 		
 		

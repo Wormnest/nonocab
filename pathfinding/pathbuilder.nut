@@ -203,7 +203,7 @@ function PathBuilder::CheckError(buildResult)
 			
 		// Unsolvable ones:
 		case AIError.ERR_PRECONDITION_FAILED:
-			Log.logError("Build from " + buildResult[0] + " to " + buildResult[1] + " tileType: " + buildResult[2]);
+			Log.logError("Build from " + AIMap.GetTileX(buildResult[0]) + ", " + AIMap.GetTileY(buildResult[0]) + " to " + AIMap.GetTileX(buildResult[1]) + ", " + AIMap.GetTileY(buildResult[1]) + " tileType: " + buildResult[2]);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
 			assert(false);

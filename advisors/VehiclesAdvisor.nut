@@ -35,7 +35,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 	reports = [];
 	
 
-	Log.logInfo("Update vehicle advisor");
+//	Log.logInfo("Update vehicle advisor");
 	foreach (connection in connections) {
 
 		// If the road isn't build we can't micro manage, move on!		

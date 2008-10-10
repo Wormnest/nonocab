@@ -107,7 +107,7 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup = VehicleGroup();
 			vehicleGroup.connection = connection;
 			
-			local pathfinder = RoadPathFinding(Tile.GetNeighbours);
+			local pathfinder = RoadPathFinding(PathFinderHelper());
 			vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 			vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 

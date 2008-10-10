@@ -100,7 +100,7 @@ class Connection
 	
 	function GetSurroundingTiles(tile, tileList, excludeList) {
 
-		foreach (surroundingTile in GetTilesAround(tile)) {
+		foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
 			if (excludeList.HasItem(surroundingTile)) continue;
 
 			if (AIStation.IsValidStation(AIStation.GetStationID(surroundingTile))) {
@@ -113,11 +113,6 @@ class Connection
 				tileList.AddItem(surroundingTile, surroundingTile);
 			}
 		}
-	}
-	
-	function GetTilesAround(currentTile) {
-		return [currentTile -1, currentTile +1, currentTile - AIMap.GetMapSizeX(), currentTile + AIMap.GetMapSizeX(),
-		currentTile - AIMap.GetMapSizeX() + 1, currentTile - AIMap.GetMapSizeX() - 1, currentTile - AIMap.GetMapSizeY() + 1, currentTile - AIMap.GetMapSizeY() - 1];
 	}
 	
 	function GetUID() {

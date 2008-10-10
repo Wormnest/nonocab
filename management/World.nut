@@ -112,9 +112,6 @@ function World::IncreaseMaxDistanceBetweenNodes()
 	}
 	max_distance_between_nodes += 32;
 	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
-	
-	// Overwrite the default increase each year.
-	//years_passed = (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year) + 1;	
 }
 
 /**

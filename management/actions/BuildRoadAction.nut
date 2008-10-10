@@ -21,7 +21,7 @@ class BuildRoadAction extends Action
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
-		this.pathfinder = RoadPathFinding(Tile.GetNeighbours);
+		this.pathfinder = RoadPathFinding(PathFinderHelper());
 		this.world = world;
 		Action.constructor();
 	}
@@ -37,7 +37,7 @@ function BuildRoadAction::Execute()
 	
 		{
 			// Replan the route.
-			local pathFinder = RoadPathFinding(Tile.GetNeighbours);
+			local pathFinder = RoadPathFinding(PathFinderHelper());
 			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 			if (connection.pathInfo == null) {
 				connection.pathInfo = PathInfo(null, 0);
@@ -56,7 +56,7 @@ function BuildRoadAction::Execute()
 		
 		if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 			connection.pathInfo.forceReplan = true;
-			Log.logError("BuildRoadAction: Failed to build a road");
+			Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
 			return false;
 		}
 	}
