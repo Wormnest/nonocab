@@ -216,14 +216,8 @@ function PathBuilder::CheckError(buildResult)
 
 function PathBuilder::RealiseConnection(buildRoadStations)
 {
-	
 	local test = AIExecMode();
 	return BuildPath(connection.pathInfo.roadList, false);
-		
-	// If we were unsuccessful in building the road (and the fallback option failed),
-	// we might need to recalculate a part or the whole path.
-	
-	// TODO
 }
 
 /**

@@ -51,37 +51,45 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.cargoID]);
 		report.nrVehicles = 0;
 		
-		// First we check whether the rating is good or bad.
-		if (connection.vehiclesOperating.len() == 0 || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 67 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
 		
-			// It's bad so we need more vehicles! :)
-			report.nrVehicles = 2;
-		} else {
-		
-			// If our rating is alright, make sure we don't have to many vehicles!
-			local tileToCheck = connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 3].tile;
+		// We first check if there is a line of vehicles waiting for the depot:
+		local tileToCheck = connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 3].tile;
 			
-			report.nrVehicles = 0;
-			local travelToTile = AIStation().GetLocation(connection.travelFromNodeStationID);
+		report.nrVehicles = 0;
+		local travelToTile = AIStation().GetLocation(connection.travelFromNodeStationID);
 			
-			// Check if there are any vehicles waiting on this tile and if so, sell them!
-			foreach (vehicleGroup in connection.vehiclesOperating) {
-				foreach (vehicleID in vehicleGroup.vehicleIDs) {
-					if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), AIStation().GetLocation(connection.travelFromNodeStationID)) > 1 && 
-						AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), AIStation().GetLocation(connection.travelFromNodeStationID)) < 5 &&
-						AIVehicle().GetCurrentSpeed(vehicleID) < 10 && 
-						AIVehicle().GetAge(vehicleID) > World.DAYS_PER_YEAR / 2 &&
-						AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
-						report.nrVehicles--;
-					}
+		// Check if there are any vehicles waiting on this tile and if so, sell them!
+		foreach (vehicleGroup in connection.vehiclesOperating) {
+			foreach (vehicleID in vehicleGroup.vehicleIDs) {
+				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) > 1 && 
+					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) < 6 &&
+					AIVehicle().GetCurrentSpeed(vehicleID) < 10 && 
+//					AIVehicle().GetAge(vehicleID) > World.DAYS_PER_YEAR / 2 &&
+					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
+					report.nrVehicles--;
 				}
 			}
-			
-			// We always want a little overhead (to be keen ;)).
-			if (report.nrVehicles > -2)
-				continue;
 		}
-		
+
+		// Now we check whether we need more vehicles
+		if (connection.vehiclesOperating.len() == 0 || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 67 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
+			
+			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
+			if (report.nrVehicles < 0) {
+
+				// build additional station...
+				report.nrRoadStations = 2;
+				report.nrVehicles = 2;
+			} else {
+				// build new vehicles!
+				report.nrVehicles = 2;
+			}
+		} 
+
+		// We always want a little overhead (to be keen ;)).
+		else if (report.nrVehicles > -2)
+			continue;
+
 		if (report.nrVehicles != 0)
 			reports.push(report);
 	}
@@ -119,6 +127,11 @@ function VehiclesAdvisor::GetReports() {
 			vehicleAction.SellVehicles(report.engineID, -report.nrVehicles, connection);
 
 		actionList.push(vehicleAction);
+
+		if (report.nrRoadStations > 1) {
+			Log.logWarning("build d3h road! " + report.connection.pathInfo.build);
+			actionList.push(BuildRoadAction(report.connection, false, true, world));
+		}
 		report.actions = actionList;
 
 		// Create a report and store it!

@@ -31,64 +31,87 @@ class BuildRoadAction extends Action
 function BuildRoadAction::Execute()
 {
 	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
+
+	local isConnectionBuild = connection.pathInfo.build;
+	local newConnection = null;
+	local originalRoadList = null;
+
+	// If the connection is already build we will try to add additional road stations.
+	if (isConnectionBuild) {
+		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0, 0);
+		originalRoadList = clone connection.pathInfo.roadList;
+	}
 	
-	// Check if this path isn't already build.
-	if (!connection.pathInfo.build) {
-	
-		{
-			// Replan the route.
-			local pathFinder = RoadPathFinding(PathFinderHelper());
+	{
+		// Replan the route.
+		local pathFinder = RoadPathFinding(PathFinderHelper());
+		local connectionPathInfo = null;
+		if (!isConnectionBuild)
 			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
-			if (connection.pathInfo == null) {
-				connection.pathInfo = PathInfo(null, 0);
-				connection.pathInfo.forceReplan = true;
+		else 
+			newConnection.pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+
+
+		// If we need to build additional road stations we will temporaly overwrite the 
+		// road list of the connection with the roadlist which will build the additional
+		// road stations. 
+		if (isConnectionBuild) {
+
+			if (newConnection.pathInfo == null)
 				return false;
-			}
+
+			connection.pathInfo.roadList = newConnection.pathInfo.roadList;
+			connection.pathInfo.build = true;
 		}
-		local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
-	
-		local roadCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
-		local money = AICompany.GetBankBalance(AICompany.MY_COMPANY);
-		if (roadCost > money) {
-			Log.logWarning("Not enough money(" + money + ") to build the road (cost = " + roadCost +").");
-			return false;
-		}
-		
-		if (!pathBuilder.RealiseConnection(buildRoadStations)) {
+
+		else if (connection.pathInfo == null) {
+			connection.pathInfo = PathInfo(null, 0);
 			connection.pathInfo.forceReplan = true;
-			Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
 			return false;
 		}
+	}
+
+	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
+	
+	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
+		if (!isConnectionBuild)
+			connection.pathInfo.forceReplan = true;
+		else
+			connection.pathInfo.roadList = originalRoadList;
+		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
+		return false;
 	}
 		
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 
 	if (buildRoadStations) {
-	
+
 		// This breaks?!
 		//local abc = AIExecMode();
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, false)) {
+		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, isConnectionBuild)) {
 			
-			//if (!BuildRoadStation(connection, false, isTruck)) {
-				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
+			Log.logError("BuildRoadAction: Road station couldn't be build!");
+			if (!isConnectionBuild)
 				connection.pathInfo.forceReplan = true;
-				return false;
-			//}
-		} else {
+			else
+				connection.pathInfo.roadList = originalRoadList;
+			return false;
+		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadList[0].tile);
 			assert(AIStation.GetStationID(connection.travelToNodeStationID));
 		}
 		
-		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, false)) {
+		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, isConnectionBuild)) {
 			
-			//if (!BuildRoadStation(connection, true, isTruck)) {
-				Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
+			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
+			if (!isConnectionBuild)
 				connection.pathInfo.forceReplan = true;
-				return false;
-			//}
-		} else {
+			else
+				connection.pathInfo.roadList = originalRoadList;
+			return false;
+		} else if (!isConnectionBuild) {
 			connection.travelFromNodeStationID = AIStation.GetStationID(roadList[len - 1].tile);
 			assert(AIStation.GetStationID(connection.travelFromNodeStationID));		
 		}
@@ -144,120 +167,19 @@ function BuildRoadAction::Execute()
 			return false;
 	}
 	
+	// We must make sure that the original road list is restored because we join the new
+	// road station with the existing one, but OpenTTD only recognices the original one!
+	// If we don't do this all vehicles which are build afterwards get wrong orders and
+	// the AI fails :(.
+	if (isConnectionBuild)
+		connection.pathInfo.roadList = originalRoadList;
 	// We only specify a connection as build if both the depots and the roads are build.
-	connection.pathInfo.build = true;
+	else
+		connection.pathInfo.build = true;
+	
 	connection.lastChecked = AIDate.GetCurrentDate();
 	
 	CallActionHandlers();
 	return true;
 }
 
-
-function BuildRoadAction::BuildRoadStation(connection, isProducingSide, isTruck) {
-	Log.logError(AIError.GetLastErrorString());
-	
-
-	local originalRoadList = connection.pathInfo.roadList;
-	local originalRoadListLen = originalRoadList.len();
-	
-	// Find a new way to connect the industry:
-	local start_list;
-	if (isProducingSide) {
-		// The road is calculated from the producition side to the accepting side.
-		// However, the road is stored from the accepting side to the production
-		// side!
-		start_list = connection.travelFromNode.GetProducingTiles(connection.cargoID);
-		start_list.RemoveTile(originalRoadList[originalRoadListLen - 1].tile);
-		AISign.BuildSign(originalRoadList[originalRoadListLen - 1].tile, "!");
-	} else {
-		start_list = connection.travelToNode.GetAcceptingTiles(connection.cargoID);
-		start_list.RemoveTile(originalRoadList[0].tile);
-		AISign.BuildSign(originalRoadList[0].tile, "!");		
-	}
-	
-	/**
-	 * The end list consists of the first 10 nodes of the path before
-	 * the actual road station. The original location of the road list
-	 * is however excluded from the list (since we couldn't build there
-	 * in the first place!
-	 */
-	local end_list = AIList();
-	local max = 10;
-	if (originalRoadListLen < max + 1)
-		max = originalRoadListLen - 1;
-	if (isProducingSide) {		
-		for (local i = 0; i < max; i++) {
-			end_list.AddItem(originalRoadList[originalRoadListLen - (i + 2)].tile, originalRoadList[originalRoadListLen - (i + 2)].tile);
-		}
-	} else {
-		for (local i = 0; i < max; i++) {
-			end_list.AddItem(originalRoadList[i + 1].tile, originalRoadList[i + 1].tile); 
-		}		
-	}
-
-	Log.logError("start tiles: " + start_list.Count());
-	Log.logError("End tiles: " + end_list.Count());
-
-	// We try to build a path to connect the disconnected road station.
-	local roadStationPathInfo = pathfinder.FindFastestRoad(start_list, end_list, true, false, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
-			
-	if (roadStationPathInfo == null) {
-		Log.logError("couldn't build the road station, aborting! (null)");
-		return false;
-	}
-	
-	// Debug; Show the calculated route.
-	foreach (at in roadStationPathInfo.roadList) {
-		AISign.BuildSign(at.tile, "X");
-	}
-			
-	// Try to build it, remember that the start position is the location for the new
-	// road station. But the path is stored backwards, so the new location is the
-	// very last item on the roadList!
-	local pathBuilder = PathBuilder(null, AIEngine.GetMaxSpeed(world.cargoTransportEngineIds[connection.cargoID]), world.pathFixer);
-	local buildResult = pathBuilder.BuildPath(roadStationPathInfo.roadList, false);
-	
-	AISign.BuildSign(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, "New station");
-	if (buildResult && AIRoad.BuildRoadStation(roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 1].tile, roadStationPathInfo.roadList[roadStationPathInfo.roadList.len() - 2].tile, isTruck, false, true)) {
-		// We're done so update the connection.
-		local connectionTile = -1;
-		
-		// Now that we've updated the original roadList, we need to update
-		// the connection to reflect this change. So we try to find the
-		// point where the new piece of road overlaps with the original
-		// pathlist and overwrite that part.		
-		for (local i = 0; i < 10; i++) {
-			if (!isProducingSide && originalRoadList[i + 1].tile == roadStationPathInfo.roadList[0].tile) {
-				connectionTile = i + 1;
-				break;
-			} else if (isProducingSide && originalRoadList[originalRoadListLen - (i + 2)].tile == roadStationPathInfo.roadList[0].tile) {
-				connectionTile = originalRoadListLen - (i + 2);
-				break;
-			}
-		}
-		
-		if (connectionTile == -1) {
-			Log.logError("Couldn't find connection point with original road, aborting!");
-			quit();
-		}
-		
-		// Now, the road list is stored from accepting side to the production side. But the
-		// new road for the road station is always stored from the original road to the new
-		// road station. So if we calculate the road for the road station at the accepting side
-		// we need to reverse the roadlist before adding them to the path info.
-		if (!isProducingSide) {
-			roadStationPathInfo.roadList.reverse();
-			local arrayPart = connection.pathInfo.roadList.slice(connectionTile + 1);
-			roadStationPathInfo.roadList.extend(arrayPart);
-			connection.pathInfo.roadList = roadStationPathInfo.roadList;
-		} else {
-			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(0, connectionTile);
-			connection.pathInfo.roadList.extend(roadStationPathInfo.roadList);
-		}
-		return true;
-	} else {
-		Log.logError("couldn't build the road station, aborting!");
-		Log.logError(AIError.GetLastErrorString());
-		return false;
-	}
-}

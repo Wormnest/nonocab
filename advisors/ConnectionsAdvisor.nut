@@ -137,8 +137,8 @@ function ConnectionAdvisor::Update(loopCounter)
 				reportTable.rawdelete(connection.GetUID());
 			}
 			
-			Log.logInfo("[" + (maxNrReports + loopCounter) + "/" + reportTable.len() + "] " + report.ToString());
 			reportTable[connection.GetUID()] <- report;
+			Log.logInfo("[" + reportTable.len() +  "/" + (maxNrReports + loopCounter) + "] " + report.ToString());
 		}
 	}
 	

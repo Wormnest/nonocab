@@ -55,6 +55,8 @@ function ManageVehiclesAction::Execute()
 		}
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, false);
+
+		local vehiclesDeleted = 0;
 		
 		foreach (vehicleID, value in vehicleList) {
 				
@@ -64,9 +66,11 @@ function ManageVehiclesAction::Execute()
 	        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
 	        		AIVehicle.ReverseVehicle(vehicleID);
 					AIController.Sleep(50);
-					AIVehicle.SendVehicleToDepot(vehicleID);
+					if (AIVehicle.SendVehicleToDepot(vehicleID))
+						++vehiclesDeleted;
 				}
-			}
+			} else
+				++vehiclesDeleted;
 			
 			foreach (id, value in vehicleArray) {
 				if (value == vehicleID) {
@@ -74,6 +78,9 @@ function ManageVehiclesAction::Execute()
 					break;
 				}
 			} 
+
+			if (vehiclesDeleted == vehicleNumbers)
+				break;
 		}
 	}
 	
