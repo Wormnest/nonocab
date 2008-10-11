@@ -42,35 +42,33 @@ function BuildRoadAction::Execute()
 		originalRoadList = clone connection.pathInfo.roadList;
 	}
 	
-	{
-		// Replan the route.
-		local pathFinder = RoadPathFinding(PathFinderHelper());
-		local connectionPathInfo = null;
-		if (!isConnectionBuild)
-			connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
-		else 
-			newConnection.pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+	// Replan the route.
+	local pathFinder = RoadPathFinding(PathFinderHelper());
+	local connectionPathInfo = null;
+	if (!isConnectionBuild)
+		connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+	else 
+		newConnection.pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 
+	// If we need to build additional road stations we will temporaly overwrite the 
+	// road list of the connection with the roadlist which will build the additional
+	// road stations. 
+	if (isConnectionBuild) {
 
-		// If we need to build additional road stations we will temporaly overwrite the 
-		// road list of the connection with the roadlist which will build the additional
-		// road stations. 
-		if (isConnectionBuild) {
-
-			if (newConnection.pathInfo == null)
-				return false;
-
-			connection.pathInfo.roadList = newConnection.pathInfo.roadList;
-			connection.pathInfo.build = true;
-		}
-
-		else if (connection.pathInfo == null) {
-			connection.pathInfo = PathInfo(null, 0);
-			connection.pathInfo.forceReplan = true;
+		if (newConnection.pathInfo == null)
 			return false;
-		}
+
+		connection.pathInfo.roadList = newConnection.pathInfo.roadList;
+		connection.pathInfo.build = true;
 	}
 
+	else if (connection.pathInfo == null) {
+		connection.pathInfo = PathInfo(null, 0);
+		connection.pathInfo.forceReplan = true;
+		return false;
+	}
+
+	// Build the actual road.
 	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
 	
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
@@ -87,10 +85,8 @@ function BuildRoadAction::Execute()
 
 	if (buildRoadStations) {
 
-		// This breaks?!
-		//local abc = AIExecMode();
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, isConnectionBuild)) {
+		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
 			Log.logError("BuildRoadAction: Road station couldn't be build!");
 			if (!isConnectionBuild)
