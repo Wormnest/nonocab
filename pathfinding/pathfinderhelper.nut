@@ -79,13 +79,13 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 				     direction >= AIMap.GetMapSizeX() 	 	      && offset ==  AIMap.GetMapSizeX() ||	// South
 				    -direction < AIMap.GetMapSizeX() && direction < 0 && offset == -1) {			// East
 				    
-				    local annotatedTile = AnnotatedTile();
+					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
 					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
 					tileArray.push(annotatedTile);
-				    isBridgeOrTunnelEntrance = true;
+					isBridgeOrTunnelEntrance = true;
 				}
 			}
 		}
@@ -98,7 +98,7 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 		if (!isBridgeOrTunnelEntrance) {
 
 			foreach (bridge in GetBridges(nextTile, offset)) {
-			    local annotatedTile = AnnotatedTile();
+				local annotatedTile = AnnotatedTile();
 				annotatedTile.type = Tile.BRIDGE;
 				annotatedTile.direction = offset;
 				annotatedTile.tile = bridge;
@@ -107,7 +107,7 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 			}
 			
 			foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile)) {
-			    local annotatedTile = AnnotatedTile();
+				local annotatedTile = AnnotatedTile();
 				annotatedTile.type = Tile.TUNNEL;
 				annotatedTile.direction = offset;
 				annotatedTile.tile = tunnel;
@@ -117,8 +117,11 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 
 			
 			// Besides the tunnels and bridges, we also add the tiles
-			// adjacent to the currentTile.
-		    local annotatedTile = AnnotatedTile();
+			// adjacent to the 
+			if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile))
+				continue;
+
+			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.ROAD;
 			annotatedTile.direction = offset;
 			annotatedTile.tile = nextTile;

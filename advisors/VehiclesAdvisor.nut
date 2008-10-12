@@ -128,10 +128,8 @@ function VehiclesAdvisor::GetReports() {
 
 		actionList.push(vehicleAction);
 
-		if (report.nrRoadStations > 1) {
-			Log.logWarning("build d3h road! " + report.connection.pathInfo.build);
+		if (report.nrRoadStations > 1)
 			actionList.push(BuildRoadAction(report.connection, false, true, world));
-		}
 		report.actions = actionList;
 
 		// Create a report and store it!

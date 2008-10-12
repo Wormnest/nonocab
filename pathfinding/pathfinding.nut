@@ -297,8 +297,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		local neighbour = null;
 		foreach (neighbour in pathFinderHelper.GetNeighbours(at)) {
 		
-			// Skip if this node is already processed or if we can't build on it.
-			if (closedList.rawin(neighbour.tile) || (neighbour.type == Tile.ROAD && !AIRoad.AreRoadTilesConnected(neighbour.tile, at.tile) && !AIRoad.BuildRoad(neighbour.tile, at.tile)))
+			// Skip if this node is already processed.
+			if (closedList.rawin(neighbour.tile))
 				continue;
 				
 			if (neighbour.type != Tile.ROAD) {
