@@ -50,7 +50,7 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 		local nextTile = currentAnnotatedTile.tile + offset;
 
 		// Check if we can actually build this piece of road or if the slopes render this impossible.
-		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
+		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
 		
 		local isBridgeOrTunnelEntrance = false;
@@ -118,7 +118,7 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 			
 			// Besides the tunnels and bridges, we also add the tiles
 			// adjacent to the 
-			if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile))
+			if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
 				continue;
 
 			local annotatedTile = AnnotatedTile();
