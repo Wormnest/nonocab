@@ -75,12 +75,13 @@ function ConnectionAdvisor::Update(loopCounter)
 		reportTable.len() < maxNrReports + loopCounter &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 5) {
 
+		Log.logDebug("Considder: " + report.ToString());
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Check if this path hasn't been build yet, update later to incorporate dates!
-		if (connection != null && connection.pathInfo.build)
-			continue;
+//		if (connection != null && connection.pathInfo.build)
+//			continue;
 
 		// Check if this connection has already been checked.
 		foreach (report in reportTable)
@@ -100,7 +101,11 @@ function ConnectionAdvisor::Update(loopCounter)
 		
 		// Check if the industry connection node actually exists else create it, and update it!
 		if (connection == null) {
-			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, false);
+			local bi = false;
+			if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
+				bi = true;
+
+			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, bi);
 			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
 		} else {
 			connection.pathInfo = pathInfo;
@@ -210,7 +215,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	foreach (primIndustryConnectionNode in industry_tree) {
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
-
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
 			if (manhattanDistance > world.max_distance_between_nodes) continue;			
@@ -244,11 +248,16 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				// Make sure we only check the accepting side for possible connections if
 				// and only if it has a connection to it.
-				if (connection != null && connection.pathInfo.build)
-					checkIndustry = true; 
+				if (connection != null && connection.pathInfo.build) {
+
+					if (!connection.bilateralConnection)
+						checkIndustry = true;
+					continue;
+				}
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
-				connectionReports.Insert(report, -report.Utility());
+				if (report.Utility() > 0)
+					connectionReports.Insert(report, -report.Utility());
 			}
 			
 			if (checkIndustry) {

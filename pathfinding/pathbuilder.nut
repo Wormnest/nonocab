@@ -170,14 +170,20 @@ function PathBuilder::CheckError(buildResult)
 		// Temporal onces:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
-		
+
+			// Retry the same action 5 times...
+			for (local i = 0; i < 5; i++) {
+				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
+					return true;
+				AIController.Sleep(50);
+			}
+				
 			// We make a special exception for the very first and last piece of the road,
 			// these are critical because without these we will be unable to build road
 			// stations!
 			if (buildResult[0] == connection.pathInfo.roadList[0].tile || buildResult[0] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile ||
-			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile) {
+			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile)
 				return false;
-			}
 			pathFixer.AddBuildPieceToFix(buildResult);
 			return true;
 			

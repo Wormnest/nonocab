@@ -75,12 +75,13 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 				case 3: y = y + 1; break;
 				default: break;
 			}
-			//Log.logDebug("test (" + x + ", " + y + ")");
 			tile = AIMap.GetTileIndex(x, y);
 		}
 	}
 	
 	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
+	local minimalAcceptance = (GetProduction(cargoID) > 0 ? 12 : 8);
+	local minimalProduction = (GetProduction(cargoID) > 0 ? 12 : 0);
 	
 	// loop through square.
 	for(x = x_min; x <= x_max; x++)
@@ -90,15 +91,13 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 			tile = AIMap.GetTileIndex(x, y);
 			if(AITile.IsWithinTownInfluence(tile, id))
 			{
-				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > 8 ||
-				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > 0) {
+				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > minimalAcceptance ||
+				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > minimalProduction) {
 					list.AddTile(tile);
 				}
 			}
 		}
 	}
-	//Log.logInfo("Tiles in GetTownTiles(): " + list.Count());
-	//Log.logDebug(GetName() + ": x {" + x_min + ", " + x_max + "}, y {" + y_min + ", " + y_max + "}");
 	return list;
 }
 function TownConnectionNode::GetPopulation()

@@ -146,8 +146,10 @@ function ManageVehiclesAction::Execute()
 			local roadList = connection.pathInfo.roadList;
 			if(connection.bilateralConnection)
 			{
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_TRANSFER);
-				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_TRANSFER);
+//				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_UNLOAD);
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+//				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
 			}
 			else
 			{

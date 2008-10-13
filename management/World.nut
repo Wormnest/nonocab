@@ -139,7 +139,7 @@ function World::BuildIndustryTree() {
 		InsertIndustry(industry);
 	}
 	
-	// Now handle the connection Industry --> Town
+	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
 		
 		local townNode = TownConnectionNode(town);
@@ -153,8 +153,36 @@ function World::BuildIndustryTree() {
 					connectionNode.connectionNodeList.push(townNode);
 				}
 			}
+		
 		}
+
+		// Add town <-> town connections, we only store these connections as 1-way directions
+		// because they are bidirectional.
+		foreach (townConnectionNode in townConnectionNodes) {
+			townNode.connectionNodeList.push(townConnectionNode);
+			
+			foreach (cargo, value in cargo_list) {
+				if (AITown.GetMaxProduction(townNode.id, cargo) + AITown.GetMaxProduction(townConnectionNode.id, cargo) > 0) {
+					
+					local doAdd = true;
+					foreach (c in townNode.cargoIdsProducing) {
+						if (c == cargo) {
+							doAdd = false;
+							break;
+						}
+					}
+					
+					if (!doAdd)
+						continue;
+
+					townNode.cargoIdsProducing.push(cargo);
+					townNode.cargoIdsAccepting.push(cargo);
+				}
+			}
+		}
+
 		townConnectionNodes.push(townNode);
+		industry_tree.push(townNode);
 	}
 }
 

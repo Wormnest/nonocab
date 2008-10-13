@@ -1,10 +1,10 @@
 class ConnectionReport extends Report {
 
-	engineID = 0;					// The vehicles to build.
+	engineID = 0;			// The vehicles to build.
 
 	fromConnectionNode = null;	// The node which produces the cargo.
 	toConnectionNode = null;	// The node which accepts the produced cargo.
-	connection = null;			// The proposed connection.
+	connection = null;		// The proposed connection.
 	
 	cargoID = 0;			// The cargo to transport.
 	
@@ -31,34 +31,43 @@ class ConnectionReport extends Report {
 		
 		// Get the distances (real or guessed).
 		local travelTime;
+		local travelTimeTo;
+		local travelTimeFrom;
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
 		if (connection != null) {
-			travelTime = connection.pathInfo.GetTravelTime(maxSpeed, true) + connection.pathInfo.GetTravelTime(maxSpeed, false);
+			travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
+			travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
 			initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
 		} else { 
-			travelTime = 2 * (manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed);
+			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+			travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 			initialCost = 500 * manhattanDistance;
 		}
+		travelTime = travelTimeTo + travelTimeFrom;
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / travelTime) * AIEngine.GetCapacity(engineID);
-		nrVehicles = ((AIIndustry.GetLastMonthProduction(travelFromNode.id, cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
+		nrVehicles = ((travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
 
 		brutoIncomePerMonth = 0;
-		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTime.tointeger()) * transportedCargoPerVehiclePerMonth;
+		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
+
+		if (connection != null && connection.bilateralConnection) {
+			// Also calculate the route in the other direction.
+			local nrVehiclesOtherDirection = ((travelToNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
+
+			if (nrVehiclesOtherDirection < nrVehicles)
+				nrVehicles = nrVehiclesOtherDirection;
+
+			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
+		}
+
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(engineID) / World.DAYS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(engineID);
 		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
-		
-		/*
-		// Calculate the number of road stations which need to be build
-		local daysBetweenVehicles = ((timeToTravelTo + timeToTravelFrom) + 2 * 5) / maxNrVehicles.tofloat();
-		local numberOfRoadStations = 5 / daysBetweenVehicles;
-		if (numberOfRoadStations < 1) numberOfRoadStations = 1;
-		else numberOfRoadStations = numberOfRoadStations.tointeger();*/	
 	}
 	
 	function Print() {
