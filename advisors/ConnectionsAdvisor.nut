@@ -79,10 +79,6 @@ function ConnectionAdvisor::Update(loopCounter)
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
-		// Check if this path hasn't been build yet, update later to incorporate dates!
-//		if (connection != null && connection.pathInfo.build)
-//			continue;
-
 		// Check if this connection has already been checked.
 		foreach (report in reportTable)
 			if (report.connection == connection)

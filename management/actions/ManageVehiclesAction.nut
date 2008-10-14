@@ -126,6 +126,9 @@ function ManageVehiclesAction::Execute()
 			connection.vehiclesOperating.push(vehicleGroup);
 		}
 		
+		// In case of a bilateral connection we want to spread the load by sending the trucks
+		// in opposite directions.
+		local directionToggle = false;
 		for (local i = 0; i < vehicleNumbers; i++) {
 			// DEBUG: What's goes wrong?
 			assert(connection.pathInfo.depot != null);
@@ -144,15 +147,17 @@ function ManageVehiclesAction::Execute()
 			
 			// Send the vehicles on their way.
 			local roadList = connection.pathInfo.roadList;
-			if(connection.bilateralConnection)
-			{
-//				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_UNLOAD);
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
-//				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
-				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
-			}
-			else
-			{
+			if(connection.bilateralConnection) {
+
+				if (directionToggle) {
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+				} else {
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
+				}
+				directionToggle != directionToggle;
+			} else {
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}

@@ -72,7 +72,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 
 		// Now we check whether we need more vehicles
-		if (connection.vehiclesOperating.len() == 0 || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 67 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
+		if (connection.vehiclesOperating.len() == 0 || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 50 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {

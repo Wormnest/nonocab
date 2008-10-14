@@ -199,9 +199,18 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local x = 0;
 	local y = 0;
 
+	local hasEndLocation = false;
+
 	for(local i = end.Begin(); end.HasNext(); i = end.Next()) {
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
+		if (Tile.IsBuildable(i))
+			hasEndLocation = true;
+	}
+
+	if (!hasEndLocation) {
+		Log.logError("No suitable end locations found.");
+		return null;
 	}
 
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
