@@ -79,20 +79,21 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 		}
 	}
 	
+	local isTownToTown = GetProduction(cargoID) > 0;
 	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
-	local minimalAcceptance = (GetProduction(cargoID) > 0 ? 12 : 8);
-	local minimalProduction = (GetProduction(cargoID) > 0 ? 12 : 0);
+	local minimalAcceptance = (isTownToTown ? 15 : 8);
+	local minimalProduction = (isTownToTown ? 15 : 0);
 	
 	// loop through square.
-	for(x = x_min; x <= x_max; x++)
-	{
-		for(y = y_min; y <= y_max; y++)
-		{
+	for(x = x_min; x <= x_max; x++) {
+		for(y = y_min; y <= y_max; y++) {
 			tile = AIMap.GetTileIndex(x, y);
-			if(AITile.IsWithinTownInfluence(tile, id))
-			{
+			if(AITile.IsWithinTownInfluence(tile, id)) {
 				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > minimalAcceptance ||
 				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > minimalProduction) {
+				
+					if (isTownToTown && GetProduction(cargoID) < 100)
+						continue;
 					list.AddTile(tile);
 				}
 			}
