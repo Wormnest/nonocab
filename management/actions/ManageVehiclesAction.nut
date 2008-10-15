@@ -124,8 +124,6 @@ function ManageVehiclesAction::Execute()
 		// in opposite directions.
 		local directionToggle = false;
 		for (local i = 0; i < vehicleNumbers; i++) {
-			// DEBUG: What's goes wrong?
-			assert(connection.pathInfo.depot != null);
 		
 			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0) {
 				Log.logDebug("Not enough money to build all prescibed vehicles!");

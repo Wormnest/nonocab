@@ -86,6 +86,7 @@ function ConnectionAdvisor::Update(loopCounter)
 
 		// If we haven't calculated yet what it cost to build this report, we do it now.
 		local pathfinder = RoadPathFinding(PathFinderHelper());
+		pathfinder.costTillEnd = pathfinder.costForNewRoad;
 		local pathInfo = null;
 		
 		

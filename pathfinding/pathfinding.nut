@@ -16,6 +16,7 @@ class RoadPathFinding
 	costForBridge 	= 65;		// Cost for building a bridge.
 	costForTunnel 	= 65;		// Cost for building a tunnel.
 	costForSlope 	= 85;		// Additional cost if the road heads up or down a slope.
+	costTillEnd     = 20;           // The cost for each tile till the end.
 	
 	static toBuildLater = [];		// List of build actions which couldn't be completed the moment
 									// they were issued due to temporal problems, but should be able
@@ -33,6 +34,7 @@ class RoadPathFinding
 	 */
 	constructor(pathFinderHelper) {
 		this.pathFinderHelper = pathFinderHelper;
+		costForRoad = costForRoad;
 	}
 								
 	/**
@@ -179,14 +181,8 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  */
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength)
 {
-	if(start.IsEmpty())
-	{
+	if(start.IsEmpty()) {
 		Log.logError("Could not find a fasted road for an empty startlist.");
-		return null;
-	}
-	if(end.IsEmpty())
-	{
-		Log.logError("Could not find a fasted road for an empty endlist.");
 		return null;
 	}
 
@@ -199,17 +195,44 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local x = 0;
 	local y = 0;
 
-	local hasEndLocation = false;
+	local newEndLocations = AIList();
 
 	for(local i = end.Begin(); end.HasNext(); i = end.Next()) {
-		x += AIMap.GetTileX(i);
-		y += AIMap.GetTileY(i);
-		if (Tile.IsBuildable(i))
-			hasEndLocation = true;
+		if (checkEndPositions) {
+			if (!Tile.IsBuildable(i))
+				continue;
+
+			local annotatedTile = AnnotatedTile();
+			annotatedTile.tile = i;
+			annotatedTile.type = Tile.ROAD;
+			annotatedTile.parentTile = annotatedTile;
+	
+			// We preprocess all end nodes to see if a road station can be build on them.
+			local neighbours = pathFinderHelper.GetNeighbours(annotatedTile, true);
+			
+			// We only consider roads which don't go down hill because we can't build road stations
+			// on them!
+			foreach (neighbour in neighbours) {
+				local slope = Tile.GetSlope(i, neighbour.direction);
+				if (neighbour.type != Tile.ROAD || slope == 2)
+					continue;
+					
+				newEndLocations.AddItem(i, i);
+
+			}
+			x += AIMap.GetTileX(i);
+			y += AIMap.GetTileY(i);
+		} else {
+				x += AIMap.GetTileX(i);
+				y += AIMap.GetTileY(i);
+		}
 	}
 
-	if (!hasEndLocation) {
-		Log.logError("No suitable end locations found.");
+	if (checkEndPositions)
+		end = newEndLocations;
+
+	if(end.IsEmpty()) {
+		Log.logError("Could not find a fasted road for an empty endlist.");
 		return null;
 	}
 
@@ -236,7 +259,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				continue;
 			
 			// We preprocess all start nodes to see if a road station can be build on them.
-			local neighbours = pathFinderHelper.GetNeighbours(annotatedTile);
+			local neighbours = pathFinderHelper.GetNeighbours(annotatedTile, true);
 			
 			// We only consider roads which don't go down hill because we can't build road stations
 			// on them!
@@ -249,7 +272,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				neighbour.parentTile = annotatedTile;
 				neighbour.length = 1;
 				
-				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 20);
+				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
 			}
 		} else {
 	 		
@@ -257,7 +280,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			annotatedTile.tile = i;
 			annotatedTile.type = Tile.ROAD;
 			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
-			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 20);
+			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
 		}
 	}
 	
@@ -304,7 +327,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		// East) and check if we're already at the end or if new roads are possible
 		// from those tiles.
 		local neighbour = null;
-		foreach (neighbour in pathFinderHelper.GetNeighbours(at)) {
+		foreach (neighbour in pathFinderHelper.GetNeighbours(at, false)) {
 		
 			// Skip if this node is already processed.
 			if (closedList.rawin(neighbour.tile))
@@ -347,7 +370,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			neighbour.length = at.length + 1;
 			
 			// Add this neighbour node to the queue.
-			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 20);
+			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
 		}
 		
 		// Done! Don't forget to put at into the closed list

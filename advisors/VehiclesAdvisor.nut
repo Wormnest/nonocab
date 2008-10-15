@@ -66,7 +66,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) > 1 && 
 					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) < 6 &&
 					AIVehicle().GetCurrentSpeed(vehicleID) < 10 && 
-					!AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)) &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
 					report.nrVehicles--;
 				}
@@ -74,23 +73,23 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 
 		// Now we check whether we need more vehicles
-		if (!hasVehicles || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 50 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
+		local production;
+		if (!hasVehicles || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 50 || (production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID)) > 100) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
-			if (report.nrVehicles < 0) {
-
+			if (report.nrVehicles < 0)
 				// build additional station...
 				report.nrRoadStations = 2;
-				report.nrVehicles = 2;
-			} else {
-				// build new vehicles!
-				report.nrVehicles = 2;
-			}
-		} 
 
-		// We always want a little overhead (to be keen ;)).
-		else if (report.nrVehicles > -2)
-			continue;
+			if (production < 150)
+				report.nrVehicles = 1;
+			else if (production < 250)
+				report.nrVehicles = 2;
+			else if (production < 350)
+				report.nrVehicles = 3;
+			else
+				report.nrVehicles = 4;
+		} 
 
 		if (report.nrVehicles != 0)
 			reports.push(report);

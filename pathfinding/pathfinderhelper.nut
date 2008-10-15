@@ -4,9 +4,10 @@ class PathFinderHelper {
 	 * Search for all tiles which are reachable from the given tile, either by road or
 	 * by building bridges and tunnels or exploiting existing onces.
 	 * @param currentAnnotatedTile An instance of AnnotatedTile from where to search from.
+	 * @param onlyRoads Take only roads into acccount?
 	 * @return An array of annotated tiles.
 	 */
-	function GetNeighbours(currentAnnotatedTile);
+	function GetNeighbours(currentAnnotatedTile, onlyRoads);
 	
 	/**
 	 * Search for all bridges which can be build.
@@ -25,7 +26,7 @@ class PathFinderHelper {
 	static function GetTunnels(startTile, direction);	
 }
 
-function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
+function PathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads) {
 
 	local tileArray = [];
 	local offsets;
@@ -56,7 +57,7 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 		local isBridgeOrTunnelEntrance = false;
 		
 		// Check if we can exploit excising bridges and tunnels.
-		if (AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
+		if (!onlyRoads && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			local type = Tile.NONE;
 			local otherEnd;
 			if (AIBridge.IsBridgeTile(nextTile)) {
@@ -97,24 +98,25 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile) {
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			foreach (bridge in GetBridges(nextTile, offset)) {
-				local annotatedTile = AnnotatedTile();
-				annotatedTile.type = Tile.BRIDGE;
-				annotatedTile.direction = offset;
-				annotatedTile.tile = bridge;
-				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-				tileArray.push(annotatedTile);
-			}
+			if (!onlyRoads) {
+				foreach (bridge in GetBridges(nextTile, offset)) {
+					local annotatedTile = AnnotatedTile();
+					annotatedTile.type = Tile.BRIDGE;
+					annotatedTile.direction = offset;
+					annotatedTile.tile = bridge;
+					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+					tileArray.push(annotatedTile);
+				}
 			
-			foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile)) {
-				local annotatedTile = AnnotatedTile();
-				annotatedTile.type = Tile.TUNNEL;
-				annotatedTile.direction = offset;
-				annotatedTile.tile = tunnel;
-				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-				tileArray.push(annotatedTile);
+				foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile)) {
+					local annotatedTile = AnnotatedTile();
+					annotatedTile.type = Tile.TUNNEL;
+					annotatedTile.direction = offset;
+					annotatedTile.tile = tunnel;
+					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+					tileArray.push(annotatedTile);
+				}
 			}
-
 			
 			// Besides the tunnels and bridges, we also add the tiles
 			// adjacent to the 
