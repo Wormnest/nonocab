@@ -85,6 +85,11 @@ class World
 function World::Update()
 {
 	UpdateEvents();
+
+	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 4) {
+		IncreaseMaxDistanceBetweenNodes();
+		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
+	}
 	
 	// Check if we have any vehicles to sell! :)
 	local vehicleList = AIVehicleList();
@@ -107,7 +112,7 @@ function World::Update()
 function World::IncreaseMaxDistanceBetweenNodes()
 {
 	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) {
-//		Log.logDebug("Max distance reached its max!");
+		Log.logDebug("Max distance reached its max!");
 		return;
 	}
 	max_distance_between_nodes += 32;

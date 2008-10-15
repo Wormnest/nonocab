@@ -93,12 +93,6 @@ function ManageVehiclesAction::Execute()
 		local vehicleID = null;
 		local vehicleGroup = null;
 		
-		if (connection.cargoID != AIEngine.GetCargoType(engineID)) {
-			Log.logError("Mismatch " + AICargo.GetCargoLabel(connection.cargoID));
-			Log.logError("vs " + AICargo.GetCargoLabel(AIEngine.GetCargoType(engineID))	);
-			abc();
-		}
-		
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + ".");
 		
 		// Search if there are already have a vehicle group with this engine ID.

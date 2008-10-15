@@ -228,6 +228,15 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))
 					continue;
 
+				// Make sure we only check the accepting side for possible connections if
+				// and only if it has a connection to it.
+				if (connection != null && connection.pathInfo.build) {
+
+					if (!connection.bilateralConnection)
+						checkIndustry = true;
+					continue;
+				}
+
 				// Make sure the producing side isn't already served, we don't want more then
 				// 1 connection on 1 production facility per cargo type.
 				local otherConnections = primIndustryConnectionNode.GetConnections(cargoID);
@@ -241,15 +250,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				
 				if (skip)
 					continue;
-
-				// Make sure we only check the accepting side for possible connections if
-				// and only if it has a connection to it.
-				if (connection != null && connection.pathInfo.build) {
-
-					if (!connection.bilateralConnection)
-						checkIndustry = true;
-					continue;
-				}
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
 				if (report.Utility() > 0)

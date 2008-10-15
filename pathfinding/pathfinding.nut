@@ -249,7 +249,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				neighbour.parentTile = annotatedTile;
 				neighbour.length = 1;
 				
-				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 30);
+				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 20);
 			}
 		} else {
 	 		
@@ -257,7 +257,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			annotatedTile.tile = i;
 			annotatedTile.type = Tile.ROAD;
 			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
-			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 30);
+			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * 20);
 		}
 	}
 	
@@ -347,7 +347,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			neighbour.length = at.length + 1;
 			
 			// Add this neighbour node to the queue.
-			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 30);
+			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * 20);
 		}
 		
 		// Done! Don't forget to put at into the closed list

@@ -57,14 +57,16 @@ function VehiclesAdvisor::Update(loopCounter) {
 			
 		report.nrVehicles = 0;
 		local travelToTile = AIStation().GetLocation(connection.travelFromNodeStationID);
+		local hasVehicles = false;
 			
 		// Check if there are any vehicles waiting on this tile and if so, sell them!
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 			foreach (vehicleID in vehicleGroup.vehicleIDs) {
+				hasVehicles = true;
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) > 1 && 
 					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) < 6 &&
 					AIVehicle().GetCurrentSpeed(vehicleID) < 10 && 
-//					AIVehicle().GetAge(vehicleID) > World.DAYS_PER_YEAR / 2 &&
+					!AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)) &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
 					report.nrVehicles--;
 				}
@@ -72,7 +74,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 
 		// Now we check whether we need more vehicles
-		if (connection.vehiclesOperating.len() == 0 || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 50 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
+		if (!hasVehicles || AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID) < 50 || AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) > 100) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
