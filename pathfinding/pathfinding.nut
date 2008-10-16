@@ -34,7 +34,7 @@ class RoadPathFinding
 	 */
 	constructor(pathFinderHelper) {
 		this.pathFinderHelper = pathFinderHelper;
-		costForRoad = costForRoad;
+		costTillEnd = costForRoad;
 	}
 								
 	/**

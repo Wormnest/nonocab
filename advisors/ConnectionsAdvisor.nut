@@ -73,7 +73,7 @@ function ConnectionAdvisor::Update(loopCounter)
 
 	while ((report = connectionReports.Pop()) != null &&
 		reportTable.len() < maxNrReports + loopCounter &&
-		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 5) {
+		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24) {
 
 		Log.logDebug("Considder: " + report.ToString());
 		// Check if we already know the path or need to calculate it.

@@ -44,11 +44,24 @@ function BuildRoadAction::Execute()
 	
 	// Replan the route.
 	local pathFinder = RoadPathFinding(PathFinderHelper());
+	
+	// For non-existing roads we want the AI to find them quickly!
+	// Therefor we use a non-admissible function to calculate this path.
+	if (!isConnectionBuild)
+		pathFinder.costTillEnd = pathFinder.costForNewRoad;
+		
+	// For existing routs, we want the new path to coher to the existing
+	// path as much as possible, therefor we calculate no additional
+	// penalties for turns so the pathfinder can find the existing
+	// route as quick as possible.
+	else
+		pathFinder.costForTurn = pathFinder.costForNewRoad;
+		
 	local connectionPathInfo = null;
 	if (!isConnectionBuild)
-		connection.pathInfo = pathfinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 	else 
-		newConnection.pathInfo = pathfinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
 
 	// If we need to build additional road stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional
