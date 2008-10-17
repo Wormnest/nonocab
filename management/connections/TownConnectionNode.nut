@@ -42,7 +42,7 @@ class TownConnectionNode extends ConnectionNode
 /**
  * Scans tiles who are within town influence.
  */
-function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
+function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	local list = AITileList();
 	local tile = GetLocation();
 	local x = AIMap.GetTileX(tile);
@@ -80,6 +80,9 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 	}
 	
 	local isTownToTown = GetProduction(cargoID) > 0;
+	if (isTownToTown)
+		isAcceptingCargo = true;
+
 	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
 	local minimalAcceptance = (isTownToTown ? 15 : 8);
 	local minimalProduction = (isTownToTown ? 15 : 0);
@@ -92,12 +95,18 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID){
 				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > minimalAcceptance ||
 				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > minimalProduction) {
 				
-					if (isTownToTown && GetProduction(cargoID) < 100)
+					if (isTownToTown && !Tile.IsBuildable(tile))
 						continue;
 					list.AddTile(tile);
 				}
 			}
 		}
+	}
+
+	if (isTownToTown) {
+		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
+		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		list.KeepTop(5);
 	}
 	return list;
 }

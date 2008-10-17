@@ -300,14 +300,22 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
-		if(end.HasItem(at.tile) && at.type == Tile.ROAD && 
-		
+		if(end.HasItem(at.tile) && at.type == Tile.ROAD) { 
+
 			// If we need to check the end positions then we either have to be able to build a road station
 			// Either the slope is flat or it is downhill, othersie we can't build a depot here
 			// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-			(!checkEndPositions || (AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) && Tile.GetSlope(at.tile, at.direction) != 1 && at.parentTile.type != Tile.TUNNEL) ||
-			// or a roadstation must already be in place, facing the correct direction and be ours.
-			(AIRoad.IsRoadStationTile(at.tile) && AIStation.HasStationType(at.tile, stationType) && AIRoad.GetRoadStationFrontTile(at.tile) == at.parentTile.tile && AITile.GetOwner(at.tile) == AICompany.MY_COMPANY))) {			
+			if (checkEndPositions && (!AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, true, false, true) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
+
+				// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
+				// endpoints that aren't valid anymore.
+				end.RemoveItem(at.tile);
+
+				if (end.IsEmpty()) {
+					Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
+					return false;
+				}
+			}
 				
 			local resultList = [];
 			local resultTile = at;

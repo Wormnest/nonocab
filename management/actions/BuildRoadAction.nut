@@ -77,7 +77,6 @@ function BuildRoadAction::Execute()
 
 	else if (connection.pathInfo == null) {
 		connection.pathInfo = PathInfo(null, 0);
-		connection.pathInfo.forceReplan = true;
 		return false;
 	}
 
@@ -85,9 +84,7 @@ function BuildRoadAction::Execute()
 	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[connection.cargoID], world.pathFixer);
 	
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
-		if (!isConnectionBuild)
-			connection.pathInfo.forceReplan = true;
-		else
+		if (isConnectionBuild)
 			connection.pathInfo.roadList = originalRoadList;
 		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
 		return false;
@@ -102,9 +99,7 @@ function BuildRoadAction::Execute()
 		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
 			Log.logError("BuildRoadAction: Road station couldn't be build!");
-			if (!isConnectionBuild)
-				connection.pathInfo.forceReplan = true;
-			else
+			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
 			return false;
 		} else if (!isConnectionBuild) {
@@ -115,9 +110,7 @@ function BuildRoadAction::Execute()
 		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, isConnectionBuild)) {
 			
 			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
-			if (!isConnectionBuild)
-				connection.pathInfo.forceReplan = true;
-			else
+			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
 			return false;
 		} else if (!isConnectionBuild) {
@@ -183,8 +176,10 @@ function BuildRoadAction::Execute()
 	if (isConnectionBuild)
 		connection.pathInfo.roadList = originalRoadList;
 	// We only specify a connection as build if both the depots and the roads are build.
-	else
+	else {
 		connection.pathInfo.build = true;
+		connection.pathInfo.buildDate = AIDate.GetCurrentDate();
+	}
 	
 	connection.lastChecked = AIDate.GetCurrentDate();
 	

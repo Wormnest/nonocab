@@ -47,7 +47,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
-			if (report.connection.pathInfo.build || report.connection.pathInfo.forceReplan)
+			if (report.connection.pathInfo.build)
 				reportsToBeRemoved.push(report);
 		
 		foreach (report in reportsToBeRemoved)
@@ -233,24 +233,30 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				// and only if it has a connection to it.
 				if (connection != null && connection.pathInfo.build) {
 
+					// Don't check bilateral connections because all towns are already in the
+					// root list!
 					if (!connection.bilateralConnection)
 						checkIndustry = true;
 					continue;
 				}
 
-				// Make sure the producing side isn't already served, we don't want more then
-				// 1 connection on 1 production facility per cargo type.
-				local otherConnections = primIndustryConnectionNode.GetConnections(cargoID);
-				local skip = false;
-				foreach (otherConnection in otherConnections) {
-					if (otherConnection.pathInfo.build && otherConnection != connection) {
-						skip = true;
-						break;
+				// We want towns to be strongly interconnected, therefore we skip this test for towns.
+				if (connection == null || !connection.bilateralConnection) {
+
+					// Make sure the producing side isn't already served, we don't want more then
+					// 1 connection on 1 production facility per cargo type.
+					local otherConnections = primIndustryConnectionNode.GetConnections(cargoID);
+					local skip = false;
+					foreach (otherConnection in otherConnections) {
+						if (otherConnection.pathInfo.build && otherConnection != connection) {
+							skip = true;
+							break;
+						}
 					}
-				}
 				
-				if (skip)
-					continue;
+					if (skip)
+						continue;
+				}
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
 				if (report.Utility() > 0)

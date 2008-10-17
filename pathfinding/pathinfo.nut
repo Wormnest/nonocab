@@ -7,11 +7,11 @@ class PathInfo
 	roadCost = null;		// The cost to create this road.
 	depot = null;			// The location of the depot.
 	build = null;			// Is this path build?
-	forceReplan = null;		// This is a failsafe option, if the road has been build but depots and road
-							// stations are impossible to build, we force a replanning of the path.
 							
 	travelTimesForward = null;		// An array containing the travel times in days for vehicles with a certain speed.
 	travelTimesBackward = null;		// An array containing the travel times in days for vehicles with a certain speed.
+
+	buildDate = null;			// The date this connection is build.
 
 	constructor(_roadList, _roadCost) {
 		roadList = _roadList;

@@ -24,8 +24,10 @@
 			//if (max > report.costForRoad + report.costPerVehicle) {
 			if (max >= report.GetCost(max)) {
 				subsumList.push(report);
-				//max -= report.costForRoad + report.costPerVehicle * report.nrVehicles;
-				max -= report.GetCost(max);
+				
+				local cost = report.GetCost(max);
+				if (cost > 0)
+					max -= cost;
 			}
 		}
  		return subsumList;

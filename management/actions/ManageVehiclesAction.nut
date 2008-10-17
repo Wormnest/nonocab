@@ -148,7 +148,7 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
 				}
-				directionToggle != directionToggle;
+				directionToggle = !directionToggle;
 			} else {
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);

@@ -112,7 +112,7 @@ function World::Update()
 function World::IncreaseMaxDistanceBetweenNodes()
 {
 	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) {
-		Log.logDebug("Max distance reached its max!");
+//		Log.logDebug("Max distance reached its max!");
 		return;
 	}
 	max_distance_between_nodes += 32;
