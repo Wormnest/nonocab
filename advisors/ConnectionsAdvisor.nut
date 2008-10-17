@@ -169,6 +169,9 @@ function ConnectionAdvisor::GetReports() {
 		if (processedProcessingIndustries.rawin(connection.GetUID()))
 			continue;
 			
+		// Update report.
+		report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.cargoID]);
+			
 		Log.logInfo("Report a" + (connection.pathInfo.build ? "n update" : " connection") + " from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 			

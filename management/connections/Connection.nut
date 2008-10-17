@@ -65,8 +65,8 @@ class Connection
 				if (connection.pathInfo == null)
 					continue;
 				
-				// We don't want multiple connections use the same source! (need rewrite..)
-				if (connection.pathInfo.build && connection.travelToNode != travelToNode)
+				// We don't want multiple connections use the same source unless it is a bilateral connection! (need rewrite..)
+				if (!connection.bilateralConnection && connection.pathInfo.build && connection.travelToNode != travelToNode)
 					return null;
 					
 				foreach (vehicleGroup in connection.vehiclesOperating) {
