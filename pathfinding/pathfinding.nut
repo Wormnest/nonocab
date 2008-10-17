@@ -313,7 +313,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 
 				if (end.IsEmpty()) {
 					Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
-					return false;
+					return null;
 				}
 			}
 				
