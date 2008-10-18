@@ -239,9 +239,9 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
-	
-	for(local a = roadList.len() - 2; -1 < a; a--)		
-	{
+
+	for(local a = roadList.len() - 2; -1 < a; a--) {
+
 		local buildToIndex = a;
 		local direction = roadList[a].direction;
 		
@@ -323,7 +323,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 	}
 	
 	// Build the last part (if any).
-	if (buildFromIndex >0) {
+	if (buildFromIndex > 0) {
 		if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, ignoreError))
 			return false;
 	}
@@ -343,7 +343,11 @@ function PathBuilder::GetCostForRoad(roadList)
 	
 	local pathBuilder = PathBuilder(null, null, null);
 
-	pathBuilder.BuildPath(roadList, true);			// Fake the construction
+	if (!pathBuilder.BuildPath(roadList, true)) assert(false);			// Fake the construction
+
+	// Including 2 road stations :)
+	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true);
+	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, true, false, true);
 
 	return accounting.GetCosts();		// Automatic memory management will kill accounting and testmode! :)
 }

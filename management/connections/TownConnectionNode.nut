@@ -36,7 +36,7 @@ class TownConnectionNode extends ConnectionNode
 	}
 	
 	function GetProduction(cargoID) {
-		return AITown.GetMaxProduction(id, cargoID);
+		return AITown.GetLastMonthProduction(id, cargoID);
 	}
 }
 /**
@@ -79,7 +79,8 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 		}
 	}
 	
-	local isTownToTown = GetProduction(cargoID) > 0;
+//	local isTownToTown = GetProduction(cargoID) > 0;
+	local isTownToTown = AITown.GetMaxProduction(id, cargoID) > 0;
 	if (isTownToTown)
 		isAcceptingCargo = true;
 
@@ -106,7 +107,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	if (isTownToTown) {
 		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
 		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
-		list.KeepTop(5);
+		list.KeepTop(2);
 	}
 	return list;
 }

@@ -31,10 +31,6 @@ function Parlement::ExecuteReports()
 		Log.logInfo(report.ToString());
 		foreach (action in report.actions) {
 		
-			// Check if we have enough money.
-			if (Finance.GetMaxMoneyToSpend() < report.initialCost + report.initialCostPerVehicle)
-				continue;
-				
 			// Break if one of the action fails!
 			if (!action.Execute()) {
 				Log.logWarning("Execution of raport halted!");

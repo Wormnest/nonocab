@@ -4,7 +4,7 @@
  */
 class Finance {
 
-	static minimumBankReserve = 7000;
+	static minimumBankReserve = 5000;
 	
 	/**
 	 * Returns the maximum amount of money that can be spend.

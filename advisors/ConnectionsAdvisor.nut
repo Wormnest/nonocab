@@ -90,7 +90,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		local pathInfo = null;
 		
 		
-		pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.5);
 		if (pathInfo == null) {
 			Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 			continue;
@@ -243,13 +243,13 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 					continue;
 				}
 
-				// We want towns to be strongly interconnected, therefore we skip this test for towns.
-				if (connection == null || !connection.bilateralConnection) {
+				if (connection == null) {
+
+					local skip = false;
 
 					// Make sure the producing side isn't already served, we don't want more then
 					// 1 connection on 1 production facility per cargo type.
 					local otherConnections = primIndustryConnectionNode.GetConnections(cargoID);
-					local skip = false;
 					foreach (otherConnection in otherConnections) {
 						if (otherConnection.pathInfo.build && otherConnection != connection) {
 							skip = true;
@@ -260,6 +260,17 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 					if (skip)
 						continue;
 				}
+/*
+				if (connection != null && connection.bilateralConnection) {
+
+					foreach (otherConnection in secondConnectionNode.GetConnections(cargoID)) {
+						if (otherConnection.pathInfo.build) {
+							skip = true;
+							break;
+						}
+					}
+				}
+*/			
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
 				if (report.Utility() > 0)

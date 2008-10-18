@@ -36,14 +36,14 @@ class ConnectionReport extends Report {
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
-		if (connection != null) {
+		if (connection != null && connection.pathInfo.roadList != null) {
 			travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
 			travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
 			initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
 		} else { 
 			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 			travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-			initialCost = 500 * manhattanDistance;
+			initialCost = 150 * manhattanDistance;
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
 
@@ -58,11 +58,8 @@ class ConnectionReport extends Report {
 			// Also calculate the route in the other direction.
 			local nrVehiclesOtherDirection = ((travelToNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
 
-			if (nrVehiclesOtherDirection < nrVehicles)
-				nrVehicles = nrVehiclesOtherDirection;
-
+			nrVehicles = (nrVehicles + nrVehiclesOtherDirection) / 2
 			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
-			brutoIncomePerMonthPerVehicle /= 2;
 		}
 
 		brutoCostPerMonth = 0;

@@ -197,6 +197,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 
 	local newEndLocations = AIList();
 
+	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 0)
+		AIController.Sleep(1);
+
 	for(local i = end.Begin(); end.HasNext(); i = end.Next()) {
 		if (checkEndPositions) {
 			if (!Tile.IsBuildable(i))
@@ -218,7 +221,6 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 					continue;
 					
 				newEndLocations.AddItem(i, i);
-
 			}
 			x += AIMap.GetTileX(i);
 			y += AIMap.GetTileY(i);
@@ -294,9 +296,13 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	while (pq.Count != 0)
 	{
 		local at = pq.Pop();	
-		
+		if (at.length > maxPathLength) {
+			Log.logError("Max length hit, aborting!");
+			return null;
+		}
+			
 		// Get the node with the best utility value
-		if(closedList.rawin(at.tile) || at.length > maxPathLength)
+		if(closedList.rawin(at.tile))
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
@@ -315,18 +321,19 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 					Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
 					return null;
 				}
-			}
+			} else {
 				
-			local resultList = [];
-			local resultTile = at;
+				local resultList = [];
+				local resultTile = at;
 			
-			while (resultTile.parentTile != resultTile) {
-				resultList.push(resultTile);
-				resultTile = resultTile.parentTile;
-			}
+				while (resultTile.parentTile != resultTile) {
+					resultList.push(resultTile);
+					resultTile = resultTile.parentTile;
+				}
 		
-			resultList.push(resultTile);
-			return PathInfo(resultList, null);
+				resultList.push(resultTile);
+				return PathInfo(resultList, null);
+			}
 		}
 		
 

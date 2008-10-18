@@ -59,9 +59,9 @@ function BuildRoadAction::Execute()
 		
 	local connectionPathInfo = null;
 	if (!isConnectionBuild)
-		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
 	else 
-		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, world.max_distance_between_nodes * 2);
+		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
 
 	// If we need to build additional road stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional
@@ -98,7 +98,7 @@ function BuildRoadAction::Execute()
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
 		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
 			
-			Log.logError("BuildRoadAction: Road station couldn't be build!");
+			Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
 			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
 			return false;
@@ -109,7 +109,7 @@ function BuildRoadAction::Execute()
 		
 		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, isConnectionBuild)) {
 			
-			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!");
+			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!" + AIError.GetLastErrorString());
 			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
 			return false;

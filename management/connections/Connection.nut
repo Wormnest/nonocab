@@ -100,18 +100,25 @@ class Connection
 	
 	function GetSurroundingTiles(tile, tileList, excludeList) {
 
+		local currentStationID = AIStation.GetStationID(tile);
 		foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
 			if (excludeList.HasItem(surroundingTile)) continue;
 
-			if (AIStation.IsValidStation(AIStation.GetStationID(surroundingTile))) {
+			local stationID = AIStation.GetStationID(surroundingTile);
+
+			if (AIStation.IsValidStation(stationID)) {
 				excludeList.AddItem(surroundingTile, surroundingTile);
+
+				// Only explore this possibility if the station has the same name!
+				if (AIStation.GetName(stationID) != AIStation.GetName(currentStationID))
+					continue;
+
 				GetSurroundingTiles(surroundingTile, tileList, excludeList);
 				continue;
 			}
 
-			if (!tileList.HasItem(surroundingTile)) {
+			if (!tileList.HasItem(surroundingTile))
 				tileList.AddItem(surroundingTile, surroundingTile);
-			}
 		}
 	}
 	
