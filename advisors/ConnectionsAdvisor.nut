@@ -260,17 +260,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 					if (skip)
 						continue;
 				}
-/*
-				if (connection != null && connection.bilateralConnection) {
-
-					foreach (otherConnection in secondConnectionNode.GetConnections(cargoID)) {
-						if (otherConnection.pathInfo.build) {
-							skip = true;
-							break;
-						}
-					}
-				}
-*/			
 
 				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
 				if (report.Utility() > 0)

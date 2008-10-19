@@ -79,19 +79,16 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// Now we check whether we need more vehicles
 		local production;
 		local rating;
-		if (!hasVehicles || report.nrVehicles - nrVehiclesInStation != 0 && (rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID)) < 50 || (production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID)) > 100) {
+		if (!hasVehicles || report.nrVehicles - nrVehiclesInStation != 0 && (rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID)) < 60 || (production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID)) > 100) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0)
 				// build additional station...
 				report.nrRoadStations = 2;
 
-			if (production < 200) {
-				if (rating < 30)
-					report.nrVehicles = 2;
-				else
-					report.nrVehicles = 1;
-			} else if (production < 300)
+			if (production < 200) 
+				report.nrVehicles = 1;
+			else if (production < 300)
 				report.nrVehicles = 2;
 			else if (production < 400)
 				report.nrVehicles = 3;
@@ -102,6 +99,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to sell vehicle but the road isn't old enough, don't!
 		else if (report.nrVehicles < 0 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60)
 			continue;
+
+		if (connection.bilateralConnection)
+			report.nrVehicles *= 2;
 
 		if (report.nrVehicles != 0)
 			reports.push(report);
