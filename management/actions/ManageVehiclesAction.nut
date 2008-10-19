@@ -55,6 +55,8 @@ function ManageVehiclesAction::Execute()
 		}
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
+		vehicleList.RemoveAboveValue(0);
 
 		local vehiclesDeleted = 0;
 		

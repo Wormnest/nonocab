@@ -21,11 +21,10 @@
 		while ((report = reportList.Pop()) != null) {
 			
 			// Check if we can afford it.
-			//if (max > report.costForRoad + report.costPerVehicle) {
-			if (max >= report.GetCost(max)) {
+			local cost;
+			if (max >= (cost = report.GetCost(max)) && report.UtilityForMoney(max) > 0) {
 				subsumList.push(report);
 				
-				local cost = report.GetCost(max);
 				if (cost > 0)
 					max -= cost;
 			}
