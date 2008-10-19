@@ -58,7 +58,7 @@ class ConnectionReport extends Report {
 			// Also calculate the route in the other direction.
 			local nrVehiclesOtherDirection = ((travelToNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
 
-			if (nrVehiclesOtherDirection > nrVehicles)
+			if (nrVehiclesOtherDirection < nrVehicles)
 				nrVehicles = nrVehiclesOtherDirection;
 			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
 		}

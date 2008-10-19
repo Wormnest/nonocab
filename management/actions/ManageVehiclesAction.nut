@@ -144,11 +144,15 @@ function ManageVehiclesAction::Execute()
 			if(connection.bilateralConnection) {
 
 				if (directionToggle) {
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+					//AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
+					//AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 				} else {
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
+					//AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
+					//AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
 				}
 				directionToggle = !directionToggle;
 			} else {

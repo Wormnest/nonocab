@@ -70,16 +70,31 @@ function VehiclesAdvisor::Update(loopCounter) {
 					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
 					report.nrVehicles--;
 					
-					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
-						nrVehiclesInStation++;
 				}
+
+				if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
+					nrVehiclesInStation++;
 			}
 		}
 
+		if (nrVehiclesInStation > 3)
+			report.nrVehicles -= nrVehiclesInStation - 3;
+
 		// Now we check whether we need more vehicles
-		local production;
-		local rating;
-		if (!hasVehicles || report.nrVehicles - nrVehiclesInStation != 0 && (rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID)) < 60 || (production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID)) > 100) {
+		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
+		local rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID);
+
+		if (connection.bilateralConnection) {
+			local productionOtherEnd = AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
+			local ratingOtherEnd = AIStation().GetCargoRating(connection.travelToNodeStationID, connection.cargoID);
+
+			if (productionOtherEnd < production)
+				production = productionOtherEnd;
+			if (ratingOtherEnd < rating)
+				rating = ratingOtherEnd;
+		}
+
+		if (!hasVehicles || rating < 60 || production > 100) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0)
@@ -99,9 +114,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to sell vehicle but the road isn't old enough, don't!
 		else if (report.nrVehicles < 0 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60)
 			continue;
-
-		if (connection.bilateralConnection)
-			report.nrVehicles *= 2;
 
 		if (report.nrVehicles != 0)
 			reports.push(report);
@@ -186,7 +198,8 @@ function VehiclesAdvisor::UpdateIndustryConnections(industry_tree) {
 				if (connection == null || !connection.pathInfo.build)
 					continue;
 
-				checkIndustry = true; 
+				if (!connection.bilateralConnection)
+					checkIndustry = true; 
 				connections.push(connection);
 			}
 			

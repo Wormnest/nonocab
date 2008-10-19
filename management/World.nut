@@ -37,6 +37,8 @@ class World
 		this.starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		this.years_passed = 0;
 		this.town_list = AITownList();
+		town_list.Valuate(AITown.GetPopulation);
+		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
 		cargoTransportEngineIds = array(AICargoList().Count(), -1);
