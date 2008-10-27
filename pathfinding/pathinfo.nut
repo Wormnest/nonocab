@@ -8,10 +8,11 @@ class PathInfo
 	depot = null;			// The location of the depot.
 	build = null;			// Is this path build?
 							
-	travelTimesForward = null;		// An array containing the travel times in days for vehicles with a certain speed.
-	travelTimesBackward = null;		// An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesForward = null;	// An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesBackward = null;	// An array containing the travel times in days for vehicles with a certain speed.
 
-	buildDate = null;			// The date this connection is build.
+	buildDate = null;		// The date this connection is build.
+	nrRoadStations = null;          // The number of road stations.
 
 	constructor(_roadList, _roadCost) {
 		roadList = _roadList;
@@ -19,6 +20,7 @@ class PathInfo
 		build = false;
 		travelTimesForward = [];
 		travelTimesBackward = [];
+		nrRoadStations = 0;
 	}
 	
 	/**

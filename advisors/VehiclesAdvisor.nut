@@ -26,6 +26,44 @@ class VehiclesAdvisor extends Advisor {
 	function getReports();	
 }
 
+/**
+ * Get the number of vehicles waiting in front of road stations, in the road stations
+ * and if a connection has any vehicles at all.
+ * @param stationLocation The station to check out.
+ * @param connection The connection this station is part of.
+ * @return A tuple containing: 
+ * - The number of vehicles waiting in or in from of the station.
+ * - The number of vehicles which are in the road station or depot.
+ * - A boolean which denotes if any vehicles are detected for this connection.
+ */
+function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
+
+		local nrVehicles = 0;
+		local nrVehiclesInStation = 0;
+		local hasVehicles = false;
+			
+		// Check if there are any vehicles waiting on this tile and if so, sell them!
+		foreach (vehicleGroup in connection.vehiclesOperating) {
+			foreach (vehicleID in vehicleGroup.vehicleIDs) {
+				hasVehicles = true;
+				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
+					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < 15 &&
+					AIVehicle().GetCurrentSpeed(vehicleID) < 10 &&
+					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == stationLocation &&
+					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING) {
+					nrVehicles--;
+					
+					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
+						nrVehiclesInStation++;
+				}
+
+
+			}
+		}
+		
+		return [nrVehicles, nrVehiclesInStation, hasVehicles];
+}
+
 function VehiclesAdvisor::Update(loopCounter) {
 	
 	if (loopCounter == 0) {
@@ -51,34 +89,24 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.cargoID]);
 		report.nrVehicles = 0;
 		
-		
-		// We first check if there is a line of vehicles waiting for the depot:
-		local tileToCheck = connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 3].tile;
-			
-		report.nrVehicles = 0;
-		local nrVehiclesInStation = 0;
-		local travelToTile = AIStation().GetLocation(connection.travelFromNodeStationID);
-		local hasVehicles = false;
-			
-		// Check if there are any vehicles waiting on this tile and if so, sell them!
-		foreach (vehicleGroup in connection.vehiclesOperating) {
-			foreach (vehicleID in vehicleGroup.vehicleIDs) {
-				hasVehicles = true;
-				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) > 1 && 
-					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), travelToTile) < 6 &&
-					AIVehicle().GetCurrentSpeed(vehicleID) < 10 &&
-					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == travelToTile) {
-					report.nrVehicles--;
-					
-				}
+		local stationDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelFromNodeStationID), connection);
+		report.nrVehicles = stationDetails[0];
+		local nrVehiclesInStation = stationDetails[1];
+		local hasVehicles = stationDetails[2];
 
-				if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
-					nrVehiclesInStation++;
+		if (connection.bilateralConnection) {
+			local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
+			
+			// If the other station has more vehicles, check that station.
+			if (stationOtherDetails[0] > report.nrVehicles) {
+				report.nrVehicles = stationOtherDetails[0];
+				local nrVehiclesInStation = stationOtherDetails[1];
+				local hasVehicles = stationOtherDetails[2];
 			}
 		}
-
-		if (nrVehiclesInStation > 3)
-			report.nrVehicles -= nrVehiclesInStation - 3;
+		
+		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
+			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
 
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
@@ -90,7 +118,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 			if (productionOtherEnd < production)
 				production = productionOtherEnd;
-			if (ratingOtherEnd < rating)
+			if (ratingOtherEnd > rating)
 				rating = ratingOtherEnd;
 		}
 
@@ -144,6 +172,9 @@ function VehiclesAdvisor::GetReports() {
 						
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
+
+		if (report.nrRoadStations > 1)
+			actionList.push(BuildRoadAction(report.connection, false, true, world));
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
 		if (report.nrVehicles > 0)
@@ -153,8 +184,6 @@ function VehiclesAdvisor::GetReports() {
 
 		actionList.push(vehicleAction);
 
-		if (report.nrRoadStations > 1)
-			actionList.push(BuildRoadAction(report.connection, false, true, world));
 		report.actions = actionList;
 
 		// Create a report and store it!

@@ -54,8 +54,12 @@ function BuildRoadAction::Execute()
 	// path as much as possible, therefor we calculate no additional
 	// penalties for turns so the pathfinder can find the existing
 	// route as quick as possible.
-	else
+	else {
 		pathFinder.costForTurn = pathFinder.costForNewRoad;
+		pathFinder.costForNewRoad = pathFinder.costForNewRoad * 2;
+		pathFinder.costForBridge = pathFinder.costForBridge * 2;
+		pathFinder.costForTunnel = pathFinder.costForTunnel * 2;
+	}
 		
 	local connectionPathInfo = null;
 	if (!isConnectionBuild)
@@ -117,6 +121,8 @@ function BuildRoadAction::Execute()
 			connection.travelFromNodeStationID = AIStation.GetStationID(roadList[len - 1].tile);
 			assert(AIStation.GetStationID(connection.travelFromNodeStationID));		
 		}
+
+		connection.pathInfo.nrRoadStations++;
 	}
 
 	// Check if we need to build a depot.	
