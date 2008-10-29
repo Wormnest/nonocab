@@ -100,8 +100,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 			// If the other station has more vehicles, check that station.
 			if (stationOtherDetails[0] > report.nrVehicles) {
 				report.nrVehicles = stationOtherDetails[0];
-				local nrVehiclesInStation = stationOtherDetails[1];
-				local hasVehicles = stationOtherDetails[2];
+				nrVehiclesInStation = stationOtherDetails[1];
+				hasVehicles = stationOtherDetails[2];
 			}
 		}
 		

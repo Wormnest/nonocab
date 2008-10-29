@@ -5,8 +5,11 @@
 class TownConnectionNode extends ConnectionNode
 {
 
+	excludeList = null;			// List of all nodes where no station may be build!
+
 	constructor(id) {
 		ConnectionNode.constructor(TOWN_NODE, id);
+		excludeList = {};
 	}
 	
 	/**
@@ -18,16 +21,10 @@ class TownConnectionNode extends ConnectionNode
 	}
 	
 	function GetProducingTiles(cargoID) {
-		//local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-		//Log.logWarning("TownConnectionNode.GetProducingTiles not implemented yet.");
-		//return AIList();
 		return GetTownTiles(false, cargoID);
 	}
 	
 	function GetAcceptingTiles(cargoID) {
-		//local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-		//Log.logWarning("TownConnectionNode.GetAcceptingTiles not implemented yet.");
-		//return AIList();
 		return GetTownTiles(true, cargoID);
 	}
 	
@@ -36,7 +33,10 @@ class TownConnectionNode extends ConnectionNode
 	}
 	
 	function GetProduction(cargoID) {
-		return AITown.GetLastMonthProduction(id, cargoID);
+		local productionLastMonth = AITown.GetLastMonthProduction(id, cargoID);
+		if (productionLastMonth == 0)
+			return AITown.GetMaxProduction(id, cargoID) / 2;
+		return productionLastMonth;
 	}
 }
 /**
@@ -79,7 +79,6 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 		}
 	}
 	
-//	local isTownToTown = GetProduction(cargoID) > 0;
 	local isTownToTown = AITown.GetMaxProduction(id, cargoID) > 0;
 	if (isTownToTown)
 		isAcceptingCargo = true;
@@ -105,6 +104,8 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	}
 
 	if (isTownToTown) {
+		if (excludeList.rawin("" + cargoID))
+			list.RemoveList(excludeList["" + cargoID]);
 		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
 		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		list.KeepTop(2);

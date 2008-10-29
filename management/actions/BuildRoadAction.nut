@@ -123,6 +123,36 @@ function BuildRoadAction::Execute()
 		}
 
 		connection.pathInfo.nrRoadStations++;
+
+		// In the case of a bilateral connection we want to make sure that
+		// we don't hinder ourselves; Place the stations not to near each
+		// other.
+		if (connection.bilateralConnection) {
+			local listFrom;
+			local listTo;
+			if (!connection.travelFromNode.rawin("" + connection.cargoID)) {
+				listFrom = AIList();
+				connection.travelFromNode.excludeList["" + connection.cargoID] <- listFrom;
+			} else
+				listFrom = connection.travelFromNode.rawget("" + connection.cargoID);
+			if (!connection.travelToNode.rawin("" + connection.cargoID)) {
+				listTo = AIList();
+				connection.travelToNode.excludeList["" + connection.cargoID] <- listTo;
+			} else
+				listTo = connection.travelToNode.rawget("" + connection.cargoID);
+
+			local fromTile = roadList[len - 1].tile;
+			local toTile = roadList[0].tile;
+			for (local i = -3; i < 4; i++)  {
+				local yCoord = i * AIMap.GetMapSizeX();
+				for (local j = -3; j < 4; j++) {
+					local from = fromTile + j + yCoord;
+					local to = toTile + j + yCoord;
+					listFrom.AddItem(from, from);
+					listTo.AddItem(to, to);
+				}
+			}
+		}
 	}
 
 	// Check if we need to build a depot.	
