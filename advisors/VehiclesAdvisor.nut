@@ -32,8 +32,8 @@ class VehiclesAdvisor extends Advisor {
  * @param stationLocation The station to check out.
  * @param connection The connection this station is part of.
  * @return A tuple containing: 
- * - The number of vehicles waiting in or in from of the station.
- * - The number of vehicles which are in the road station or depot.
+ * - The number of vehicles waiting in or in front of the station multiplied by -1.
+ * - The number of vehicles which are waiting and in the road station or depot; this > -nrVehicles.
  * - A boolean which denotes if any vehicles are detected for this connection.
  */
 function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
@@ -93,16 +93,18 @@ function VehiclesAdvisor::Update(loopCounter) {
 		report.nrVehicles = stationDetails[0];
 		local nrVehiclesInStation = stationDetails[1];
 		local hasVehicles = stationDetails[2];
+		local dropoffOverLoad = false;
 
-		if (connection.bilateralConnection) {
-			local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
+		local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
 			
-			// If the other station has more vehicles, check that station.
-			if (stationOtherDetails[0] > report.nrVehicles) {
-				report.nrVehicles = stationOtherDetails[0];
-				nrVehiclesInStation = stationOtherDetails[1];
-				hasVehicles = stationOtherDetails[2];
-			}
+		// If the other station has more vehicles, check that station.
+		if (stationOtherDetails[0] < report.nrVehicles) {
+			report.nrVehicles = stationOtherDetails[0];
+			nrVehiclesInStation = stationOtherDetails[1];
+			hasVehicles = stationOtherDetails[2];
+
+			if (!connection.bilateralConnection)
+				dropoffOverLoad = true;
 		}
 		
 		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
@@ -122,7 +124,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 				rating = ratingOtherEnd;
 		}
 
-		if (!hasVehicles || rating < 60 || production > 100) {
+		if (!hasVehicles || rating < 60 || production > 100 || dropoffOverLoad) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0)
