@@ -108,7 +108,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 			list.RemoveList(excludeList["" + cargoID]);
 		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
 		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
-		list.KeepTop(2);
+		list.KeepTop(1);
 	}
 	return list;
 }
