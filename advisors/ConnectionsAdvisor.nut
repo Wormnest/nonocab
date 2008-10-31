@@ -47,7 +47,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
-			if (report.connection.pathInfo.build)
+			if (report.connection.pathInfo.forceReplan || report.connection.pathInfo.build)
 				reportsToBeRemoved.push(report);
 		
 		foreach (report in reportsToBeRemoved)

@@ -92,9 +92,8 @@ class PathFixer extends Thread {
 		
 		// Reverse the list so we don't remove the wrong items!
 		toRemoveIndexes.reverse();
-		foreach (index in toRemoveIndexes) {
+		foreach (index in toRemoveIndexes)
 			buildPiecesToFix.remove(index);
-		}
 	}
 }
 
@@ -119,9 +118,8 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 			local bestBridgeType = null;
 			for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
 				local bridge = bridgeTypes.Next();
-				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed)) {
+				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
 					bestBridgeType = bridge;
-				}
 			}		
 		
 			// Connect the bridge to the other end. Because the first road tile after the bridge has to
@@ -304,17 +302,15 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 		if (roadList[a].type != Tile.ROAD) {
 
 			// Build road before the tunnel or bridge.
-			if (buildFromIndex != a + 1) {
+			if (buildFromIndex != a + 1)
 				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, ignoreError))
 					return false;
-			}
 			
 			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
 			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
-			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {
+			if (a > 0 && roadList[a - 1].type == Tile.ROAD)
 				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, Tile.ROAD, null, ignoreError))
 					return false;
-			}
 
 			// Update the status before moving on.
 			buildFromIndex = a;
@@ -323,10 +319,9 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 	}
 	
 	// Build the last part (if any).
-	if (buildFromIndex > 0) {
+	if (buildFromIndex > 0)
 		if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, ignoreError))
 			return false;
-	}
 
 	return true;
 }

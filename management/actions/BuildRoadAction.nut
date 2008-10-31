@@ -81,6 +81,7 @@ function BuildRoadAction::Execute()
 
 	else if (connection.pathInfo == null) {
 		connection.pathInfo = PathInfo(null, 0);
+		connection.pathInfo.forceReplan = true;
 		return false;
 	}
 

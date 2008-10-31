@@ -1,5 +1,9 @@
 class PathFinderHelper {
 
+	standardOffsets = null;
+	constructor() {
+		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
+	}
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or
 	 * by building bridges and tunnels or exploiting existing onces.
@@ -24,6 +28,7 @@ class PathFinderHelper {
 	 * @return An array of tile IDs of all possible end points.
 	 */	
 	static function GetTunnels(startTile, direction);	
+
 }
 
 function PathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads) {
@@ -37,10 +42,9 @@ function PathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads) {
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
 	if (currentAnnotatedTile.type == Tile.ROAD)
-		offsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
-	else {
+		offsets = standardOffsets;
+	else
 		offsets = [currentAnnotatedTile.direction];
-	}
 
 	foreach (offset in offsets) {
 		
@@ -168,8 +172,8 @@ function PathFinderHelper::GetTunnels(startNode, previousNode) {
 	local direction = (other_tunnel_end - startNode) / tunnel_length;
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) &&  (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode))) {
+	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) &&  (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)))
 		tiles.push(other_tunnel_end);
-	}
 	return tiles;
 }
+

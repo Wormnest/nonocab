@@ -25,7 +25,7 @@ function Parlement::ExecuteReports()
 		// other reports. So it may very well be that the utility becomes
 		// negative because we don't have enough money to buy - for instance -
 		// a couple of vehicles and can only pay for the road.
-		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) < 0)
+		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0)
 			continue;
 			
 		Log.logInfo(report.ToString());
@@ -68,7 +68,6 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	reports = SubSum.GetSubSum(sortedReports, Finance.GetMaxMoneyToSpend());
 }
 
-function Parlement::ClearReports()
-{
+function Parlement::ClearReports() {
 	reports = [];
 }

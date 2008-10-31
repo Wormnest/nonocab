@@ -7,6 +7,7 @@ class PathInfo
 	roadCost = null;		// The cost to create this road.
 	depot = null;			// The location of the depot.
 	build = null;			// Is this path build?
+	forceReplan = null;		// Must this path be replanned?
 							
 	travelTimesForward = null;	// An array containing the travel times in days for vehicles with a certain speed.
 	travelTimesBackward = null;	// An array containing the travel times in days for vehicles with a certain speed.

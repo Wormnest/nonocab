@@ -181,11 +181,6 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  */
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength)
 {
-	if(start.IsEmpty()) {
-		Log.logError("Could not find a fasted road for an empty startlist.");
-		return null;
-	}
-
 	local test = AITestMode();
 
 	local pq = null;
@@ -200,7 +195,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 0)
 		AIController.Sleep(1);
 
-	for(local i = end.Begin(); end.HasNext(); i = end.Next()) {
+	foreach (i, value in end) {
 		if (checkEndPositions) {
 			if (!Tile.IsBuildable(i))
 				continue;
@@ -216,18 +211,14 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			// We only consider roads which don't go down hill because we can't build road stations
 			// on them!
 			foreach (neighbour in neighbours) {
-				local slope = Tile.GetSlope(i, neighbour.direction);
-				if (neighbour.type != Tile.ROAD || slope == 2)
+				if (neighbour.type != Tile.ROAD || Tile.GetSlope(i, neighbour.direction) == 2)
 					continue;
 					
 				newEndLocations.AddItem(i, i);
 			}
-			x += AIMap.GetTileX(i);
-			y += AIMap.GetTileY(i);
-		} else {
-				x += AIMap.GetTileX(i);
-				y += AIMap.GetTileY(i);
 		}
+		x += AIMap.GetTileX(i);
+		y += AIMap.GetTileY(i);
 	}
 
 	if (checkEndPositions)
@@ -246,7 +237,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
-	for(local i = start.Begin(); start.HasNext(); i = start.Next()) {
+	foreach (i, value in start) {
 	
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.tile = i;
@@ -277,25 +268,19 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				pq.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
 			}
 		} else {
-	 		
-	 		local annotatedTile = AnnotatedTile();
-			annotatedTile.tile = i;
-			annotatedTile.type = Tile.ROAD;
-			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 			pq.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
 		}
 	}
 	
 	// Check if we have a node from which to build.
-	if (!pq.Count == 0) {
+	if (!pq.Count) {
 		Log.logDebug("Pathfinder: No start points for this road; Abort: original #start points: " + start.Count());
 		return null;
 	}
 
 	// Now with the open and closed list we're ready to do some grinding!!!
-	while (pq.Count != 0)
-	{
-		local at = pq.Pop();	
+	local at;
+	while ((at = pq.Pop())) {
 		if (at.length > maxPathLength) {
 			Log.logError("Max length hit, aborting!");
 			return null;
