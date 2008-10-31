@@ -88,7 +88,7 @@ function World::Update()
 {
 	UpdateEvents();
 
-	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 4) {
+	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 2) {
 		IncreaseMaxDistanceBetweenNodes();
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 	}
