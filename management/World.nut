@@ -197,33 +197,24 @@ function World::BuildIndustryTree() {
  * Insert an industryNode in the industryList.
  * @industryID The id of the industry which needs to be added.
  */
-function World::InsertIndustry(industryID)
-{
+function World::InsertIndustry(industryID) {
+
 	local industryNode = IndustryConnectionNode(industryID);
 	
 	// Make sure this industry hasn't already been added.
-	if (!industry_table.rawin(industryID)) {
+	if (!industry_table.rawin(industryID))
 		industry_table[industryID] <- industryNode;
-	} else {
+	else
 		return;
-	}
+
+	local hasBilateral = false;
 	
 	// Check which cargo is accepted.
 	foreach (cargo, value in cargo_list) {
 
-		// Check if the industry actually accepts something.
-		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
-			industryNode.cargoIdsAccepting.push(cargo);
-
-			// Add to cache.
-			industryCacheAccepting[cargo].push(industryNode);
-
-			// Check if there are producing plants which this industry accepts.
-			for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
-				industryCacheProducing[cargo][i].connectionNodeList.push(industryNode);
-				industryNode.connectionNodeListReversed.push(industryCacheProducing[cargo][i]);
-			}
-		}
+		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetProduction(industryID, cargo) != -1;
+		if (isBilateral)
+			hasBilateral = true;
 
 		if (AIIndustry.GetProduction(industryID, cargo) != -1) {	
 
@@ -234,17 +225,35 @@ function World::InsertIndustry(industryID)
 			industryCacheProducing[cargo].push(industryNode);
 
 			// Check for accepting industries for these products.
-			for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
-				industryNode.connectionNodeList.push(industryCacheAccepting[cargo][i]);
-				industryCacheAccepting[cargo][i].connectionNodeListReversed.push(industryNode);
+			foreach (cachedIndustry in industryCacheAccepting[cargo]) {
+	
+				industryNode.connectionNodeList.push(cachedIndustry);
+				if (!isBilateral)
+					cachedIndustry.connectionNodeListReversed.push(industryNode);
 			}
 		}
+
+		// Check if the industry actually accepts something.
+		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
+			industryNode.cargoIdsAccepting.push(cargo);
+
+			// Add to cache.
+			industryCacheAccepting[cargo].push(industryNode);
+
+			// Check if there are producing plants which this industry accepts.
+			if (!isBilateral) {
+				foreach (cachedIndustry in industryCacheProducing[cargo]) {
+					cachedIndustry.connectionNodeList.push(industryNode);
+					industryNode.connectionNodeListReversed.push(cachedIndustry);
+				}
+			}
+		}
+
 	}
 
 	// If the industry doesn't accept anything we add it to the root list.
-	if (industryNode.cargoIdsAccepting.len() == 0) {
+	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
 		industry_tree.push(industryNode);
-	}	
 }
 
 /**

@@ -38,6 +38,11 @@ class TownConnectionNode extends ConnectionNode
 			return AITown.GetMaxProduction(id, cargoID) / 2;
 		return productionLastMonth;
 	}
+
+	function IsAccepted(cargoID) {
+		local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
+		return AITile.GetCargoAcceptance(AITown.GetLocation(id), cargoID, 1, 1, stationRadius) > 7;
+	}
 }
 /**
  * Scans tiles who are within town influence.
@@ -84,7 +89,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 		isAcceptingCargo = true;
 
 	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
-	local minimalAcceptance = (isTownToTown ? 15 : 8);
+	local minimalAcceptance = (isTownToTown ? 15 : 7);
 	local minimalProduction = (isTownToTown ? 15 : 0);
 	
 	// loop through square.

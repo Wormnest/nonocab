@@ -38,7 +38,7 @@ function BuildRoadAction::Execute()
 
 	// If the connection is already build we will try to add additional road stations.
 	if (isConnectionBuild) {
-		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0, 0);
+		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0);
 		originalRoadList = clone connection.pathInfo.roadList;
 	}
 	
@@ -128,7 +128,7 @@ function BuildRoadAction::Execute()
 		// In the case of a bilateral connection we want to make sure that
 		// we don't hinder ourselves; Place the stations not to near each
 		// other.
-		if (connection.bilateralConnection) {
+		if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
 			local listFrom;
 			local listTo;
 			if (!connection.travelFromNode.rawin("" + connection.cargoID)) {

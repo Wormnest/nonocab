@@ -98,11 +98,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		
 		// Check if the industry connection node actually exists else create it, and update it!
 		if (connection == null) {
-			local bi = false;
-			if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
-				bi = true;
-
-			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, bi);
+			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo);
 			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
 		} else {
 			connection.pathInfo = pathInfo;

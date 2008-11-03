@@ -7,15 +7,15 @@ class ConnectionNode
 	static INDUSTRY_NODE = "i";
 	static TOWN_NODE = "t";
 	
-	nodeType = null;				// The type of node (one of above).
-	id = null;						// The ID of the town or industry.
-	cargoIdsProducing = null;		// The cargo IDs which are produced.
-	cargoIdsAccepting = null;		// The cargo IDs which are accepted.
+	nodeType = null;                        // The type of node (one of above).
+	id = null;                              // The ID of the town or industry.
+	cargoIdsProducing = null;               // The cargo IDs which are produced.
+	cargoIdsAccepting = null;               // The cargo IDs which are accepted.
 
-	connectionNodeList = null;		// All nodes which accepts the products this node produces.
-	connectionNodeListReversed = null;	// All nodes which this noded accepts cargo from.
+	connectionNodeList = null;              // All nodes which accepts the products this node produces.
+	connectionNodeListReversed = null;      // All nodes which this noded accepts cargo from.
 
-	connections = null;				// Running connections to other nodes.
+	connections = null;                     // Running connections to other nodes.
 
 	constructor(nodeType, id) {
 		this.nodeType = nodeType;

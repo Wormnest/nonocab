@@ -20,12 +20,12 @@ class Connection
 	travelFromNodeStationID = null; // The station ID which is build at the producing side.
 	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
 	
-	constructor(cargo_id, travel_from_node, travel_to_node, path_info, bilateral_connection) {
+	constructor(cargo_id, travel_from_node, travel_to_node, path_info) {
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
 		travelToNode = travel_to_node;
 		pathInfo = path_info;
-		bilateralConnection = bilateral_connection;
+		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
 		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 			if (travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
