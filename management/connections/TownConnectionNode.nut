@@ -89,7 +89,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	// but also make sure we don't build to close to other road stations.
 	if (isTownToTown) {
 		if (excludeList.rawin("" + cargoID))
-			list.RemoveList(excludeList["" + cargoID]);
+			list.RemoveList(excludeList.rawget("" + cargoID));
 		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
 		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		list.KeepTop(1);
