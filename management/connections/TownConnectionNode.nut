@@ -50,40 +50,23 @@ class TownConnectionNode extends ConnectionNode
 function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	local list = AITileList();
 	local tile = GetLocation();
+
 	local x = AIMap.GetTileX(tile);
 	local y = AIMap.GetTileY(tile);
-	local x_min = x;
-	local x_max = x;
-	local y_min = y;
-	local y_max = y;
-	
-	// detect edges.
-	for(local i = 0; i < 4; i++)
-	{
-		// reset.
-		tile = GetLocation();
-		x = AIMap.GetTileX(tile);
-		y = AIMap.GetTileY(tile);
-		
-		while(AITile.IsWithinTownInfluence(tile, id))
-		{
-			if(x > x_max){ x_max = x; }
-			if(y > y_max){ y_max = y; }
-			if(x < x_min){ x_min = x; }
-			if(y < y_min){ y_min = y; }
-			
-			switch(i)
-			{
-				case 0: x = x - 1; break;
-				case 1: y = y - 1; break;
-				case 2: x = x + 1; break;
-				case 3: y = y + 1; break;
-				default: break;
-			}
-			tile = AIMap.GetTileIndex(x, y);
-		}
-	}
-	
+	local min_x = x - 20;
+	local min_y = y - 20;
+	local max_x = x + 20;
+	local max_y = y + 20;
+	if (min_x < 0) min_x = 1; else if (max_x >= AIMap.GetMapSizeX()) max_x = AIMap.GetMapSizeX() - 2;
+	if (min_y < 0) min_y = 1; else if (max_y >= AIMap.GetMapSizeY()) max_y = AIMap.GetMapSizeY() - 2;
+	list.AddRectangle(AIMap.GetTileIndex(min_x, min_y), AIMap.GetTileIndex(max_x, max_y));
+
+	// Purge all unnecessary entries from the list.
+	list.Valuate(AITile.IsWithinTownInfluence, id);
+	list.KeepAboveValue(0);
+	list.Valuate(AITile.IsBuildable);
+	list.KeepAboveValue(0);
+
 	local isTownToTown = AITown.GetMaxProduction(id, cargoID) > 0;
 	if (isTownToTown)
 		isAcceptingCargo = true;
@@ -91,23 +74,19 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	local stationRadius = (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) ? AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP) : AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP)); 
 	local minimalAcceptance = (isTownToTown ? 15 : 7);
 	local minimalProduction = (isTownToTown ? 15 : 0);
-	
-	// loop through square.
-	for(x = x_min; x <= x_max; x++) {
-		for(y = y_min; y <= y_max; y++) {
-			tile = AIMap.GetTileIndex(x, y);
-			if(AITile.IsWithinTownInfluence(tile, id)) {
-				if (isAcceptingCargo && AITile.GetCargoAcceptance(tile, cargoID, 1, 1, stationRadius) > minimalAcceptance ||
-				!isAcceptingCargo && AITile.GetCargoProduction(tile, cargoID, 1, 1, stationRadius) > minimalProduction) {
-				
-					if (isTownToTown && !Tile.IsBuildable(tile))
-						continue;
-					list.AddTile(tile);
-				}
-			}
-		}
+
+	// Make sure the tiles we want to build are producing or accepting our cargo in enough
+	// quantity.
+	if (isAcceptingCargo) {
+		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
+		list.KeepAboveValue(minimalAcceptance);
+	} else {
+		list.Valuate(AITile.GetCargoProduction, cargoID, 1, 1, stationRadius);
+		list.KeepAboveValue(minimalProduction);
 	}
 
+	// If we're building town to town we want the best tile in that town available
+	// but also make sure we don't build to close to other road stations.
 	if (isTownToTown) {
 		if (excludeList.rawin("" + cargoID))
 			list.RemoveList(excludeList["" + cargoID]);
@@ -115,8 +94,10 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		list.KeepTop(1);
 	}
+
 	return list;
 }
+
 function TownConnectionNode::GetPopulation()
 {
 	return AITown.GetPopulation(id);
