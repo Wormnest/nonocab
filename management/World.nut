@@ -45,17 +45,19 @@ class World
 		
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
-		industryCacheAccepting = array(cargo_list.Count());
-		industryCacheProducing = array(cargo_list.Count());
+		cargo_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		local nr_of_cargoes = cargo_list.Begin();
+		industryCacheAccepting = array(nr_of_cargoes + 1);
+		industryCacheProducing = array(nr_of_cargoes + 1);
 	
 		industry_tree = [];
 	
 		// Fill the arrays with empty arrays, we can't use:
 		// local industryCacheAccepting = array(cargos.Count(), [])
 		// because it will all point to the same empty array...
-		for (local i = 0; i < cargo_list.Count(); i++) {
-			industryCacheAccepting[i] = [];
-			industryCacheProducing[i] = [];
+		foreach (index, value in cargo_list) {
+			industryCacheAccepting[index] = [];
+			industryCacheProducing[index] = [];
 		}		
 		
 		BuildIndustryTree();
