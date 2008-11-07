@@ -100,9 +100,8 @@ function ConnectionAdvisor::Update(loopCounter)
 		if (connection == null) {
 			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo);
 			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
-		} else {
-			connection.pathInfo = pathInfo;
-		}		
+		} else
+			connection.pathInfo = pathInfo;		
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.engineID);
@@ -166,9 +165,9 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.cargoID]);
+		report = connection.CompileReport(world, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][connection.cargoID]);
 			
-		Log.logInfo("Report a" + (connection.pathInfo.build ? "n update" : " connection") + " from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logInfo("Report a road connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 			
 		// Give the action to build the road.
@@ -257,7 +256,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 						continue;
 				}
 
-				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[cargoID], 0);
+				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][cargoID], 0);
 				if (report.Utility() > 0)
 					connectionReports.Insert(report, -report.Utility());
 			}

@@ -64,14 +64,14 @@ function ManageVehiclesAction::Execute()
 				
 			// First remove all order of this vehicle.
 			//while (AIOrder.RemoveOrder(vehicleID, 0));
-			if (!AIRoad.IsRoadDepotTile(AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER))) {
-	        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
-	        		AIVehicle.ReverseVehicle(vehicleID);
-					AIController.Sleep(50);
-					if (AIVehicle.SendVehicleToDepot(vehicleID))
-						++vehiclesDeleted;
-				}
-			} else
+			//if (!AIRoad.IsRoadDepotTile(AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER))) {
+        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
+        		AIVehicle.ReverseVehicle(vehicleID);
+				AIController.Sleep(50);
+				if (AIVehicle.SendVehicleToDepot(vehicleID))
+					++vehiclesDeleted;
+			}
+			else
 				++vehiclesDeleted;
 			
 			foreach (id, value in vehicleArray) {
@@ -110,15 +110,20 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup = VehicleGroup();
 			vehicleGroup.connection = connection;
 			
-			local pathfinder = RoadPathFinding(PathFinderHelper());
-			vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-			vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+				local pathfinder = RoadPathFinding(PathFinderHelper());
+				vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+			} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR){ 
+				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
+				vehicleGroup.timeToTravelTo = (manhattanDistance * RoadPathFinding.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
+				vehicleGroup.timeToTravelFrom = vehicleGroup.timeToTravelTo;
+			}
+			
 			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 
 				AIMap.DistanceManhattan(connection.pathInfo.roadList[0].tile, connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), 
 				vehicleGroup.timeToTravelTo) * AIEngine.GetCapacity(engineID);	
 			vehicleGroup.engineID = engineID;
-			
-			
 			connection.vehiclesOperating.push(vehicleGroup);
 		}
 		
@@ -144,13 +149,9 @@ function ManageVehiclesAction::Execute()
 			if(connection.bilateralConnection) {
 
 				if (directionToggle) {
-					//AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
-					//AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 				} else {
-					//AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_NONE);
-					//AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_NONE);
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
 				}
@@ -159,7 +160,9 @@ function ManageVehiclesAction::Execute()
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}
-			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
+			
+			if (!AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR)
+				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 			AIVehicle.StartStopVehicle(vehicleID);
 		}			
 	}

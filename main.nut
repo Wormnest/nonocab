@@ -18,7 +18,8 @@ class NoCAB extends AIController {
 		
 		this.advisors = [
 			ConnectionAdvisor(world),
-			VehiclesAdvisor(world)			
+			VehiclesAdvisor(world),
+			AircraftAdvisor(world)
 		];
 		
 		planner = Planner(world);

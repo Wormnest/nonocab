@@ -86,7 +86,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 		
 		connection.lastChecked = currentDate;
-		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.cargoID]);
+		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID]);
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelFromNodeStationID), connection);
@@ -169,13 +169,13 @@ function VehiclesAdvisor::GetReports() {
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 			
-		Log.logInfo("Report a" + (connection.pathInfo.build ? "n update" : " connection") + " from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logInfo("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 						
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
 
-		if (report.nrRoadStations > 1)
+		if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD && report.nrRoadStations > 1)
 			actionList.push(BuildRoadAction(report.connection, false, true, world));
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.

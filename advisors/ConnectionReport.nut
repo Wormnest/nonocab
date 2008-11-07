@@ -36,14 +36,21 @@ class ConnectionReport extends Report {
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
-		if (connection != null && connection.pathInfo.roadList != null) {
-			travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
-			travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
-			initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
-		} else { 
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+			if (connection != null && connection.pathInfo.roadList != null) {
+				travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
+				travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
+				initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
+			} else {
+				travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+				travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+				initialCost = 150 * manhattanDistance;
+			}
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
+			// Air :)
 			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-			travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-			initialCost = 150 * manhattanDistance;
+			travelTimeFrom = travelTimeTo;
+			initialCost = 25000;
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
 
@@ -74,8 +81,8 @@ class ConnectionReport extends Report {
 	}
 	
 	function ToString() {
-		return "Build a road from " + fromConnectionNode.GetName() + " to " + toConnectionNode.GetName() +
-		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " vehicles. Cost for the road: " +
+		return "Build a connection from " + fromConnectionNode.GetName() + " to " + toConnectionNode.GetName() +
+		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " " + AIEngine.GetName(engineID) + ". Cost for the road: " +
 		initialCost + ".";
 	}
 }

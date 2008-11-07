@@ -220,8 +220,29 @@ function PathBuilder::CheckError(buildResult)
 
 function PathBuilder::RealiseConnection(buildRoadStations)
 {
+	//if (GetCostForRoad(connection.pathInfo.roadList) > Finance.GetMaxMoneyToSpend())
+	//	return false;
+	{
+	/*	local test = AITestMode();
+		local account = AIAccounting();
+		local roadList = connection.pathInfo.roadList;
+		if (!BuildPath(roadList, false))
+			return false;
+			
+		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
+		local len = roadList.len();
+		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true) ||
+		!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true))
+			return false;
+			
+		if (Finance.GetMaxMoneyToSpend() < account.GetCosts())
+			retur  false;*/
+			
+	}
+	{
 	local test = AIExecMode();
 	return BuildPath(connection.pathInfo.roadList, false);
+	}
 }
 
 /**

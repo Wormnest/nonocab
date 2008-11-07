@@ -9,6 +9,9 @@ class Connection
 	static TOWN_TO_TOWN = 3;
 	static TOWN_TO_SELF = 4;
 	
+	// Vehicle types in this connection.
+	vehicleTypes = null;
+	
 	lastChecked = null;             // The latest date this connection was inspected.
 	connectionType = null;          // The type of connection (one of above).
 	cargoID = null;	                // The type of cargo carried from one node to another.

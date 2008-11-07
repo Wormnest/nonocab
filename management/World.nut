@@ -41,7 +41,7 @@ class World
 		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
-		cargoTransportEngineIds = array(AICargoList().Count(), -1);
+		
 		
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
@@ -49,6 +49,10 @@ class World
 		local nr_of_cargoes = cargo_list.Begin();
 		industryCacheAccepting = array(nr_of_cargoes + 1);
 		industryCacheProducing = array(nr_of_cargoes + 1);
+		
+		cargoTransportEngineIds = array(4);
+		for (local i = 0; i < cargoTransportEngineIds.len(); i++) 
+			cargoTransportEngineIds[i] = array(nr_of_cargoes + 1, -1);
 	
 		industry_tree = [];
 	
@@ -326,17 +330,21 @@ function World::InitCargoTransportEngineIds() {
 	foreach (cargo, value in cargo_list) {
 
 		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
+		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_AIR));
 		foreach (engine, value in engineList) {
+			local vehicleType = AIEngine.GetVehicleType(engine);
 			if (AIEngine.GetCargoType(engine) == cargo && 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[cargo]) < AIEngine.GetMaxSpeed(engine)) {
-				cargoTransportEngineIds[cargo] = engine;
+				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine)) {
+				cargoTransportEngineIds[vehicleType][cargo] = engine;
 			}
 		}
 	}
 	
 	// Check
-	for(local i = 0; i < cargoTransportEngineIds.len(); i++) {
-		Log.logDebug("Use engine: " + AIEngine.GetName(cargoTransportEngineIds[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
+	foreach (element in cargoTransportEngineIds) {
+		for(local i = 0; i < element.len(); i++) {
+			Log.logDebug("Use engine: " + AIEngine.GetName(element[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
+		}
 	}
 }
 
@@ -364,11 +372,12 @@ function World::UpdateEvents() {
 			case AIEvent.AI_ET_ENGINE_AVAILABLE:
 				local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 				local cargoID = AIEngine.GetCargoType(newEngineID);
-				local oldEngineID = cargoTransportEngineIds[cargoID];
+				local vehicleType = AIEngine.GetVehicleType(newEngineID);
+				local oldEngineID = cargoTransportEngineIds[vehicleType][cargoID];
 				
-				if (AIEngine.GetVehicleType(newEngineID) == AIEngine.GetVehicleType(oldEngineID) && AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
+				if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
 					Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(newEngineID));
-					cargoTransportEngineIds[cargoID] = newEngineID;
+					cargoTransportEngineIds[vehicleType][cargoID] = newEngineID;
 				}
 				break;
 				
