@@ -38,8 +38,8 @@ function AircraftAdvisor::Update(loopCounter) {
 	foreach (from in world.townConnectionNodes) {
 		foreach (to in from.connectionNodeList) {
 
-			if (AITown.GetPopulation(from.id) < 1000 ||
-			AITown.GetPopulation(to.id) < 1000)
+			if (AITown.GetPopulation(from.id) < 500 ||
+			AITown.GetPopulation(to.id) < 500)
 				continue;
 
 			foreach (cargo in AICargoList()) {

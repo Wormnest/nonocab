@@ -6,6 +6,7 @@ class PathInfo
 	roadList = null;		// List of all road tiles the road needs to follow.
 	roadCost = null;		// The cost to create this road.
 	depot = null;			// The location of the depot.
+	depotOtherEnd = null;		// The location of the depot at the other end (if it any).
 	build = null;			// Is this path build?
 	forceReplan = null;		// Must this path be replanned?
 							

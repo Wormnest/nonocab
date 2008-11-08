@@ -62,9 +62,6 @@ function ManageVehiclesAction::Execute()
 		
 		foreach (vehicleID, value in vehicleList) {
 				
-			// First remove all order of this vehicle.
-			//while (AIOrder.RemoveOrder(vehicleID, 0));
-			//if (!AIRoad.IsRoadDepotTile(AIOrder.GetOrderDestination(vehicleID, AIOrder.CURRENT_ORDER))) {
         	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
         		AIVehicle.ReverseVehicle(vehicleID);
 				AIController.Sleep(50);
@@ -137,7 +134,12 @@ function ManageVehiclesAction::Execute()
 				break;
 			}
 					
-			local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
+			local vehicleID;
+
+			if (directionToggle && connection.pathInfo.depotOtherEnd)
+				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depotOtherEnd, engineID);
+			else
+				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
 				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
 				continue;

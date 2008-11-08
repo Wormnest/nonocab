@@ -54,6 +54,7 @@ function BuildAirfieldAction::Execute()
 	local end = AnnotatedTile();
 	end.tile = tile_2;
 	connection.pathInfo.depot = AIAirport.GetHangarOfAirport(tile_1);
+	connection.pathInfo.depotOtherEnd = AIAirport.GetHangarOfAirport(tile_2);
 	connection.pathInfo.roadList = [end, start];
 	connection.pathInfo.build = true;
 	connection.lastChecked = AIDate.GetCurrentDate();

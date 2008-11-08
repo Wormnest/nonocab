@@ -138,52 +138,23 @@ function BuildRoadAction::Execute()
 
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
-		local depotLocation = null;
-		local depotFront = null;
 		
-		// Look for a suitable spot and test if we can build there.
-		for (local i = len - 4; i > 1; i--) {
-			
-			foreach (direction in directions) {
-				if (direction == roadList[i].direction || direction == -roadList[i].direction)
-					continue;
-				if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
-					
-					// Switch to test mode so we don't build the depot, but just test its location.
-					{
-						local test = AITestMode();
-						if (AIRoad.BuildRoadDepot(roadList[i].tile + direction, roadList[i].tile)) {
-							
-							// We can't build the depot instantly, because OpenTTD crashes if we
-							// switch to exec mode at this point (stupid bug...).
-							depotLocation = roadList[i].tile + direction;
-							depotFront = roadList[i].tile;
-							connection.pathInfo.depot = depotLocation;
-						}
-					}
-					
-					if (depotLocation) {
-						local abc = AIExecMode();
-						// If we found the correct location switch to exec mode and build it.
-						// Note that we need to build the road first, else we are unable to do
-						// so again in the future.
-						if (!AIRoad.BuildRoad(depotLocation, depotFront) ||	!AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
-							depotLocation = null;
-							depotFront = null;
-						} else {
-							break;
-						}
-					}
-				}
-			}
-			
-			if (depotLocation != null)
-				break;
-		}
-		
+		local depot = BuildDepot(roadList, len - 6, -1);
+
 		// Check if we could actualy build a depot:
-		if (depotLocation == null)
+		if (depot == null)
 			return false;
+
+		connection.pathInfo.depot = depot;
+
+		if (connection.bilateralConnection) {
+
+			depot = BuildDepot(roadList, 5, 1);
+			if (depot == null)
+				return false;
+
+			connection.pathInfo.depotOtherEnd = depot;
+		}
 	}
 	
 	// We must make sure that the original road list is restored because we join the new
@@ -205,3 +176,50 @@ function BuildRoadAction::Execute()
 	return true;
 }
 
+function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {
+
+	local len = roadList.len();
+	local depotLocation = null;
+	local depotFront = null;
+
+	// Look for a suitable spot and test if we can build there.
+	for (local i = startPoint; i > 1; i += searchDirection) {
+			
+		foreach (direction in directions) {
+			if (direction == roadList[i].direction || direction == -roadList[i].direction)
+				continue;
+			if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
+				
+				// Switch to test mode so we don't build the depot, but just test its location.
+				{
+					local test = AITestMode();
+					if (AIRoad.BuildRoadDepot(roadList[i].tile + direction, roadList[i].tile)) {
+						
+						// We can't build the depot instantly, because OpenTTD crashes if we
+						// switch to exec mode at this point (stupid bug...).
+						depotLocation = roadList[i].tile + direction;
+						depotFront = roadList[i].tile;
+					}
+				}
+				
+				if (depotLocation) {
+					local abc = AIExecMode();
+					// If we found the correct location switch to exec mode and build it.
+					// Note that we need to build the road first, else we are unable to do
+					// so again in the future.
+					if (!AIRoad.BuildRoad(depotLocation, depotFront) || !AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
+						depotLocation = null;
+						depotFront = null;
+					} else {
+						break;
+					}
+				}
+			}
+		}
+		
+		if (depotLocation != null)
+			return depotLocation;
+	}
+
+	return null;
+}
