@@ -137,11 +137,15 @@ function ManageVehiclesAction::Execute()
 				break;
 			}
 					
-			local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot,	engineID);
+			local vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
 				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
 				continue;
 			}
+
+			// Refit if necessary.
+			if (connection.cargoID != AIEngine.GetCargoType(engineID))
+				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
 			vehicleGroup.vehicleIDs.push(vehicleID);
 			
 			// Send the vehicles on their way.

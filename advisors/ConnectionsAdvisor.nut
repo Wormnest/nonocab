@@ -220,6 +220,11 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargoID in primIndustryConnectionNode.cargoIdsProducing) {
 
+				// Check if we even have an engine to transport this cargo.
+				local engineID = world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][cargoID];
+				if (engineID == -1)
+					continue;
+
 				// Check if this connection already exists.
 				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
 
@@ -255,8 +260,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 					if (skip)
 						continue;
 				}
-
-				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][cargoID], 0);
+				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, engineID, 0);
 				if (report.Utility() > 0)
 					connectionReports.Insert(report, -report.Utility());
 			}

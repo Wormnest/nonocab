@@ -51,7 +51,7 @@ class ConnectionReport extends Report {
 			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 			travelTimeFrom = travelTimeTo;
 			initialCost = 25000;
-		}
+		} 
 		travelTime = travelTimeTo + travelTimeFrom;
 
 		// Calculate netto income per vehicle.

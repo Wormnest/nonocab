@@ -333,7 +333,7 @@ function World::InitCargoTransportEngineIds() {
 		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_AIR));
 		foreach (engine, value in engineList) {
 			local vehicleType = AIEngine.GetVehicleType(engine);
-			if (AIEngine.GetCargoType(engine) == cargo && 
+			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 
 				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine)) {
 				cargoTransportEngineIds[vehicleType][cargo] = engine;
 			}
@@ -343,7 +343,7 @@ function World::InitCargoTransportEngineIds() {
 	// Check
 	foreach (element in cargoTransportEngineIds) {
 		for(local i = 0; i < element.len(); i++) {
-			Log.logDebug("Use engine: " + AIEngine.GetName(element[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
+			Log.logDebug(i + "Use engine: " + AIEngine.GetName(element[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
 		}
 	}
 }
