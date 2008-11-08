@@ -129,25 +129,10 @@ function BuildRoadAction::Execute()
 		// we don't hinder ourselves; Place the stations not to near each
 		// other.
 		if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
-			local listFrom;
-			local listTo;
-			if (!connection.travelFromNode.rawin("" + connection.cargoID)) {
-				listFrom = AITileList();
-				connection.travelFromNode.excludeList["" + connection.cargoID] <- listFrom;
-			} else
-				listFrom = connection.travelFromNode.rawget("" + connection.cargoID);
-			if (!connection.travelToNode.rawin("" + connection.cargoID)) {
-				listTo = AITileList();
-				connection.travelToNode.excludeList["" + connection.cargoID] <- listTo;
-			} else
-				listTo = connection.travelToNode.rawget("" + connection.cargoID);
 
-			local fromTile = roadList[len - 1].tile;
-			local toTile = roadList[0].tile;
-			local mapSizeX = AIMap.GetMapSizeX();
-
-			listFrom.AddRectangle(fromTile - 3 - 3 * mapSizeX, fromTile + 3 + 3 * mapSizeX);
-			listTo.AddRectangle(toTile - 3 - 3 * mapSizeX, toTile + 3 + 3 * mapSizeX);
+			local stationType = isTruck ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP;
+			connection.travelFromNode.AddExcludeTiles(connection.cargoID, roadList[len - 1].tile, AIStation.GetCoverageRadius(stationType));
+			connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
 		}
 	}
 

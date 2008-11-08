@@ -21,11 +21,19 @@ class TownConnectionNode extends ConnectionNode
 	}
 	
 	function GetProducingTiles(cargoID) {
-		return GetTownTiles(false, cargoID);
+		return GetTownTiles(false, cargoID, true);
 	}
 	
 	function GetAcceptingTiles(cargoID) {
-		return GetTownTiles(true, cargoID);
+		return GetTownTiles(true, cargoID, true);
+	}
+
+	function GetAllProducingTiles(cargoID) {
+		return GetTownTiles(false, cargoID, false);
+	}
+	
+	function GetAllAcceptingTiles(cargoID) {
+		return GetTownTiles(true, cargoID, false);
 	}
 	
 	function GetName() {
@@ -47,7 +55,7 @@ class TownConnectionNode extends ConnectionNode
 /**
  * Scans tiles who are within town influence.
  */
-function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
+function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnly) {
 	local list = AITileList();
 	local tile = GetLocation();
 
@@ -90,9 +98,12 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID) {
 	if (isTownToTown) {
 		if (excludeList.rawin("" + cargoID))
 			list.RemoveList(excludeList.rawget("" + cargoID));
-		list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
-		list.Sort(AIAbstractList.SORT_BY_VALUE, false);
-		list.KeepTop(1);
+
+		if (keepBestOnly) {
+			list.Valuate(AITile.GetCargoAcceptance, cargoID, 1, 1, stationRadius);
+			list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			list.KeepTop(1);
+		}
 	}
 
 	return list;
@@ -106,4 +117,17 @@ function TownConnectionNode::GetPopulation()
 function TownConnectionNode::ToString()
 {
 	return GetName() + " (" + GetPopulation() + ")";
+}
+
+function TownConnectionNode::AddExcludeTiles(cargoID, centreTile, radius) {
+
+	local list;
+	if (!excludeList.rawin("" + cargoID)) {
+		list = AITileList();
+		excludeList["" + cargoID] <- list;
+	} else
+		list = excludeList.rawget("" + cargoID);
+
+	local mapSizeX = AIMap.GetMapSizeX();
+	list.AddRectangle(centreTile - radius - radius * mapSizeX, centreTile + radius + radius * mapSizeX);
 }

@@ -33,6 +33,8 @@ class ConnectionNode
 	function GetLocation();
 	function GetProducingTiles(cargoID);
 	function GetAcceptingTiles(cargoID);
+	function GetAllProducingTiles(cargoID) { return GetProducingTiles(cargoID); }
+	function GetAllAcceptingTiles(cargoID) { return GetProducingTile(cargoID); }
 	function GetName();	
 }
 	
