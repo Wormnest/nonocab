@@ -51,7 +51,7 @@ function AircraftAdvisor::Update(loopCounter) {
 				local engine = world.cargoTransportEngineIds[AIVehicle.VEHICLE_AIR][cargo];
 				local report = connection.CompileReport(world, engine);
 						
-				if (report.isInvalid || report.nrVehicles == 0)
+				if (report.isInvalid || report.nrVehicles < 1)
 					continue;
 						
 				// Generate a report.
