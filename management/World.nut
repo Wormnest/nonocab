@@ -323,7 +323,8 @@ function World::RemoveIndustry(industryID) {
  * Check all available vehicles to transport all sorts of cargos and save
  * the max speed of the fastest transport for each cargo.
  *
- * Update the engine IDs for each cargo type and select the fastest engines.
+ * Update the engine IDs for each cargo type and select the fastest engines
+ * which can cary the most (speed * capacity).
  */
 function World::InitCargoTransportEngineIds() {
 
@@ -334,7 +335,7 @@ function World::InitCargoTransportEngineIds() {
 		foreach (engine, value in engineList) {
 			local vehicleType = AIEngine.GetVehicleType(engine);
 			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine)) {
+				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine) * AIEngine.GetCapacity(engine)) {
 				cargoTransportEngineIds[vehicleType][cargo] = engine;
 			}
 		}
