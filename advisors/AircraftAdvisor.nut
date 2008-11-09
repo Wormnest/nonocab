@@ -2,13 +2,11 @@ class AircraftAdvisor extends Advisor {
 
 	reportTable = null;
 	world = null;
-	lastUpdated = null;
 	
 	constructor (world) {
 		this.world = world;
 		reportTable = {};
 		local currentDate = AIDate.GetCurrentDate();
-		lastUpdated = AIDate.GetDate(AIDate.GetYear(currentDate) - 1, 1, 1);
 	}
 	
 	function GetReports();
@@ -27,13 +25,9 @@ function AircraftAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	}
+
+	local maxSize = 3 * (1 + loopCounter);
 	
-	// Only update every 100 days.
-	if (Date.GetDaysBetween(lastUpdated, AIDate.GetCurrentDate()) < 100)
-		return;
-
-	lastUpdated = AIDate.GetCurrentDate();
-
 	// First get a list of all good towns.
 	foreach (from in world.townConnectionNodes) {
 		foreach (to in from.connectionNodeList) {
@@ -51,31 +45,27 @@ function AircraftAdvisor::Update(loopCounter) {
 				if (connection == null) {
 					connection = Connection(cargo, from, to, PathInfo(null, 0));
 					from.AddConnection(to, connection);
-				} else if (connection.pathInfo.build)
+				} else if (connection.pathInfo.build || reportTable.rawin(connection.GetUID()))
 					continue;
 
-				// Determine what plane to use...
-				local engineList = AIEngineList(AIVehicle.VEHICLE_AIR);
-
-				foreach (engine, value in engineList) {
-					
-					if (AIEngine.GetCargoType(engine) == cargo) {
-						local report = connection.CompileReport(world, engine);
+				local engine = world.cargoTransportEngineIds[AIVehicle.VEHICLE_AIR][cargo];
+				local report = connection.CompileReport(world, engine);
 						
-						if (report.nrVehicles == 0)
-							continue;
+				if (report.isInvalid || report.nrVehicles == 0)
+					continue;
 						
-						// Generate a report.
-						if (reportTable.rawin(connection.GetUID())) {
-							local otherReport = reportTable.rawget(connection.GetUID());
-							if (otherReport.Utility() >= report.Utility())
-								continue;
-						}
-						
-						reportTable[connection.GetUID()] <- report;
-						Log.logInfo("[**/**] " + report.ToString());
-					}
+				// Generate a report.
+				if (reportTable.rawin(connection.GetUID())) {
+					local otherReport = reportTable.rawget(connection.GetUID());
+					if (otherReport.Utility() >= report.Utility())
+						continue;
 				}
+						
+				reportTable[connection.GetUID()] <- report;
+				Log.logInfo("[" + reportTable.len() + "/" + maxSize + "] " + report.ToString());
+
+				if (reportTable.len() > maxSize)
+					return;
 			}
 		}
 	}
@@ -114,7 +104,7 @@ function AircraftAdvisor::GetReports() {
 
 		// Buy only half of the vehicles needed, build the rest gradualy.
 		report.nrVehicles = report.nrVehicles / 2;
-		if (report.nrVehicles == 0)
+		if (report.nrVehicles < 1)
 			continue;
 		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		
@@ -128,3 +118,4 @@ function AircraftAdvisor::GetReports() {
 	
 	return reports;
 }
+

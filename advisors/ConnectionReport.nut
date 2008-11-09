@@ -5,10 +5,11 @@ class ConnectionReport extends Report {
 	fromConnectionNode = null;	// The node which produces the cargo.
 	toConnectionNode = null;	// The node which accepts the produced cargo.
 	connection = null;		// The proposed connection.
+	isInvalid = null;		// If an error is found during the construction this value is set to true.
 	
 	cargoID = 0;			// The cargo to transport.
 	
-	nrRoadStations = 0;	// The number of road stations which need to be build on each side.
+	nrRoadStations = 0;		// The number of road stations which need to be build on each side.
 	
 	/**
 	 * Construct a connection report.
@@ -25,6 +26,7 @@ class ConnectionReport extends Report {
 		toConnectionNode = travelToNode;
 		fromConnectionNode = travelFromNode;
 		this.cargoID = cargoID;
+		isInvalid = false;
 		
 		// Calculate the travel times for the prospected engine ID.
 		local maxSpeed = AIEngine.GetMaxSpeed(engineID);
@@ -40,7 +42,9 @@ class ConnectionReport extends Report {
 			if (connection != null && connection.pathInfo.roadList != null) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
 				travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
-				initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList);
+
+				if (!connection.pathInfo.build)
+					initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID));
 			} else {
 				travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 				travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
@@ -50,7 +54,15 @@ class ConnectionReport extends Report {
 			// Air :)
 			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 			travelTimeFrom = travelTimeTo;
-			initialCost = 25000;
+			if (!connection.pathInfo.build) {
+				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false);
+				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true);
+
+				if (costForFrom == -1 || costForTo == -1)
+					isInvalid = true;
+					
+				initialCost = costForFrom + costForTo;
+			}
 		} 
 		travelTime = travelTimeTo + travelTimeFrom;
 

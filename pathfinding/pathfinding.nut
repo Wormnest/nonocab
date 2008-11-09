@@ -192,7 +192,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 
 	local newEndLocations = AIList();
 
-	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 0)
+	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 1000)
 		AIController.Sleep(1);
 
 	foreach (i, value in end) {
