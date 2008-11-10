@@ -41,16 +41,21 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 		local nrVehicles = 0;
 		local nrVehiclesInStation = 0;
 		local hasVehicles = false;
+		local isAir = false;
 			
 		// Check if there are any vehicles waiting on this tile and if so, sell them!
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 			foreach (vehicleID in vehicleGroup.vehicleIDs) {
 				hasVehicles = true;
+
+				if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VEHICLE_AIR)
+					isAir = true;
+
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
 					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < 15 &&
-					AIVehicle().GetCurrentSpeed(vehicleID) < 10 &&
-					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == stationLocation &&
-					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING) {
+					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
+					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
+					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == stationLocation) {
 					nrVehicles--;
 					
 					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
@@ -60,6 +65,9 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 
 			}
 		}
+
+		if (isAir && nrVehicles > -3)
+			nrVehicles = 0;
 		
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
 }
@@ -107,6 +115,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 				dropoffOverLoad = true;
 		}
 		
+		// If we have multiple stations we want to take this into account. Each station
+		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
+		// road stations from the number of vehicles waiting.
 		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
 			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
 
@@ -175,12 +186,25 @@ function VehiclesAdvisor::GetReports() {
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
 
-		if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD && report.nrRoadStations > 1)
-			actionList.push(BuildRoadAction(report.connection, false, true, world));
+		if (report.nrRoadStations > 1) {
+			if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD)
+				actionList.push(BuildRoadAction(report.connection, false, true, world));
+			else if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR)
+				actionList.push(BuildAirfieldAction(report.connection, world));
+		}
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
-		if (report.nrVehicles > 0)
+		if (report.nrVehicles > 0) {
+			// If we want to buy aircrafts, make sure the airports are of the correct type!
+			// Big airplanes have a 5% chance to crash, so we want to avoid that!
+			if (AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR && 
+				AIEngine.GetPlaneType(report.engineID) == AIAirport.PT_BIG_PLANE &&
+				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
+				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
+				
+				actionList.push(BuildAirfieldAction(report.connection, world));
 			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
+		}
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.engineID, -report.nrVehicles, connection);
 

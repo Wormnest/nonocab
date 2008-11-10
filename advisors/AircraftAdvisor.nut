@@ -26,14 +26,14 @@ function AircraftAdvisor::Update(loopCounter) {
 			reportTable.rawdelete(report.connection.GetUID());
 	}
 
-	local maxSize = 3 * (1 + loopCounter);
+	local maxSize = 2 * (1 + loopCounter);
 	
 	// First get a list of all good towns.
 	foreach (from in world.townConnectionNodes) {
 		foreach (to in from.connectionNodeList) {
 
-			if (AITown.GetPopulation(from.id) < 500 ||
-			AITown.GetPopulation(to.id) < 500)
+			if (AITown.GetPopulation(from.id) < 1000 ||
+			AITown.GetPopulation(to.id) < 1000)
 				continue;
 
 			foreach (cargo in AICargoList()) {
@@ -92,6 +92,8 @@ function AircraftAdvisor::GetReports() {
 			
 		// Update report.
 		report = connection.CompileReport(world, report.engineID);
+		if (report.nrVehicles < 1)
+			continue;
 			
 		Log.logInfo("Report an air connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
@@ -103,9 +105,8 @@ function AircraftAdvisor::GetReports() {
 		local vehicleAction = ManageVehiclesAction();
 
 		// Buy only half of the vehicles needed, build the rest gradualy.
-		report.nrVehicles = report.nrVehicles / 2;
-		if (report.nrVehicles < 1)
-			continue;
+		if (report.nrVehicles != 1)
+			report.nrVehicles = report.nrVehicles / 2;
 		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		
 		actionList.push(vehicleAction);

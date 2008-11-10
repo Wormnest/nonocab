@@ -26,7 +26,8 @@ function Parlement::ExecuteReports()
 		// negative because we don't have enough money to buy - for instance -
 		// a couple of vehicles and can only pay for the road.
 		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0)
-			continue;
+			break;
+//			continue;
 			
 		Log.logInfo(report.ToString());
 		foreach (action in report.actions) {
@@ -54,8 +55,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 	local moneyToSpend = Finance.GetMaxMoneyToSpend();
 
 	// Sort all the reports based on their utility.
-	foreach (report in reportlist)
-	{
+	foreach (report in reportlist) {
 		local utility = report.UtilityForMoney(moneyToSpend);
 		Log.logDebug(utility + " for " + report.ToString());
 		// Only add when whe think that they will be profitable in the end.

@@ -89,8 +89,10 @@ function ConnectionAdvisor::Update(loopCounter)
 		pathfinder.costTillEnd = pathfinder.costForNewRoad;
 		local pathInfo = null;
 		
+		local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
+		local stationRadius = AIStation.GetCoverageRadius(stationType);
 		
-		pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID), report.toConnectionNode.GetAcceptingTiles(report.cargoID), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.5);
+		pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.5);
 		if (pathInfo == null) {
 			Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 			continue;
@@ -105,7 +107,7 @@ function ConnectionAdvisor::Update(loopCounter)
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.engineID);
-		if (report == null)
+		if (report == null || report.nrVehicles < 1)
 			continue;
 
 		// If the report yields a positive result we add it to the list of possible connections.
@@ -145,6 +147,10 @@ function ConnectionAdvisor::Update(loopCounter)
 }
 
 function ConnectionAdvisor::GetReports() {
+
+	// If we don't have enough money, don't bother!
+//	if (Finance.GetMaxMoneyToSpend() < 30000)
+//		return [];
 	
 	// We have a list with possible connections we can afford, we now apply
 	// a subsum algorithm to get the best profit possible with the given money.
@@ -166,6 +172,8 @@ function ConnectionAdvisor::GetReports() {
 			
 		// Update report.
 		report = connection.CompileReport(world, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][connection.cargoID]);
+		if (report.nrVehicles < 1)
+			continue;
 			
 		Log.logInfo("Report a road connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
@@ -177,7 +185,8 @@ function ConnectionAdvisor::GetReports() {
 		local vehicleAction = ManageVehiclesAction();
 		
 		// TEST!
-		report.nrVehicles = report.nrVehicles / 2;
+		if (report.nrVehicles != 1)
+			report.nrVehicles = report.nrVehicles / 2;
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
 		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);

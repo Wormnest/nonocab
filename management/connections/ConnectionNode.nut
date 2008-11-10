@@ -31,10 +31,10 @@ class ConnectionNode
 	 * @return The tile location of this node.
 	 */
 	function GetLocation();
-	function GetProducingTiles(cargoID);
-	function GetAcceptingTiles(cargoID);
-	function GetAllProducingTiles(cargoID) { return GetProducingTiles(cargoID); }
-	function GetAllAcceptingTiles(cargoID) { return GetProducingTile(cargoID); }
+	function GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
+	function GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
+	function GetAllProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
+	function GetAllAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetProducingTile(cargoID, stationRadius, stationSizeX, stationSizeY); }
 	function GetName();	
 }
 	

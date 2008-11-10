@@ -62,10 +62,13 @@ function BuildRoadAction::Execute()
 	}
 		
 	local connectionPathInfo = null;
+	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
+	local stationRadius = AIStation.GetCoverageRadius(stationType);
+
 	if (!isConnectionBuild)
-		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID), connection.travelToNode.GetAcceptingTiles(connection.cargoID), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
+		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
 	else 
-		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, AIStation.STATION_TRUCK_STOP, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
+		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
 
 	// If we need to build additional road stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional
@@ -139,7 +142,7 @@ function BuildRoadAction::Execute()
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
-		local depot = BuildDepot(roadList, len - 6, -1);
+		local depot = BuildDepot(roadList, len - 4, -1);
 
 		// Check if we could actualy build a depot:
 		if (depot == null)
@@ -149,7 +152,7 @@ function BuildRoadAction::Execute()
 
 		if (connection.bilateralConnection) {
 
-			depot = BuildDepot(roadList, 5, 1);
+			depot = BuildDepot(roadList, 3, 1);
 			if (depot == null)
 				return false;
 

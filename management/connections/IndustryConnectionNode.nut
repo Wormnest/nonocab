@@ -17,14 +17,12 @@ class IndustryConnectionNode extends ConnectionNode
 		return AIIndustry.GetLocation(id);
 	}
 	
-	function GetProducingTiles(cargoID) {
-		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-		return AITileList_IndustryProducing(id, radius);
+	function GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) {
+		return AITileList_IndustryProducing(id, stationRadius);
 	}
 	
-	function GetAcceptingTiles(cargoID) {
-		local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
-		return AITileList_IndustryAccepting(id, radius);
+	function GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) {
+		return AITileList_IndustryAccepting(id, stationRadius);
 	}
 	
 	function GetName() {
@@ -33,9 +31,5 @@ class IndustryConnectionNode extends ConnectionNode
 	
 	function GetProduction(cargoID) {
 		return AIIndustry.GetLastMonthProduction(id, cargoID);
-	}
-
-	function IsAccepted(cargoID) {
-		return AIIndustry.IsCargoAccepted(id, cargoID);
 	}
 }

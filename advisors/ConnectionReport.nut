@@ -55,8 +55,8 @@ class ConnectionReport extends Report {
 			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
 			travelTimeFrom = travelTimeTo;
 			if (!connection.pathInfo.build) {
-				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false);
-				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true);
+				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false, !connection.pathInfo.forceReplan);
+				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true, !connection.pathInfo.forceReplan);
 
 				if (costForFrom == -1 || costForTo == -1)
 					isInvalid = true;
