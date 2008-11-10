@@ -61,6 +61,7 @@ class ConnectionReport extends Report {
 				if (costForFrom == -1 || costForTo == -1)
 					isInvalid = true;
 					
+				connection.pathInfo.forceReplan = false;
 				initialCost = costForFrom + costForTo;
 			}
 		} 

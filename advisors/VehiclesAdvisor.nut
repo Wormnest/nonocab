@@ -52,7 +52,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 					isAir = true;
 
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < 15 &&
+					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 15) &&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == stationLocation) {
@@ -66,7 +66,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 			}
 		}
 
-		if (isAir && nrVehicles > -3)
+		if (isAir && nrVehicles > -2)
 			nrVehicles = 0;
 		
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
