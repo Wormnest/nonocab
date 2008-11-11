@@ -90,9 +90,11 @@ function ConnectionAdvisor::Update(loopCounter)
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Check if this connection has already been checked.
-		foreach (report in reportTable)
-			if (report.connection == connection)
+		if (connection != null && reportTable.rawin(connection.GetUID())) {
+			local otherCon = reportTable.rawget(connection.GetUID());
+			if (otherCon.connection.travelToNode.GetUID(report.cargoID) == connection.travelToNode.GetUID(report.cargoID))
 				continue;
+		}
 
 		// If we haven't calculated yet what it cost to build this report, we do it now.
 		local pathfinder = RoadPathFinding(PathFinderHelper());
