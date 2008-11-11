@@ -12,9 +12,9 @@ import("queue.binary_heap", "BinaryHeap", 1);
  */
 class ConnectionAdvisor extends Advisor
 {
-	reportTable = null;				// The table where all good reports are stored in.
-	ignoreTable = null;				// A table with all connections which should be ignored because the algorithm already found better onces!
-	maxNrReports = 5;				// The minimum number of reports this report should have.
+	reportTable = null;			// The table where all good reports are stored in.
+	ignoreTable = null;			// A table with all connections which should be ignored because the algorithm already found better onces!
+	maxNrReports = 5;			// The minimum number of reports this report should have.
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 		
 	constructor(world)
@@ -44,6 +44,13 @@ function ConnectionAdvisor::Update(loopCounter)
 {
 
 	if (loopCounter == 0) {
+
+		if (!GameSettings.IsBuildable(AIVehicle.VEHICLE_ROAD)) {
+			disabled = true;
+			return;
+		} else
+			disabled = false;
+
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
@@ -59,6 +66,9 @@ function ConnectionAdvisor::Update(loopCounter)
 		Log.logDebug("Update industry connections.");
 		UpdateIndustryConnections(world.industry_tree);
 	}
+
+	if (disabled)
+		return;
 
 	// The report list to construct.
 	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);

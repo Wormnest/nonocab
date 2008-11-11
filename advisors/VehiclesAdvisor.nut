@@ -61,8 +61,6 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
 						nrVehiclesInStation++;
 				}
-
-
 			}
 		}
 
@@ -79,9 +77,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		UpdateIndustryConnections(world.industry_tree);
 	}
 	reports = [];
-	
 
-//	Log.logInfo("Update vehicle advisor");
 	foreach (connection in connections) {
 
 		// If the road isn't build we can't micro manage, move on!		
@@ -154,6 +150,10 @@ function VehiclesAdvisor::Update(loopCounter) {
 		
 		// If we want to sell vehicle but the road isn't old enough, don't!
 		else if (report.nrVehicles < 0 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60)
+			continue;
+
+		// If we want to build vehicles make sure we can actually build them!
+		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.engineID)))
 			continue;
 
 		if (report.nrVehicles != 0)

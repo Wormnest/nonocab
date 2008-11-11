@@ -9,6 +9,7 @@ class ManageVehiclesAction extends Action {
 		Action.constructor();
 	}
 }
+
 /**
  * Sell a vehicle when this action is executed.
  * @param vehicleID The vehicle ID of the vehicle which needs to be sold.
@@ -17,6 +18,7 @@ function ManageVehiclesAction::SellVehicles(engineID, number, connection)
 {
 	vehiclesToSell.push([engineID, number, connection]);
 }
+
 /**
  * Buy a certain number of vehicles when this action is executed.
  * @param engineID The engine ID of the vehicles which need to be build.
@@ -84,6 +86,7 @@ function ManageVehiclesAction::Execute()
 	}
 	
 	// Buy the vehicles.
+	// During execution we keep track of the number of vehicles we can buy.
 	foreach (engineInfo in vehiclesToBuy) {
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
@@ -91,6 +94,11 @@ function ManageVehiclesAction::Execute()
 
 		local vehicleID = null;
 		local vehicleGroup = null;
+		local vehicleType = AIEngine.GetVehicleType(engineID);
+
+		local maxBuildableVehicles =  GameSettings.GetMaxBuildableVehicles(vehicleType);
+		if (vehicleNumbers > maxBuildableVehicles)
+			vehicleNumbers = maxBuildableVehicles;
 		
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + ".");
 		
@@ -107,11 +115,11 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup = VehicleGroup();
 			vehicleGroup.connection = connection;
 			
-			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+			if (vehicleType == AIVehicle.VEHICLE_ROAD) {
 				local pathfinder = RoadPathFinding(PathFinderHelper());
 				vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 				vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR){ 
+			} else if (vehicleType == AIVehicle.VEHICLE_AIR){ 
 				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 				vehicleGroup.timeToTravelTo = (manhattanDistance * RoadPathFinding.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
 				vehicleGroup.timeToTravelFrom = vehicleGroup.timeToTravelTo;
@@ -167,9 +175,13 @@ function ManageVehiclesAction::Execute()
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}
 			
-			if (!AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR)
+			if (!vehicleType == AIVehicle.VEHICLE_AIR)
 				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 			AIVehicle.StartStopVehicle(vehicleID);
+
+			// Update the game setting so subsequent actions won't build more vehicles then possible!
+			// (this will be overwritten anyway during the update).
+			GameSettings.maxVehiclesBuildLimit[vehicleType]--;
 		}			
 	}
 	CallActionHandlers();

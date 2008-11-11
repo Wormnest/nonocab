@@ -1,7 +1,5 @@
 class ConnectionReport extends Report {
 
-	engineID = 0;			// The vehicles to build.
-
 	fromConnectionNode = null;	// The node which produces the cargo.
 	toConnectionNode = null;	// The node which accepts the produced cargo.
 	connection = null;		// The proposed connection.

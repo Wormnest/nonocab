@@ -8,11 +8,11 @@ class World
 	static MONTHS_PER_YEAR = 12.0;
 	static MONTHS_BEFORE_AUTORENEW = 144; // 12 years
 	
-	town_list = null;				// List with all towns.
+	town_list = null;			// List with all towns.
 	industry_list = null;			// List with all industries.
 	industry_table = null;			// Table with all industries.
-	cargo_list = null;				// List with all cargos.
-	townConnectionNodes = null;
+	cargo_list = null;			// List with all cargos.
+	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
 	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 
@@ -24,19 +24,16 @@ class World
 	years_passed = null;
 	
 	max_distance_between_nodes = null;		// The maximum distance between industries.
+	pathFixer = null;
 	
-	// Does this belong here!?!?!
-	pathFixer = null;						// The instance to call when paths needs to be fixed.
-
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor()
-	{
-		this.townConnectionNodes = [];
-		this.starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
-		this.years_passed = 0;
-		this.town_list = AITownList();
+	constructor() {
+		townConnectionNodes = [];
+		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
+		years_passed = 0;
+		town_list = AITownList();
 		town_list.Valuate(AITown.GetPopulation);
 		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
@@ -51,6 +48,7 @@ class World
 		industryCacheProducing = array(nr_of_cargoes + 1);
 		
 		cargoTransportEngineIds = array(4);
+		
 		for (local i = 0; i < cargoTransportEngineIds.len(); i++) 
 			cargoTransportEngineIds[i] = array(nr_of_cargoes + 1, -1);
 	
@@ -72,7 +70,6 @@ class World
 		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
 		AICompany.SetAutoRenewStatus(true);
 	}
-	
 	
 	/**
 	 * Debug purposes only:
@@ -110,7 +107,10 @@ function World::Update()
 		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0)
 			AIVehicle.SendVehicleToDepot(vehicleID);
 	}
+
+	GameSettings.UpdateGameSettings();
 }
+
 
 /**
  * Manually increase the maximum distance between industries / towns. We need

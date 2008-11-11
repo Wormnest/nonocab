@@ -5,17 +5,17 @@
  * point, the advisor wants to report an important report it will have to
  * return true when the function HaltPlanner is called (see the Planner class).
  */
-class Advisor extends Thread
-{
+class Advisor extends Thread {
 	world = null;				// Pointer to the World class.
+	disabled = null;			// Is this advisor disabled?
 	
 	/**
 	 * Constructor
 	 * @param world Pointer to a world instance.
 	 */
-	constructor(world)
-	{
+	constructor(world) {
 		this.world = world;
+		disabled = false;
 	}
 
 	/**
@@ -36,5 +36,4 @@ class Advisor extends Thread
 	 * @return An array of reports.
 	 */	
 	function GetReports();
-
 }

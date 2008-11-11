@@ -16,6 +16,12 @@ class AircraftAdvisor extends Advisor {
 function AircraftAdvisor::Update(loopCounter) {
 		
 	if (loopCounter == 0) {
+		if (!GameSettings.IsBuildable(AIVehicle.VEHICLE_AIR)) {
+			disabled = true;
+			return;
+		} else
+			disabled = false;
+
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
@@ -25,6 +31,9 @@ function AircraftAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	}
+
+	if (disabled)
+		return;
 
 	local maxSize = 2 * (1 + loopCounter);
 	
