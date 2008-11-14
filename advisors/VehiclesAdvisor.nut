@@ -167,15 +167,10 @@ function VehiclesAdvisor::Update(loopCounter) {
  */
 function VehiclesAdvisor::GetReports() {
 	
-	// Use a binary heap to sort all reports.
-	local connectionReports = BinaryHeap();
-	foreach (report in reports)
-		connectionReports.Insert(report, -report.Utility());
-		
 	local reportsToReturn = [];
 	local report;
 	
-	while ((report = connectionReports.Pop()) != null) {
+	foreach (report in reports) {
 	
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
@@ -277,5 +272,10 @@ function VehiclesAdvisor::UpdateIndustryConnections(industry_tree) {
 
 
 function VehiclesAdvisor::HaltPlanner() {
-	return reports.len() > 0;
+	local money = Finance.GetMaxMoneyToSpend();
+	foreach (report in reports) {
+		if (report.UtilityForMoney(money) > 0)
+			return true;
+	}
+	return false;
 } 
