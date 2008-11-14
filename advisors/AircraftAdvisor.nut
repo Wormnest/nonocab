@@ -26,6 +26,7 @@ function AircraftAdvisor::GetPathInfo(report) {
  * connections for airplanes. Other connections will be explored if this function is commented out,
  * but so far I've never seen an aircraft which carries other cargo other then passengers and mail.
  * Trains will be far better at this job :).
+ */
 function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
 
 	foreach (from in world.townConnectionNodes) {
@@ -79,4 +80,3 @@ function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
 		}
 	}
 }
-*/
