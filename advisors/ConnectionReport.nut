@@ -8,7 +8,7 @@ class ConnectionReport extends Report {
 	cargoID = 0;			// The cargo to transport.
 	
 	nrRoadStations = 0;		// The number of road stations which need to be build on each side.
-	
+
 	/**
 	 * Construct a connection report.
 	 * @param world The world.
@@ -16,7 +16,6 @@ class ConnectionReport extends Report {
 	 * @param travelToNode The connection node the connection goes to (the accepting side).
 	 * @param engineID The engine which is used (or will be used) for the connection.
 	 * @param cargoAlreadyTransported The cargo which is already transpored.
-	 * @return The number of vehicles of that type which can be 
 	 */
 	constructor(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported) {
 
@@ -29,12 +28,12 @@ class ConnectionReport extends Report {
 		// Calculate the travel times for the prospected engine ID.
 		local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 		
-		// Get the distances (real or guessed).
+		// Get the distances (real or estimated).
 		local travelTime;
 		local travelTimeTo;
 		local travelTimeFrom;
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
-		local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
 		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
 			if (connection != null && connection.pathInfo.roadList != null) {
@@ -44,22 +43,48 @@ class ConnectionReport extends Report {
 				if (!connection.pathInfo.build)
 					initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID));
 			} else {
-				travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-				travelTimeFrom = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
-				initialCost = 150 * manhattanDistance;
+				travelTimeTo = distance * RoadPathFinding.straightRoadLength / maxSpeed;
+				travelTimeFrom = travelTimeTo;
+				initialCost = 150 * distance;
 			}
 		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
-			// Air :)
-			travelTimeTo = manhattanDistance * RoadPathFinding.straightRoadLength / maxSpeed;
+
+			// For air connections the distance travelled is different (shorter in general)
+			// than road vehicles. A part of the tiles are traversed diagonal, we want to
+			// capture this so we can make more precise predictions on the income per vehicle.
+			local fromLoc = travelFromNode.GetLocation();
+			local toLoc = travelToNode.GetLocation();
+			local distanceX = AIMap.GetTileX(fromLoc) - AIMap.GetTileX(toLoc);
+			local distanceY = AIMap.GetTileY(fromLoc) - AIMap.GetTileY(toLoc);
+
+			if (distanceX < 0) distanceX = -distanceX;
+			if (distanceY < 0) distanceY = -distanceY;
+
+			local diagonalTiles;
+			local straightTiles;
+
+			if (distanceX < distanceY) {
+				diagonalTiles = distanceX;
+				straightTiles = distanceY - diagonalTiles;
+			} else {
+				diagonalTiles = distanceY;
+				straightTiles = distanceX - diagonalTiles;
+			}
+
+			// Take the landing sequence in consideration.
+			local realDistance = diagonalTiles * RoadPathFinding.diagonalRoadLength + (straightTiles + 40) * RoadPathFinding.straightRoadLength;
+
+			travelTimeTo = realDistance / maxSpeed;
 			travelTimeFrom = travelTimeTo;
-			if (!connection.pathInfo.build) {
-				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false, !connection.pathInfo.forceReplan);
-				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true, !connection.pathInfo.forceReplan);
+			if (connection == null || !connection.pathInfo.build) {
+
+				local useCache = connection == null || !connection.forceReplan;
+				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false, useCache);
+				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true, useCache);
 
 				if (costForFrom == -1 || costForTo == -1)
 					isInvalid = true;
 					
-				connection.pathInfo.forceReplan = false;
 				initialCost = costForFrom + costForTo;
 			}
 		} 
@@ -70,25 +95,24 @@ class ConnectionReport extends Report {
 		nrVehicles = ((travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
 
 		brutoIncomePerMonth = 0;
-		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
+		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
 
+		// In case of a bilateral connection we take a persimistic take on the amount of 
+		// vehicles supported by this connection, but we do increase the income by adding
+		// the expected income of the other connection to the total.
 		if (connection != null && connection.bilateralConnection || travelToNode.nodeType == ConnectionNode.TOWN_NODE && travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
 			// Also calculate the route in the other direction.
 			local nrVehiclesOtherDirection = ((travelToNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
 
 			if (nrVehiclesOtherDirection < nrVehicles)
 				nrVehicles = nrVehiclesOtherDirection;
-			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, manhattanDistance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
+			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
 		}
 
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(engineID) / World.DAYS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(engineID);
 		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
-	}
-	
-	function Print() {
-		Log.logDebug(ToString());
 	}
 	
 	function ToString() {

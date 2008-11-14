@@ -5,29 +5,28 @@ class Parlement
 	reports = null;
 	balance = null;
 	
-	constructor()
-	{
+	constructor() {
 		reports = BinaryHeap();
 	}
 }
+
 /**
  * Executes reports.
  */
-function Parlement::ExecuteReports()
-{
+function Parlement::ExecuteReports() {
+
 	// Get as much money as possible.
 	Finance.GetMaxLoan();
 
-	foreach (report in reports)
-	{
+	foreach (report in reports) {
+
 		// Because we planned all reports in advance, we havan't take
 		// into account the effects of having less money available for
 		// other reports. So it may very well be that the utility becomes
 		// negative because we don't have enough money to buy - for instance -
 		// a couple of vehicles and can only pay for the road.
 		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0)
-			break;
-//			continue;
+			continue;
 			
 		Log.logInfo(report.ToString());
 		foreach (action in report.actions) {
@@ -47,8 +46,7 @@ function Parlement::ExecuteReports()
 /**
  * Select which reports to execute.
  */
-function Parlement::SelectReports(/*Report[]*/ reportlist)
-{
+function Parlement::SelectReports(/*Report[]*/ reportlist) {
 
 	local sortedReports = BinaryHeap();
 	local orderby = 0;
@@ -61,7 +59,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist)
 		// Only add when whe think that they will be profitable in the end.
 		// Don't look for things if they are to expensive.
 		if(utility > 0)
-			sortedReports.Insert(report, (report.initialCost > 0 ? -utility / (report.initialCost + report.nrVehicles * report.initialCostPerVehicle) : -2147483648));
+			sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility / (report.initialCost + report.nrVehicles * report.initialCostPerVehicle)));
 	}
 
 	// Do the selection, by using a greedy subsum algorithm.

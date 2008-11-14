@@ -1,8 +1,12 @@
 /**
- * Information for a vehicle group which runs a certain connection.
+ * A connection is a link between two nodes (industries or towns) and holds all information that is
+ * relevant to maintain / build such a connection. Connection are build up from ConnectionNodes. 
+ * Because multiple advisors can reason over connection and create reports for them, we store the
+ * best report produced by an advisor in the bestReport variable which can only be overwritten if
+ * it becomes invalidated (i.e. it can't be build) or an advisor comes with a better report.
  */
-class Connection
-{
+class Connection {
+
 	// Type of connection.
 	static INDUSTRY_TO_INDUSTRY = 1;
 	static INDUSTRY_TO_TOWN = 2;
@@ -22,12 +26,16 @@ class Connection
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
 	travelFromNodeStationID = null; // The station ID which is build at the producing side.
 	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
+
+	bestReport = null;		// The best report to construct this connection till now.
+	forceReplan = null;		// Force this connection to be replanned.
 	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info) {
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
 		travelToNode = travel_to_node;
 		pathInfo = path_info;
+		forceReplan = false;
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
 		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {

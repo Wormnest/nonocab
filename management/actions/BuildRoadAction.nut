@@ -80,11 +80,9 @@ function BuildRoadAction::Execute()
 
 		connection.pathInfo.roadList = newConnection.pathInfo.roadList;
 		connection.pathInfo.build = true;
-	}
-
-	else if (connection.pathInfo == null) {
+	} else if (connection.pathInfo == null) {
 		connection.pathInfo = PathInfo(null, 0);
-		connection.pathInfo.forceReplan = true;
+		connection.forceReplan = true;
 		return false;
 	}	
 
@@ -94,6 +92,8 @@ function BuildRoadAction::Execute()
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 		if (isConnectionBuild)
 			connection.pathInfo.roadList = originalRoadList;
+		else
+			connection.forceReplan = true;
 		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
 		return false;
 	}
@@ -109,6 +109,8 @@ function BuildRoadAction::Execute()
 			Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
 			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
+			else
+				connection.forceReplan = true;
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadList[0].tile);
@@ -120,6 +122,8 @@ function BuildRoadAction::Execute()
 			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!" + AIError.GetLastErrorString());
 			if (isConnectionBuild)
 				connection.pathInfo.roadList = originalRoadList;
+			else
+				connection.forceReplan = true;
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelFromNodeStationID = AIStation.GetStationID(roadList[len - 1].tile);

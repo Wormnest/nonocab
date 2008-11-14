@@ -47,18 +47,18 @@ function ManageVehiclesAction::Execute()
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 		
 			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetEngineType(vehicleGroup.vehicleIDs[0]) == engineID) {
-				foreach (vehicleID in vehicleGroup.vehicleIDs) {
-					// Check if the vehicle is going to the delivery tile.
+				foreach (vehicleID in vehicleGroup.vehicleIDs)
 					vehicleList.AddItem(vehicleID, vehicleID);
-				}
 				vehicleArray = vehicleGroup.vehicleIDs;
 				break;
 			}
 		}
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, false);
-		vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
-		vehicleList.RemoveAboveValue(0);
+		if (!connection.bilateralConnection) {
+			vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
+			vehicleList.RemoveAboveValue(0);
+		}
 
 		local vehiclesDeleted = 0;
 		
@@ -66,7 +66,7 @@ function ManageVehiclesAction::Execute()
 				
         	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
         		AIVehicle.ReverseVehicle(vehicleID);
-				AIController.Sleep(50);
+				AIController.Sleep(5);
 				if (AIVehicle.SendVehicleToDepot(vehicleID))
 					++vehiclesDeleted;
 			}
@@ -80,8 +80,12 @@ function ManageVehiclesAction::Execute()
 				}
 			} 
 
-			if (vehiclesDeleted == vehicleNumbers)
+			if (vehiclesDeleted == vehicleNumbers) {
+				// Update the creation date of the connection so vehicles don't get
+				// removed twice!
+				connection.pathInfo.buildDate = AIDate.GetCurrentDate();
 				break;
+			}
 		}
 	}
 	
@@ -163,15 +167,15 @@ function ManageVehiclesAction::Execute()
 			if(connection.bilateralConnection) {
 
 				if (directionToggle) {
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				} else {
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD);
+					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				}
 				directionToggle = !directionToggle;
 			} else {
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD);
+				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}
 			

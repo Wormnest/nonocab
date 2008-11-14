@@ -1,6 +1,6 @@
 /**
  * Industry node which contains all information about an industry and its connections
- * to other industries.
+ * to other industries and / or towns.
  */
 class ConnectionNode
 {
@@ -17,6 +17,11 @@ class ConnectionNode
 
 	connections = null;                     // Running connections to other nodes.
 
+	/**
+	 * Construct a new connection node with the given ID an type.
+	 * @param nodeType Determines whether this node is a town or industry.
+	 * @param id The ID of the industry or town.
+	 */
 	constructor(nodeType, id) {
 		this.nodeType = nodeType;
 		this.id = id;
@@ -26,6 +31,7 @@ class ConnectionNode
 		connectionNodeListReversed = [];
 		connections = {};
 	}
+
 	/**
 	 * Get the location of this node.
 	 * @return The tile location of this node.
@@ -34,7 +40,7 @@ class ConnectionNode
 	function GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
 	function GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
 	function GetAllProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
-	function GetAllAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetProducingTile(cargoID, stationRadius, stationSizeX, stationSizeY); }
+	function GetAllAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetAceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
 	function GetName();	
 }
 	

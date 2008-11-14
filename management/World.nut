@@ -72,16 +72,35 @@ class World
 	}
 	
 	/**
+	 * Manually increase the maximum distance between industries / towns. We need
+	 * this because sometimes the advisors have already build all possible connections
+	 * and are eager for more!
+	 */
+	function IncreaseMaxDistanceBetweenNodes();
+
+	/**
+	 * Insert an industryNode in the industryList.
+	 * @industryID The id of the industry which needs to be added.
+	 */
+	function InsertIndustry(industryID);
+
+	/**
+	 * Remove an industryNode from the industryList.
+	 * @industryID The id of the industry which needs to be removed.
+	 */
+	function RemoveIndustry(industryID);
+
+	/**
 	 * Debug purposes only:
 	 * Print the constructed industry node.
 	 */
-	//function PrintTree();
+	function PrintTree();
 	
 	/**
 	 * Debug purposes only:
 	 * Print a single node in the industry tree.
 	 */
-	//function PrintNode();	
+	function PrintNode(node, depth);	
 }
 
 /**
@@ -107,8 +126,6 @@ function World::Update()
 		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0)
 			AIVehicle.SendVehicleToDepot(vehicleID);
 	}
-
-	GameSettings.UpdateGameSettings();
 }
 
 
@@ -117,10 +134,9 @@ function World::Update()
  * this because sometimes the advisors have already build all possible connections
  * and are eager for more!
  */
-function World::IncreaseMaxDistanceBetweenNodes()
-{
+function World::IncreaseMaxDistanceBetweenNodes() {
 	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) {
-//		Log.logDebug("Max distance reached its max!");
+		Log.logDebug("Max distance reached its max!");
 		return;
 	}
 	max_distance_between_nodes += 32;
@@ -340,13 +356,6 @@ function World::InitCargoTransportEngineIds() {
 			}
 		}
 	}
-	
-	// Check
-	foreach (element in cargoTransportEngineIds) {
-		for(local i = 0; i < element.len(); i++) {
-			Log.logDebug(i + "Use engine: " + AIEngine.GetName(element[i]) + " for cargo: " + AICargo.GetCargoLabel(i));
-		}
-	}
 }
 
 /**
@@ -403,6 +412,7 @@ function World::UpdateEvents() {
 		}
 	}
 }
+
 /**
  * Debug purposes only.
  */

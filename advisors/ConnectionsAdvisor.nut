@@ -10,18 +10,19 @@ import("queue.binary_heap", "BinaryHeap", 1);
  * Iron ore        -> Steel           }-> Goods  -> Town
  * Livestock                          }
  */
-class ConnectionAdvisor extends Advisor
-{
+class ConnectionAdvisor extends Advisor {
+
 	reportTable = null;			// The table where all good reports are stored in.
 	ignoreTable = null;			// A table with all connections which should be ignored because the algorithm already found better onces!
-	maxNrReports = 5;			// The minimum number of reports this report should have.
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
+	vehicleType = null;			// The type of vehicles this class advises on.
 		
-	constructor(world)
-	{
+	constructor(world, vehType) {
 		Advisor.constructor(world);
 		reportTable = {};
 		ignoreTable = {};
+		connectionReports = null;
+		vehicleType = vehType;
 	}
 	
 	/**
@@ -30,22 +31,58 @@ class ConnectionAdvisor extends Advisor
 	function GetReports();
 
 	/**
+	 * Return the min number of reports that must be calculated before
+	 * returning control to the planner.
+	 * @loopCounter The iteration number during the same plan phase.
+	 * @return The minimal number of reports.
+	 */
+	function GetMinNrReports(loopCounter);
+
+	/**
 	 * Iterate through the industry tree and update its information.
-	 * @industryTree An array with connectionNode instances.
+	 * @param industryTree An array with connectionNode instances.
 	 */
 	function UpdateIndustryConnections(industryTree);
+
+	/**
+	 * Return an action instance which builds the actual connection. This
+	 * method will be used in the GetReports function.
+	 * @param connection The connection which needs to be build.
+	 * @return Instance of Action which builds that connection.
+	 */
+	function GetBuildAction(connection);
+
+	/**
+	 * Return the pathInfo for the given connection. This is used
+	 * during the update of the report table.
+	 * @param report The partially constructed report so far.
+	 * @return Instance of PathInfo which contains the information to build
+	 * the path for the connection.
+	 */
+	function GetPathInfo(report);
+
+	/**
+	 * Update the connection reports by iterating over all relevant industries
+	 * and towns and store them in the bineary queue 'connectionReports'. The
+	 * Update function will use this queue to generate reports, the reports
+	 * generates by this function are only estimations. This method will iterate
+	 * over ALL towns and industries if it produces a cargo, if a subclass
+	 * needs specialized treatment this function can be overloaded.
+	 * @param industry_tree An array containing all connection nodes the algorithm
+	 * should iterate over and expand to fill the bineary queue.
+	 */
+	function UpdateIndustryConnections(industry_tree);
 }
 
 /**
  * Construct a report by finding the largest subset of buildable infrastructure given
  * the amount of money available to us, which in turn yields the largest income.
  */
-function ConnectionAdvisor::Update(loopCounter)
-{
+function ConnectionAdvisor::Update(loopCounter) {
 
 	if (loopCounter == 0) {
 
-		if (!GameSettings.IsBuildable(AIVehicle.VEHICLE_ROAD)) {
+		if (!GameSettings.IsBuildable(vehicleType)) {
 			disabled = true;
 			return;
 		} else
@@ -54,7 +91,7 @@ function ConnectionAdvisor::Update(loopCounter)
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
-			if (report.connection.pathInfo.forceReplan || report.connection.pathInfo.build)
+			if (report.isInvalid || report.connection.pathInfo.build)
 				reportsToBeRemoved.push(report);
 		
 		foreach (report in reportsToBeRemoved)
@@ -67,68 +104,72 @@ function ConnectionAdvisor::Update(loopCounter)
 		UpdateIndustryConnections(world.industry_tree);
 	}
 
+	local currentDate = AIDate.GetCurrentDate();
 	if (disabled)
 		return;
-
-	// The report list to construct.
-	local radius = AIStation.GetCoverageRadius(AIStation.STATION_TRUCK_STOP);
 
 	// Try to get the best subset of options.
 	local report;
 	
-	// Keep track of the number of connections we could build, if we had the money.
-	local possibleConnections = 0;
-	
 	local startDate = AIDate.GetCurrentDate();
 
+	local minNrReports = GetMinNrReports(loopCounter);
+
 	while ((report = connectionReports.Pop()) != null &&
-		reportTable.len() < maxNrReports + loopCounter &&
+		reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24) {
 
 		Log.logDebug("Considder: " + report.ToString());
+
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
 		// Check if this connection has already been checked.
-		if (connection != null && reportTable.rawin(connection.GetUID())) {
+		if (connection != null && !connection.forceReplan && reportTable.rawin(connection.GetUID())) {
 			local otherCon = reportTable.rawget(connection.GetUID());
 			if (otherCon.connection.travelToNode.GetUID(report.cargoID) == connection.travelToNode.GetUID(report.cargoID))
 				continue;
 		}
 
+		if (connection != null && connection.bestReport == report)
+			connection.forceReplan = false;
+
 		// If we haven't calculated yet what it cost to build this report, we do it now.
-		local pathfinder = RoadPathFinding(PathFinderHelper());
-		pathfinder.costTillEnd = pathfinder.costForNewRoad;
-		local pathInfo = null;
-		
-		local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
-		local stationRadius = AIStation.GetCoverageRadius(stationType);
-		
-		pathInfo = pathfinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.5);
+		local pathInfo = GetPathInfo(report);
 		if (pathInfo == null) {
-			Log.logError("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
+			if (connection != null && connection.bestReport == report)
+				connection.bestReport = null;
 			continue;
 		}
-		
-		// Check if the industry connection node actually exists else create it, and update it!
+
+		// Check if the industry connection node actually exists else create it, and update it! If it exists
+		// we must be carefull because an other report may already have clamed it.
+		local oldPathInfo;
 		if (connection == null) {
 			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo);
 			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
-		} else
-			connection.pathInfo = pathInfo;		
+		} else {
+			oldPathInfo = clone connection.pathInfo;
+			connection.pathInfo = pathInfo;
+		}
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.engineID);
-		if (report == null || report.nrVehicles < 1)
+		if (report == null || report.isInvalid || report.nrVehicles < 1)
 			continue;
+
+		// If a connection already exists, see if it already has a report. If so we can only
+		// overwrite it if our report is better or if the original needs a rewrite.
+		// If the other is better we restore the original pathInfo and back off.
+		if (connection.bestReport && !connection.forceReplan && report.Utility() <= connection.bestReport.Utility()) {
+			if (oldPathInfo)
+				connection.pathInfo = oldPathInfo;
+			continue;
+		}
 
 		// If the report yields a positive result we add it to the list of possible connections.
 		if (report.Utility() > 0) {
 		
-			if (!connection.pathInfo.build) {
-				possibleConnections++;
-			}
-				
 			// Add the report to the list.
 			if (reportTable.rawin(connection.GetUID())) {
 				
@@ -149,21 +190,24 @@ function ConnectionAdvisor::Update(loopCounter)
 			}
 			
 			reportTable[connection.GetUID()] <- report;
-			Log.logInfo("[" + reportTable.len() +  "/" + (maxNrReports + loopCounter) + "] " + report.ToString());
+
+			// If an other report already existed, mark it as invalid.
+			if (connection.bestReport)
+				connection.bestReport.isInvalid = true;
+
+			connection.bestReport = report;
+			connection.forceReplan = false;
+			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
 		}
 	}
 	
 	// If we find no other possible connections, extend our range!
-	if (possibleConnections == 0 && reportTable.len() < maxNrReports + loopCounter)
+	if (connectionReports.Count() == 0)
 		world.IncreaseMaxDistanceBetweenNodes();
 }
 
 function ConnectionAdvisor::GetReports() {
 
-	// If we don't have enough money, don't bother!
-//	if (Finance.GetMaxMoneyToSpend() < 30000)
-//		return [];
-	
 	// We have a list with possible connections we can afford, we now apply
 	// a subsum algorithm to get the best profit possible with the given money.
 	local reports = [];
@@ -183,15 +227,21 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][connection.cargoID]);
-		if (report.nrVehicles < 1)
+		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
+
+		if (connection.forceReplan || report.isInvalid || report.nrVehicles < 1) {
+
+			// Only mark a connection as invalid if it's the same report!
+			if (connection.bestReport == report)
+				connection.forceReplan = true;
 			continue;
+		}
 			
-		Log.logInfo("Report a road connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logInfo("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 			
 		// Give the action to build the road.
-		actionList.push(BuildRoadAction(connection, true, true, world));
+		actionList.push(GetBuildAction(connection));
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
@@ -216,6 +266,10 @@ function ConnectionAdvisor::GetReports() {
 
 function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
+	local maxDistanceConstraints = false;
+	if (vehicleType == AIVehicle.VEHICLE_ROAD || vehicleType == AIVehicle.VEHICLE_RAIL)
+		maxDistanceConstraints = true;
+
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't
 	// however get perfect information by calculating all possible routes as that will take
@@ -233,7 +287,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
-			if (manhattanDistance > world.max_distance_between_nodes) continue;			
+			if (maxDistanceConstraints && manhattanDistance > world.max_distance_between_nodes) continue;			
 			
 			local checkIndustry = false;
 			
@@ -242,7 +296,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			foreach (cargoID in primIndustryConnectionNode.cargoIdsProducing) {
 
 				// Check if we even have an engine to transport this cargo.
-				local engineID = world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][cargoID];
+				local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
 				if (engineID == -1)
 					continue;
 
@@ -297,8 +351,3 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	if (industriesToCheck.len() > 0)
 		UpdateIndustryConnections(industriesToCheck);
 }
-
-/*function ConnectionAdvisor::HaltPlanner() {
-	return Finance.GetMaxMoneyToSpend() > 250000 && reportTable.len() > 5;
-}
-*/

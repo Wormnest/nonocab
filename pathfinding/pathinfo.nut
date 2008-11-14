@@ -8,7 +8,6 @@ class PathInfo
 	depot = null;			// The location of the depot.
 	depotOtherEnd = null;		// The location of the depot at the other end (if it any).
 	build = null;			// Is this path build?
-	forceReplan = null;		// Must this path be replanned?
 							
 	travelTimesForward = null;	// An array containing the travel times in days for vehicles with a certain speed.
 	travelTimesBackward = null;	// An array containing the travel times in days for vehicles with a certain speed.

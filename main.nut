@@ -17,8 +17,8 @@ class NoCAB extends AIController {
 		this.world = World();
 		
 		this.advisors = [
-			ConnectionAdvisor(world),
 			VehiclesAdvisor(world),
+			RoadConnectionAdvisor(world),
 			AircraftAdvisor(world)
 		];
 		
@@ -53,26 +53,26 @@ function NoCAB::Start()
 	}
 	
 	// Do what we have to do.
-	while(true)
-	{
-		world.Update();
-		
+	world.Update();
+	while(true) {
+		GameSettings.UpdateGameSettings();
 		planner.ScheduleAndExecute();
 		
 		// Get all reports from our advisors.
 		local reports = [];
 		foreach (advisor in advisors) {
 			reports.extend(advisor.GetReports());
-		}		
+		}
 		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		
+		world.Update();	
 		parlement.SelectReports(reports);
 		parlement.ExecuteReports();
 	}
 	Log.logInfo("Done!");
 }
+
 /**
  * Build Head Quaters at the largest place available. 
  */
@@ -81,9 +81,9 @@ function NoCAB::BuildHQ()
 	Log.logInfo("Build Head Quaters.");
 	Log.logDebug("TODO: not implemented.");
 }
+
 /** Required by interface . */
-function NoCAB::Stop()
-{
+function NoCAB::Stop() {
 	this.stop = true;
 	logInfo("Stopped.");
 }

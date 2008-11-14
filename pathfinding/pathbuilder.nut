@@ -170,10 +170,10 @@ function PathBuilder::CheckError(buildResult)
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
 
 			// Retry the same action 5 times...
-			for (local i = 0; i < 5; i++) {
+			for (local i = 0; i < 50; i++) {
 				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
-				AIController.Sleep(50);
+				AIController.Sleep(1);
 			}
 				
 			// We make a special exception for the very first and last piece of the road,

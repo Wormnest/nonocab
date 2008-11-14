@@ -1,131 +1,93 @@
-class AircraftAdvisor extends Advisor {
+/**
+ * This class handles all new aircraft connections. For the moment we only focus on 
+ * town <-> town connections, see UpdateIndustryConnections for more details.
+ */
+class AircraftAdvisor extends ConnectionAdvisor {
 
-	reportTable = null;
-	world = null;
-	
 	constructor (world) {
-		this.world = world;
-		reportTable = {};
-		local currentDate = AIDate.GetCurrentDate();
+		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_AIR);
 	}
-	
-	function GetReports();
-	function Update(loopCounter);
 }
 
-function AircraftAdvisor::Update(loopCounter) {
-		
-	if (loopCounter == 0) {
-		if (!GameSettings.IsBuildable(AIVehicle.VEHICLE_AIR)) {
-			disabled = true;
-			return;
-		} else
-			disabled = false;
+function AircraftAdvisor::GetMinNrReports(loopCounter) {
+	return 2 * (1 + loopCounter);
+}
 
-		// Check if some connections in the reportTable have been build, if so remove them!
-		local reportsToBeRemoved = [];
-		foreach (report in reportTable)
-			if (report.connection.pathInfo.forceReplan || report.connection.pathInfo.build)
-				reportsToBeRemoved.push(report);
-		
-		foreach (report in reportsToBeRemoved)
-			reportTable.rawdelete(report.connection.GetUID());
-	}
+function AircraftAdvisor::GetBuildAction(connection) {
+	return BuildAirfieldAction(connection, world);
+}
 
-	if (disabled)
-		return;
+function AircraftAdvisor::GetPathInfo(report) {
+/*
+	if (report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE &&
+		(AITown.GetPopulation(report.toConnectionNode.id) < 1000 || AITown.GetPopulation(report.fromConnectionNode.id) < 1000) || !AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS))
+		return null;
+*/
+	return PathInfo(null, 0);
+}
 
-	local maxSize = 2 * (1 + loopCounter);
-	
-	// First get a list of all good towns.
+/**
+ * We implement our own update industry connection function, becaus we only consider town <-> town
+ * connections for airplanes. Other connections will be explored if this function is commented out,
+ * but so far I've never seen an aircraft which carries other cargo other then passengers and mail.
+ * Trains will be far better at this job :).
+ */
+function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
+
 	foreach (from in world.townConnectionNodes) {
 		foreach (to in from.connectionNodeList) {
 
-			if (AITown.GetPopulation(from.id) < 1000 ||
-			AITown.GetPopulation(to.id) < 1000)
-				continue;
+			// Ignore small towns.
+//			if (AITown.GetPopulation(from.id) < 100 ||
+//			AITown.GetPopulation(to.id) < 100)
+//				continue;
+			
+			// See if we need to add or remove some vehicles.
+			// Take a guess at the travel time and profit for each cargo type.
+			foreach (cargoID in from.cargoIdsProducing) {
 
-			foreach (cargo in AICargoList()) {
-
-				if (to.GetProduction(cargo) == 0 || from.GetProduction(cargo) == 0)
+				if (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS))
 					continue;
-					
-				local connection = from.GetConnection(to, cargo);
+
+				// Check if we even have an engine to transport this cargo.
+				local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
+				if (engineID == -1)
+					continue;
+
+				// Check if this connection already exists.
+				local connection = from.GetConnection(to, cargoID);
+
+				// Make sure we only check the accepting side for possible connections if
+				// and only if it has a connection to it.
+				if (connection != null && connection.pathInfo.build)
+					continue;
+
+				// Check if this connection isn't in the ignore table.
+				if (ignoreTable.rawin(from.GetUID(cargoID) + "_" + to.GetUID(cargoID)))
+					continue;
+
 				if (connection == null) {
-					connection = Connection(cargo, from, to, PathInfo(null, 0));
-					from.AddConnection(to, connection);
-				} else if (connection.pathInfo.build || reportTable.rawin(connection.GetUID()))
-					continue;
 
-				local engine = world.cargoTransportEngineIds[AIVehicle.VEHICLE_AIR][cargo];
-				local report = connection.CompileReport(world, engine);
-						
-				if (report.isInvalid || report.nrVehicles < 1)
-					continue;
-						
-				// Generate a report.
-				if (reportTable.rawin(connection.GetUID())) {
-					local otherReport = reportTable.rawget(connection.GetUID());
-					if (otherReport.Utility() >= report.Utility())
+					local skip = false;
+
+					// Make sure the producing side isn't already served, we don't want more then
+					// 1 connection on 1 production facility per cargo type.
+					local otherConnections = from.GetConnections(cargoID);
+					foreach (otherConnection in otherConnections) {
+						if (otherConnection.pathInfo.build && otherConnection != connection) {
+							skip = true;
+							break;
+						}
+					}
+				
+					if (skip)
 						continue;
 				}
-						
-				reportTable[connection.GetUID()] <- report;
-				Log.logInfo("[" + reportTable.len() + "/" + maxSize + "] " + report.ToString());
-
-				if (reportTable.len() > maxSize)
-					return;
+				local report = ConnectionReport(world, from, to, cargoID, engineID, 0);
+				if (report.Utility() > 0)
+					connectionReports.Insert(report, -report.Utility());
 			}
 		}
 	}
-}
-
-function AircraftAdvisor::GetReports() {
-	// We have a list with possible connections we can afford, we now apply
-	// a subsum algorithm to get the best profit possible with the given money.
-	local reports = [];
-	local processedProcessingIndustries = {};
-	
-	foreach (report in reportTable) {
-	
-		// The industryConnectionNode gives us the actual connection.
-		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
-	
-		// Check if this industry has already been processed, if this is the
-		// case, we won't add it to the reports because we want to prevent
-		// an industry from being exploited by different connections which
-		// interfere with eachother. i.e. 1 connection should suffise to bring
-		// all cargo from 1 producing industry to 1 accepting industry.
-		if (processedProcessingIndustries.rawin(connection.GetUID()))
-			continue;
-			
-		// Update report.
-		report = connection.CompileReport(world, report.engineID);
-		if (report.nrVehicles < 1)
-			continue;
-			
-		Log.logInfo("Report an air connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
-		local actionList = [];
-			
-		// Give the action to build the airfield.
-		actionList.push(BuildAirfieldAction(connection, world));
-			
-		// Add the action to build the vehicles.
-		local vehicleAction = ManageVehiclesAction();
-
-		// Buy only half of the vehicles needed, build the rest gradualy.
-		if (report.nrVehicles != 1)
-			report.nrVehicles = report.nrVehicles / 2;
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
-		
-		actionList.push(vehicleAction);
-		report.actions = actionList;
-
-		// Create a report and store it!
-		reports.push(report);
-		processedProcessingIndustries[connection.GetUID()] <- connection.GetUID();
-	}
-	
-	return reports;
 }
 

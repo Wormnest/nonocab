@@ -3,10 +3,11 @@
 /**
  * This class will take care of all pathfinding features.
  */
-class RoadPathFinding 
-{
+class RoadPathFinding {
+
 	// The length of various road pieces
 	static straightRoadLength 	= 28.5;					// Road length / 24 (easier to calculate km/h)
+	static diagonalRoadLength	= 40.3;
 	static bendedRoadLength 	= 20;
 	static upDownHillRoadLength = 28.5;
 
@@ -19,8 +20,8 @@ class RoadPathFinding
 	costTillEnd     = 20;           // The cost for each tile till the end.
 	
 	static toBuildLater = [];		// List of build actions which couldn't be completed the moment
-									// they were issued due to temporal problems, but should be able
-									// to complete in the (near) future.
+						// they were issued due to temporal problems, but should be able
+						// to complete in the (near) future.
 									
 	// Utility class which helps the pathfinder to reach its goal.
 	pathFinderHelper = null;
@@ -179,8 +180,8 @@ function RoadPathFinding::GetTime(roadList, maxSpeed, forward)
  * @param maxPathLength The maximum length of the path (stop afterwards!).
  * @return A PathInfo instance which contains the found path (if any).
  */
-function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength)
-{
+function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength) {
+
 	local test = AITestMode();
 
 	local pq = null;
@@ -192,26 +193,33 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 
 	local newEndLocations = AIList();
 
+	// Optimalization, use a prefat annotated tile for heuristics.
+	local dummyAnnotatedTile = AnnotatedTile();
+	dummyAnnotatedTile.type = Tile.ROAD;
+	dummyAnnotatedTile.parentTile = dummyAnnotatedTile;
+
 	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 1000)
 		AIController.Sleep(1);
 
+	if (checkEndPositions) {
+		end.Valuate(Tile.IsBuildable);
+		end.KeepValue(1);
+	}
+	
 	foreach (i, value in end) {
 		if (checkEndPositions) {
-			if (!Tile.IsBuildable(i))
-				continue;
+		//	if (!Tile.IsBuildable(i))
+		//		continue;
 
-			local annotatedTile = AnnotatedTile();
-			annotatedTile.tile = i;
-			annotatedTile.type = Tile.ROAD;
-			annotatedTile.parentTile = annotatedTile;
-	
+			dummyAnnotatedTile.tile = i;
+
 			// We preprocess all end nodes to see if a road station can be build on them.
-			local neighbours = pathFinderHelper.GetNeighbours(annotatedTile, true);
+			local neighbours = pathFinderHelper.GetNeighbours(dummyAnnotatedTile, true);
 			
 			// We only consider roads which don't go down hill because we can't build road stations
 			// on them!
 			foreach (neighbour in neighbours) {
-				if (neighbour.type != Tile.ROAD || Tile.GetSlope(i, neighbour.direction) == 2)
+				if (Tile.GetSlope(i, neighbour.direction) == 2)
 					continue;
 					
 				newEndLocations.AddItem(i, i);
@@ -225,7 +233,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		end = newEndLocations;
 
 	if(end.IsEmpty()) {
-		Log.logError("Could not find a fasted road for an empty endlist.");
+		Log.logDebug("Could not find a fasted road for an empty endlist.");
 		return null;
 	}
 
@@ -282,7 +290,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local at;
 	while ((at = pq.Pop())) {
 		if (at.length > maxPathLength) {
-			Log.logError("Max length hit, aborting!");
+			Log.logDebug("Max length hit, aborting!");
 			return null;
 		}
 			
@@ -301,6 +309,34 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 				// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 				// endpoints that aren't valid anymore.
 				end.RemoveItem(at.tile);
+
+				// Check the remaining nodes too!
+				end.Valuate(Tile.IsBuildable);
+				end.KeepValue(1);
+				local listToRemove = AITileList();
+
+				foreach (i, value in end) {
+
+					dummyAnnotatedTile.tile = i;
+	
+					// We preprocess all end nodes to see if a road station can be build on them.
+					local neighbours = pathFinderHelper.GetNeighbours(dummyAnnotatedTile, true);
+			
+					// We only consider roads which don't go down hill because we can't build road stations
+					// on them!
+					local foundSuitableNeighbour = false;
+					foreach (neighbour in neighbours) {
+						if (Tile.GetSlope(i, neighbour.direction) != 2) {
+							foundSuitableNeighbour = true;
+							break;
+						}
+					}
+
+					if (!foundSuitableNeighbour)
+						listToRemove.AddItem(i, i);
+				}
+
+				end.RemoveList(listToRemove);
 
 				if (end.IsEmpty()) {
 					Log.logDebug("End list is empty, original goal isn't satisviable anymore.");

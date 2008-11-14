@@ -1,5 +1,5 @@
 /**
- * This class is responsible of maintaining already build exising by
+ * This class is responsible of maintaining already build connections by
  * advising to sell or buy vehicles.
  */
 class VehiclesAdvisor extends Advisor {
@@ -19,11 +19,6 @@ class VehiclesAdvisor extends Advisor {
 	 * @param callingObject The object which made the call, this can't be the thread itself!!!
 	 */
 	function AddConnection(connection, callingObject);
-	
-	/**
-	 * Check already build connections and sell / buy vehicles where needed.
-	 */
-	function getReports();	
 }
 
 /**
@@ -64,9 +59,6 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 			}
 		}
 
-		if (isAir && nrVehicles > -2)
-			nrVehicles = 0;
-		
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
 }
 
@@ -117,6 +109,11 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
 			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
 
+		// If we want to sell 1 aircraft: don't. We allow for a little slack in airlines :).
+		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR;
+		if (isAir && report.nrVehicles == -1)
+			continue;
+
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
 		local rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID);
@@ -134,11 +131,14 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (!hasVehicles || rating < 60 || production > 100 || dropoffOverLoad) {
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
-			if (report.nrVehicles < 0)
-				// build additional station...
+			if (report.nrVehicles < 0) {
+				// We don't build an extra airport if more aircrafts are needed!
+				if (isAir)
+					continue;
 				report.nrRoadStations = 2;
+			}
 
-			if (production < 200) 
+			if (production < 200 || isAir) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;
@@ -189,20 +189,25 @@ function VehiclesAdvisor::GetReports() {
 		if (report.nrRoadStations > 1) {
 			if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD)
 				actionList.push(BuildRoadAction(report.connection, false, true, world));
+
+			// Don't build extra airfields (yet).
 			else if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR)
-				actionList.push(BuildAirfieldAction(report.connection, world));
+				continue;
 		}
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
-		if (report.nrVehicles > 0) {
+		if (report.nrVehicles > 0)  {
+
 			// If we want to buy aircrafts, make sure the airports are of the correct type!
-			// Big airplanes have a 5% chance to crash, so we want to avoid that!
-			if (AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR && 
+			// Big airplanes have a 5% chance to crash, so we want to avoid that! Also we
+			// check if an extra airport can actually be build! If not we simple obmit building
+			// more aircrafts. This will be handled better in the future.
+			if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR && 
 				AIEngine.GetPlaneType(report.engineID) == AIAirport.PT_BIG_PLANE &&
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
-				
-				actionList.push(BuildAirfieldAction(report.connection, world));
+					continue;
+
 			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
 		}
 		else if(report.nrVehicles < 0)
