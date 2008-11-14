@@ -18,11 +18,6 @@ function AircraftAdvisor::GetBuildAction(connection) {
 }
 
 function AircraftAdvisor::GetPathInfo(report) {
-/*
-	if (report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE &&
-		(AITown.GetPopulation(report.toConnectionNode.id) < 1000 || AITown.GetPopulation(report.fromConnectionNode.id) < 1000) || !AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS))
-		return null;
-*/
 	return PathInfo(null, 0);
 }
 
@@ -31,16 +26,10 @@ function AircraftAdvisor::GetPathInfo(report) {
  * connections for airplanes. Other connections will be explored if this function is commented out,
  * but so far I've never seen an aircraft which carries other cargo other then passengers and mail.
  * Trains will be far better at this job :).
- */
 function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
 
 	foreach (from in world.townConnectionNodes) {
 		foreach (to in from.connectionNodeList) {
-
-			// Ignore small towns.
-//			if (AITown.GetPopulation(from.id) < 100 ||
-//			AITown.GetPopulation(to.id) < 100)
-//				continue;
 			
 			// See if we need to add or remove some vehicles.
 			// Take a guess at the travel time and profit for each cargo type.
@@ -90,4 +79,4 @@ function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
 		}
 	}
 }
-
+*/

@@ -208,9 +208,6 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	
 	foreach (i, value in end) {
 		if (checkEndPositions) {
-		//	if (!Tile.IsBuildable(i))
-		//		continue;
-
 			dummyAnnotatedTile.tile = i;
 
 			// We preprocess all end nodes to see if a road station can be build on them.
