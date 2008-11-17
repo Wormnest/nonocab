@@ -200,7 +200,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	}
 	
 	// If we find no other possible connections, extend our range!
-	if (connectionReports.Count() == 0)
+	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VEHICLE_ROAD || vehicleType == AIVehicle.VEHICLE_RAIL))
 		world.IncreaseMaxDistanceBetweenNodes();
 }
 
