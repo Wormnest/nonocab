@@ -72,6 +72,13 @@ class ConnectionAdvisor extends Advisor {
 	 * should iterate over and expand to fill the bineary queue.
 	 */
 	function UpdateIndustryConnections(industry_tree);
+
+	/**
+	 * Check if this connection node can be handled by this advisor.
+	 * @param connectionNode The connection to consider.
+	 * @return Whether this connection can be handled.
+	 */
+	function AcceptConnectionNode(connectionNode) { return true; }
 }
 
 /**
@@ -97,7 +104,6 @@ function ConnectionAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	
-		Log.logInfo("ConnectionAdvisor::getReports()");
 		connectionReports = BinaryHeap();
 		
 		Log.logDebug("Update industry connections.");
@@ -228,16 +234,13 @@ function ConnectionAdvisor::GetReports() {
 			
 		// Update report.
 		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
-
 		if (connection.forceReplan || report.isInvalid || report.nrVehicles < 1) {
-
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.bestReport == report)
 				connection.forceReplan = true;
 			continue;
 		}
 			
-		Log.logInfo("Report a connection from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 			
 		// Give the action to build the road.
@@ -283,8 +286,13 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	// actual pathfinding on that selection to find the best one(s).
 	local industriesToCheck = {};
 	foreach (primIndustryConnectionNode in industry_tree) {
+		if (!AcceptConnectionNode(primIndustryConnectionNode))
+			continue;
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
+			if (!AcceptConnectionNode(secondConnectionNode))
+				continue;
+
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
 			if (maxDistanceConstraints && manhattanDistance > world.max_distance_between_nodes) continue;			
@@ -302,6 +310,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				// Check if this connection already exists.
 				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
+
 
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))

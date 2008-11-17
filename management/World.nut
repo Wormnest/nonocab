@@ -136,7 +136,7 @@ function World::Update()
  */
 function World::IncreaseMaxDistanceBetweenNodes() {
 	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) {
-		Log.logDebug("Max distance reached its max!");
+//		Log.logDebug("Max distance reached its max!");
 		return;
 	}
 	max_distance_between_nodes += 32;
@@ -167,16 +167,32 @@ function World::BuildIndustryTree() {
 	foreach (industry, value in industry_list) {
 		InsertIndustry(industry);
 	}
+
+	// We want to preprocess all industries which can be build near water.
+//	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	
 	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
 		
+		local isNearWater = false;
 		local townNode = TownConnectionNode(town);
 		
 		// Check if this town accepts something an industry creates.
 		foreach (cargo, value in cargo_list) {
 			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
-				
+			/*	
+				// Check if this town is near to water.
+				if (!isNearWater) {
+					local townTiles = townNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
+					townTiles.Valuate(AITile.IsCoastTile);
+					townTiles.KeepValue(1);
+					if (townTiles.Count() > 0) {
+						townNode.isNearWater = true;
+						isNearWater = true;
+					}
+				}
+			*/
+
 				// Check if we have an industry which actually produces this cargo.
 				foreach (connectionNode in industryCacheProducing[cargo]) {
 					connectionNode.connectionNodeList.push(townNode);
@@ -191,6 +207,19 @@ function World::BuildIndustryTree() {
 			townNode.connectionNodeList.push(townConnectionNode);
 			
 			foreach (cargo, value in cargo_list) {
+/*
+				// Check if this town is near to water.
+				if (AITown.GetMaxProduction(townNode.id, cargo) > 0 && !isNearWater) {
+					local townTiles = townNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
+					townTiles.Valuate(AITile.IsCoastTile);
+					townTiles.KeepValue(1);
+					if (townTiles.Count() > 0) {
+						townTiles.isNearWater = true;
+						isNearWater = true;
+					}
+				}
+*/
+
 				if (AITown.GetMaxProduction(townNode.id, cargo) + AITown.GetMaxProduction(townConnectionNode.id, cargo) > 0) {
 					
 					local doAdd = true;
@@ -230,16 +259,22 @@ function World::InsertIndustry(industryID) {
 		return;
 
 	local hasBilateral = false;
+
+	// We want to preprocess all industries which can be build near water.
+//	local isNearWater = false;
+//	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	
 	// Check which cargo is accepted.
 	foreach (cargo, value in cargo_list) {
 
+
+//		local canHandleCargo = false;
 		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetProduction(industryID, cargo) != -1;
 		if (isBilateral)
 			hasBilateral = true;
 
 		if (AIIndustry.GetProduction(industryID, cargo) != -1) {	
-
+//			canHandleCargo = true;
 			// Save production information.
 			industryNode.cargoIdsProducing.push(cargo);
 
@@ -257,6 +292,7 @@ function World::InsertIndustry(industryID) {
 
 		// Check if the industry actually accepts something.
 		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
+//			canHandleCargo = true;
 			industryNode.cargoIdsAccepting.push(cargo);
 
 			// Add to cache.
@@ -270,7 +306,18 @@ function World::InsertIndustry(industryID) {
 				}
 			}
 		}
-
+/*
+		// Check if this town is near to water.
+		if (canHandleCargo && !isNearWater) {
+			local industryTiles = industryNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
+			industryTiles.Valuate(AITile.IsCoastTile);
+			industryTiles.KeepValue(1);
+			if (industryTiles.Count() > 0) {
+				industryNode.isNearWater = true;
+				isNearWater = true;
+			}
+		}
+*/
 	}
 
 	// If the industry doesn't accept anything we add it to the root list.
@@ -348,6 +395,7 @@ function World::InitCargoTransportEngineIds() {
 
 		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
 		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_AIR));
+		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_WATER));
 		foreach (engine, value in engineList) {
 			local vehicleType = AIEngine.GetVehicleType(engine);
 			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 

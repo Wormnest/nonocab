@@ -129,6 +129,11 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 
 		if (!hasVehicles || rating < 60 || production > 100 || dropoffOverLoad) {
+
+			// We only want to buy new vehicles if the producion is at least twice the amount of
+			// cargo a vehicle can carry.
+			if (AIEngine.GetCapacity(report.engineID) * 2 > production)
+				continue;
 			
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {

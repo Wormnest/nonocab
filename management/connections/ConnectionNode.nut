@@ -16,6 +16,7 @@ class ConnectionNode
 	connectionNodeListReversed = null;      // All nodes which this noded accepts cargo from.
 
 	connections = null;                     // Running connections to other nodes.
+	isNearWater = false;			// Is this node near water?
 
 	/**
 	 * Construct a new connection node with the given ID an type.
@@ -40,7 +41,7 @@ class ConnectionNode
 	function GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
 	function GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY);
 	function GetAllProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetProducingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
-	function GetAllAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetAceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
+	function GetAllAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) { return GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY); }
 	function GetName();	
 }
 	

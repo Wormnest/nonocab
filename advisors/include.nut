@@ -4,4 +4,5 @@ require("RoadConnectionAdvisor.nut");
 require("AircraftAdvisor.nut");
 require("ConnectionReport.nut");
 require("VehiclesAdvisor.nut");
+require("ShipAdvisor.nut");
 

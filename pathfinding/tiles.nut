@@ -9,6 +9,12 @@ class Tile {
 	static BRIDGE = 1;
 	static TUNNEL = 2;
 	static ROAD   = 3;
+
+	// The length of various road pieces
+	static straightRoadLength 	= 28.5;					// Road length / 24 (easier to calculate km/h)
+	static diagonalRoadLength	= 40.3;
+	static bendedRoadLength 	= 20;
+	static upDownHillRoadLength 	= 28.5;
 	
 	/**
 	 * Get all the tile IDs from the tiles directly adjacent to the given tile ID.

@@ -1,16 +1,15 @@
 /**
  * Store important info about a path we found! :)
  */
-class PathInfo
-{
+class PathInfo {
+
 	roadList = null;		// List of all road tiles the road needs to follow.
 	roadCost = null;		// The cost to create this road.
 	depot = null;			// The location of the depot.
 	depotOtherEnd = null;		// The location of the depot at the other end (if it any).
 	build = null;			// Is this path build?
 							
-	travelTimesForward = null;	// An array containing the travel times in days for vehicles with a certain speed.
-	travelTimesBackward = null;	// An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesCache = null;	// An array containing the travel times in days for vehicles with a certain speed.
 
 	buildDate = null;		// The date this connection is build.
 	nrRoadStations = null;          // The number of road stations.
@@ -19,8 +18,7 @@ class PathInfo
 		roadList = _roadList;
 		roadCost = _roadCost;
 		build = false;
-		travelTimesForward = [];
-		travelTimesBackward = [];
+		travelTimesCache = {};
 		nrRoadStations = 0;
 	}
 	
@@ -34,20 +32,28 @@ class PathInfo
 	function GetTravelTime(maxSpeed, forward);
 }
 
-function PathInfo::GetTravelTime(maxSpeed, forward) {
+function PathInfo::GetTravelTime(engineID, forward) {
 	
 	if (roadList == null)
 		return -1;
 		
 	// Check if we don't have this in our cache.
-	local cache = (forward ? travelTimesForward : travelTimesBackward);
-	foreach (time in cache) {
-		if (time[0] == maxSpeed) 
-			return time[1];
-	}
+	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
+	local vehicleType = AIEngine.GetVehicleType(engineID);
+	local cacheID = "" + forward + "_" + vehicleType + "_" + maxSpeed;
+
+	if (travelTimesCache.rawin(cacheID))
+		return travelTimesCache.rawget(cacheID);
+		
+	local time;
+
+	if (vehicleType == AIVehicle.VEHICLE_ROAD)
+		time = RoadPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+	else if (vehicleType == AIVehicle.VEHICLE_WATER)
+		time = WaterPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+	else
+		Log.logWarning("Unknown vehicle type: " + vehicleType);
 	
-	local pathfinder = RoadPathFinding(PathFinderHelper());
-	local time = pathfinder.GetTime(roadList, maxSpeed, forward);
-	cache.push([maxSpeed, time]);
+	travelTimesCache[cacheID] <- time;
 	return time;
 }

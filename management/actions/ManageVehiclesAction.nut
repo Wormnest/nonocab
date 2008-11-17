@@ -2,11 +2,17 @@ class ManageVehiclesAction extends Action {
 
 	vehiclesToSell = null;		// List of vehicles IDs which need to be sold.
 	vehiclesToBuy = null;		// List of [engine IDs, number of vehicles to buy, tile ID of a depot]
-	
+	pathfinder = null;
+
 	constructor() { 
 		vehiclesToSell = [];
 		vehiclesToBuy = [];
 		Action.constructor();
+
+		local pathFinderHelper = RoadPathFinderHelper();
+		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad;
+
+		pathfinder = RoadPathFinding(pathFinderHelper);
 	}
 }
 
@@ -120,15 +126,16 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup.connection = connection;
 			
 			if (vehicleType == AIVehicle.VEHICLE_ROAD) {
-				local pathfinder = RoadPathFinding(PathFinderHelper());
-				vehicleGroup.timeToTravelTo = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				vehicleGroup.timeToTravelFrom = pathfinder.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+				vehicleGroup.timeToTravelTo = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				vehicleGroup.timeToTravelFrom = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			} else if (vehicleType == AIVehicle.VEHICLE_AIR){ 
 				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
-				vehicleGroup.timeToTravelTo = (manhattanDistance * RoadPathFinding.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
+				vehicleGroup.timeToTravelTo = (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
 				vehicleGroup.timeToTravelFrom = vehicleGroup.timeToTravelTo;
+			} else if (vehicleType == AIVehicle.VEHICLE_WATER) {
+				vehicleGroup.timeToTravelTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				vehicleGroup.timeToTravelFrom = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			}
-			
 			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 
 				AIMap.DistanceManhattan(connection.pathInfo.roadList[0].tile, connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), 
 				vehicleGroup.timeToTravelTo) * AIEngine.GetCapacity(engineID);	
@@ -164,18 +171,41 @@ function ManageVehiclesAction::Execute()
 			
 			// Send the vehicles on their way.
 			local roadList = connection.pathInfo.roadList;
+
 			if(connection.bilateralConnection) {
 
 				if (directionToggle) {
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					// If it's a ship, give it additional orders!
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						roadList.reverse();
+						foreach (at in roadList.slice(1, -1))
+							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+						roadList.reverse();
+					}
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					// If it's a ship, give it additional orders!
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						roadList.reverse();
+						foreach (at in roadList.slice(1, -1))
+							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+						roadList.reverse();
+					}
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				}
 				directionToggle = !directionToggle;
 			} else {
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+
+				// If it's a ship, give it additional orders!
+				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+					roadList.reverse();
+					foreach (at in roadList.slice(1, -1))
+						AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+					roadList.reverse();
+				}
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 			}
 			

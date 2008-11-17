@@ -37,13 +37,13 @@ class ConnectionReport extends Report {
 		
 		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
 			if (connection != null && connection.pathInfo.roadList != null) {
-				travelTimeTo = connection.pathInfo.GetTravelTime(maxSpeed, true);
-				travelTimeFrom = connection.pathInfo.GetTravelTime(maxSpeed, false);
+				travelTimeTo = connection.pathInfo.GetTravelTime(engineID, true);
+				travelTimeFrom = connection.pathInfo.GetTravelTime(engineID, false);
 
 				if (!connection.pathInfo.build)
 					initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID));
 			} else {
-				travelTimeTo = distance * RoadPathFinding.straightRoadLength / maxSpeed;
+				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
 				initialCost = 150 * distance;
 			}
@@ -72,7 +72,7 @@ class ConnectionReport extends Report {
 			}
 
 			// Take the landing sequence in consideration.
-			local realDistance = diagonalTiles * RoadPathFinding.diagonalRoadLength + (straightTiles + 40) * RoadPathFinding.straightRoadLength;
+			local realDistance = diagonalTiles * Tile.diagonalRoadLength + (straightTiles + 40) * Tile.straightRoadLength;
 
 			travelTimeTo = realDistance / maxSpeed;
 			travelTimeFrom = travelTimeTo;
@@ -87,12 +87,40 @@ class ConnectionReport extends Report {
 					
 				initialCost = costForFrom + costForTo;
 			}
-		} 
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+
+			if (connection != null && connection.pathInfo.roadList != null) {
+				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				travelTimeFrom = travelTimeTo;
+				initialCost = WaterPathBuilder.GetCostForRoad(connection.pathInfo.roadList);
+			} else {
+				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
+				travelTimeFrom = travelTimeTo;
+			}
+
+			if (connection == null || !connection.pathInfo.build) {
+
+				local useCache = connection == null || !connection.forceReplan;
+				local costForFrom = BuildShipYardAction.GetShipYardCost(travelFromNode, cargoID, false, useCache);
+				local costForTo = BuildShipYardAction.GetShipYardCost(travelToNode, cargoID, true, useCache);
+
+				if (costForFrom == -1 || costForTo == -1)
+					isInvalid = true;
+					
+				
+				initialCost += costForFrom + costForTo;
+			}
+		}
 		travelTime = travelTimeTo + travelTimeFrom;
 
 		// Calculate netto income per vehicle.
-		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH / travelTime) * AIEngine.GetCapacity(engineID);
-		nrVehicles = ((travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
+		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(engineID);
+		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
+
+		if (nrVehicles > 0.5 && nrVehicles < 1)
+			nrVehicles = 1;
+		else
+			nrVehicles = nrVehicles.tointeger();
 
 		brutoIncomePerMonth = 0;
 		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;

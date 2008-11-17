@@ -20,6 +20,7 @@ class NoCAB extends AIController {
 			VehiclesAdvisor(world),
 			RoadConnectionAdvisor(world),
 			AircraftAdvisor(world)
+			ShipAdvisor(world)
 		];
 		
 		planner = Planner(world);
