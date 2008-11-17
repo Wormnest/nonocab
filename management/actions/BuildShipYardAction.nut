@@ -1,5 +1,5 @@
 /**
- * Action class for the creation of airfields.
+ * Action class for the creation of ship yards.
  */
 class BuildShipYardAction extends Action {
 	connection = null;			// Connection object of the road to build.

@@ -109,9 +109,10 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
 			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
 
-		// If we want to sell 1 aircraft: don't. We allow for a little slack in airlines :).
-		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR;
-		if (isAir && report.nrVehicles == -1)
+		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
+		local isAirOrShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR ||
+			AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_WATER;
+		if (isAirOrShip && report.nrVehicles == -1)
 			continue;
 
 		// Now we check whether we need more vehicles
@@ -138,12 +139,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
 				// We don't build an extra airport if more aircrafts are needed!
-				if (isAir)
+				if (isAirOrShip)
 					continue;
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isAir) 
+			if (production < 200 || isAirOrShip) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;

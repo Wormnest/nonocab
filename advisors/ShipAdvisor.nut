@@ -1,6 +1,5 @@
 /**
- * This class handles all new aircraft connections. For the moment we only focus on 
- * town <-> town connections, see UpdateIndustryConnections for more details.
+ * This class handles all new ship connections.
  */
 class ShipAdvisor extends ConnectionAdvisor {
 
@@ -28,8 +27,8 @@ function ShipAdvisor::GetPathInfo(report) {
 		(!toNode.isNearWater && toNode.nodeType != ConnectionNode.INDUSTRY_NODE && !AIIndustry.IsBuiltOnWater(toNode.id)))
 		return null;
 			
-	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	local stationType = AIStation.STATION_DOCK;
+	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	local producingTiles = report.fromConnectionNode.GetAllProducingTiles(report.cargoID, stationRadius, 1, 1);
 	local acceptingTiles = report.toConnectionNode.GetAllAcceptingTiles(report.cargoID, stationRadius, 1, 1);
 

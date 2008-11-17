@@ -146,6 +146,11 @@ function ManageVehiclesAction::Execute()
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
 		local directionToggle = false;
+		
+		// Use a 'main' vehicle to enable the sharing of orders.
+		local mainVehicleID = -1;
+		if (vehicleGroup.vehicleIDs.len() > 0)
+			mainVehicleID = vehicleGroup.vehicleIDs[0];
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0) {
@@ -170,22 +175,38 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup.vehicleIDs.push(vehicleID);
 			
 			// Send the vehicles on their way.
-			local roadList = connection.pathInfo.roadList;
-
-			if(connection.bilateralConnection) {
-
-				if (directionToggle) {
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-					// If it's a ship, give it additional orders!
-					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
-						roadList.reverse();
-						foreach (at in roadList.slice(1, -1))
-							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-						roadList.reverse();
+			if (mainVehicleID != -1) {
+				AIOrder.ShareOrders(vehicleID, mainVehicleID);
+			} else {
+				local roadList = connection.pathInfo.roadList;
+	
+				if(connection.bilateralConnection) {
+	
+					if (directionToggle) {
+						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						// If it's a ship, give it additional orders!
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+							roadList.reverse();
+							foreach (at in roadList.slice(1, -1))
+								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+							roadList.reverse();
+						}
+						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					} else {
+						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						// If it's a ship, give it additional orders!
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+							roadList.reverse();
+							foreach (at in roadList.slice(1, -1))
+								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+							roadList.reverse();
+						}
+						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 					}
-					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					directionToggle = !directionToggle;
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+	
 					// If it's a ship, give it additional orders!
 					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
 						roadList.reverse();
@@ -193,24 +214,14 @@ function ManageVehiclesAction::Execute()
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						roadList.reverse();
 					}
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 				}
-				directionToggle = !directionToggle;
-			} else {
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-
-				// If it's a ship, give it additional orders!
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
-					roadList.reverse();
-					foreach (at in roadList.slice(1, -1))
-						AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-					roadList.reverse();
-				}
-				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+				
+				if (!vehicleType == AIVehicle.VEHICLE_AIR)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
+				mainVehicleID = vehicleID;
 			}
-			
-			if (!vehicleType == AIVehicle.VEHICLE_AIR)
-				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
+
 			AIVehicle.StartStopVehicle(vehicleID);
 
 			// Update the game setting so subsequent actions won't build more vehicles then possible!

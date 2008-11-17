@@ -47,12 +47,6 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, c
 			annotatedTile.distanceFromStart = Tile.diagonalRoadLength;
 		else
 			annotatedTile.distanceFromStart = Tile.straightRoadLength;
-
-		// At a little insentive to follow straight lines, otherwise there
-		// will be way to many bouys!
-		if (annotatedTile.direction != currentAnnotatedTile.direction)
-			annotatedTile.distanceFromStart += 10;
-
 		tileArray.push(annotatedTile);
 	}
 
