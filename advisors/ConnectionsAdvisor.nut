@@ -72,13 +72,6 @@ class ConnectionAdvisor extends Advisor {
 	 * should iterate over and expand to fill the bineary queue.
 	 */
 	function UpdateIndustryConnections(industry_tree);
-
-	/**
-	 * Check if this connection node can be handled by this advisor.
-	 * @param connectionNode The connection to consider.
-	 * @return Whether this connection can be handled.
-	 */
-	function AcceptConnectionNode(connectionNode) { return true; }
 }
 
 /**
@@ -121,10 +114,9 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 	local minNrReports = GetMinNrReports(loopCounter);
 
-	while ((report = connectionReports.Pop()) != null &&
-		reportTable.len() < minNrReports &&
-		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24) {
-
+	while (reportTable.len() < minNrReports &&
+		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
+		(report = connectionReports.Pop()) != null) {
 		Log.logDebug("Considder: " + report.ToString());
 
 		// Check if we already know the path or need to calculate it.
@@ -286,12 +278,8 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	// actual pathfinding on that selection to find the best one(s).
 	local industriesToCheck = {};
 	foreach (primIndustryConnectionNode in industry_tree) {
-		if (!AcceptConnectionNode(primIndustryConnectionNode))
-			continue;
 
 		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
-			if (!AcceptConnectionNode(secondConnectionNode))
-				continue;
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	

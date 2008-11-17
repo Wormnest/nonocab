@@ -52,6 +52,16 @@ class Tile {
 	 * @return True if the tile is buildable, false otherwise.
 	 */
 	static function IsBuildable(tile);
+	
+	/**
+	 * Get a list of a rectangle of tiles from the world.
+	 * @param centre The centre of the rectangle.
+	 * @param radiusX The size of the rectangle in the X direction.
+	 * @param radiusY The size of the rectangle in the Y direction.
+	 * @return An AITileList instance with the tiles which are in the
+	 * rectangle.
+	 */
+	static function GetRectangle(centre, sizeX, sizeY);
 }
 
 function Tile::GetTilesAround(currentTile, diagonal) {
@@ -137,4 +147,18 @@ function Tile::IsBuildable(tile) {
 		}
 	}
 	return false;
+}
+
+function Tile::GetRectangle(centre, sizeX, sizeY) {
+		local list = AITileList();
+		local x = AIMap.GetTileX(centre);
+		local y = AIMap.GetTileY(centre);
+		local min_x = x - sizeX;
+		local min_y = y - sizeY;
+		local max_x = x + sizeX;
+		local max_y = y + sizeY;
+		if (min_x < 0) min_x = 1; else if (max_x >= AIMap.GetMapSizeX()) max_x = AIMap.GetMapSizeX() - 2;
+		if (min_y < 0) min_y = 1; else if (max_y >= AIMap.GetMapSizeY()) max_y = AIMap.GetMapSizeY() - 2;
+		list.AddRectangle(AIMap.GetTileIndex(min_x, min_y), AIMap.GetTileIndex(max_x, max_y));
+		return list;
 }

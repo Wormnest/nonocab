@@ -51,19 +51,10 @@ class TownConnectionNode extends ConnectionNode
  * Scans tiles who are within town influence.
  */
 function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnly, stationRadius, stationSizeX, stationSizeY) {
-	local list = AITileList();
+
 	local tile = GetLocation();
-
-	local x = AIMap.GetTileX(tile);
-	local y = AIMap.GetTileY(tile);
-	local min_x = x - 20 - stationRadius;
-	local min_y = y - 20 - stationRadius;
-	local max_x = x + 20 + stationRadius;
-	local max_y = y + 20 + stationRadius;
-	if (min_x < 0) min_x = 1; else if (max_x >= AIMap.GetMapSizeX()) max_x = AIMap.GetMapSizeX() - 2;
-	if (min_y < 0) min_y = 1; else if (max_y >= AIMap.GetMapSizeY()) max_y = AIMap.GetMapSizeY() - 2;
-	list.AddRectangle(AIMap.GetTileIndex(min_x, min_y), AIMap.GetTileIndex(max_x, max_y));
-
+	local list = Tile.GetRectangle(tile, 20, 20);
+	
 	// Purge all unnecessary entries from the list.
 	list.Valuate(AITile.IsWithinTownInfluence, id);
 	list.KeepAboveValue(0);

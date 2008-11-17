@@ -2,6 +2,8 @@ class WaterPathFinderHelper extends PathFinderHelper {
 
 	standardOffsets = null;
 	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
+	startLocationIsBuildOnWater = false;
+	endLocationIsBuildOnWater = false;
 	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0),
@@ -65,11 +67,20 @@ function WaterPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 	foreach (at in roadList) {
 
 		local offset = lastTile - at.tile;
+		local lastTileX = AIMap.GetTileX(lastTile);
+		local lastTileY = AIMap.GetTileY(lastTile);
+		local currentX = AIMap.GetTileX(at.tile);
+		local currentY = AIMap.GetTileY(at.tile);
+		local deltaX = currentX - lastTileX;
+		local deltaY = currentY - lastTileY;
+		if (deltaX < 0) deltaX = -deltaX;
+		if (deltaY < 0) deltaY = -deltaY;
+		local tmpDistance = (deltaX < deltaY ? deltaY : deltaX);
 
 		if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-			distance += Tile.diagonalRoadLength;
+			distance += Tile.diagonalRoadLength * tmpDistance;
 		else
-			distance += Tile.straightRoadLength;
+			distance += Tile.straightRoadLength * tmpDistance;
 		lastTile = at.tile;
 	}
 	return (distance / maxSpeed).tointeger();
@@ -109,30 +120,59 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 
 function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 
-	ProcessNeighbours(startList, function(annotatedTile, neighbour, heap, expectedEnd) {
-			local offset = annotatedTile.tile - neighbour.tile;
+	if (startLocationIsBuildOnWater) {
 
-			if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-				neighbour.distanceFromStart = Tile.diagonalRoadLength;
-			else
-				neighbour.distanceFromStart = Tile.straightRoadLength;
-
-			neighbour.parentTile = annotatedTile;
-			neighbour.length = 1;
+		foreach (i, value in startList) {
+			local annotatedTile = AnnotatedTile();
+			annotatedTile.tile = i;
+			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
+			
+			// We preprocess all start nodes to see if a road station can be build on them.
+			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 				
-			heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
-			return false;
-		}, heap, expectedEnd);
+			foreach (neighbour in neighbours) {
+				local offset = annotatedTile.tile - neighbour.tile;
+	
+				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
+					neighbour.distanceFromStart = Tile.diagonalRoadLength;
+				else
+					neighbour.distanceFromStart = Tile.straightRoadLength;
+	
+				neighbour.parentTile = annotatedTile;
+				neighbour.length = 1;
+					
+				heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
+			}
+		}
+	} else {
+	
+		ProcessNeighbours(startList, function(annotatedTile, neighbour, heap, expectedEnd) {
+				local offset = annotatedTile.tile - neighbour.tile;
+	
+				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
+					neighbour.distanceFromStart = Tile.diagonalRoadLength;
+				else
+					neighbour.distanceFromStart = Tile.straightRoadLength;
+	
+				neighbour.parentTile = annotatedTile;
+				neighbour.length = 1;
+					
+				heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
+				return false;
+			}, heap, expectedEnd);
+	}
 }
 
 function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
-	local newEndList = ProcessNeighbours(endList, function(annotatedTile, neighbour, heap, expectedEnd) {
-			return true;
-		}, null, null);	
-
-	endList.Clear();
-	endList.AddList(newEndList);
+	if (!endLocationIsBuildOnWater) {
+		local newEndList = ProcessNeighbours(endList, function(annotatedTile, neighbour, heap, expectedEnd) {
+				return true;
+			}, null, null);
+	
+		endList.Clear();
+		endList.AddList(newEndList);
+	}
 }
 
 
@@ -141,7 +181,7 @@ function WaterPathFinderHelper::CheckGoalState(at, end, checkEndPositions, close
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (!AIMarine.BuildDock(at.tile, true) && !AIMarine.BuildDock(at.tile, false))) {
+	if (checkEndPositions && (endLocationIsBuildOnWater || !AIMarine.BuildDock(at.tile, true) && !AIMarine.BuildDock(at.tile, false))) {
 
 		at.tile = at.tile - at.direction;
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 

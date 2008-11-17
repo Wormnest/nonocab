@@ -24,33 +24,22 @@ class RoadPathFinding {
 	 */
 	constructor(pathFinderHelper) {
 		this.pathFinderHelper = pathFinderHelper;
-		//costTillEnd = costForRoad;
 	}
-								
+
 	/**
-	 * We need functions to calibrate penalties and stuff. We want functions
-	 * to build the *fastest*, *cheapest*, *optimal throughput*, etc. We aren't
-	 * allowed to write C++ so we need to script this information :).
+	 * A* pathfinder to find the fastest path from start to end.
+	 * @param start An AIAbstractList which contains all the nodes the path can start from.
+	 * @param end An AIAbstractList which contains all the nodes the path can stop at. The
+	 * middle point of these values will be used to guide the pathfinder to its goal.
+	 * @param checkStartPoints Check the start points before finding a road.
+	 * @param checkEndPoints Check the end points before finding a road.
+	 * @param stationType The station type to build.
+	 * @param maxPathLength The maximum length of the path (stop afterwards!).
+	 * @return A PathInfo instance which contains the found path (if any).
 	 */
-	//function FallBackCreateRoad(buildResult);
-	//function CreateRoad(connection);			// Create the best road from start to end
-	//function BuildRoad(roadList);
-	//function GetSlope(tile, currentDirection);
-	//function GetTime(roadList, maxSpeed, forward);
-	//function FindFastestRoad(start, end, checkStartPositions, checkEndPositions);
+	function FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength);
 }
 
-/**
- * A* pathfinder to find the fastest path from start to end.
- * @param start An AIAbstractList which contains all the nodes the path can start from.
- * @param end An AIAbstractList which contains all the nodes the path can stop at. The
- * middle point of these values will be used to guide the pathfinder to its goal.
- * @param checkStartPoints Check the start points before finding a road.
- * @param checkEndPoints Check the end points before finding a road.
- * @param stationType The station type to build.
- * @param maxPathLength The maximum length of the path (stop afterwards!).
- * @return A PathInfo instance which contains the found path (if any).
- */
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength) {
 
 	local test = AITestMode();
@@ -67,6 +56,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 1000)
 		AIController.Sleep(1);
 
+	// Use the helper to prune all end positions which can't be reached.
 	pathFinderHelper.ProcessEndPositions(end, checkEndPositions);
 
 	if(end.IsEmpty()) {
@@ -74,11 +64,11 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		return null;
 	}
 
+	// To guide the pathfinder we use the mean of all viable end positions.
 	foreach (i, value in end) {
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
 	}
-
 	expectedEnd = AIMap.GetTileIndex(x / end.Count(), y / end.Count());
 	
 	// We must also keep track of all tiles we've already processed, we use
@@ -103,7 +93,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			return null;
 		}
 			
-		// Get the node with the best utility value
+		// If this node has already been processed, skip it!
 		if(closedList.rawin(at.tile))
 			continue;
 
@@ -112,6 +102,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			local resultList = [];
 			local resultTile = at;
 			
+			// We store the route from back to front!
 			while (resultTile.parentTile != resultTile) {
 				resultList.push(resultTile);
 				resultTile = resultTile.parentTile;
@@ -120,13 +111,11 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			resultList.push(resultTile);
 			return PathInfo(resultList, null);
 		} else if (end.IsEmpty()) {
-			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
+			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;
 		}
 		
-		// Get all possible tiles from this annotated tile (North, South, West,
-		// East) and check if we're already at the end or if new roads are possible
-		// from those tiles.
+		// Get all possible tiles from this annotated tile and add them to the open list.
 		local neighbour = null;
 		foreach (neighbour in pathFinderHelper.GetNeighbours(at, false, closedList)) {
 			neighbour.distanceFromStart += at.distanceFromStart;
@@ -142,7 +131,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	}
 
 	// Oh oh... No result found :(
-	Log.logWarning("No path found!");
+	Log.logDebug("No path found!");
 	return null;
 }
 
@@ -150,8 +139,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
  * Util class to hold a tile and the heuristic value for
  * pathfinding.
  */
-class AnnotatedTile 
-{
+class AnnotatedTile {
 	tile = 0;				// Instance of AITile
 	parentTile = null;		// Needed for backtracking!
 	distanceFromStart = 0;	// 'Distance' already travelled from start tile

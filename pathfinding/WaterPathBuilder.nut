@@ -108,27 +108,35 @@ function WaterPathBuilder::RealiseConnection()
 }
 
 /**
- * Create the fastest road from start to end, without altering
- * the landscape. We use the A* pathfinding algorithm.
- * If something goes wrong during the building process the fallBackMethod
- * is called to handle things for us.
+ * We create a path through the water for our boats. Because applying A*
+ * to the ingame pathfinding is quite hard, the pathfinding capabilities
+ * of ships are quite bad. Therefor we need to build buoys to lead our
+ * ships in the good direction. We don't want to build to many and not to
+ * close together!
  */
 function WaterPathBuilder::BuildPath(roadList)
 {
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
-	local newRoadList = [];
-	newRoadList.push(roadList[0]);
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
 	local buoyBuildTimeout = 10;
+	local newRoadList = [roadList[0]];
 
-	for(local a = roadList.len() - 2; -1 < a; a--) {
+	for(local a = roadList.len() - 2; 9 < a; a--) {
 
-		if (buoyBuildTimeout != 0 && --buoyBuildTimeout != 0)
-			continue;
+		// If we recently saw / build a buoy we add an additional timeout
+		// constraint.
+		if (buoyBuildTimeout != 0) {
+			if (--buoyBuildTimeout != 0)
+				currentDirection = roadList[a].direction;
+			else
+				continue;
+		}
+				
 		local direction = roadList[a].direction;
+		local currentTile = roadList[a + 1].tile;
 		
 		/**
 		 * Every time we make a call to the OpenTTD engine (i.e. build something) we hand over the
@@ -136,46 +144,80 @@ function WaterPathBuilder::BuildPath(roadList)
 		 * large segments of roads at the time instead of single tiles.
 		 */
 		if (direction != currentDirection) {
-
-			// Check if we don't encounter a buoy 10 steps from now
-			local min = a - 10;
-			local hasFutureBuoy = false;
-			for (local b = a - 1; -1 < b && min < b; b--)  {
-				if (AIMarine.IsBuoyTile(roadList[b].tile)) {
-					hasFutureBuoy = true;
-					break;
-				}
-			}
-
-			if (hasFutureBuoy)
-				continue;
 	
-			// Check if there is no buoy directly next to this one.
-			local hasBuoyCloseby = false;
-			foreach (tile in Tile.GetTilesAround(roadList[a + 1].tile, true)) {
-				if (AIMarine.IsBuoyTile(tile)) {
-					local newAT = clone roadList[a + 1];
-					newAT.tile = tile;	
-					newRoadList.push(newAT);
-					hasBuoyCloseby = true;
-					break;
+			// Check if there is no buoy close to this tile.
+			local list = Tile.GetRectangle(currentTile, 20, 20);
+			list.Valuate(AIMarine.IsBuoyTile);
+			list.KeepValue(1);
+			
+			// If there is a buoy we check if we can reach it by the fastest way
+			// possible, if not we might add a buoy ourselves!
+			if(list.Count() > 0) {
+
+				local localBuoy = null;
+				local foundLocalBuoy = false;
+			
+				// Check if we can reach at least one of them in a straight line!
+				foreach (buoyTile, value in list) {
+				
+					local buoyX = AIMap.GetTileX(buoyTile);
+					local buoyY = AIMap.GetTileY(buoyTile);
+					local tmpX = AIMap.GetTileX(currentTile);
+					local tmpY = AIMap.GetTileY(currentTile);
+					
+					// Get the shortest path and see if we can go here :).
+					local deltaX = tmpX - buoyX;
+					local deltaY = tmpY - buoyY;
+					local directionX = (deltaX > 0 ? -1 : 1);
+					local directionY = (deltaY > 0 ? -1 : 1);
+					local mapSizeX = AIMap.GetMapSizeX();
+
+					foundLocalBuoy = true;
+					
+					while (tmpX != buoyX && tmpY != buoyY) {
+						if (tmpX != buoyX)
+							tmpX += directionX;
+						if (tmpY != buoyY)
+							tmpY += directionY;
+							
+						local tmpTile = tmpX + mapSizeX * tmpY;
+						if (AIMarine.IsBuoyTile(tmpTile)) {
+							buoyTile = tmpTile;
+							break;
+						}
+							 
+						if (!AITile.IsWaterTile(tmpTile)) {
+							foundLocalBuoy = false;
+							break;
+						}
+					}
+					
+					// If we can find one of the buoys we call it a day =).
+					if (foundLocalBuoy) {
+						localBuoy = buoyTile;
+						roadList[a + 1].tile = localBuoy;
+						newRoadList.push(roadList[a + 1]);
+						break;
+					}
+				}
+				
+				// Buoy is found, so add a timeout.
+				if (localBuoy != null) {
+					buoyBuildTimeout = 20;
+					continue;
 				}
 			}
-
-			if (hasBuoyCloseby)
-				continue;
-				
-			if (!AIMarine.IsBuoyTile(roadList[a + 1].tile) && !AIMarine.BuildBuoy(roadList[a + 1].tile) && !WaterPathBuilder.CheckError(roadList[a + 1].tile)) {
-				AISign.BuildSign(roadList[a + 1].tile, "ERROR");
+			
+			// Check if we need to build an additional buoy.
+			if (!AIMarine.IsBuoyTile(currentTile) && !AIMarine.BuildBuoy(currentTile) && !WaterPathBuilder.CheckError(currentTile)) {
+				AISign.BuildSign(currentTile, "ERROR");
 				return false;
 			} else
 				buoyBuildTimeout = 20;
 
 			newRoadList.push(roadList[a + 1]);
-
 			currentDirection = direction;
 		}
-
 	}
 	
 	newRoadList.push(roadList[roadList.len() - 1]);
