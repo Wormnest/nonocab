@@ -180,7 +180,7 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 			}
 
 			if (!foundSuitableNeighbour)
-				listToRemove.AddItem(i, i);
+				listToRemove.AddTile(i);
 		}
 
 		end.RemoveList(listToRemove);
