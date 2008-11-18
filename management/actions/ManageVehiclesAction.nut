@@ -149,8 +149,17 @@ function ManageVehiclesAction::Execute()
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local mainVehicleID = -1;
-		if (vehicleGroup.vehicleIDs.len() > 0)
-			mainVehicleID = vehicleGroup.vehicleIDs[0];
+		local mainVehicleIDReverse = -1;
+		foreach (vehicle in vehicleGroup.vehicleIDs) {
+			if (AIOrder.GetOrderDestination(vehicle, 0) == roadList[0].tile)
+				mainVehicleIDReverse = vehicle;
+			else
+				mainVehicleID = vehicle;
+
+			if (mainVehicleID != -1 && mainVehicleIDReverse != -1)
+				break;
+		}
+
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0) {
@@ -165,7 +174,7 @@ function ManageVehiclesAction::Execute()
 			else
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
-				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + "!");
+				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + connection.pathInfo.depotOtherEnd + "!");
 				continue;
 			}
 
@@ -174,12 +183,14 @@ function ManageVehiclesAction::Execute()
 				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
 			vehicleGroup.vehicleIDs.push(vehicleID);
 			
+			local roadList = connection.pathInfo.roadList;
+			
 			// Send the vehicles on their way.
-			if (mainVehicleID != -1) {
+			if (mainVehicleID != -1 && (!connection.bilateralConnection || !directionToggle)) {
 				AIOrder.ShareOrders(vehicleID, mainVehicleID);
+			} else if (mainVehicleIDReverse != -1 && connection.bilateralConnection && directionToggle) {
+				AIOrder.ShareOrders(vehicleID, mainVehicleIDReverse);
 			} else {
-				local roadList = connection.pathInfo.roadList;
-	
 				if(connection.bilateralConnection) {
 	
 					if (directionToggle) {
@@ -192,6 +203,7 @@ function ManageVehiclesAction::Execute()
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						mainVehicleIDReverse = vehicleID;
 					} else {
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						// If it's a ship, give it additional orders!
@@ -202,8 +214,9 @@ function ManageVehiclesAction::Execute()
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						mainVehicleID = vehicleID;
 					}
-					directionToggle = !directionToggle;
+//					directionToggle = !directionToggle;
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 	
@@ -215,12 +228,16 @@ function ManageVehiclesAction::Execute()
 						roadList.reverse();
 					}
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+					mainVehicleID = vehicleID;
 				}
 				
 				if (vehicleType == AIVehicle.VEHICLE_ROAD)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
-				mainVehicleID = vehicleID;
 			}
+
+
+			if(connection.bilateralConnection)
+				directionToggle = !directionToggle;
 
 			AIVehicle.StartStopVehicle(vehicleID);
 
