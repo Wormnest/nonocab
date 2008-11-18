@@ -161,6 +161,15 @@ function ManageVehiclesAction::Execute()
 				break;
 		}
 
+		// If we want to build aircrafts or ships, we only want to build 1 per station!
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER || AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
+			if (connection.bilateralConnection && vehicleNumbers > 4)
+				vehicleNumbers = 4;
+			else if (vehicleNumbers > 2)
+				vehicleNumbers = 2;
+		}
+			
+
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0) {
@@ -215,7 +224,6 @@ function ManageVehiclesAction::Execute()
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						mainVehicleID = vehicleID;
 					}
-//					directionToggle = !directionToggle;
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 	

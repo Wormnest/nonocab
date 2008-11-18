@@ -109,11 +109,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
 			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
 
-		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
-		local isAirOrShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR ||
-			AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_WATER;
-		if (isAirOrShip && report.nrVehicles == -1)
-			continue;
 
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
@@ -129,6 +124,10 @@ function VehiclesAdvisor::Update(loopCounter) {
 				rating = ratingOtherEnd;
 		}
 
+		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
+		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR;
+		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_WATER;
+
 		if (!hasVehicles || rating < 60 || production > 100 || dropoffOverLoad) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
@@ -139,12 +138,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
 				// We don't build an extra airport if more aircrafts are needed!
-				if (isAirOrShip)
+				if (isAir)
 					continue;
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isAirOrShip) 
+			if (production < 200 || isAir || isShip) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;
@@ -156,6 +155,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 		
 		// If we want to sell vehicle but the road isn't old enough, don't!
 		else if (report.nrVehicles < 0 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60)
+			continue;
+
+		if ((isAir || isShip) && report.nrVehicles == -1)
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!
