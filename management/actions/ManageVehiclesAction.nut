@@ -148,6 +148,7 @@ function ManageVehiclesAction::Execute()
 		local directionToggle = false;
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
+		local roadList = connection.pathInfo.roadList;
 		local mainVehicleID = -1;
 		local mainVehicleIDReverse = -1;
 		foreach (vehicle in vehicleGroup.vehicleIDs) {
@@ -182,8 +183,6 @@ function ManageVehiclesAction::Execute()
 			if (connection.cargoID != AIEngine.GetCargoType(engineID))
 				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
 			vehicleGroup.vehicleIDs.push(vehicleID);
-			
-			local roadList = connection.pathInfo.roadList;
 			
 			// Send the vehicles on their way.
 			if (mainVehicleID != -1 && (!connection.bilateralConnection || !directionToggle)) {

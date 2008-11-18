@@ -226,7 +226,7 @@ function ConnectionAdvisor::GetReports() {
 			
 		// Update report.
 		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
-		if (connection.forceReplan || report.isInvalid || report.nrVehicles < 1) {
+		if (report == null || connection.forceReplan || report.isInvalid || report.nrVehicles < 1) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.bestReport == report)
 				connection.forceReplan = true;
