@@ -17,8 +17,8 @@ function RoadConnectionAdvisor::GetMinNrReports(loopCounter) {
 	return 5 + loopCounter;
 }
 
-function RoadConnectionAdvisor::GetBuildAction(report) {
-	return BuildRoadAction(report.connection, true, true, world, AIEngine.GetRoadType(report.engineID));
+function RoadConnectionAdvisor::GetBuildAction(connection) {
+	return BuildRoadAction(connection, true, true, world);
 }
 
 /**
