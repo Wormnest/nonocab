@@ -217,7 +217,7 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 				}
 				
-				if (!vehicleType == AIVehicle.VEHICLE_AIR)
+				if (vehicleType == AIVehicle.VEHICLE_ROAD)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				mainVehicleID = vehicleID;
 			}
