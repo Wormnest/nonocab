@@ -30,12 +30,8 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, c
 		
 		local nextTile = currentAnnotatedTile.tile + offset;
 
-		// Skip if this node is already processed.
-		if (closedList.rawin(nextTile))
-			continue;
-
-		// Check if this is water or not.
-		if (!AITile.IsWaterTile(nextTile))
+		// Skip if this node is already processed and if this node is on water.
+		if (closedList.rawin(nextTile) || !AITile.IsWaterTile(nextTile))
 			continue;
 
 		local annotatedTile = AnnotatedTile();

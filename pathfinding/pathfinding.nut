@@ -88,7 +88,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	// Now with the open and closed list we're ready to do some grinding!!!
 	local at;
 	while ((at = pq.Pop())) {
-		if (at.length > maxPathLength) {
+		if (at.length + AIMap.DistanceManhattan(at.tile, expectedEnd) > maxPathLength) {
 			Log.logDebug("Max length hit, aborting!");
 			return null;
 		}

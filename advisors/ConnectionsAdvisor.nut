@@ -283,7 +283,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
-			if (maxDistanceConstraints && manhattanDistance > world.max_distance_between_nodes) continue;			
+			// Check if the nodes are not to far away (we restrict it by an extra 
+			// 32 tiles to avoid doing unnecessary work.
+			if (maxDistanceConstraints && manhattanDistance + 32 > world.max_distance_between_nodes) continue;			
 			
 			local checkIndustry = false;
 			
