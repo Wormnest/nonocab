@@ -264,7 +264,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	local maxDistanceConstraints = vehicleType != AIVehicle.VEHICLE_AIR;
 	local maxDistanceMultiplier = 1.25;
 	if (vehicleType == AIVehicle.VEHICLE_WATER)
-		maxDistanceMultiplier = 0.5;
+		maxDistanceMultiplier = 0.75;
 
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't

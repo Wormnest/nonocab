@@ -43,11 +43,9 @@ function BuildRoadAction::Execute() {
 	local pathFinderHelper = RoadPathFinderHelper();
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
-	// Replan the route.
-	// For non-existing roads we want the AI to find them quickly!
-	// Therefor we use a non-admissible function to calculate this path.
+	// For non-existing roads we want the AI to find the best route possible.
 	if (!isConnectionBuild)
-		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad;
+		pathFinderHelper.costTillEnd = pathFinderHelper.costForRoad;
 		
 	// For existing routs, we want the new path to coher to the existing
 	// path as much as possible, therefor we calculate no additional
@@ -55,6 +53,7 @@ function BuildRoadAction::Execute() {
 	// route as quick as possible.
 	else {
 		pathFinderHelper.costForTurn = pathFinderHelper.costForNewRoad;
+		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad;
 		pathFinderHelper.costForNewRoad = pathFinderHelper.costForNewRoad * 2;
 		pathFinderHelper.costForBridge = pathFinderHelper.costForBridge * 2;
 		pathFinderHelper.costForTunnel = pathFinderHelper.costForTunnel * 2;
@@ -65,9 +64,9 @@ function BuildRoadAction::Execute() {
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 
 	if (!isConnectionBuild)
-		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
+		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 2);
 	else 
-		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5);
+		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 2);
 
 	// If we need to build additional road stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional

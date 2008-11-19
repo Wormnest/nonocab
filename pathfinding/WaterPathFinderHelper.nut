@@ -1,7 +1,8 @@
 class WaterPathFinderHelper extends PathFinderHelper {
 
 	standardOffsets = null;
-	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
+//	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
+	costTillEnd     = Tile.straightRoadLength;           // The cost for each tile till the end.
 	startLocationIsBuildOnWater = false;
 	endLocationIsBuildOnWater = false;
 	
@@ -40,9 +41,9 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, c
 
 		// Check if the path is diagonal of not.
 		if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-			annotatedTile.distanceFromStart = Tile.diagonalRoadLength;
-		else
 			annotatedTile.distanceFromStart = Tile.straightRoadLength;
+		else
+			annotatedTile.distanceFromStart = Tile.diagonalRoadLength;
 		tileArray.push(annotatedTile);
 	}
 
@@ -140,9 +141,9 @@ function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStar
 				local offset = annotatedTile.tile - neighbour.tile;
 	
 				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-					neighbour.distanceFromStart = Tile.diagonalRoadLength;
-				else
 					neighbour.distanceFromStart = Tile.straightRoadLength;
+				else
+					neighbour.distanceFromStart = Tile.diagonalRoadLength;
 	
 				neighbour.parentTile = annotatedTile;
 				neighbour.length = 1;

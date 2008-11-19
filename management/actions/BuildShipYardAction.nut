@@ -17,6 +17,59 @@ class BuildShipYardAction extends Action {
 
 function BuildShipYardAction::Execute() {
 
+	local pathFindingHelper = WaterPathFinderHelper();
+	local pathFinder = RoadPathFinding(pathFindingHelper);
+
+	local stationType = AIStation.STATION_DOCK;
+	local stationRadius = AIStation.GetCoverageRadius(stationType);
+	local fromNode = connection.travelFromNode;
+	local toNode = connection.travelToNode;
+	local producingTiles = fromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1);
+	local acceptingTiles = toNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1);
+
+
+	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id))) {
+		producingTiles.Valuate(AITile.IsCoastTile);
+		producingTiles.KeepValue(1);
+
+		if (fromNode.nodeType == ConnectionNode.TOWN_NODE) {
+			producingTiles.Valuate(AITile.GetCargoAcceptance, connection.cargoID, 1, 1, stationRadius);
+			producingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			producingTiles.KeepTop(1);
+		}
+	} else {
+		producingTiles.Valuate(AITile.IsWaterTile);
+		producingTiles.KeepValue(1);
+		pathFinder.pathFinderHelper.startLocationIsBuildOnWater = true;
+	}
+
+	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id))) {
+		acceptingTiles.Valuate(AITile.IsCoastTile);
+		acceptingTiles.KeepValue(1);
+
+		if (toNode.nodeType == ConnectionNode.TOWN_NODE) {
+			acceptingTiles.Valuate(AITile.GetCargoAcceptance, connection.cargoID, 1, 1, stationRadius);
+			acceptingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			acceptingTiles.KeepTop(1);
+		}
+	} else {
+		acceptingTiles.Valuate(AITile.IsWaterTile);
+		acceptingTiles.KeepValue(1);	
+		pathFinder.pathFinderHelper.endLocationIsBuildOnWater = true;
+	}
+
+	if (producingTiles.Count() == 0 || acceptingTiles.Count() == 0) {
+		connection.forceReplan = true;
+		return false;
+	}
+	
+	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 2);
+
+	if (pathInfo == null) {
+		connection.forceReplan = true;
+		return false;
+	}
+	connection.pathInfo = pathInfo;
 	local roadList = connection.pathInfo.roadList;
 	local toTile = roadList[0].tile;
 	local fromTile = roadList[roadList.len() - 1].tile;

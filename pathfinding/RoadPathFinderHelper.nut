@@ -6,7 +6,7 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	costForBridge 	= 65;		// Cost for building a bridge.
 	costForTunnel 	= 65;		// Cost for building a tunnel.
 	costForSlope 	= 85;		// Additional cost if the road heads up or down a slope.
-	costTillEnd     = 20;           // The cost for each tile till the end.
+	costTillEnd     = 50;           // The cost for each tile till the end.
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;

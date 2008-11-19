@@ -8,6 +8,7 @@ class ShipAdvisor extends ConnectionAdvisor {
 	constructor (world) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_WATER);
 		local pathFindingHelper = WaterPathFinderHelper();
+		pathFindingHelper.costTillEnd = Tile.diagonalRoadLength;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}
 }
@@ -71,8 +72,10 @@ function ShipAdvisor::GetPathInfo(report) {
 	
 	pathFinder.pathFinderHelper.startLocationIsBuildOnWater = false;
 	pathFinder.pathFinderHelper.endLocationIsBuildOnWater = false;
-	if (pathInfo == null)
+	if (pathInfo == null) {
+		ignoreTable[fromNode.GetUID(report.cargoID) + "_" + toNode.GetUID(report.cargoID)] <- null;
 		Log.logDebug("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
+	}
 	return pathInfo;
 }
 
