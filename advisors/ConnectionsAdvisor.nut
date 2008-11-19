@@ -261,9 +261,10 @@ function ConnectionAdvisor::GetReports() {
 
 function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
-	local maxDistanceConstraints = false;
-	if (vehicleType == AIVehicle.VEHICLE_ROAD || vehicleType == AIVehicle.VEHICLE_RAIL)
-		maxDistanceConstraints = true;
+	local maxDistanceConstraints = vehicleType != AIVehicle.VEHICLE_AIR;
+	local maxDistanceMultiplier = 1.25;
+	if (vehicleType == AIVehicle.VEHICLE_WATER)
+		maxDistanceMultiplier = 0.5;
 
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't
@@ -284,8 +285,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
 	
 			// Check if the nodes are not to far away (we restrict it by an extra 
-			// 32 tiles to avoid doing unnecessary work.
-			if (maxDistanceConstraints && manhattanDistance + 32 > world.max_distance_between_nodes) continue;			
+			// percentage to avoid doing unnecessary work by envoking the pathfinder
+			// where this isn't necessary.
+			if (maxDistanceConstraints && manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) continue;			
 			
 			local checkIndustry = false;
 			

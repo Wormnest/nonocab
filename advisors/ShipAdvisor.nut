@@ -35,15 +35,27 @@ function ShipAdvisor::GetPathInfo(report) {
 	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id))) {
 		producingTiles.Valuate(AITile.IsCoastTile);
 		producingTiles.KeepValue(1);
+
+		if (fromNode.nodeType == ConnectionNode.TOWN_NODE) {
+			producingTiles.Valuate(AITile.GetCargoAcceptance, report.cargoID, 1, 1, stationRadius);
+			producingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			producingTiles.KeepTop(1);
+		}
 	} else {
 		producingTiles.Valuate(AITile.IsWaterTile);
-		producingTiles.KeepValue(1);	
+		producingTiles.KeepValue(1);
 		pathFinder.pathFinderHelper.startLocationIsBuildOnWater = true;
 	}
 
 	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id))) {
 		acceptingTiles.Valuate(AITile.IsCoastTile);
 		acceptingTiles.KeepValue(1);
+
+		if (toNode.nodeType == ConnectionNode.TOWN_NODE) {
+			acceptingTiles.Valuate(AITile.GetCargoAcceptance, report.cargoID, 1, 1, stationRadius);
+			acceptingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			acceptingTiles.KeepTop(1);
+		}
 	} else {
 		acceptingTiles.Valuate(AITile.IsWaterTile);
 		acceptingTiles.KeepValue(1);	
