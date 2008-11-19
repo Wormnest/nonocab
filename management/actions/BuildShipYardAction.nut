@@ -63,7 +63,7 @@ function BuildShipYardAction::Execute() {
 		return false;
 	}
 	
-	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 2);
+	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 3);
 
 	if (pathInfo == null) {
 		connection.forceReplan = true;

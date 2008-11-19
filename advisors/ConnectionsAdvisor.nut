@@ -113,6 +113,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 	local startDate = AIDate.GetCurrentDate();
 
 	local minNrReports = GetMinNrReports(loopCounter);
+	if (loopCounter == 0 && minNrReports > reportTable.len())
+		minNrReports = reportTable.len() + 1;
 
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
