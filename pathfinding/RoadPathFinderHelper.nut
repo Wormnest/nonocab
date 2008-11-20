@@ -204,7 +204,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 	 * to go is foreward. If we fail to do so the pathfinder will try to build invalid
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
-	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.forceForward)
+	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward)
 		offsets = standardOffsets;
 	else
 		offsets = [currentAnnotatedTile.direction];
