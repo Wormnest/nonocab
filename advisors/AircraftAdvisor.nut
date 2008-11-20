@@ -9,10 +9,6 @@ class AircraftAdvisor extends ConnectionAdvisor {
 	}
 }
 
-function AircraftAdvisor::GetMinNrReports(loopCounter) {
-	return 2 * (1 + loopCounter);
-}
-
 function AircraftAdvisor::GetBuildAction(connection) {
 	return BuildAirfieldAction(connection, world, vehicleAdvisor);
 }

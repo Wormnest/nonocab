@@ -13,10 +13,6 @@ class ShipAdvisor extends ConnectionAdvisor {
 	}
 }
 
-function ShipAdvisor::GetMinNrReports(loopCounter) {
-	return 1 + loopCounter;
-}
-
 function ShipAdvisor::GetBuildAction(connection) {
 	return BuildShipYardAction(connection, world, vehicleAdvisor);
 }

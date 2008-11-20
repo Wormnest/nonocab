@@ -33,14 +33,6 @@ class ConnectionAdvisor extends Advisor {
 	function GetReports();
 
 	/**
-	 * Return the min number of reports that must be calculated before
-	 * returning control to the planner.
-	 * @loopCounter The iteration number during the same plan phase.
-	 * @return The minimal number of reports.
-	 */
-	function GetMinNrReports(loopCounter);
-
-	/**
 	 * Iterate through the industry tree and update its information.
 	 * @param industryTree An array with connectionNode instances.
 	 */
@@ -117,9 +109,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	local startDate = AIDate.GetCurrentDate();
 
-	local minNrReports = GetMinNrReports(loopCounter);
-	if (loopCounter == 0 && minNrReports > reportTable.len())
-		minNrReports = reportTable.len() + 1;
+	// Always try to get one more then currently available in the report table.
+	local minNrReports = 1 + loopCounter + reportTable.len();
 
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&

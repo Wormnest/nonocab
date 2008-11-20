@@ -13,10 +13,6 @@ class RoadConnectionAdvisor extends ConnectionAdvisor {
 	}
 }
 
-function RoadConnectionAdvisor::GetMinNrReports(loopCounter) {
-	return 5 + loopCounter;
-}
-
 function RoadConnectionAdvisor::GetBuildAction(connection) {
 	return BuildRoadAction(connection, true, true, world, vehicleAdvisor);
 }

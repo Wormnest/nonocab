@@ -5,12 +5,10 @@ class Planner {
 
 	threads = null;			// List of all threads.
 	world = null;			// The world object.
-	firstRun = null;		// True for the very first run of the planner.
 	
 	constructor(world) {
 		threads = [];
 		this.world = world;
-		firstRun = true;
 	}
 	
 	/**
@@ -46,10 +44,5 @@ function Planner::ScheduleAndExecute() {
 				haltPlanner = true;
 		}
 		loopCounter++;
-
-		if (firstRun) {
-			firstRun = false;
-			break;
-		}
 	}
 }
