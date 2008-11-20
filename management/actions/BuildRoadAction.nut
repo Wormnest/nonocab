@@ -8,18 +8,20 @@ class BuildRoadAction extends Action
 	buildRoadStations = false;	// Should we build road stations?
 	directions = null;		// A list with all directions.
 	world = null;			// The world.
+	vehicleAdvisor = null;		// The advisor to manage the road vehicles.
 	
 	/**
 	 * @param pathList A PathInfo object, the road to be build.
 	 * @buildDepot Should a depot be build?
 	 * @param buildRoadStaions Should road stations be build?
 	 */
-	constructor(connection, buildDepot, buildRoadStations, world) {
+	constructor(connection, buildDepot, buildRoadStations, world, vehicleAdv) {
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
 		this.world = world;
+		vehicleAdvisor = vehicleAdv;
 		Action.constructor();
 	}
 }
@@ -173,6 +175,7 @@ function BuildRoadAction::Execute() {
 		connection.pathInfo.build = true;
 		connection.vehicleTypes = AIVehicle.VEHICLE_ROAD;
 		connection.pathInfo.buildDate = AIDate.GetCurrentDate();
+		vehicleAdvisor.connections.push(connection);
 	}
 	
 	connection.lastChecked = AIDate.GetCurrentDate();

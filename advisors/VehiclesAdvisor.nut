@@ -9,7 +9,7 @@ class VehiclesAdvisor extends Advisor {
 	
 	constructor(world) {
 		Advisor.constructor(world);
-		connections = {};
+		connections = [];
 		reports = [];
 	}
 	
@@ -64,10 +64,6 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 
 function VehiclesAdvisor::Update(loopCounter) {
 	
-	if (loopCounter == 0) {
-		connections = [];
-		UpdateIndustryConnections(world.industry_tree);
-	}
 	reports = [];
 
 	foreach (connection in connections) {
@@ -183,7 +179,7 @@ function VehiclesAdvisor::GetReports() {
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 			
-		Log.logInfo("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 						
 		// Add the action to build the vehicles.
@@ -191,7 +187,7 @@ function VehiclesAdvisor::GetReports() {
 
 		if (report.nrRoadStations > 1) {
 			if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD)
-				actionList.push(BuildRoadAction(report.connection, false, true, world));
+				actionList.push(BuildRoadAction(report.connection, false, true, world, this));
 
 			// Don't build extra airfields (yet).
 			else if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR)
@@ -227,55 +223,11 @@ function VehiclesAdvisor::GetReports() {
 	return reportsToReturn;
 }
 
+/**
+ * We don't do any updating, the created industries are inserted directly in this class!
+ */
 function VehiclesAdvisor::UpdateIndustryConnections(industry_tree) {
 
-	// Upon initialisation we look at all possible connections in the world and try to
-	// find the most prommising once in terms of cost to build to profit ratio. We can't
-	// however get perfect information by calculating all possible routes as that will take
-	// us way to much time.
-	//
-	// Therefore we try to get an indication by taking the Manhattan distance between two
-	// industries and see what the profit would be if we would be able to build a straight
-	// road and let and vehicle operate on it.
-	//
-	// The next step would be to look at the most prommising connection nodes and do some
-	// actual pathfinding on that selection to find the best one(s).
-	local industriesToCheck = {};
-	foreach (primIndustryConnectionNode in industry_tree) {
-
-		foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
-
-			local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
-	
-			if (manhattanDistance > world.max_distance_between_nodes) continue;			
-			
-			local checkIndustry = false;
-			
-			// See if we need to add or remove some vehicles.
-			// Take a guess at the travel time and profit for each cargo type.
-			foreach (cargoID in primIndustryConnectionNode.cargoIdsProducing) {
-
-				// Check if this connection already exists.
-				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
-
-				if (connection == null || !connection.pathInfo.build)
-					continue;
-
-				if (!connection.bilateralConnection)
-					checkIndustry = true; 
-				connections.push(connection);
-			}
-			
-			if (checkIndustry) {
-				if (!industriesToCheck.rawin(secondConnectionNode))
-					industriesToCheck[secondConnectionNode] <- secondConnectionNode;
-			}
-		}
-	}
-	
-	// Also check for other connection starting from this node.
-	if (industriesToCheck.len() > 0)
-		UpdateIndustryConnections(industriesToCheck);
 }
 
 

@@ -16,11 +16,12 @@ class NoCAB extends AIController {
 		this.parlement = Parlement();
 		this.world = World();
 		
+		local vehicleAdvisor = VehiclesAdvisor(world);
 		this.advisors = [
-			VehiclesAdvisor(world),
-			RoadConnectionAdvisor(world),
-			AircraftAdvisor(world)
-			ShipAdvisor(world)
+			vehicleAdvisor,
+			RoadConnectionAdvisor(world, vehicleAdvisor),
+			AircraftAdvisor(world, vehicleAdvisor)
+			ShipAdvisor(world, vehicleAdvisor)
 		];
 		
 		planner = Planner(world);

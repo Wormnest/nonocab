@@ -4,8 +4,8 @@
  */
 class AircraftAdvisor extends ConnectionAdvisor {
 
-	constructor (world) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_AIR);
+	constructor (world, vehicleAdvisor) {
+		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_AIR, vehicleAdvisor);
 	}
 }
 
@@ -14,7 +14,7 @@ function AircraftAdvisor::GetMinNrReports(loopCounter) {
 }
 
 function AircraftAdvisor::GetBuildAction(connection) {
-	return BuildAirfieldAction(connection, world);
+	return BuildAirfieldAction(connection, world, vehicleAdvisor);
 }
 
 function AircraftAdvisor::GetPathInfo(report) {

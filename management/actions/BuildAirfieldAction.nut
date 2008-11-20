@@ -6,10 +6,12 @@ class BuildAirfieldAction extends Action {
 	world = null;				// The world.
 	static airportCosts = {};		// Table which holds the costs per airport type and the date when they were calculated.
 						// Tuple: [calculation_date, cost].
+	vehicleAdvisor = null;			// The advisor for our planes.
 	
-	constructor(connection, world) {
+	constructor(connection, world, vehicleAdv) {
 		this.connection = connection;
 		this.world = world;
+		vehicleAdvisor = vehicleAdv;
 		Action.constructor();
 	}
 }
@@ -60,6 +62,8 @@ function BuildAirfieldAction::Execute() {
 	connection.travelFromNodeStationID = AIStation.GetStationID(fromTile);
 	connection.travelToNodeStationID = AIStation.GetStationID(toTile);
 	connection.forceReplan = false;
+
+	vehicleAdvisor.connections.push(connection);
 
 	// In the case of a bilateral connection we want to make sure that
 	// we don't hinder ourselves; Place the stations not to near each

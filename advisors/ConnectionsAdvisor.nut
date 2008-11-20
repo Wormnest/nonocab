@@ -16,13 +16,15 @@ class ConnectionAdvisor extends Advisor {
 	ignoreTable = null;			// A table with all connections which should be ignored because the algorithm already found better onces!
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 	vehicleType = null;			// The type of vehicles this class advises on.
+	vehicleAdvisor = null;			// The vehicle advisor which must be updated every time a connection is build.
 		
-	constructor(world, vehType) {
+	constructor(world, vehType, vehicleAdv) {
 		Advisor.constructor(world);
 		reportTable = {};
 		ignoreTable = {};
 		connectionReports = null;
 		vehicleType = vehType;
+		vehicleAdvisor = vehicleAdv;
 	}
 	
 	/**
@@ -97,10 +99,13 @@ function ConnectionAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	
-		connectionReports = BinaryHeap();
+		if (world.worldChanged[vehicleType] || connectionReports == null) {
+			connectionReports = BinaryHeap();
 		
-		Log.logDebug("Update industry connections.");
-		UpdateIndustryConnections(world.industry_tree);
+			Log.logDebug("Update industry connections.");
+			UpdateIndustryConnections(world.industry_tree);
+			world.worldChanged[vehicleType] = false;
+		}
 	}
 
 	local currentDate = AIDate.GetCurrentDate();

@@ -5,8 +5,8 @@ class ShipAdvisor extends ConnectionAdvisor {
 
 	pathFinder = null;
 
-	constructor (world) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_WATER);
+	constructor (world, vehicleAdvisor) {
+		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_WATER, vehicleAdvisor);
 		local pathFindingHelper = WaterPathFinderHelper();
 		pathFindingHelper.costTillEnd = Tile.diagonalRoadLength;
 		pathFinder = RoadPathFinding(pathFindingHelper);
@@ -18,7 +18,7 @@ function ShipAdvisor::GetMinNrReports(loopCounter) {
 }
 
 function ShipAdvisor::GetBuildAction(connection) {
-	return BuildShipYardAction(connection, world);
+	return BuildShipYardAction(connection, world, vehicleAdvisor);
 }
 
 function ShipAdvisor::GetPathInfo(report) {
