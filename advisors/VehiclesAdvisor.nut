@@ -12,13 +12,6 @@ class VehiclesAdvisor extends Advisor {
 		connections = [];
 		reports = [];
 	}
-	
-	/**
-	 * Add a connection to the list of connections to check.
-	 * @param connection The new connection to check.
-	 * @param callingObject The object which made the call, this can't be the thread itself!!!
-	 */
-	function AddConnection(connection, callingObject);
 }
 
 /**

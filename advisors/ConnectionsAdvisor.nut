@@ -110,7 +110,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	local startDate = AIDate.GetCurrentDate();
 
 	// Always try to get one more then currently available in the report table.
-	local minNrReports = 1 + loopCounter + reportTable.len();
+	local minNrReports = 1 + reportTable.len();
 
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
@@ -260,7 +260,7 @@ function ConnectionAdvisor::GetReports() {
 function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 	local maxDistanceConstraints = vehicleType != AIVehicle.VEHICLE_AIR;
-	local maxDistanceMultiplier = 1.25;
+	local maxDistanceMultiplier = 1;
 	if (vehicleType == AIVehicle.VEHICLE_WATER)
 		maxDistanceMultiplier = 0.75;
 

@@ -52,7 +52,7 @@ function ManageVehiclesAction::Execute()
 		
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 		
-			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetEngineType(vehicleGroup.vehicleIDs[0]) == engineID) {
+			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetVehicleType(vehicleGroup.vehicleIDs[0]) == AIEngine.GetVehicleType(engineID)) {
 				foreach (vehicleID in vehicleGroup.vehicleIDs)
 					vehicleList.AddItem(vehicleID, vehicleID);
 				vehicleArray = vehicleGroup.vehicleIDs;
@@ -60,7 +60,7 @@ function ManageVehiclesAction::Execute()
 			}
 		}
 		vehicleList.Valuate(AIVehicle.GetAge);
-		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, true);
 		if (!connection.bilateralConnection) {
 			vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
 			vehicleList.RemoveAboveValue(0);
