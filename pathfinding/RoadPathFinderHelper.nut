@@ -204,7 +204,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 	 * to go is foreward. If we fail to do so the pathfinder will try to build invalid
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
-	if (currentAnnotatedTile.type == Tile.ROAD)
+	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.forceForward)
 		offsets = standardOffsets;
 	else
 		offsets = [currentAnnotatedTile.direction];
@@ -271,27 +271,11 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 		if (!isBridgeOrTunnelEntrance) {
 
 			if (!onlyRoads) {
-				foreach (bridge in GetBridges(nextTile, offset)) {
-					local length = bridge - nextTile;
-					local annotatedTile = AnnotatedTile();
-					annotatedTile.type = Tile.BRIDGE;
-					annotatedTile.direction = offset;
-					annotatedTile.tile = bridge;
-					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-					annotatedTile.distanceFromStart = costForBridge * (length < 0 ? -length : length);
-					tileArray.push(annotatedTile);
-				}
+				foreach (bridge in GetBridges(nextTile, offset))
+					tileArray.push(bridge);
 			
-				foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile)) {
-					local length = tunnel - nextTile;
-					local annotatedTile = AnnotatedTile();
-					annotatedTile.type = Tile.TUNNEL;
-					annotatedTile.direction = offset;
-					annotatedTile.tile = tunnel;
-					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-					annotatedTile.distanceFromStart = costForTunnel * (length < 0 ? -length : length);
-					tileArray.push(annotatedTile);
-				}
+				foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile))
+					tileArray.push(tunnel);
 			}
 			
 			// Besides the tunnels and bridges, we also add the tiles
@@ -332,11 +316,18 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 	if (Tile.GetSlope(startNode, direction) != 2) return [];
 	local tiles = [];
 
-	for (local i = 2; i < 20; i++) {
+	for (local i = 1; i < 20; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
-		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target)) {
-			tiles.push(target);
+		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction)) {
+
+			local annotatedTile = AnnotatedTile();
+			annotatedTile.type = Tile.BRIDGE;
+			annotatedTile.direction = direction;
+			annotatedTile.tile = target;
+			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+			annotatedTile.distanceFromStart = costForBridge * i;
+			tiles.push(annotatedTile);
 			break;
 		}
 	}
@@ -356,10 +347,31 @@ function RoadPathFinderHelper::GetTunnels(startNode, previousNode) {
 
 	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end);
 	local direction = (other_tunnel_end - startNode) / tunnel_length;
+
+	// Check if the slope at the tunnel's end is good. This means: the base
+	// of the other end isn't going to terraform which might form unsatisfiable.
+	local forceForward = false;
+	local slopeOtherEnd = AITile.GetSlope(other_tunnel_end);
+	if (direction == 1 && (slopeOtherEnd & AITile.SLOPE_SW) != 0 ||	// West
+	direction == -1 && (slopeOtherEnd & AITile.SLOPE_NE) != 0 ||	// East
+	direction == -AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_NW) != 0 ||	// North
+	direction == AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_SE) != 0)	// South
+		// Do something!
+		forceForward = true;
+		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 2 && tunnel_length < 20 && prev_tile == previousNode && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) &&  (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode)))
-		tiles.push(other_tunnel_end);
+	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction)) {
+		local annotatedTile = AnnotatedTile();
+		annotatedTile.type = Tile.TUNNEL;
+		annotatedTile.direction = direction;
+		annotatedTile.tile = other_tunnel_end;
+		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
+		annotatedTile.forceForward = forceForward;
+
+		tiles.push(annotatedTile);
+	}
 	return tiles;
 }
 

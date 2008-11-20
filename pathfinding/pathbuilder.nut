@@ -109,6 +109,8 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 			break;
 			
 		case Tile.TUNNEL:
+			if (!AITile.IsBuildable(fromTile))
+				AITile.DemolishTile(fromTile);
 			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, fromTile);
 			break;
 			
@@ -195,6 +197,10 @@ function PathBuilder::CheckError(buildResult)
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		case AIError.ERR_NOT_ENOUGH_CASH:		
+
+			AISign.BuildSign(buildResult[0], "From");
+			if (buildResult[1])
+				AISign.BuildSign(buildResult[1], "To");
 			/**
 			 * We handle these kind of errors elsewhere.
 			 */
@@ -220,25 +226,6 @@ function PathBuilder::CheckError(buildResult)
 
 function PathBuilder::RealiseConnection(buildRoadStations)
 {
-	//if (GetCostForRoad(connection.pathInfo.roadList) > Finance.GetMaxMoneyToSpend())
-	//	return false;
-	{
-	/*	local test = AITestMode();
-		local account = AIAccounting();
-		local roadList = connection.pathInfo.roadList;
-		if (!BuildPath(roadList, false))
-			return false;
-			
-		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		local len = roadList.len();
-		if (!AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true) ||
-		!AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, true))
-			return false;
-			
-		if (Finance.GetMaxMoneyToSpend() < account.GetCosts())
-			retur  false;*/
-			
-	}
 	{
 	local test = AIExecMode();
 	return BuildPath(connection.pathInfo.roadList, false);
@@ -263,7 +250,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 
 		local buildToIndex = a;
 		local direction = roadList[a].direction;
-		
+
 		if (roadList[a].type == Tile.ROAD) {
 
 			/**
@@ -298,7 +285,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 					return false;
 			}
 		} 
-		
+
 		else if (roadList[a].type == Tile.BRIDGE) {
 			if (!AIBridge.IsBridgeTile(roadList[a + 1].tile + roadList[a].direction)) {
 			

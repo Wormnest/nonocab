@@ -153,6 +153,43 @@ function BuildShipYardAction::BuildDepot(location) {
 
 	local depotLoc;
 	foreach (pos, value in docPositions) {
+
+
+		local depotX = AIMap.GetTileX(pos);
+		local depotY = AIMap.GetTileY(pos);
+		local tmpX = AIMap.GetTileX(location);
+		local tmpY = AIMap.GetTileY(location);
+			
+		// Get the shortest path and see if we can go here :).
+		local deltaX = tmpX - depotX;
+		local deltaY = tmpY - depotY;
+		local directionX = (deltaX > 0 ? -1 : 1);
+		local directionY = (deltaY > 0 ? -1 : 1);
+		local mapSizeX = AIMap.GetMapSizeX();
+
+		local foundDepotLocation = true;
+			
+		while (tmpX != depotX && tmpY != depotY) {
+			if (tmpX != depotX)
+				tmpX += directionX;
+			if (tmpY != depotY)
+				tmpY += directionY;
+				
+			local tmpTile = tmpX + mapSizeX * tmpY;
+			if (AIMarine.IsBuoyTile(tmpTile)) {
+				pos = tmpTile;
+				break;
+			}
+				 
+			if (!AITile.IsWaterTile(tmpTile)) {
+				foundDepotLocation = false;
+				break;
+			}
+		}
+
+		if (!foundDepotLocation)
+			continue;
+		
 		if (AIMarine.BuildWaterDepot(pos, true) || AIMarine.BuildWaterDepot(pos, false)) {
 			depotLoc = pos;
 			break;

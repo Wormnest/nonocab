@@ -147,4 +147,5 @@ class AnnotatedTile {
 	type = null;			// What type of infrastructure is this?
 	length = 0;				// The length of the path.
 	bridgeOrTunnelAlreadyBuild = false;	// Is the bridge or tunnel already build?
+	forceForward = false;			// Force the sucessor to go forward.
 }
