@@ -211,6 +211,10 @@ function ManageVehiclesAction::Execute()
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+							foreach (at in roadList.slice(1, -1))
+								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+						}
 						mainVehicleIDReverse = vehicleID;
 					} else {
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
@@ -222,6 +226,10 @@ function ManageVehiclesAction::Execute()
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+							foreach (at in roadList.slice(1, -1))
+								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+						}
 						mainVehicleID = vehicleID;
 					}
 				} else {
@@ -235,6 +243,10 @@ function ManageVehiclesAction::Execute()
 						roadList.reverse();
 					}
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						foreach (at in roadList.slice(1, -1))
+							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+					}
 					mainVehicleID = vehicleID;
 				}
 				

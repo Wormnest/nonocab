@@ -121,10 +121,10 @@ function WaterPathBuilder::BuildPath(roadList)
 
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
-	local buoyBuildTimeout = 10;
+	local buoyBuildTimeout = 5;
 	local newRoadList = [roadList[0]];
 
-	for(local a = roadList.len() - 2; 9 < a; a--) {
+	for(local a = roadList.len() - 2; 5 < a; a--) {
 
 		// If we recently saw / build a buoy we add an additional timeout
 		// constraint.
@@ -146,7 +146,7 @@ function WaterPathBuilder::BuildPath(roadList)
 		if (direction != currentDirection) {
 	
 			// Check if there is no buoy close to this tile.
-			local list = Tile.GetRectangle(currentTile, 20, 20);
+			local list = Tile.GetRectangle(currentTile, 10, 10);
 			list.Valuate(AIMarine.IsBuoyTile);
 			list.KeepValue(1);
 			
@@ -203,7 +203,7 @@ function WaterPathBuilder::BuildPath(roadList)
 				
 				// Buoy is found, so add a timeout.
 				if (localBuoy != null) {
-					buoyBuildTimeout = 20;
+					buoyBuildTimeout = 10;
 					continue;
 				}
 			}
