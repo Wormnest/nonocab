@@ -119,6 +119,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local bestReport = report.fromConnectionNode.bestReport;
 
 		// Check if this connection has already been checked.
 		if (connection != null && !connection.forceReplan && reportTable.rawin(connection.GetUID())) {
@@ -127,14 +128,14 @@ function ConnectionAdvisor::Update(loopCounter) {
 				continue;
 		}
 
-		if (connection != null && connection.bestReport == report)
+		if (connection != null && bestReport == report)
 			connection.forceReplan = false;
 
 		// If we haven't calculated yet what it cost to build this report, we do it now.
 		local pathInfo = GetPathInfo(report);
 		if (pathInfo == null) {
-			if (connection != null && connection.bestReport == report)
-				connection.bestReport = null;
+			if (connection != null && bestReport == report)
+				bestReport = null;
 			continue;
 		}
 
@@ -157,7 +158,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// If a connection already exists, see if it already has a report. If so we can only
 		// overwrite it if our report is better or if the original needs a rewrite.
 		// If the other is better we restore the original pathInfo and back off.
-		if (connection.bestReport && !connection.forceReplan && report.Utility() <= connection.bestReport.Utility()) {
+		if (bestReport && !connection.forceReplan && report.Utility() <= bestReport.Utility()) {
 			if (oldPathInfo)
 				connection.pathInfo = oldPathInfo;
 			continue;
@@ -188,10 +189,10 @@ function ConnectionAdvisor::Update(loopCounter) {
 			reportTable[connection.GetUID()] <- report;
 
 			// If an other report already existed, mark it as invalid.
-			if (connection.bestReport)
-				connection.bestReport.isInvalid = true;
+			if (bestReport)
+				bestReport.isInvalid = true;
 
-			connection.bestReport = report;
+			connection.travelFromNode.bestReport = report;
 			connection.forceReplan = false;
 			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
 		}
@@ -210,9 +211,16 @@ function ConnectionAdvisor::GetReports() {
 	local processedProcessingIndustries = {};
 	
 	foreach (report in reportTable) {
-	
+
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+
+		if (connection.forceReplan || report.isInvalid) {
+			// Only mark a connection as invalid if it's the same report!
+			if (connection.travelFromNode.bestReport == report)
+				connection.forceReplan = true;
+			continue;
+		}
 	
 		// Check if this industry has already been processed, if this is the
 		// case, we won't add it to the reports because we want to prevent
@@ -226,7 +234,7 @@ function ConnectionAdvisor::GetReports() {
 		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
 		if (report == null || connection.forceReplan || report.isInvalid || report.nrVehicles < 1) {
 			// Only mark a connection as invalid if it's the same report!
-			if (connection.bestReport == report)
+			if (connection.travelFromNode.bestReport == report)
 				connection.forceReplan = true;
 			continue;
 		}

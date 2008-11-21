@@ -146,7 +146,7 @@ function WaterPathBuilder::BuildPath(roadList)
 		if (direction != currentDirection) {
 	
 			// Check if there is no buoy close to this tile.
-			local list = Tile.GetRectangle(currentTile, 10, 10);
+			local list = Tile.GetRectangle(currentTile, 5, 5);
 			list.Valuate(AIMarine.IsBuoyTile);
 			list.KeepValue(1);
 			

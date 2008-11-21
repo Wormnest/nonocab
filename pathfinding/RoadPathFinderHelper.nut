@@ -316,7 +316,7 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 	if (Tile.GetSlope(startNode, direction) != 2) return [];
 	local tiles = [];
 
-	for (local i = 1; i < 20; i++) {
+	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
 		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction)) {

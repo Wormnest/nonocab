@@ -27,7 +27,6 @@ class Connection {
 	travelFromNodeStationID = null; // The station ID which is build at the producing side.
 	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
 
-	bestReport = null;		// The best report to construct this connection till now.
 	forceReplan = null;		// Force this connection to be replanned.
 	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info) {

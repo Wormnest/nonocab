@@ -18,6 +18,8 @@ class ConnectionNode
 	connections = null;                     // Running connections to other nodes.
 	isNearWater = false;			// Is this node near water?
 
+	bestReport = null;			// The best report to serve this connection node.
+
 	/**
 	 * Construct a new connection node with the given ID an type.
 	 * @param nodeType Determines whether this node is a town or industry.
