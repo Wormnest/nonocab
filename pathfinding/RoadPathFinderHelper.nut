@@ -242,14 +242,18 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 			if (type != Tile.NONE) {
 
 				local length = otherEnd - nextTile;
+				local mapSizeX = AIMap.GetMapSizeX();
 				
 				// Make sure we're heading in the same direction as the bridge or tunnel we try
 				// to connect to, else we end up with false road pieces which try to connect to the
 				// side of a bridge.
-				if (-length >= AIMap.GetMapSizeX()                 && offset == -AIMap.GetMapSizeX() ||	// North
-				     length < AIMap.GetMapSizeX() && length > 0 && offset ==  1 ||			// West
-				     length >= AIMap.GetMapSizeX() 	 	      && offset ==  AIMap.GetMapSizeX() ||	// South
-				    -length < AIMap.GetMapSizeX() && length < 0 && offset == -1) {			// East
+				if (-length >= mapSizeX && offset == -mapSizeX ||		// North
+				     length <  mapSizeX && length > 0 && offset ==  1 ||	// West
+				     length >= mapSizeX && offset ==  mapSizeX ||		// South
+				    -length <  mapSizeX && length < 0 && offset == -1) {	// East
+
+					if (length > mapSizeX || length < -mapSizeX)
+						length /= mapSizeX;
 				    
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
@@ -319,7 +323,7 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
-		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction)) {
+		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
@@ -352,16 +356,16 @@ function RoadPathFinderHelper::GetTunnels(startNode, previousNode) {
 	// of the other end isn't going to terraform which might form unsatisfiable.
 	local forceForward = false;
 	local slopeOtherEnd = AITile.GetSlope(other_tunnel_end);
-	if (direction == 1 && (slopeOtherEnd & AITile.SLOPE_SW) != 0 ||	// West
-	direction == -1 && (slopeOtherEnd & AITile.SLOPE_NE) != 0 ||	// East
-	direction == -AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_NW) != 0 ||	// North
-	direction == AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_SE) != 0)	// South
+	if (direction ==  1 && (slopeOtherEnd & AITile.SLOPE_SW) != 0 ||			// West
+	    direction == -1 && (slopeOtherEnd & AITile.SLOPE_NE) != 0 ||			// East
+	    direction == -AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_NW) != 0 ||	// North
+ 	    direction ==  AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_SE) != 0)	// South
 		// Do something!
 		forceForward = true;
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction)) {
+	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;

@@ -203,7 +203,7 @@ function WaterPathBuilder::BuildPath(roadList)
 				
 				// Buoy is found, so add a timeout.
 				if (localBuoy != null) {
-					buoyBuildTimeout = 10;
+					buoyBuildTimeout = 5;
 					continue;
 				}
 			}
@@ -213,7 +213,7 @@ function WaterPathBuilder::BuildPath(roadList)
 				AISign.BuildSign(currentTile, "ERROR");
 				return false;
 			} else
-				buoyBuildTimeout = 20;
+				buoyBuildTimeout = 5;
 
 			newRoadList.push(roadList[a + 1]);
 			currentDirection = direction;
