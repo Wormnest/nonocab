@@ -17,7 +17,8 @@ class ConnectionAdvisor extends Advisor {
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 	vehicleType = null;			// The type of vehicles this class advises on.
 	vehicleAdvisor = null;			// The vehicle advisor which must be updated every time a connection is build.
-		
+	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
+
 	constructor(world, vehType, vehicleAdv) {
 		Advisor.constructor(world);
 		reportTable = {};
@@ -74,6 +75,7 @@ class ConnectionAdvisor extends Advisor {
  */
 function ConnectionAdvisor::Update(loopCounter) {
 
+	local currentDate = AIDate.GetCurrentDate();
 	if (loopCounter == 0) {
 
 		if (!GameSettings.IsBuildable(vehicleType)) {
@@ -91,16 +93,16 @@ function ConnectionAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	
-		if (world.worldChanged[vehicleType] || connectionReports == null) {
+		if (world.worldChanged[vehicleType] || connectionReports == null || Date.GetDaysBetween(currentDate, lastConnectionUpdate) > world.DAYS_PER_YEAR) {
 			connectionReports = BinaryHeap();
 		
 			Log.logDebug("Update industry connections.");
 			UpdateIndustryConnections(world.industry_tree);
 			world.worldChanged[vehicleType] = false;
+			lastConnectionUpdate = AIDate.GetCurrentDate();
 		}
 	}
 
-	local currentDate = AIDate.GetCurrentDate();
 	if (disabled)
 		return;
 

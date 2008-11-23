@@ -80,12 +80,15 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local hasVehicles = stationDetails[2];
 
 		local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
+		local dropoffOverload = false;
 			
 		// If the other station has more vehicles, check that station.
 		if (stationOtherDetails[0] < report.nrVehicles) {
 			report.nrVehicles = stationOtherDetails[0];
 			nrVehiclesInStation = stationOtherDetails[1];
 			hasVehicles = stationOtherDetails[2];
+			if (!connection.bilateralConnection)
+				dropoffOverload = true;
 		}
 
 		// Now we check whether we need more vehicles
@@ -137,7 +140,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		} 
 		
 		// If we want to sell vehicle but the road isn't old enough, don't!
-		else if (report.nrVehicles < 0 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60)
+		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60 || dropoffOverload))
 			continue;
 
 		if ((isAir || isShip) && report.nrVehicles == -1)

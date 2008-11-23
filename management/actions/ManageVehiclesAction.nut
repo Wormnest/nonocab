@@ -167,6 +167,11 @@ function ManageVehiclesAction::Execute()
 				vehicleNumbers = 4;
 			else if (vehicleNumbers > 2)
 				vehicleNumbers = 2;
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+			if (connection.bilateralConnection && vehicleNumbers > 30)
+				vehicleNumbers = 30;
+			else if (vehicleNumbers > 15)
+				vehicleNumbers = 15;
 		}
 			
 
