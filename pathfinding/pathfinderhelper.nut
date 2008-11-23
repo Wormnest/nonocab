@@ -22,4 +22,6 @@ class PathFinderHelper {
 	 * with the given maximum speed.
 	 */
 	function GetTime(roadList, maxSpeed, forward);	
+
+	function ProcessClosedTile(tile, direction) { return false; }
 }

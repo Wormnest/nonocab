@@ -216,10 +216,11 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 			continue;
 		
 		local nextTile = currentAnnotatedTile.tile + offset;
+		local isInClosedList = false;
 
 		// Skip if this node is already processed.
 		if (closedList.rawin(nextTile))
-			continue;
+			isInClosedList = true;
 
 		// Check if we can actually build this piece of road or if the slopes render this impossible.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
@@ -275,44 +276,60 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 		if (!isBridgeOrTunnelEntrance) {
 
 			if (!onlyRoads) {
-				foreach (bridge in GetBridges(nextTile, offset))
-					tileArray.push(bridge);
-			
-				foreach (tunnel in GetTunnels(nextTile, currentAnnotatedTile.tile))
-					tileArray.push(tunnel);
+				tileArray.extend(GetBridges(nextTile, offset));
+				tileArray.extend(GetTunnels(nextTile, currentAnnotatedTile.tile));
 			}
+
+			if (!isInClosedList) {
 			
-			// Besides the tunnels and bridges, we also add the tiles
-			// adjacent to the 
-			if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
-				continue;
+				// Besides the tunnels and bridges, we also add the tiles
+				// adjacent to the 
+				if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
+					continue;
 
-			local annotatedTile = AnnotatedTile();
-			annotatedTile.type = Tile.ROAD;
-			annotatedTile.direction = offset;
-			annotatedTile.tile = nextTile;
-			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+				local annotatedTile = AnnotatedTile();
+				annotatedTile.type = Tile.ROAD;
+				annotatedTile.direction = offset;
+				annotatedTile.tile = nextTile;
+				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 
-			// Check if the road is sloped.
-			if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentAnnotatedTile.tile, annotatedTile.tile))
-				annotatedTile.distanceFromStart = costForSlope;
+				// Check if the road is sloped.
+				if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentAnnotatedTile.tile, annotatedTile.tile))
+					annotatedTile.distanceFromStart = costForSlope;
 			
-			// Check if the road makes a turn.
-			if (currentAnnotatedTile.direction != annotatedTile.direction)
-				annotatedTile.distanceFromStart += costForTurn;
-			
-			// Check if there is already a road here.
-			if (AIRoad.IsRoadTile(annotatedTile.tile))
-				annotatedTile.distanceFromStart += costForRoad;
-			else
-				annotatedTile.distanceFromStart += costForNewRoad;
+				// Check if the road makes a turn.
+				if (currentAnnotatedTile.direction != annotatedTile.direction)
+					annotatedTile.distanceFromStart += costForTurn;
+
+				// Check if there is already a road here.
+				if (AIRoad.IsRoadTile(annotatedTile.tile))
+					annotatedTile.distanceFromStart += costForRoad;
+				else
+					annotatedTile.distanceFromStart += costForNewRoad;
 
 
-			tileArray.push(annotatedTile);
+				tileArray.push(annotatedTile);
+			}
 		}
 	}
 
 	return tileArray;
+}
+
+function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
+	if (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, tile))
+		return true;
+
+	for (local i = 1; i < 30; i++) {
+		local bridge_list = AIBridgeList_Length(i);
+		local target = tile + i * direction;
+		if (!AIMap.DistanceFromEdge(target))
+			return false;
+		if (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), tile, target))
+			return true;
+	}
+
+	return false;
 }
 
 function RoadPathFinderHelper::GetBridges(startNode, direction) {
@@ -323,6 +340,9 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
+		if (!AIMap.DistanceFromEdge(target))
+			break;
+
 		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
@@ -335,7 +355,6 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 			break;
 		}
 	}
-	
 	return tiles;
 }
 	
