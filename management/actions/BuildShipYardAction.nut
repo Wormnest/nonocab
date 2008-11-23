@@ -103,8 +103,14 @@ function BuildShipYardAction::Execute() {
 
 	/* Now build some docks... */
 	connection.pathInfo.depot = BuildDepot(roadList);
-	if (connection.bilateralConnection)
+	if (connection.pathInfo.depot == null)
+		return false;
+
+	if (connection.bilateralConnection) {
 		connection.pathInfo.depotOtherEnd = BuildDepot(roadList);
+		if (connection.pathInfo.depotOtherEnd == null)
+			return false;
+	}
 
 
 	// Reconstruct road list.
@@ -149,7 +155,7 @@ function BuildShipYardAction::Execute() {
 function BuildShipYardAction::BuildDepot(roadList) {
 
 	local depotLoc;
-	for (local i = roadList.len() - 5; i > 5; i--) {
+	for (local i = roadList.len() - 3; i > 2; i--) {
 		
 		local pos = roadList[i].tile;
 		if (AIMarine.BuildWaterDepot(pos, true) || AIMarine.BuildWaterDepot(pos, false)) {

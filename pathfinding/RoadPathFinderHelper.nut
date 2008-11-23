@@ -63,7 +63,7 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	 * @param direction The direction the bridge must head.
 	 * @return An array of tile IDs of all possible end points.
 	 */
-	function GetBridges(startTile, direction);
+	function GetBridge(startTile, direction);
 	
 	/**
 	 * Search for all tunnels which can be build.
@@ -71,7 +71,7 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	 * @param direction The direction the tunnel must head.
 	 * @return An array of tile IDs of all possible end points.
 	 */	
-	function GetTunnels(startTile, direction);	
+	function GetTunnel(startTile, direction);	
 
 }
 
@@ -276,8 +276,11 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 		if (!isBridgeOrTunnelEntrance) {
 
 			if (!onlyRoads) {
-				tileArray.extend(GetBridges(nextTile, offset));
-				tileArray.extend(GetTunnels(nextTile, currentAnnotatedTile.tile));
+				local tmp;
+				if (tmp = GetBridge(nextTile, offset))
+					tileArray.push(tmp);
+				if (tmp = GetTunnel(nextTile, currentAnnotatedTile.tile))
+					tileArray.push(tmp);
 			}
 
 			if (!isInClosedList) {
@@ -332,16 +335,15 @@ function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
 	return false;
 }
 
-function RoadPathFinderHelper::GetBridges(startNode, direction) {
+function RoadPathFinderHelper::GetBridge(startNode, direction) {
 
-	if (Tile.GetSlope(startNode, direction) != 2) return [];
-	local tiles = [];
+	if (Tile.GetSlope(startNode, direction) != 2) return null;
 
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
-			break;
+			return null;
 
 		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 
@@ -351,22 +353,20 @@ function RoadPathFinderHelper::GetBridges(startNode, direction) {
 			annotatedTile.tile = target;
 			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
-			tiles.push(annotatedTile);
-			break;
+			return annotatedTile;
 		}
 	}
-	return tiles;
+	return null;
 }
 	
-function RoadPathFinderHelper::GetTunnels(startNode, previousNode) {
+function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 
 	local slope = AITile.GetSlope(startNode);
-	if (slope == AITile.SLOPE_FLAT) return [];
-	local tiles = [];
+	if (slope == AITile.SLOPE_FLAT) return null;
 	
 	/** Try to build a tunnel */
 	local other_tunnel_end = AITunnel.GetOtherTunnelEnd(startNode);
-	if (!AIMap.IsValidTile(other_tunnel_end)) return tiles;
+	if (!AIMap.IsValidTile(other_tunnel_end)) return null;
 
 	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end);
 	local direction = (other_tunnel_end - startNode) / tunnel_length;
@@ -392,10 +392,9 @@ function RoadPathFinderHelper::GetTunnels(startNode, previousNode) {
 		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = forceForward;
-
-		tiles.push(annotatedTile);
+		return annotatedTile;
 	}
-	return tiles;
+	return null;
 }
 
 function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {

@@ -78,7 +78,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 		report.nrVehicles = stationDetails[0];
 		local nrVehiclesInStation = stationDetails[1];
 		local hasVehicles = stationDetails[2];
-		local dropoffOverLoad = false;
 
 		local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
 			
@@ -87,17 +86,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			report.nrVehicles = stationOtherDetails[0];
 			nrVehiclesInStation = stationOtherDetails[1];
 			hasVehicles = stationOtherDetails[2];
-
-			if (!connection.bilateralConnection)
-				dropoffOverLoad = true;
 		}
-		
-		// If we have multiple stations we want to take this into account. Each station
-		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
-		// road stations from the number of vehicles waiting.
-		if (connection.pathInfo.nrRoadStations < nrVehiclesInStation)
-			report.nrVehicles += nrVehiclesInStation - connection.pathInfo.nrRoadStations;
-
 
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
@@ -117,13 +106,18 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR;
 		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_WATER;
 
-		if (!hasVehicles || rating < 60 || production > 100 || dropoffOverLoad) {
+		if (!hasVehicles || rating < 60 || production > 100) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
 			// cargo a vehicle can carry.
 			if (AIEngine.GetCapacity(report.engineID) * 1.5 > production && rating > 35)
 				continue;
 			
+			// If we have multiple stations we want to take this into account. Each station
+			// is allowed to have 1 vehicle waiting in them. So we subtract the number of
+			// road stations from the number of vehicles waiting.
+			report.nrVehicles += (connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
+
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
 				// We don't build an extra airport if more aircrafts are needed!
