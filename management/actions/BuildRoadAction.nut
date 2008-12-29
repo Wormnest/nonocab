@@ -148,20 +148,19 @@ function BuildRoadAction::Execute() {
 	// the AI fails :(.
 	if (isConnectionBuild) {
 		connection.pathInfo.roadList = originalRoadList;
-		connection.lastChecked = AIDate.GetCurrentDate();
-
 	// We only specify a connection as build if both the depots and the roads are build.
 	} else {
 		
-		connection.UpdateAfterBuild(AIVehicle.VEHICLE_ROAD, roadList[0].tile, roadList[len - 1].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+		connection.UpdateAfterBuild(AIVehicle.VEHICLE_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 		vehicleAdvisor.connections.push(connection);
-		/*
-		connection.pathInfo.build = true;
-		connection.vehicleTypes = AIVehicle.VEHICLE_ROAD;
-		connection.pathInfo.buildDate = AIDate.GetCurrentDate();
-		vehicleAdvisor.connections.push(connection);*/
+		
+	//	connection.pathInfo.build = true;
+	//	connection.vehicleTypes = AIVehicle.VEHICLE_ROAD;
+	//	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
+	//	vehicleAdvisor.connections.push(connection);
 	}
-	
+
+	connection.lastChecked = AIDate.GetCurrentDate();	
 	
 	
 	CallActionHandlers();
