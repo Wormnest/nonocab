@@ -124,7 +124,11 @@ function BuildShipYardAction::Execute() {
 	newRoadList.push(start);
 	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
 		start.tile = connection.travelFromNode.GetLocation();
-
+		
+	connection.UpdateAfterBuild(AIVehicle.VEHICLE_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+	vehicleAdvisor.connections.push(connection);
+	
+	/*
 	connection.pathInfo.roadList = newRoadList;
 
 	connection.pathInfo.build = true;
@@ -136,7 +140,7 @@ function BuildShipYardAction::Execute() {
 	connection.travelToNodeStationID = AIStation.GetStationID(toTile);
 	connection.forceReplan = false;
 
-	vehicleAdvisor.connections.push(connection);
+	
 
 	// In the case of a bilateral connection we want to make sure that
 	// we don't hinder ourselves; Place the stations not to near each
@@ -146,7 +150,7 @@ function BuildShipYardAction::Execute() {
 		connection.travelFromNode.AddExcludeTiles(connection.cargoID, fromTile, shipYardRadius);
 		connection.travelToNode.AddExcludeTiles(connection.cargoID, toTile, shipYardRadius);
 	}
-
+*/
 
 	CallActionHandlers();
 	return true;

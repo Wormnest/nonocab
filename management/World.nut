@@ -1,15 +1,15 @@
 /**
  * World holds the current status of the world as the AI sees it.
  */
-class World {
+class World extends EventListener {
 	static DAYS_PER_MONTH = 30.0;
 	static DAYS_PER_YEAR = 364.0;
 	static MONTHS_PER_YEAR = 12.0;
 	static MONTHS_BEFORE_AUTORENEW = 144; // 12 years
 	
 	town_list = null;			// List with all towns.
-	industry_list = null;			// List with all industries.
-	industry_table = null;			// Table with all industries.
+	industry_list = null;		// List with all industries.
+	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
@@ -30,7 +30,7 @@ class World {
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor() {
+	constructor(eventManager) {
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -65,7 +65,10 @@ class World {
 		
 		max_distance_between_nodes = 128;
 		
-		InitEvents();
+		//InitEvents();
+		eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
+		eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
+		eventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		InitCargoTransportEngineIds();
 		
 		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
@@ -111,7 +114,7 @@ class World {
  */
 function World::Update()
 {
-	UpdateEvents();
+	//UpdateEvents();
 
 	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 2) {
 		IncreaseMaxDistanceBetweenNodes();
@@ -413,60 +416,30 @@ function World::InitCargoTransportEngineIds() {
 	}
 }
 
-/**
- * Enable the event system and mark which events we want to be notified about.
- */
-function World::InitEvents() {
-	AIEventController.DisableAllEvents();
-	AIEventController.EnableEvent(AIEvent.AI_ET_ENGINE_AVAILABLE);
-	AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_OPEN);
-	AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_CLOSE);
+// Handle events:
+function ProcessNewEngineAvailableEvent(engineID) {
+	local cargoID = AIEngine.GetCargoType(engineID);
+	local vehicleType = AIEngine.GetVehicleType(engineID);
+		
+	local oldEngineID = cargoTransportEngineIds[vehicleType][cargoID];
+	if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
+		Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
+		cargoTransportEngineIds[vehicleType][cargoID] = engineID;
+	}
+}				
+
+function ProcessIndustryOpenedEvent(industryID) {
+	industry_list = AIIndustryList();
+	InsertIndustry(industryID);
+	Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
+}			
+
+function ProcessIndustryClosedEvent(industryID) {
+	industry_list = AIIndustryList();
+	RemoveIndustry(industryID);
+	Log.logInfo("Industry: " + AIIndustry.GetName(industryID) + " removed from the world!");
 }
 
-/**
- * Check all events which are waiting and handle them properly.
- */
-function World::UpdateEvents() {
-	while (AIEventController.IsEventWaiting()) {
-		local e = AIEventController.GetNextEvent();
-		switch (e.GetEventType()) {
-			
-			/**
-			 * As a new engine becomes available, consider if we want to use it.
-			 */
-			case AIEvent.AI_ET_ENGINE_AVAILABLE:
-				local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
-				local cargoID = AIEngine.GetCargoType(newEngineID);
-				local vehicleType = AIEngine.GetVehicleType(newEngineID);
-				local oldEngineID = cargoTransportEngineIds[vehicleType][cargoID];
-				
-				if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
-					Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(newEngineID));
-					cargoTransportEngineIds[vehicleType][cargoID] = newEngineID;
-				}
-				break;
-				
-			/**
-			 * Add a new industry to the industry list.
-			 */
-			case AIEvent.AI_ET_INDUSTRY_OPEN:
-				industry_list = AIIndustryList();
-				local industryID = AIEventIndustryOpen.Convert(e).GetIndustryID();
-				InsertIndustry(industryID);
-				Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
-				break;
-				
-			/**
-			 * Remove a new industry to the industry list.
-			 */
-			case AIEvent.AI_ET_INDUSTRY_CLOSE:
-				industry_list = AIIndustryList();
-				local industryID = AIEventIndustryClose.Convert(e).GetIndustryID();
-				RemoveIndustry(industryID);
-				break;
-		}
-	}
-}
 
 /**
  * Debug purposes only.

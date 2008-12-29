@@ -104,32 +104,10 @@ function BuildRoadAction::Execute() {
 	if (buildRoadStations) {
 
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
-		if (!AIRoad.IsRoadStationTile(roadList[0].tile) && !AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, isTruck, false, true)) {
-			
-			Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
-			if (isConnectionBuild)
-				connection.pathInfo.roadList = originalRoadList;
-			else
-				connection.forceReplan = true;
+		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, isTruck, isConnectionBuild) ||
+			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isTruck, isConnectionBuild))
 			return false;
-		} else if (!isConnectionBuild) {
-			connection.travelToNodeStationID = AIStation.GetStationID(roadList[0].tile);
-			assert(AIStation.GetStationID(connection.travelToNodeStationID));
-		}
 		
-		if (!AIRoad.IsRoadStationTile(roadList[len - 1].tile) && !AIRoad.BuildRoadStation(roadList[len - 1].tile, roadList[len - 2].tile, isTruck, false, isConnectionBuild)) {
-			
-			Log.logError("BuildRoadAction: Road station couldn't be build! Not handled yet!" + AIError.GetLastErrorString());
-			if (isConnectionBuild)
-				connection.pathInfo.roadList = originalRoadList;
-			else
-				connection.forceReplan = true;
-			return false;
-		} else if (!isConnectionBuild) {
-			connection.travelFromNodeStationID = AIStation.GetStationID(roadList[len - 1].tile);
-			assert(AIStation.GetStationID(connection.travelFromNodeStationID));		
-		}
-
 		connection.pathInfo.nrRoadStations++;
 
 		// In the case of a bilateral connection we want to make sure that
@@ -168,20 +146,43 @@ function BuildRoadAction::Execute() {
 	// road station with the existing one, but OpenTTD only recognices the original one!
 	// If we don't do this all vehicles which are build afterwards get wrong orders and
 	// the AI fails :(.
-	if (isConnectionBuild)
+	if (isConnectionBuild) {
 		connection.pathInfo.roadList = originalRoadList;
+		connection.lastChecked = AIDate.GetCurrentDate();
+
 	// We only specify a connection as build if both the depots and the roads are build.
-	else {
+	} else {
+		
+		connection.UpdateAfterBuild(AIVehicle.VEHICLE_ROAD, roadList[0].tile, roadList[len - 1].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+		vehicleAdvisor.connections.push(connection);
+		/*
 		connection.pathInfo.build = true;
 		connection.vehicleTypes = AIVehicle.VEHICLE_ROAD;
 		connection.pathInfo.buildDate = AIDate.GetCurrentDate();
-		vehicleAdvisor.connections.push(connection);
+		vehicleAdvisor.connections.push(connection);*/
 	}
 	
-	connection.lastChecked = AIDate.GetCurrentDate();
+	
 	
 	CallActionHandlers();
 	return true;
+}
+
+function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoadStationTile, isTruck, isConnectionBuild) {
+		if (!AIRoad.IsRoadStationTile(roadStationTile) && !AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, isTruck, false, true)) {
+			
+			Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
+			if (isConnectionBuild)
+				connection.pathInfo.roadList = originalRoadList;
+			else
+				connection.forceReplan = true;
+			return false;
+		} else if (!isConnectionBuild) {
+			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
+			assert(AIStation.GetStationID(connection.travelToNodeStationID));
+		}
+		
+		return true;
 }
 
 function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {

@@ -54,6 +54,13 @@ function BuildAirfieldAction::Execute() {
 	connection.pathInfo.depot = AIAirport.GetHangarOfAirport(fromTile);
 	connection.pathInfo.depotOtherEnd = AIAirport.GetHangarOfAirport(toTile);
 	connection.pathInfo.roadList = [end, start];
+	
+	connection.UpdateAfterBuild(AIVehicle.VEHICLE_AIR, fromTile, toTile, AIAirport.GetAirportCoverageRadius(airportType));
+	vehicleAdvisor.connections.push(connection);
+	
+	vehicleAdvisor.connections.push(connection);
+	
+	/*
 	connection.pathInfo.build = true;
 	connection.pathInfo.nrRoadStations++;
 	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
@@ -72,7 +79,7 @@ function BuildAirfieldAction::Execute() {
         	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
 		connection.travelFromNode.AddExcludeTiles(connection.cargoID, fromTile, airportRadius);
 		connection.travelToNode.AddExcludeTiles(connection.cargoID, toTile, airportRadius);
-	}
+	}*/
 
 	CallActionHandlers();
 	return true;

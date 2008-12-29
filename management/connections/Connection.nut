@@ -88,6 +88,31 @@ class Connection {
 		return ConnectionReport(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
 	}
 	
+	/**
+	 * If the connection is build this function is called to update its
+	 * internal state.
+	 */
+	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
+		pathInfo.build = true;
+		pathInfo.nrRoadStations = 1;
+		pathInfo.buildDate = AIDate.GetCurrentDate();
+		lastChecked = AIDate.GetCurrentDate();
+		vehicleTypes = vehicleType;
+		travelFromNodeStationID = AIStation.GetStationID(fromTile);
+		travelToNodeStationID = AIStation.GetStationID(toTile);
+		forceReplan = false;
+	
+		//vehicleAdvisor.connections.push(connection);
+	
+		// In the case of a bilateral connection we want to make sure that
+		// we don't hinder ourselves; Place the stations not to near each
+		// other.
+		if (bilateralConnection && connectionType == TOWN_TO_TOWN) {
+			travelFromNode.AddExcludeTiles(cargoID, fromTile, stationCoverageRadius);
+			travelToNode.AddExcludeTiles(cargoID, toTile, stationCoverageRadius);
+		}		
+	}
+	
 	
 	// Everything below this line is just a toy implementation designed to test :)
 	function GetLocationsForNewStation(atStart) {
