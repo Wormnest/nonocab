@@ -17,7 +17,8 @@ class NoCAB extends AIController {
 		parlement = Parlement();
 		eventManager = EventManager();
 		world = World(eventManager);
-		
+		GameSettings.InitGameSettings();
+
 		local vehicleAdvisor = VehiclesAdvisor(world);
 		advisors = [
 			vehicleAdvisor,
@@ -45,6 +46,11 @@ function NoCAB::Start()
 		local i = 2;
 		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
 	}
+
+	AICompany.SetAutoRenewMonths(World.MONTHS_BEFORE_AUTORENEW);
+	AICompany.SetAutoRenewStatus(true);
+
+	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	
 	// Start the threads!
 	local pathFixer = PathFixer();
@@ -55,7 +61,6 @@ function NoCAB::Start()
 	foreach (advisor in advisors) {
 		planner.AddThread(advisor);
 	}
-	
 	// Do what we have to do.
 	world.Update();
 	while(true) {

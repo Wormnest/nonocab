@@ -36,14 +36,14 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 			foreach (vehicleID in vehicleGroup.vehicleIDs) {
 				hasVehicles = true;
 
-				if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VEHICLE_AIR)
+				if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_AIR)
 					isAir = true;
 
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
 					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 15) &&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
-					AIOrder().GetOrderDestination(vehicleID, AIOrder().CURRENT_ORDER) == stationLocation) {
+					AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
 					nrVehicles--;
 					
 					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
@@ -106,8 +106,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
-		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_AIR;
-		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VEHICLE_WATER;
+		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
+		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
 
 		if (!hasVehicles || rating < 60 || production > 100) {
 
@@ -176,11 +176,11 @@ function VehiclesAdvisor::GetReports() {
 		local vehicleAction = ManageVehiclesAction();
 
 		if (report.nrRoadStations > 1) {
-			if (connection.vehicleTypes == AIVehicle.VEHICLE_ROAD)
+			if (connection.vehicleTypes == AIVehicle.VT_ROAD)
 				actionList.push(BuildRoadAction(report.connection, false, true, world, this));
 
 			// Don't build extra airfields (yet).
-			else if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR)
+			else if (connection.vehicleTypes == AIVehicle.VT_AIR)
 				continue;
 		}
 		
@@ -191,7 +191,7 @@ function VehiclesAdvisor::GetReports() {
 			// Big airplanes have a 5% chance to crash, so we want to avoid that! Also we
 			// check if an extra airport can actually be build! If not we simple obmit building
 			// more aircrafts. This will be handled better in the future.
-			if (connection.vehicleTypes == AIVehicle.VEHICLE_AIR && 
+			if (connection.vehicleTypes == AIVehicle.VT_AIR && 
 				AIEngine.GetPlaneType(report.engineID) == AIAirport.PT_BIG_PLANE &&
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))

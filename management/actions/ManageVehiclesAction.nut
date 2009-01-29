@@ -86,7 +86,7 @@ function ManageVehiclesAction::Execute()
 				}
 			} 
 
-			if (vehiclesDeleted == vehicleNumbers && AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
+			if (vehiclesDeleted == vehicleNumbers && AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
 				// Update the creation date of the connection so vehicles don't get
 				// removed twice!
 				connection.pathInfo.buildDate = AIDate.GetCurrentDate();
@@ -125,14 +125,14 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup = VehicleGroup();
 			vehicleGroup.connection = connection;
 			
-			if (vehicleType == AIVehicle.VEHICLE_ROAD) {
+			if (vehicleType == AIVehicle.VT_ROAD) {
 				vehicleGroup.timeToTravelTo = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 				vehicleGroup.timeToTravelFrom = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			} else if (vehicleType == AIVehicle.VEHICLE_AIR){ 
+			} else if (vehicleType == AIVehicle.VT_AIR){ 
 				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 				vehicleGroup.timeToTravelTo = (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
 				vehicleGroup.timeToTravelFrom = vehicleGroup.timeToTravelTo;
-			} else if (vehicleType == AIVehicle.VEHICLE_WATER) {
+			} else if (vehicleType == AIVehicle.VT_WATER) {
 				vehicleGroup.timeToTravelTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 				vehicleGroup.timeToTravelFrom = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			}
@@ -162,12 +162,12 @@ function ManageVehiclesAction::Execute()
 		}
 
 		// If we want to build aircrafts or ships, we only want to build 1 per station!
-		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER || AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER || AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
 			if (connection.bilateralConnection && vehicleNumbers > 4)
 				vehicleNumbers = 4;
 			else if (vehicleNumbers > 2)
 				vehicleNumbers = 2;
-		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_ROAD) {
 			if (connection.bilateralConnection && vehicleNumbers > 30)
 				vehicleNumbers = 30;
 			else if (vehicleNumbers > 15)
@@ -209,14 +209,14 @@ function ManageVehiclesAction::Execute()
 					if (directionToggle) {
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						// If it's a ship, give it additional orders!
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 							roadList.reverse();
 							foreach (at in roadList.slice(1, -1))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 							foreach (at in roadList.slice(1, -1))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						}
@@ -224,14 +224,14 @@ function ManageVehiclesAction::Execute()
 					} else {
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						// If it's a ship, give it additional orders!
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 							roadList.reverse();
 							foreach (at in roadList.slice(1, -1))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 							foreach (at in roadList.slice(1, -1))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						}
@@ -241,21 +241,21 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 	
 					// If it's a ship, give it additional orders!
-					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 						roadList.reverse();
 						foreach (at in roadList.slice(1, -1))
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						roadList.reverse();
 					}
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
-					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 						foreach (at in roadList.slice(1, -1))
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 					}
 					mainVehicleID = vehicleID;
 				}
 				
-				if (vehicleType == AIVehicle.VEHICLE_ROAD)
+				if (vehicleType == AIVehicle.VT_ROAD)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 			}
 

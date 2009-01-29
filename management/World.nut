@@ -71,9 +71,6 @@ class World extends EventListener {
 		eventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		InitCargoTransportEngineIds();
 		
-		AICompany.SetAutoRenewMonths(MONTHS_BEFORE_AUTORENEW);
-		AICompany.SetAutoRenewStatus(true);
-		
 		BuildIndustryTree();
 	}
 	
@@ -403,9 +400,9 @@ function World::InitCargoTransportEngineIds() {
 
 	foreach (cargo, value in cargo_list) {
 
-		local engineList = AIEngineList(AIVehicle.VEHICLE_ROAD);
-		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_AIR));
-		engineList.AddList(AIEngineList(AIVehicle.VEHICLE_WATER));
+		local engineList = AIEngineList(AIVehicle.VT_ROAD);
+		engineList.AddList(AIEngineList(AIVehicle.VT_AIR));
+		engineList.AddList(AIEngineList(AIVehicle.VT_WATER));
 		foreach (engine, value in engineList) {
 			local vehicleType = AIEngine.GetVehicleType(engine);
 			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 

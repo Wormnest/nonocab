@@ -6,7 +6,7 @@ class ShipAdvisor extends ConnectionAdvisor {
 	pathFinder = null;
 
 	constructor (world, vehicleAdvisor) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VEHICLE_WATER, vehicleAdvisor);
+		ConnectionAdvisor.constructor(world, AIVehicle.VT_WATER, vehicleAdvisor);
 		local pathFindingHelper = WaterPathFinderHelper();
 		pathFindingHelper.costTillEnd = Tile.diagonalRoadLength;
 		pathFinder = RoadPathFinding(pathFindingHelper);

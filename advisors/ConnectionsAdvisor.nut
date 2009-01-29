@@ -201,7 +201,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	}
 	
 	// If we find no other possible connections, extend our range!
-	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VEHICLE_ROAD || vehicleType == AIVehicle.VEHICLE_RAIL))
+	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL))
 		world.IncreaseMaxDistanceBetweenNodes();
 }
 
@@ -269,9 +269,9 @@ function ConnectionAdvisor::GetReports() {
 
 function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
-	local maxDistanceConstraints = vehicleType != AIVehicle.VEHICLE_AIR;
+	local maxDistanceConstraints = vehicleType != AIVehicle.VT_AIR;
 	local maxDistanceMultiplier = 1;
-	if (vehicleType == AIVehicle.VEHICLE_WATER)
+	if (vehicleType == AIVehicle.VT_WATER)
 		maxDistanceMultiplier = 0.75;
 
 	// Upon initialisation we look at all possible connections in the world and try to

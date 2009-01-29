@@ -111,7 +111,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 		case Tile.TUNNEL:
 			if (!AITile.IsBuildable(fromTile))
 				AITile.DemolishTile(fromTile);
-			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, fromTile);
+			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VT_ROAD, fromTile);
 			break;
 			
 		case Tile.BRIDGE:
@@ -128,7 +128,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 			// be straight, we have to substract a tile in the opposite direction from where the bridge is
 			// going. Because we calculated the pathlist in the other direction, the direction is in the
 			// opposite direction so we need to add it.
-			buildSucceded = AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, fromTile, toTile);
+			buildSucceded = AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, fromTile, toTile);
 			break;
 			
 		default:
@@ -352,7 +352,7 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 		if (at.type == Tile.ROAD) {
 			AIRoad.BuildRoad(at.tile, previousRoadTile);
 		} else if (at.type == Tile.TUNNEL && !AITunnel.IsTunnelTile(previousRoadTile + at.direction)) {
-			AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, previousRoadTile + at.direction);
+			AITunnel.BuildTunnel(AIVehicle.VT_ROAD, previousRoadTile + at.direction);
 		} else if (at.type == Tile.BRIDGE && !AIBridge.IsBridgeTile(previousRoadTile + at.direction)) {
 			
 
@@ -369,7 +369,7 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 					bestBridgeType = bridge;
 			}		
 		
-			AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bestBridgeType, previousRoadTile + at.direction, at.tile);
+			AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, previousRoadTile + at.direction, at.tile);
 		}
 
 		previousRoadTile = at.tile;

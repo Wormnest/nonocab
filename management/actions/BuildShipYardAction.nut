@@ -125,7 +125,7 @@ function BuildShipYardAction::Execute() {
 	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
 		start.tile = connection.travelFromNode.GetLocation();
 		
-	connection.UpdateAfterBuild(AIVehicle.VEHICLE_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+	connection.UpdateAfterBuild(AIVehicle.VT_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 	vehicleAdvisor.connections.push(connection);
 	
 	/*
@@ -135,7 +135,7 @@ function BuildShipYardAction::Execute() {
 	connection.pathInfo.nrRoadStations++;
 	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
 	connection.lastChecked = AIDate.GetCurrentDate();
-	connection.vehicleTypes = AIVehicle.VEHICLE_WATER;
+	connection.vehicleTypes = AIVehicle.VT_WATER;
 	connection.travelFromNodeStationID = AIStation.GetStationID(fromTile);
 	connection.travelToNodeStationID = AIStation.GetStationID(toTile);
 	connection.forceReplan = false;

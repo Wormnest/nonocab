@@ -2,8 +2,10 @@ class GameSettings {
 
 	static maxVehiclesLimit = array(4); 		// List with the maximum vehicles allowed in game (actual setting).
 	static maxVehiclesBuildLimit = array(4); 	// List with the maximum vehicles still buildable per vehicle type.
-	static vehicleTypes = [AIVehicle.VEHICLE_RAIL, AIVehicle.VEHICLE_ROAD, AIVehicle.VEHICLE_WATER, AIVehicle.VEHICLE_AIR];		
+	static vehicleTypes = array(4);
 	static vehicleGameSettingNames = ["vehicle.max_trains", "vehicle.max_roadveh", "vehicle.max_ships", "vehicle.max_aircraft"];	// List with the corresponding setting names.
+
+	function InitGameSettings();
 
 	/**
 	 * Update the game settings by reading the latest value from the
@@ -28,6 +30,13 @@ class GameSettings {
 	 * higher then 0!
 	 */
 	function IsBuildable(vehicleType);
+}
+
+function GameSettings::InitGameSettings() {
+	GameSettings.vehicleTypes[0] = AIVehicle.VT_RAIL;
+	GameSettings.vehicleTypes[1] = AIVehicle.VT_ROAD;
+	GameSettings.vehicleTypes[2] = AIVehicle.VT_WATER;
+	GameSettings.vehicleTypes[3] = AIVehicle.VT_AIR;
 }
 
 function GameSettings::UpdateGameSettings() {

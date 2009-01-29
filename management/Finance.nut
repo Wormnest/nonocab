@@ -23,7 +23,7 @@ class Finance {
 }
 
 function Finance::GetMaxMoneyToSpend() {
-	return AICompany.GetBankBalance(AICompany.MY_COMPANY) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount() - Finance.minimumBankReserve;
+	return AICompany.GetBankBalance(AICompany.COMPANY_SELF) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount() - Finance.minimumBankReserve;
 }
 
 function Finance::GetMaxLoan() {
@@ -34,5 +34,5 @@ function Finance::GetMaxLoan() {
 function Finance::RepayLoan() {
 	local loanMode = AIExecMode();
 	local loanInterval = AICompany.GetLoanInterval();
-	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) - loanInterval > Finance.minimumBankReserve && AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
+	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) - loanInterval > Finance.minimumBankReserve && AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
 }

@@ -1,6 +1,13 @@
 class PathFinderHelper {
 
-	emptyList = AIList();
+	emptyList = null;
+
+	/**
+	 * Reset all variables before doing pathfinding.
+	 */
+	function Reset() {
+		emptyList = AIList();
+	}
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or
@@ -23,5 +30,18 @@ class PathFinderHelper {
 	 */
 	function GetTime(roadList, maxSpeed, forward);	
 
+	/**
+	 * Sometimes we want to process tiles which are already in the closed
+	 * list. For example, bridges and tunnels can only be build if the road
+	 * which leads towards the entrence of these structures follows the same
+	 * direction. During the A* algorithm a tile can already be processed and
+	 * stored in the closed list, but if we approach the same tile from an
+	 * other direction it may be possible that a tunnel or bridge can be
+	 * build! There for this test is conducted to check if a tile in the
+	 * closed list should be processed.
+	 * @param tile The tile under inspection.
+	 * @param direction The direction the tile is going.
+	 * @return True if the tile should be processed, false otherwise.
+	 */
 	function ProcessClosedTile(tile, direction) { return false; }
 }

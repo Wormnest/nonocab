@@ -87,7 +87,7 @@ function BuildRoadAction::Execute() {
 	}	
 
 	// Build the actual road.
-	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[AIVehicle.VEHICLE_ROAD][connection.cargoID], world.pathFixer);
+	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 		if (isConnectionBuild)
@@ -151,11 +151,11 @@ function BuildRoadAction::Execute() {
 	// We only specify a connection as build if both the depots and the roads are build.
 	} else {
 		
-		connection.UpdateAfterBuild(AIVehicle.VEHICLE_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 		vehicleAdvisor.connections.push(connection);
 		
 	//	connection.pathInfo.build = true;
-	//	connection.vehicleTypes = AIVehicle.VEHICLE_ROAD;
+	//	connection.vehicleTypes = AIVehicle.VT_ROAD;
 	//	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
 	//	vehicleAdvisor.connections.push(connection);
 	}

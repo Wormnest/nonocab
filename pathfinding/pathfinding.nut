@@ -13,7 +13,7 @@ class RoadPathFinding {
 	// Utility class which helps the pathfinder to reach its goal.
 	pathFinderHelper = null;
 
-	emptyList = AIList();
+	emptyList = null;
 								
 	/**
 	 * Create a pathfinder by inserting a couple of utility functions which
@@ -24,6 +24,7 @@ class RoadPathFinding {
 	 */
 	constructor(pathFinderHelper) {
 		this.pathFinderHelper = pathFinderHelper;
+		emptyList = AIList();
 	}
 
 	/**
@@ -52,8 +53,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local y = 0;
 
 	local costTillEnd = pathFinderHelper.costTillEnd;
+	pathFinderHelper.Reset();
 
-	while (AICompany.GetBankBalance(AICompany.MY_COMPANY) < 1000)
+	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 1000)
 		AIController.Sleep(1);
 
 	// Use the helper to prune all end positions which can't be reached.

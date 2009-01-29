@@ -6,10 +6,10 @@ class EventManager {
 	 * Enable all events we're interested in.
 	 */
 	constructor() {
-		AIEventController.DisableAllEvents();
-		AIEventController.EnableEvent(AIEvent.AI_ET_ENGINE_AVAILABLE);
-		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_OPEN);
-		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_CLOSE);
+//		AIEventController.DisableAllEvents();
+//		AIEventController.EnableEvent(AIEvent.AI_ET_ENGINE_AVAILABLE);
+//		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_OPEN);
+//		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_CLOSE);
 		eventListeners = {};
 	}
 	

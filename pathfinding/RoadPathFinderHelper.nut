@@ -114,14 +114,11 @@ function RoadPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 	local newEndLocations = AIList();
-
-	if (checkEndPositions) {
-		endList.Valuate(Tile.IsBuildable);
-		endList.KeepValue(1);
-	}
 	
 	foreach (i, value in endList) {
 		if (checkEndPositions) {
+			if (!Tile.IsBuildable(i))
+				continue;
 			dummyAnnotatedTile.tile = i;
 
 			// We preprocess all end nodes to see if a road station can be build on them.
@@ -158,8 +155,8 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 		end.RemoveValue(at.tile);
 
 		// Check the remaining nodes too!
-		end.Valuate(Tile.IsBuildable);
-		end.KeepValue(1);
+//		end.Valuate(Tile.IsBuildable);
+//		end.KeepValue(1);
 		local listToRemove = AITileList();
 
 		foreach (i, value in end) {
@@ -225,7 +222,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 		// Check if we can actually build this piece of road or if the slopes render this impossible.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
-		
+
 		local isBridgeOrTunnelEntrance = false;
 		
 		// Check if we can exploit excising bridges and tunnels.
@@ -320,7 +317,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 }
 
 function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
-	if (AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, tile))
+	if (AITunnel.BuildTunnel(AIVehicle.VT_ROAD, tile))
 		return true;
 
 	for (local i = 1; i < 30; i++) {
@@ -328,7 +325,7 @@ function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
 		local target = tile + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
 			return false;
-		if (AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), tile, target))
+		if (AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), tile, target))
 			return true;
 	}
 
@@ -345,7 +342,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
 
-		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VEHICLE_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
+		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
@@ -384,7 +381,7 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VEHICLE_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
+	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;

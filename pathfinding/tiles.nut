@@ -135,7 +135,6 @@ function Tile::GetSlope(tile, direction)
 
 function Tile::IsBuildable(tile) {
 
-
 	// Check if we can actually build here!
 	local test = AITestMode();
 

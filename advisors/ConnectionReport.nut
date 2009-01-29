@@ -35,7 +35,7 @@ class ConnectionReport extends Report {
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		
-		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_ROAD) {
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_ROAD) {
 			if (connection != null && connection.pathInfo.roadList != null) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(engineID, true);
 				travelTimeFrom = connection.pathInfo.GetTravelTime(engineID, false);
@@ -47,7 +47,7 @@ class ConnectionReport extends Report {
 				travelTimeFrom = travelTimeTo;
 				initialCost = 150 * distance;
 			}
-		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_AIR) {
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
 
 			// For air connections the distance travelled is different (shorter in general)
 			// than road vehicles. A part of the tiles are traversed diagonal, we want to
@@ -87,7 +87,7 @@ class ConnectionReport extends Report {
 					
 				initialCost = costForFrom + costForTo;
 			}
-		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VEHICLE_WATER) {
+		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 
 			if (connection != null && connection.pathInfo.roadList != null) {
 				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);

@@ -9,6 +9,7 @@ class WaterPathFinderHelper extends PathFinderHelper {
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0),
 				   AIMap.GetTileIndex(1, 1), AIMap.GetTileIndex(1, -1), AIMap.GetTileIndex(-1, -1), AIMap.GetTileIndex(-1, 1)];
+		emptyList = AIList();
 	}
 
 	/**
