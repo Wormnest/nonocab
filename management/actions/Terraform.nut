@@ -26,6 +26,8 @@ class Terraform {
 
 function Terraform::Terraform(startTile, width, height) {
 	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
+	if (preferedHeight == 0)
+		preferedHeight = 1;
 	
 	// With the prefered height in hand, lets get busy!
 	// Make the first tile flat and the correct level and make the other tiles
@@ -34,7 +36,7 @@ function Terraform::Terraform(startTile, width, height) {
 	local tileHeight = AITile.GetHeight(startTile);
 	local raiseSlope = false;
 	
-	Log.logWarning("Prefered height: " + preferedHeight);
+	//AISign.BuildSign(startTile, "T");
 	
 	// Rules to lower a tile.
 	if (tileHeight > preferedHeight ||
@@ -60,6 +62,9 @@ function Terraform::Terraform(startTile, width, height) {
 		if (slopeTip != AITile.SLOPE_INVALID)		
 			AITile.LowerTile(startTile, slopeTip);
 		AITile.LowerTile(startTile, slope);
+		
+		for (local i = AITile.GetHeight(startTile); i > preferedHeight; i--)
+			AITile.LowerTile(startTile, AITile.SLOPE_FLAT);
 	}
 	
 	// Rules to make a tile higher.
@@ -93,9 +98,17 @@ function Terraform::Terraform(startTile, width, height) {
 		
 		AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
 		raiseSlope = true;
+		
+		for (local i = AITile.GetHeight(startTile); i < preferedHeight; i++)
+			AITile.RaiseTile(startTile, AITile.SLOPE_FLAT);
 	}
 	
-	AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX());
+	if (AITile.GetHeight(startTile) != preferedHeight)
+		return false;
+	
+	if (!AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX()))
+		return false;
+	return true;
 }
 
 function Terraform::CalculatePreferedHeight(startTile, width, height) {

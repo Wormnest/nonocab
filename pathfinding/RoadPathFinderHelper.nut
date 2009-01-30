@@ -155,8 +155,6 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 		end.RemoveValue(at.tile);
 
 		// Check the remaining nodes too!
-//		end.Valuate(Tile.IsBuildable);
-//		end.KeepValue(1);
 		local listToRemove = AITileList();
 
 		foreach (i, value in end) {

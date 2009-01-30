@@ -20,7 +20,6 @@ class BuildAirfieldAction extends Action {
 function BuildAirfieldAction::Execute() {
 
 	local airportType = (AIAirport.AirportAvailable(AIAirport.AT_LARGE) ? AIAirport.AT_LARGE : AIAirport.AT_SMALL);
-
 	local fromTile = this.FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false);
 	if (fromTile < 0) {
 		Log.logWarning("No spot found for the first airfield!");
@@ -35,16 +34,23 @@ function BuildAirfieldAction::Execute() {
 	}
 	
 	/* Build the airports for real */
-	if (!AIAirport.BuildAirport(fromTile, airportType, true)) {
-	        AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
+	local test = AIExecMode();
+	local airportX = AIAirport.GetAirportWidth(airportType);
+    local airportY = AIAirport.GetAirportHeight(airportType);	
+	if (!AIAirport.BuildAirport(fromTile, airportType, true) && 
+	!(Terraform.Terraform(fromTile, airportX, airportY) && AIAirport.BuildAirport(fromTile, airportType, true))) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
+	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
-	        return false;
+	    return false;
 	}
-	if (!AIAirport.BuildAirport(toTile, airportType, true)) {
-	        AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
+	if (!AIAirport.BuildAirport(toTile, airportType, true) && 
+	!(Terraform.Terraform(toTile, airportX, airportY) && AIAirport.BuildAirport(toTile, airportType, true))) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
+	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
-	        AIAirport.RemoveAirport(fromTile);
-	        return false;
+	    AIAirport.RemoveAirport(fromTile);
+	    return false;
 	}
 	
 	local start = AnnotatedTile();
@@ -68,7 +74,8 @@ function BuildAirfieldAction::Execute() {
  * @param node The connection node where the airport needs to be build.
  * @param cargoID The cargo that needs to be transported.
  * @param acceptingSide If true this side is considered as begin the accepting side of the connection.
- * @param getFirst If true ignores the exclude list and gets the first suitable spot to build an airfield.
+ * @param getFirst If true ignores the exclude list and gets the first suitable spot to build an airfield
+ * ignoring terraforming (it's only used to determine the cost of building an airport).
  * @return The tile where the airport can be build.
  */
 function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst) {
@@ -96,28 +103,36 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     list.KeepValue(1);
 
     /* Couldn't find a suitable place for this town, skip to the next */
-    if (list.Count() == 0) return;
-	local good_tile = 0;
+    if (list.Count() == 0) return -1;
+    list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+    
+	local good_tile = -1;
     /* Walk all the tiles and see if we can build the airport at all */
     {
     	local test = AITestMode();
-		local bestAcceptance = 0;
+		//local bestAcceptance = 0;
 
         for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-                if (!AIAirport.BuildAirport(tile, airportType, true)) continue;
-
-			local currentAcceptance = AITile.GetCargoAcceptance(tile, cargoID, airportX, airportY, airportRadius);
-			if (currentAcceptance > bestAcceptance) {
-	                        good_tile = tile;
-				bestAcceptance = currentAcceptance;
-			}
-	
-			if (getFirst)
-				break;
+            if (!AIAirport.BuildAirport(tile, airportType, true)) continue;
+			good_tile = tile;
+			break;
     	}
     }
-	if (good_tile == 0)
-		return -1;
+    
+    // If we cannot find a suitable location, pick the best one and
+    // resort to terraforming. However since the getfirst is only used
+    // to get
+	if (good_tile == -1) {
+		if (getFirst)
+			return -1;
+		local test = AITestMode();
+		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+			if (Terraform.Terraform(tile, airportX, airportY)) {
+				good_tile = tile;
+				break;
+			}
+		}
+	}
 	return good_tile;
 }
 
