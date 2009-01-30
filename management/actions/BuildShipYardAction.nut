@@ -127,30 +127,6 @@ function BuildShipYardAction::Execute() {
 		
 	connection.UpdateAfterBuild(AIVehicle.VT_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 	vehicleAdvisor.connections.push(connection);
-	
-	/*
-	connection.pathInfo.roadList = newRoadList;
-
-	connection.pathInfo.build = true;
-	connection.pathInfo.nrRoadStations++;
-	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
-	connection.lastChecked = AIDate.GetCurrentDate();
-	connection.vehicleTypes = AIVehicle.VT_WATER;
-	connection.travelFromNodeStationID = AIStation.GetStationID(fromTile);
-	connection.travelToNodeStationID = AIStation.GetStationID(toTile);
-	connection.forceReplan = false;
-
-	
-
-	// In the case of a bilateral connection we want to make sure that
-	// we don't hinder ourselves; Place the stations not to near each
-	// other.
-	if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
-        local shipYardRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
-		connection.travelFromNode.AddExcludeTiles(connection.cargoID, fromTile, shipYardRadius);
-		connection.travelToNode.AddExcludeTiles(connection.cargoID, toTile, shipYardRadius);
-	}
-*/
 
 	CallActionHandlers();
 	return true;

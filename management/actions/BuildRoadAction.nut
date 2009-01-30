@@ -105,8 +105,14 @@ function BuildRoadAction::Execute() {
 
 		local isTruck = !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS);
 		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, isTruck, isConnectionBuild) ||
-			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isTruck, isConnectionBuild))
+			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isTruck, isConnectionBuild)) {
+				Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
+				if (isConnectionBuild)
+					connection.pathInfo.roadList = originalRoadList;
+				else
+					connection.forceReplan = true;				
 			return false;
+		}
 		
 		connection.pathInfo.nrRoadStations++;
 
@@ -169,12 +175,6 @@ function BuildRoadAction::Execute() {
 
 function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoadStationTile, isTruck, isConnectionBuild) {
 		if (!AIRoad.IsRoadStationTile(roadStationTile) && !AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, isTruck, false, true)) {
-			
-			Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
-			if (isConnectionBuild)
-				connection.pathInfo.roadList = originalRoadList;
-			else
-				connection.forceReplan = true;
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);

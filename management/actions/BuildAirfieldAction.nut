@@ -57,29 +57,6 @@ function BuildAirfieldAction::Execute() {
 	
 	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, AIAirport.GetAirportCoverageRadius(airportType));
 	vehicleAdvisor.connections.push(connection);
-	
-	vehicleAdvisor.connections.push(connection);
-	
-	/*
-	connection.pathInfo.build = true;
-	connection.pathInfo.nrRoadStations++;
-	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
-	connection.lastChecked = AIDate.GetCurrentDate();
-	connection.vehicleTypes = AIVehicle.VT_AIR;
-	connection.travelFromNodeStationID = AIStation.GetStationID(fromTile);
-	connection.travelToNodeStationID = AIStation.GetStationID(toTile);
-	connection.forceReplan = false;
-
-	vehicleAdvisor.connections.push(connection);
-
-	// In the case of a bilateral connection we want to make sure that
-	// we don't hinder ourselves; Place the stations not to near each
-	// other.
-	if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
-        	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
-		connection.travelFromNode.AddExcludeTiles(connection.cargoID, fromTile, airportRadius);
-		connection.travelToNode.AddExcludeTiles(connection.cargoID, toTile, airportRadius);
-	}*/
 
 	CallActionHandlers();
 	return true;
@@ -95,9 +72,9 @@ function BuildAirfieldAction::Execute() {
  * @return The tile where the airport can be build.
  */
 function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst) {
-        local airportX = AIAirport.GetAirportWidth(airportType);
-        local airportY = AIAirport.GetAirportHeight(airportType);
-        local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
+    local airportX = AIAirport.GetAirportWidth(airportType);
+    local airportY = AIAirport.GetAirportHeight(airportType);
+    local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
 	local tile = node.GetLocation();
 	local excludeList;
 	if (getFirst && node.nodeType == ConnectionNode.TOWN_NODE) {
@@ -115,30 +92,30 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 		list.KeepAboveValue(30);
 	}
         
-        list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
-        list.KeepValue(1);
+    list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
+    list.KeepValue(1);
 
-        /* Couldn't find a suitable place for this town, skip to the next */
-        if (list.Count() == 0) return;
+    /* Couldn't find a suitable place for this town, skip to the next */
+    if (list.Count() == 0) return;
 	local good_tile = 0;
-        /* Walk all the tiles and see if we can build the airport at all */
-        {
-                local test = AITestMode();
+    /* Walk all the tiles and see if we can build the airport at all */
+    {
+    	local test = AITestMode();
 		local bestAcceptance = 0;
 
-                for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-                        if (!AIAirport.BuildAirport(tile, airportType, true)) continue;
+        for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+                if (!AIAirport.BuildAirport(tile, airportType, true)) continue;
 
 			local currentAcceptance = AITile.GetCargoAcceptance(tile, cargoID, airportX, airportY, airportRadius);
 			if (currentAcceptance > bestAcceptance) {
 	                        good_tile = tile;
 				bestAcceptance = currentAcceptance;
 			}
-
+	
 			if (getFirst)
 				break;
-                }
-        }
+    	}
+    }
 	if (good_tile == 0)
 		return -1;
 	return good_tile;

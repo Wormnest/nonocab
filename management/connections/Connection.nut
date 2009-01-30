@@ -101,9 +101,7 @@ class Connection {
 		travelFromNodeStationID = AIStation.GetStationID(fromTile);
 		travelToNodeStationID = AIStation.GetStationID(toTile);
 		forceReplan = false;
-	
-		//vehicleAdvisor.connections.push(connection);
-	
+
 		// In the case of a bilateral connection we want to make sure that
 		// we don't hinder ourselves; Place the stations not to near each
 		// other.
