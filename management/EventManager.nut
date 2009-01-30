@@ -6,10 +6,6 @@ class EventManager {
 	 * Enable all events we're interested in.
 	 */
 	constructor() {
-//		AIEventController.DisableAllEvents();
-//		AIEventController.EnableEvent(AIEvent.AI_ET_ENGINE_AVAILABLE);
-//		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_OPEN);
-//		AIEventController.EnableEvent(AIEvent.AI_ET_INDUSTRY_CLOSE);
 		eventListeners = {};
 	}
 	
@@ -32,9 +28,7 @@ function EventManager::AddEventListener(listener, event) {
 	if (!eventListeners.rawin("" + event))
 		eventListeners.rawset("" + event, []);
 	listeners = eventListeners.rawget("" + event);
-	
-	foreach (listener in listeners)
-		listener.push(listener);
+	listeners.push(listener);
 }
 
 /**
@@ -47,14 +41,14 @@ function EventManager::ProcessEvents() {
 		local functionCall;
 		
 		if (eventListeners.rawin("" + e.GetEventType())) {
-					
 			switch (e.GetEventType()) {
 				
 				case AIEvent.AI_ET_ENGINE_AVAILABLE:
 					local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 					
-					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
+					foreach (listener in eventListeners.rawget("" + e.GetEventType())) {
 						listener.ProcessNewEngineAvailableEvent(newEngineID);
+					}
 					break;
 					
 				case AIEvent.AI_ET_INDUSTRY_OPEN:

@@ -397,7 +397,7 @@ function World::RemoveIndustry(industryID) {
  * which can cary the most (speed * capacity).
  */
 function World::InitCargoTransportEngineIds() {
-
+	
 	foreach (cargo, value in cargo_list) {
 
 		local engineList = AIEngineList(AIVehicle.VT_ROAD);
@@ -414,24 +414,28 @@ function World::InitCargoTransportEngineIds() {
 }
 
 // Handle events:
-function ProcessNewEngineAvailableEvent(engineID) {
-	local cargoID = AIEngine.GetCargoType(engineID);
+function World::ProcessNewEngineAvailableEvent(engineID) {
 	local vehicleType = AIEngine.GetVehicleType(engineID);
+	
+	foreach (cargo, value in cargo_list) {
+		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
 		
-	local oldEngineID = cargoTransportEngineIds[vehicleType][cargoID];
-	if (AIEngine.GetMaxSpeed(newEngineID) > AIEngine.GetMaxSpeed(oldEngineID)) {
-		Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
-		cargoTransportEngineIds[vehicleType][cargoID] = engineID;
+		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo)) && 
+			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID))) {
+				
+			Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
+			cargoTransportEngineIds[vehicleType][cargo] = engineID;
+		}
 	}
 }				
 
-function ProcessIndustryOpenedEvent(industryID) {
+function World::ProcessIndustryOpenedEvent(industryID) {
 	industry_list = AIIndustryList();
 	InsertIndustry(industryID);
 	Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
 }			
 
-function ProcessIndustryClosedEvent(industryID) {
+function World::ProcessIndustryClosedEvent(industryID) {
 	industry_list = AIIndustryList();
 	RemoveIndustry(industryID);
 	Log.logInfo("Industry: " + AIIndustry.GetName(industryID) + " removed from the world!");

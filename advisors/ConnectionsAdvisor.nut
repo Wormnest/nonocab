@@ -303,6 +303,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			// Take a guess at the travel time and profit for each cargo type.
 			foreach (cargoID in primIndustryConnectionNode.cargoIdsProducing) {
 
+				// Check if this connection isn't in the ignore table.
+				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))
+					continue;
+
 				// Check if we even have an engine to transport this cargo.
 				local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
 				if (engineID == -1)
@@ -310,11 +314,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 
 				// Check if this connection already exists.
 				local connection = primIndustryConnectionNode.GetConnection(secondConnectionNode, cargoID);
-
-
-				// Check if this connection isn't in the ignore table.
-				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))
-					continue;
 
 				// Make sure we only check the accepting side for possible connections if
 				// and only if it has a connection to it.

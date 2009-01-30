@@ -84,7 +84,7 @@ function BuildRoadAction::Execute() {
 		connection.pathInfo = PathInfo(null, 0);
 		connection.forceReplan = true;
 		return false;
-	}	
+	}
 
 	// Build the actual road.
 	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
