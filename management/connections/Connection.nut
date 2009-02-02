@@ -26,14 +26,16 @@ class Connection {
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
 	travelFromNodeStationID = null; // The station ID which is build at the producing side.
 	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
+	connectionManager = null;       // Updates are send to all listeners when connection is realised, demolished or updated.
 
 	forceReplan = null;		// Force this connection to be replanned.
 	
-	constructor(cargo_id, travel_from_node, travel_to_node, path_info) {
+	constructor(cargo_id, travel_from_node, travel_to_node, path_info, connection_manager) {
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
 		travelToNode = travel_to_node;
 		pathInfo = path_info;
+		connectionManager = connection_manager;
 		forceReplan = false;
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
 		
@@ -108,7 +110,9 @@ class Connection {
 		if (bilateralConnection && connectionType == TOWN_TO_TOWN) {
 			travelFromNode.AddExcludeTiles(cargoID, fromTile, stationCoverageRadius);
 			travelToNode.AddExcludeTiles(cargoID, toTile, stationCoverageRadius);
-		}		
+		}
+		
+		connectionManager.ConnectionRealised(this);
 	}
 	
 	/**
@@ -134,6 +138,8 @@ class Connection {
 		
 		if (bilateralConnection)
 			AITile.Demolishtile(pathInfo.depotOtherEnd);
+			
+		connectionManager.ConnectionDemolished(this);
 	}
 	
 	/**

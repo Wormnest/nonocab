@@ -2,7 +2,7 @@
  * This class is responsible of maintaining already build connections by
  * advising to sell or buy vehicles.
  */
-class VehiclesAdvisor extends Advisor {
+class VehiclesAdvisor extends Advisor { //, ConnectionListener
 
 	connections = null;					// The table of connections to manage.
 	reports = null;
@@ -177,7 +177,7 @@ function VehiclesAdvisor::GetReports() {
 
 		if (report.nrRoadStations > 1) {
 			if (connection.vehicleTypes == AIVehicle.VT_ROAD)
-				actionList.push(BuildRoadAction(report.connection, false, true, world, this));
+				actionList.push(BuildRoadAction(report.connection, false, true, world));
 
 			// Don't build extra airfields (yet).
 			else if (connection.vehicleTypes == AIVehicle.VT_AIR)
@@ -220,6 +220,23 @@ function VehiclesAdvisor::UpdateIndustryConnections(industry_tree) {
 
 }
 
+// Functions related to the interface ConnectionListener.
+function VehiclesAdvisor::ConnectionRealised(connection) {
+	connections.push(connection);
+}
+
+function VehiclesAdvisor::ConnectionDemolished(connection) {
+	for (local i = 0; i < connections.len(); i++) {
+		if (connections[i] == connection) {
+			connection.remove(i);
+			break;
+		}
+	}
+}
+
+function VehiclesAdvisor::ConnectionUpdated(connection) {
+	
+}
 
 function VehiclesAdvisor::HaltPlanner() {
 	local money = Finance.GetMaxMoneyToSpend();

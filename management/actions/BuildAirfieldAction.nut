@@ -6,12 +6,10 @@ class BuildAirfieldAction extends Action {
 	world = null;				// The world.
 	static airportCosts = {};		// Table which holds the costs per airport type and the date when they were calculated.
 						// Tuple: [calculation_date, cost].
-	vehicleAdvisor = null;			// The advisor for our planes.
 	
-	constructor(connection, world, vehicleAdv) {
+	constructor(connection, world) {
 		this.connection = connection;
 		this.world = world;
-		vehicleAdvisor = vehicleAdv;
 		Action.constructor();
 	}
 }
@@ -62,7 +60,6 @@ function BuildAirfieldAction::Execute() {
 	connection.pathInfo.roadList = [end, start];
 	
 	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, AIAirport.GetAirportCoverageRadius(airportType));
-	vehicleAdvisor.connections.push(connection);
 
 	CallActionHandlers();
 	return true;

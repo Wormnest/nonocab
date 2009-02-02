@@ -390,7 +390,7 @@ function World::RemoveIndustry(industryID) {
 	}
 	
 	// Remove all connections which are already build!
-	foreach (connection in industryNode.GetConnections())
+	foreach (connection in industryNode.GetAllConnections())
 		if (connection.pathInfo.build)
 			connection.Demolish();
 		

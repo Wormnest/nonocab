@@ -8,20 +8,18 @@ class BuildRoadAction extends Action
 	buildRoadStations = false;	// Should we build road stations?
 	directions = null;		// A list with all directions.
 	world = null;			// The world.
-	vehicleAdvisor = null;		// The advisor to manage the road vehicles.
 	
 	/**
 	 * @param pathList A PathInfo object, the road to be build.
 	 * @buildDepot Should a depot be build?
 	 * @param buildRoadStaions Should road stations be build?
 	 */
-	constructor(connection, buildDepot, buildRoadStations, world, vehicleAdv) {
+	constructor(connection, buildDepot, buildRoadStations, world) {
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
 		this.world = world;
-		vehicleAdvisor = vehicleAdv;
 		Action.constructor();
 	}
 }
@@ -37,7 +35,7 @@ function BuildRoadAction::Execute() {
 
 	// If the connection is already build we will try to add additional road stations.
 	if (isConnectionBuild) {
-		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0);
+		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0, null);
 		originalRoadList = clone connection.pathInfo.roadList;
 	}
 
@@ -152,19 +150,11 @@ function BuildRoadAction::Execute() {
 	// road station with the existing one, but OpenTTD only recognices the original one!
 	// If we don't do this all vehicles which are build afterwards get wrong orders and
 	// the AI fails :(.
-	if (isConnectionBuild) {
+	if (isConnectionBuild)
 		connection.pathInfo.roadList = originalRoadList;
 	// We only specify a connection as build if both the depots and the roads are build.
-	} else {
-		
-		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
-		vehicleAdvisor.connections.push(connection);
-		
-	//	connection.pathInfo.build = true;
-	//	connection.vehicleTypes = AIVehicle.VT_ROAD;
-	//	connection.pathInfo.buildDate = AIDate.GetCurrentDate();
-	//	vehicleAdvisor.connections.push(connection);
-	}
+	else
+		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();	
 	
@@ -218,9 +208,8 @@ function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {
 					if (!AIRoad.BuildRoad(depotLocation, depotFront) || !AIRoad.BuildRoadDepot(depotLocation, depotFront)) {
 						depotLocation = null;
 						depotFront = null;
-					} else {
+					} else
 						break;
-					}
 				}
 			}
 		}

@@ -5,8 +5,8 @@ class RoadConnectionAdvisor extends ConnectionAdvisor {
 	
 	pathFinder = null;
 
-	constructor(world, vehicleAdvisor) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VT_ROAD, vehicleAdvisor);
+	constructor(world, connectionManager) {
+		ConnectionAdvisor.constructor(world, AIVehicle.VT_ROAD, connectionManager);
 		local pathFindingHelper = RoadPathFinderHelper();
 		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRoad;
 		pathFinder = RoadPathFinding(pathFindingHelper);
@@ -14,7 +14,7 @@ class RoadConnectionAdvisor extends ConnectionAdvisor {
 }
 
 function RoadConnectionAdvisor::GetBuildAction(connection) {
-	return BuildRoadAction(connection, true, true, world, vehicleAdvisor);
+	return BuildRoadAction(connection, true, true, world);
 }
 
 /**

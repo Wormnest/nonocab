@@ -16,16 +16,16 @@ class ConnectionAdvisor extends Advisor {
 	ignoreTable = null;			// A table with all connections which should be ignored because the algorithm already found better onces!
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 	vehicleType = null;			// The type of vehicles this class advises on.
-	vehicleAdvisor = null;			// The vehicle advisor which must be updated every time a connection is build.
+	connectionManager = null;           // The connection manager which handels events concerning construction and demolishing of connections.
 	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
 
-	constructor(world, vehType, vehicleAdv) {
+	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
 		reportTable = {};
 		ignoreTable = {};
 		connectionReports = null;
 		vehicleType = vehType;
-		vehicleAdvisor = vehicleAdv;
+		connectionManager = conManager;
 	}
 	
 	/**
@@ -145,7 +145,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// we must be carefull because an other report may already have clamed it.
 		local oldPathInfo;
 		if (connection == null) {
-			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo);
+			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, connectionManager);
 			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
 		} else {
 			oldPathInfo = clone connection.pathInfo;

@@ -6,12 +6,10 @@ class BuildShipYardAction extends Action {
 	world = null;				// The world.
 	static shipYardCosts = {};		// Table which holds the costs per shipYard type and the date when they were calculated.
 						// Tuple: [calculation_date, cost].
-	vehicleAdvisor = null;			// The vehicle advisor to manage our ships.
 	
-	constructor(connection, world, vehicleAdv) {
+	constructor(connection, world) {
 		this.connection = connection;
 		this.world = world;
-		vehicleAdvisor = vehicleAdv;
 		Action.constructor();
 	}
 }
@@ -126,7 +124,6 @@ function BuildShipYardAction::Execute() {
 		start.tile = connection.travelFromNode.GetLocation();
 		
 	connection.UpdateAfterBuild(AIVehicle.VT_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
-	vehicleAdvisor.connections.push(connection);
 
 	CallActionHandlers();
 	return true;

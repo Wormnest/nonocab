@@ -81,6 +81,14 @@ function ConnectionNode::GetConnections(cargoID) {
 }
 
 /**
+ * Return the array of all connections.
+ * @return The array with connections which transport the given cargoID.
+ */
+function ConnectionNode::GetAllConnections() {
+	return connections;
+}
+
+/**
  * Get the unique name of this connectionNode which is used for a connection
  * to this node with a certain cargoID.
  * @param cargoID The cargo ID which is transported to this connection node.
