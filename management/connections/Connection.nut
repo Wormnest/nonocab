@@ -111,6 +111,65 @@ class Connection {
 		}		
 	}
 	
+	/**
+	 * Destroy this connection.
+	 */
+	function Demolish() {
+		if (!pathInfo.build)
+			return;
+		AITile.DemolishTile(pathInfo.depot);
+		local startTileList = AIList();
+		local startStation = pathInfo.roadList[0].tile;
+		local endTileList = AIList();
+		local endStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
+		
+		startTileList.Add(startStation, startStation);
+		DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
+
+		startTileList.Add(endStation, endStation);
+		DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
+
+		AITile.Demolishtile(pathInfo.roadList[0].tile);
+		AITile.Demolishtile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
+		
+		if (bilateralConnection)
+			AITile.Demolishtile(pathInfo.depotOtherEnd);
+	}
+	
+	/**
+	 * Utility function to destroy all road stations which are related.
+	 * @param tileList A list of tiles which must be removed.
+	 * @param stationName The name of stations to be removed.
+	 * @param excludeList A list of stations already explored.
+	 */
+	function DemolishStations(tileList, stationName, excludeList) {
+		if (stationList.Count() == 0)
+			return;
+ 
+		local tile = tileList.remove(0);
+		local currentStationID = AIStation.GetStationID(tile);
+		foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
+			if (excludeList.HasItem(surroundingTile)) continue;
+
+			local stationID = AIStation.GetStationID(surroundingTile);
+
+			if (AIStation.IsValidStation(stationID)) {
+				excludeList.AddItem(surroundingTile, surroundingTile);
+
+				// Only explore this possibility if the station has the same name!
+				if (AIStation.GetName(stationID) != stationName)
+					continue;
+				AITile.DemolishTile(tile);
+
+				DemolishStations(surroundingTile, stationName, excludeList);
+				continue;
+			}
+
+			if (!tileList.HasItem(surroundingTile))
+				tileList.AddItem(surroundingTile, surroundingTile);
+		}
+	}
+	
 	
 	// Everything below this line is just a toy implementation designed to test :)
 	function GetLocationsForNewStation(atStart) {

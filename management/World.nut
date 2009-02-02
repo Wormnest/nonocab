@@ -338,6 +338,7 @@ function World::RemoveIndustry(industryID) {
 	
 	if (!industry_table.rawin(industryID)) {
 		Log.logWarning("Industry removed which wasn't in our tree!");
+		return;
 	}
 	
 	local industryNode = industry_table.rawget(industryID);
@@ -351,9 +352,7 @@ function World::RemoveIndustry(industryID) {
 				break;
 			}
 		}
-	}
-	
-	foreach (cargo in industryNode.cargoIdsAccepting) {
+
 		for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
 			local acceptingIndustryNode = industryCacheAccepting[cargo][i];
 			if (acceptingIndustryNode.id == industryNode.id) {
@@ -376,14 +375,25 @@ function World::RemoveIndustry(industryID) {
 	// Now we need to remove this industry from all industry nodes which produces
 	// cargo this industry used to accept.
 	foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
+		// Remove all connections which are already build!
+		foreach (connection in producingIndustryNode.GetConnections())
+			if (connection.pathInfo.build && connection.travelFromNode == producingIndustryNode)
+				connection.Demolish();		
+		
 		for (local i = 0; i < producingIndustryNode.connectionNodeList.len(); i++) {
 			if (producingIndustryNode.connectionNodeList[i].nodeType == industryNode.nodeType &&
-				producingIndustryNode.connectionNodeList[i].id == industryNode.id) {
+				producingIndustryNode.connectionNodeList[i].id == industryNode.id) {					
 					producingIndustryNode.connectionNodeList.remove(i);
 					break;
 			}
 		}
 	}
+	
+	// Remove all connections which are already build!
+	foreach (connection in industryNode.GetConnections())
+		if (connection.pathInfo.build)
+			connection.Demolish();
+		
 
 	for (local i = 0; i < 4; i++)
 		worldChanged[i] = true;
