@@ -110,6 +110,9 @@ class ConnectionReport extends Report {
 				
 				initialCost += costForFrom + costForTo;
 			}
+		} else {
+			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(engineID));
+			assert(false);
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
 

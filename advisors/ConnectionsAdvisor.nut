@@ -34,12 +34,6 @@ class ConnectionAdvisor extends Advisor {
 	function GetReports();
 
 	/**
-	 * Iterate through the industry tree and update its information.
-	 * @param industryTree An array with connectionNode instances.
-	 */
-	function UpdateIndustryConnections(industryTree);
-
-	/**
 	 * Return an action instance which builds the actual connection. This
 	 * method will be used in the GetReports function.
 	 * @param connection The connection which needs to be build.
@@ -121,6 +115,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		
 		local bestReport = report.fromConnectionNode.bestReport;
 
 		// Check if this connection has already been checked.

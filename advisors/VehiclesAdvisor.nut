@@ -61,9 +61,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 	foreach (connection in connections) {
 
-		// If the road isn't build we can't micro manage, move on!		
-		if (!connection.pathInfo.build) 
-			continue;
+		// If the road isn't build we can't micro manage, move on!
+		if (!connection.pathInfo.build) {
+			Log.logWarning(connection.travelToNode.GetName());
+			Log.logWarning(connection.travelFromNode.GetName());
+			quit();
+		}
 
 		// Make sure we don't update a connection to often!
 		local currentDate = AIDate.GetCurrentDate();
@@ -213,15 +216,9 @@ function VehiclesAdvisor::GetReports() {
 	return reportsToReturn;
 }
 
-/**
- * We don't do any updating, the created industries are inserted directly in this class!
- */
-function VehiclesAdvisor::UpdateIndustryConnections(industry_tree) {
-
-}
-
 // Functions related to the interface ConnectionListener.
 function VehiclesAdvisor::ConnectionRealised(connection) {
+	assert(connection.pathInfo.build);
 	connections.push(connection);
 }
 
@@ -232,10 +229,6 @@ function VehiclesAdvisor::ConnectionDemolished(connection) {
 			break;
 		}
 	}
-}
-
-function VehiclesAdvisor::ConnectionUpdated(connection) {
-	
 }
 
 function VehiclesAdvisor::HaltPlanner() {

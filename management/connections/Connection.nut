@@ -127,10 +127,10 @@ class Connection {
 		local endTileList = AIList();
 		local endStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
 		
-		startTileList.Add(startStation, startStation);
+		startTileList.AddItem(startStation, startStation);
 		DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
 
-		startTileList.Add(endStation, endStation);
+		endTileList.AddItem(endStation, endStation);
 		DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
 
 		AITile.Demolishtile(pathInfo.roadList[0].tile);
@@ -149,31 +149,38 @@ class Connection {
 	 * @param excludeList A list of stations already explored.
 	 */
 	function DemolishStations(tileList, stationName, excludeList) {
-		if (stationList.Count() == 0)
+		if (tileList.Count() == 0)
 			return;
  
-		local tile = tileList.remove(0);
-		local currentStationID = AIStation.GetStationID(tile);
-		foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
-			if (excludeList.HasItem(surroundingTile)) continue;
-
-			local stationID = AIStation.GetStationID(surroundingTile);
-
-			if (AIStation.IsValidStation(stationID)) {
+ 		local newTileList = AIList();
+ 		local tile = tileList.Begin();
+ 		while (true) {
+ 			local currentStationID = AIStation.GetStationID(tile);
+			foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
+				if (excludeList.HasItem(surroundingTile)) continue;
 				excludeList.AddItem(surroundingTile, surroundingTile);
+	
+				local stationID = AIStation.GetStationID(surroundingTile);
+	
+				if (AIStation.IsValidStation(stationID)) {
 
-				// Only explore this possibility if the station has the same name!
-				if (AIStation.GetName(stationID) != stationName)
-					continue;
-				AITile.DemolishTile(tile);
-
-				DemolishStations(surroundingTile, stationName, excludeList);
-				continue;
+					// Only explore this possibility if the station has the same name!
+					if (AIStation.GetName(stationID) != stationName)
+						continue;
+					AITile.DemolishTile(tile);
+				}
+	
+				if (!newTileList.HasItem(surroundingTile))
+					newTileList.AddItem(surroundingTile, surroundingTile);
 			}
-
-			if (!tileList.HasItem(surroundingTile))
-				tileList.AddItem(surroundingTile, surroundingTile);
-		}
+			
+			DemolishStations(newTileList, stationName, excludeList);
+			
+			if (tileList.HasNext()) 
+				tile = tileList.Next();
+			else
+				break;
+ 		}
 	}
 	
 	

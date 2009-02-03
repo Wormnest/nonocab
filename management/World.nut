@@ -376,7 +376,7 @@ function World::RemoveIndustry(industryID) {
 	// cargo this industry used to accept.
 	foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
 		// Remove all connections which are already build!
-		foreach (connection in producingIndustryNode.GetConnections())
+		foreach (connection in producingIndustryNode.GetAllConnections())
 			if (connection.pathInfo.build && connection.travelFromNode == producingIndustryNode)
 				connection.Demolish();		
 		
