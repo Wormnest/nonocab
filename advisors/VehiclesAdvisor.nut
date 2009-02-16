@@ -65,7 +65,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (!connection.pathInfo.build) {
 			Log.logWarning(connection.travelToNode.GetName());
 			Log.logWarning(connection.travelFromNode.GetName());
-			quit();
+			assert(false);
 		}
 
 		// Make sure we don't update a connection to often!

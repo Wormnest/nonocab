@@ -90,15 +90,17 @@ function UpdateConnectionAdvisor::GetReports() {
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		local oldConnection = report.oldReport.fromConnectionNode.GetConnection(report.oldReport.toConnectionNode, report.oldReport.cargoID);
-		connection.pathInfo.depot = oldConnection.pathInfo.depot;
-		connection.pathInfo.depotOtherEnd = oldConnection.pathInfo.depotOtherEnd;
+		//connection.pathInfo.depot = oldConnection.pathInfo.depot;
+		//connection.pathInfo.depotOtherEnd = oldConnection.pathInfo.depotOtherEnd;
 			
 		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 		
+		assert(oldConnection.pathInfo.build);
+		
 		// Fix report.
-		actionList.push(BuildRoadAction(connection, false, true, world));
-		actionList.push(TransferVehicles(oldConnection, connection));
+		actionList.push(BuildRoadAction(connection, true, true, world));
+		actionList.push(TransferVehicles(world, oldConnection, connection));
 		actionList.push(DemolishAction(oldConnection, world, false, true, false));
 		report.actions = actionList;
 

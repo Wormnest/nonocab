@@ -2,8 +2,11 @@ class TransferVehicles extends Action {
 
 	oldConnection = null;
 	newConnection = null;
+	world = null;
 	
-	constructor(oldConnection, newConnection) {
+	constructor(world, oldConnection, newConnection) {
+		Action.constructor();
+		this.world = world;
 		this.oldConnection = oldConnection;
 		this.newConnection = newConnection;
 	}
@@ -12,7 +15,32 @@ class TransferVehicles extends Action {
 	 * Find all vehicles off the old connection and issue new orders!
 	 */
 	function Execute() {
-		
+		// Check if there is a possibility to transfer vehicles from the
+		// start of the old connection to the start of the new connection.
+		/*if (oldConnection.vehicleTypes == newConnection.vehicleTypes &&
+		oldConnection.vehicleTypes == AIVehicle.VT_ROAD) {
+			local helper = RoadPathFinderHelper();
+			local pathFinder = RoadPathFinding(helper);
+			
+			local startList = AIList();
+			local roadList = oldConnection.pathInfo.roadList;
+			startList.AddItem(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 1].tile);
+			
+			local endList = AIList();
+			endList.AddItem(roadList[0].tile, roadList[0].tile);
+			local pathInfo = pathFinder.FindFastestRoad(startList, endList, false, false, null, 100);
+			
+			if (pathInfo == null) {
+				Log.logError("No path found to connect the two pieces!");
+			}
+			
+			// Construct this path!
+			local dummyConnection = Connection(oldConnection.cargoID, oldConnection.travelFromNode, oldConnection.travelToNode, pathInfo, null);
+			local builder = PathBuilder(dummyConnection, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][newConnection.cargoID], world.pathFixer);
+			builder.RealiseConnection(false);
+		}*/
+
+		local test = AIExecMode();
 		foreach (group in oldConnection.vehiclesOperating) {
 
 			// Use a 'main' vehicle to enable the sharing of orders.

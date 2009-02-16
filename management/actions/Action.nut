@@ -5,8 +5,7 @@ class Action
 	/**
 	 * Constructor with the world.
 	 */
-	constructor()
-	{ 
+	constructor() { 
 		actionHandlers = [];
 	}
 
