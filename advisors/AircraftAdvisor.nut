@@ -4,8 +4,8 @@
  */
 class AircraftAdvisor extends ConnectionAdvisor {
 
-	constructor (world, connectionManager) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VT_AIR, connectionManager);
+	constructor (world, connectionManager, eventManager) {
+		ConnectionAdvisor.constructor(world, AIVehicle.VT_AIR, connectionManager, eventManager);
 	}
 }
 

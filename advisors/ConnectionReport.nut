@@ -8,6 +8,8 @@ class ConnectionReport extends Report {
 	cargoID = 0;			// The cargo to transport.
 	
 	nrRoadStations = 0;		// The number of road stations which need to be build on each side.
+	
+	oldReport = null;
 
 	/**
 	 * Construct a connection report.

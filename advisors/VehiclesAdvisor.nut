@@ -171,7 +171,11 @@ function VehiclesAdvisor::GetReports() {
 	
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
-			
+		
+		// If the connection was termintated in the mean time, drop the report.
+		if (!connection.pathInfo.build)
+			continue;
+		
 		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 						
@@ -225,7 +229,7 @@ function VehiclesAdvisor::ConnectionRealised(connection) {
 function VehiclesAdvisor::ConnectionDemolished(connection) {
 	for (local i = 0; i < connections.len(); i++) {
 		if (connections[i] == connection) {
-			connection.remove(i);
+			connections.remove(i);
 			break;
 		}
 	}

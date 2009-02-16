@@ -10,7 +10,7 @@ import("queue.binary_heap", "BinaryHeap", 1);
  * Iron ore        -> Steel           }-> Goods  -> Town
  * Livestock                          }
  */
-class ConnectionAdvisor extends Advisor {
+class ConnectionAdvisor extends Advisor { // EventListener
 
 	reportTable = null;			// The table where all good reports are stored in.
 	ignoreTable = null;			// A table with all connections which should be ignored because the algorithm already found better onces!
@@ -19,13 +19,18 @@ class ConnectionAdvisor extends Advisor {
 	connectionManager = null;           // The connection manager which handels events concerning construction and demolishing of connections.
 	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
 
-	constructor(world, vehType, conManager) {
+	constructor(world, vehType, conManager, eventManager) {
 		Advisor.constructor(world);
 		reportTable = {};
 		ignoreTable = {};
 		connectionReports = null;
 		vehicleType = vehType;
 		connectionManager = conManager;
+	
+		if (eventManager != null) {
+			eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
+			eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
+		}
 	}
 	
 	/**
@@ -63,6 +68,23 @@ class ConnectionAdvisor extends Advisor {
 	function UpdateIndustryConnections(industry_tree);
 }
 
+function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
+	// Remove all related reports from the report table.
+	foreach (report in reportTable) {
+		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.fromConnectionNode == industryID ||
+			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.toConnectionNode == industryID)
+			report.isInvalid = true;
+	}
+	
+	//world.worldChanged[vehicleType] = true;
+}
+
+function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
+	//world.worldChanged[vehicleType] = true;
+}
+
 /**
  * Construct a report by finding the largest subset of buildable infrastructure given
  * the amount of money available to us, which in turn yields the largest income.
@@ -94,6 +116,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 			UpdateIndustryConnections(world.industry_tree);
 			world.worldChanged[vehicleType] = false;
 			lastConnectionUpdate = AIDate.GetCurrentDate();
+			Log.logDebug("Done...");
 		}
 	}
 

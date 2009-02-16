@@ -33,7 +33,7 @@ function Parlement::ExecuteReports() {
 		
 			// Break if one of the action fails!
 			if (!action.Execute()) {
-				Log.logWarning("Execution of raport halted!");
+				Log.logWarning("Execution of raport: " + report.ToString() + " halted!");
 				break;
 			}
 		}

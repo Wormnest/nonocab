@@ -75,13 +75,13 @@ function BuildShipYardAction::Execute() {
 	local fromTile = roadList[roadList.len() - 1].tile;
 
 	/* Build the shipYards for real */
-	if (!(connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)) && !AIMarine.BuildDock(fromTile, true) && !AIMarine.BuildDock(fromTile, false)) {
+	if (!(connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)) && !AIMarine.BuildDock(fromTile, AIStation.STATION_NEW)) {
 		AILog.Error("Although the testing told us we could build 2 shipYards, it still failed on the first shipYard at tile " + AIError.GetLastErrorString());
 		connection.forceReplan = true;
 		return false;
 	}
 
-	if (!(connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id)) && !AIMarine.BuildDock(toTile, true) && !AIMarine.BuildDock(toTile, false)) {
+	if (!(connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id)) && !AIMarine.BuildDock(toTile, AIStation.STATION_NEW)) {
 		AILog.Error("Although the testing told us we could build 2 shipYards, it still failed on the second shipYard at tile." + AIError.GetLastErrorString());
 		connection.forceReplan = true;
 		AIMarine.RemoveDock(fromTile);
@@ -131,14 +131,19 @@ function BuildShipYardAction::Execute() {
 
 function BuildShipYardAction::BuildDepot(roadList) {
 
-	local depotLoc;
+	local depotLoc = null;
 	for (local i = roadList.len() - 3; i > 2; i--) {
 		
 		local pos = roadList[i].tile;
-		if (AIMarine.BuildWaterDepot(pos, true) || AIMarine.BuildWaterDepot(pos, false)) {
-			depotLoc = pos;
-			break;
+		foreach (tile in Tile.GetTilesAround(pos, false)) {
+			if (AIMarine.BuildWaterDepot(pos, tile)) {
+				depotLoc = pos;
+				break;
+			}
 		}
+		
+		if (depotLoc)
+			break;
 	}
 
 	if (!depotLoc) {
@@ -178,7 +183,7 @@ function BuildShipYardAction::FindSuitableShipYardSpot(node, cargoID, acceptingS
         local test = AITestMode();
 
         for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-            if (!AIMarine.BuildDock(tile, true) && !AIMarine.BuildDock(tile, false)) continue;
+            if (!AIMarine.BuildDock(tile, AIStation.STATION_NEW)) continue;
 	        good_tile = tile;
 			break;
 	    }

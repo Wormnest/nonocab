@@ -74,12 +74,13 @@ class Connection {
 			if (connection.cargoID == cargoID) {
 				
 				// This shouldn't happen!
-				if (connection.pathInfo == null)
-					continue;
+				assert (connection.pathInfo);
+				//if (connection.pathInfo == null)
+				//	continue;
 				
 				// We don't want multiple connections use the same source unless it is a bilateral connection! (need rewrite..)
-				if (!connection.bilateralConnection && connection.pathInfo.build && connection.travelToNode != travelToNode)
-					return null;
+				//if (!connection.bilateralConnection && connection.pathInfo.build && connection.travelToNode != travelToNode)
+				//	return null;
 					
 				foreach (vehicleGroup in connection.vehiclesOperating) {
 					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
@@ -118,27 +119,32 @@ class Connection {
 	/**
 	 * Destroy this connection.
 	 */
-	function Demolish() {
+	function Demolish(destroyFrom, destroyTo, destroyDepots) {
 		if (!pathInfo.build)
-			return;
-		AITile.DemolishTile(pathInfo.depot);
+			assert(false);
+		
 		local startTileList = AIList();
-		local startStation = pathInfo.roadList[0].tile;
+		local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
 		local endTileList = AIList();
-		local endStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
+		local endStation = pathInfo.roadList[0].tile;
 		
-		startTileList.AddItem(startStation, startStation);
-		DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
-
-		endTileList.AddItem(endStation, endStation);
-		DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
-
-		AITile.Demolishtile(pathInfo.roadList[0].tile);
-		AITile.Demolishtile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
+		if (destroyFrom) {
+			startTileList.AddItem(startStation, startStation);
+			DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
+			AITile.DemolishTile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
+		}
 		
-		if (bilateralConnection)
-			AITile.Demolishtile(pathInfo.depotOtherEnd);
-			
+		if (destroyTo) {
+			endTileList.AddItem(endStation, endStation);
+			DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
+			AITile.DemolishTile(pathInfo.roadList[0].tile);
+		}
+		
+		if (destroyDepots) {
+			AITile.DemolishTile(pathInfo.depot);
+			if (bilateralConnection)
+				AITile.DemolishTile(pathInfo.depotOtherEnd);
+		}
 		connectionManager.ConnectionDemolished(this);
 	}
 	
@@ -168,18 +174,22 @@ class Connection {
 					if (AIStation.GetName(stationID) != stationName)
 						continue;
 					AITile.DemolishTile(tile);
-				}
-	
-				if (!newTileList.HasItem(surroundingTile))
-					newTileList.AddItem(surroundingTile, surroundingTile);
+					
+					if (!newTileList.HasItem(surroundingTile))
+						newTileList.AddItem(surroundingTile, surroundingTile);
+				}			
 			}
 			
 			DemolishStations(newTileList, stationName, excludeList);
 			
-			if (tileList.HasNext()) 
+			tile = null;
+			while (tileList.HasNext()) {
 				tile = tileList.Next();
-			else
-				break;
+				if (!excludeList.HasItem(tile))
+					break;
+			}
+			if (tile == null)
+				return;
  		}
 	}
 	

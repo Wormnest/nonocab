@@ -270,11 +270,11 @@ function World::InsertIndustry(industryID) {
 
 
 		local canHandleCargo = false;
-		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetProduction(industryID, cargo) != -1;
+		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetLastMonthProduction(industryID, cargo) != -1;
 		if (isBilateral)
 			hasBilateral = true;
 
-		if (AIIndustry.GetProduction(industryID, cargo) != -1) {	
+		if (AIIndustry.GetLastMonthProduction(industryID, cargo) != -1) {	
 			canHandleCargo = true;
 			// Save production information.
 			industryNode.cargoIdsProducing.push(cargo);
@@ -411,6 +411,8 @@ function World::InitCargoTransportEngineIds() {
 	foreach (cargo, value in cargo_list) {
 
 		local engineList = AIEngineList(AIVehicle.VT_ROAD);
+		engineList.Valuate(AIEngine.GetRoadType);
+		engineList.KeepValue(AIRoad.ROADTYPE_ROAD);
 		engineList.AddList(AIEngineList(AIVehicle.VT_AIR));
 		engineList.AddList(AIEngineList(AIVehicle.VT_WATER));
 		foreach (engine, value in engineList) {
@@ -426,6 +428,10 @@ function World::InitCargoTransportEngineIds() {
 // Handle events:
 function World::ProcessNewEngineAvailableEvent(engineID) {
 	local vehicleType = AIEngine.GetVehicleType(engineID);
+	
+	// We skip trams for now.
+	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) == AIRoad.ROADTYPE_ROAD)
+		return;
 	
 	foreach (cargo, value in cargo_list) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];

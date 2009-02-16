@@ -22,15 +22,15 @@ class NoCAB extends AIController {
 		local connectionManager = ConnectionManager();
 
 		local vehicleAdvisor = VehiclesAdvisor(world);
-//		local updateAdvisor = UpdateConnectionAdvisor(world);
+		local updateAdvisor = UpdateConnectionAdvisor(world, connectionManager);
 		connectionManager.AddConnectionListener(vehicleAdvisor);
-//		connectionManager.AddConnectionListener(updateAdvisor);
+		connectionManager.AddConnectionListener(updateAdvisor);
 		advisors = [
 			vehicleAdvisor,
-			RoadConnectionAdvisor(world, connectionManager),
-			AircraftAdvisor(world, connectionManager),
-			ShipAdvisor(world, connectionManager),
-			//updateAdvisor
+			RoadConnectionAdvisor(world, connectionManager, eventManager),
+			AircraftAdvisor(world, connectionManager, eventManager),
+			ShipAdvisor(world, connectionManager, eventManager),
+			updateAdvisor
 		];
 		
 		planner = Planner(world);

@@ -376,8 +376,8 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 	}
 
 	// Including 2 road stations.
-	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, true, false, true);
-	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, true, false, true);
+	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
 
 
 	return accounting.GetCosts();		// Automatic memory management will kill accounting and testmode! :)

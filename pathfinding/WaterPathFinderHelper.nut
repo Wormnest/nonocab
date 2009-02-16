@@ -87,7 +87,7 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 	foreach (i, value in tileList) {
 	
 		local slope = AITile.GetSlope(i);
-		if (slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NE && slope != AITile.SLOPE_SE || !AIMarine.BuildDock(i, true) && !AIMarine.BuildDock(i, false) || AIMarine.IsDockTile(i))
+		if (slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NE && slope != AITile.SLOPE_SE || !AIMarine.BuildDock(i, AIStation.STATION_NEW) || AIMarine.IsDockTile(i))
 			continue;
 
 		local annotatedTile = AnnotatedTile();
@@ -173,7 +173,7 @@ function WaterPathFinderHelper::CheckGoalState(at, end, checkEndPositions, close
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (endLocationIsBuildOnWater || !AIMarine.BuildDock(at.tile, true) && !AIMarine.BuildDock(at.tile, false))) {
+	if (checkEndPositions && (endLocationIsBuildOnWater || !AIMarine.BuildDock(at.tile, AIStation.STATION_NEW))) {
 
 		at.tile = at.tile - at.direction;
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
