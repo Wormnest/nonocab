@@ -18,7 +18,8 @@ class ConnectionNode
 	connections = null;                     // Running connections to other nodes.
 	isNearWater = false;			// Is this node near water?
 
-	bestReport = null;			// The best report to serve this connection node.
+	bestReports = null;			// The best report to serve this connection node.
+	activeConnections = null;	// The connection which serves this connection node.
 
 	/**
 	 * Construct a new connection node with the given ID an type.
@@ -30,9 +31,11 @@ class ConnectionNode
 		this.id = id;
 		cargoIdsProducing = [];
 		cargoIdsAccepting = [];
+		activeConnections = [];
 		connectionNodeList = [];
 		connectionNodeListReversed = [];
 		connections = {};
+		bestReports = [];
 	}
 
 	/**
@@ -88,6 +91,19 @@ function ConnectionNode::GetConnections(cargoID) {
  */
 function ConnectionNode::GetAllConnections() {
 	return connections;
+}
+
+/**
+ * Return the best report for a certain cargo type.
+ * @param cargoID The cargo ID of which we want the best report from.
+ * @return The best report transporting the given cargo ID. Null if no
+ * report is found.
+ */
+function ConnectionNode::GetBestReport(cargoID) {
+	foreach (report in bestReports)
+		if (report.cargoID == cargoID)
+			return report;
+	return null;
 }
 
 /**

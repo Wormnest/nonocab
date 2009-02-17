@@ -104,6 +104,8 @@ class Connection {
 			travelToNode.AddExcludeTiles(cargoID, toTile, stationCoverageRadius);
 		}
 		
+		travelFromNode.activeConnections.push(this);
+		
 		connectionManager.ConnectionRealised(this);
 	}
 	
@@ -141,6 +143,11 @@ class Connection {
 			if (bilateralConnection)
 				AITile.DemolishTile(pathInfo.depotOtherEnd);
 		}
+		
+		for (local i = 0; i < activeConnections.len(); i++)
+			if (activeConnections[i] == this)
+				activeConnections.remove(i);
+		
 		connectionManager.ConnectionDemolished(this);
 	}
 	

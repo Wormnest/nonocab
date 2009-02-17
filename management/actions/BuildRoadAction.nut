@@ -102,8 +102,8 @@ function BuildRoadAction::Execute() {
 	if (buildRoadStations) {
 
 		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK; 
-		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild) ||
-			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, roadVehicleType, isConnectionBuild)) {
+		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
+			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, roadVehicleType, isConnectionBuild, isConnectionBuild)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
 				if (isConnectionBuild)
 					connection.pathInfo.roadList = originalRoadList;
@@ -161,8 +161,9 @@ function BuildRoadAction::Execute() {
 	return true;
 }
 
-function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoadStationTile, roadVehicleType, isConnectionBuild) {
-		if (!AIRoad.IsRoadStationTile(roadStationTile) && !AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, AIStation.STATION_JOIN_ADJACENT)) {
+function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoadStationTile, roadVehicleType, isConnectionBuild, joinAdjacentStations) {
+		if (!AIRoad.IsRoadStationTile(roadStationTile) && 
+			!AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);

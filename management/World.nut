@@ -257,7 +257,7 @@ function World::InsertIndustry(industryID) {
 	if (!industry_table.rawin(industryID))
 		industry_table[industryID] <- industryNode;
 	else
-		return;
+		assert(false);
 
 	local hasBilateral = false;
 
@@ -285,6 +285,17 @@ function World::InsertIndustry(industryID) {
 			// Check for accepting industries for these products.
 			foreach (cachedIndustry in industryCacheAccepting[cargo]) {
 	
+				// Make sure we don't add industires double!
+				local skip = false;
+				foreach (node in industryNode.connectionNodeList) {
+					if (node == cachedIndustry) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
+					
 				industryNode.connectionNodeList.push(cachedIndustry);
 				if (!isBilateral)
 					cachedIndustry.connectionNodeListReversed.push(industryNode);
@@ -302,6 +313,18 @@ function World::InsertIndustry(industryID) {
 			// Check if there are producing plants which this industry accepts.
 			if (!isBilateral) {
 				foreach (cachedIndustry in industryCacheProducing[cargo]) {
+					
+					// Make sure we don't add industires double!
+					local skip = false;
+					foreach (node in industryNode.connectionNodeListReversed) {
+						if (node == cachedIndustry) {
+							skip = true;
+							break;
+						}
+					}
+					if (skip)
+						continue;
+										
 					cachedIndustry.connectionNodeList.push(industryNode);
 					industryNode.connectionNodeListReversed.push(cachedIndustry);
 				}
@@ -325,8 +348,8 @@ function World::InsertIndustry(industryID) {
 	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
 		industry_tree.push(industryNode);
 
-	for (local i = 0; i < 4; i++)
-		worldChanged[i] = true;
+	//for (local i = 0; i < 4; i++)
+	//	worldChanged[i] = true;
 }
 
 /**
@@ -395,8 +418,8 @@ function World::RemoveIndustry(industryID) {
 			connection.Demolish(true, true, true);
 		
 
-	for (local i = 0; i < 4; i++)
-		worldChanged[i] = true;
+	//for (local i = 0; i < 4; i++)
+	//	worldChanged[i] = true;
 }
 
 /**
@@ -430,7 +453,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 	local vehicleType = AIEngine.GetVehicleType(engineID);
 	
 	// We skip trams for now.
-	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) == AIRoad.ROADTYPE_ROAD)
+	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
 		return;
 	
 	foreach (cargo, value in cargo_list) {
