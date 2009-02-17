@@ -135,13 +135,13 @@ function UpdateConnectionAdvisor::GetReports() {
 
 // Functions related to the interface ConnectionListener.
 function UpdateConnectionAdvisor::ConnectionRealised(connection) {
-	for (local i = 0; i < connections.len(); i++)
-		if (connections[i] == connection)
-			assert(false);
+//	for (local i = 0; i < connections.len(); i++)
+//		if (connections[i] == connection)
+//			assert(false);
 	connections.push(connection);
-	assert(connection.pathInfo.build);
+//	assert(connection.pathInfo.build);
 	
-	Log.logWarning("[UC] Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
+//	Log.logWarning("[UC] Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 }
 
 function UpdateConnectionAdvisor::ConnectionDemolished(connection) {
@@ -152,9 +152,10 @@ function UpdateConnectionAdvisor::ConnectionDemolished(connection) {
 		}
 	}
 	
-	for (local i = 0; i < connections.len(); i++)
+/*	for (local i = 0; i < connections.len(); i++)
 		if (connections[i] == connection)
 			assert(false);
 	
 	Log.logWarning("[UC] Removed: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
+	*/
 }

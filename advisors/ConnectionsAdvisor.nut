@@ -139,7 +139,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
-			assert(false);
+			continue;
+//			assert(false);
 			
 		local bestReport = report.fromConnectionNode.bestReport;
 
@@ -236,8 +237,8 @@ function ConnectionAdvisor::GetReports() {
 
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
-		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
-			assert(false);
+//		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
+//			assert(false);
 
 		if (connection.forceReplan || report.isInvalid) {
 			// Only mark a connection as invalid if it's the same report!

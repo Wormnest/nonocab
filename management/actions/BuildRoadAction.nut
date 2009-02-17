@@ -157,7 +157,6 @@ function BuildRoadAction::Execute() {
 		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();
-	assert(connection.pathInfo.build);
 	CallActionHandlers();
 	return true;
 }
@@ -167,7 +166,6 @@ function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoa
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
-			assert(AIStation.GetStationID(connection.travelToNodeStationID));
 		}
 		
 		return true;

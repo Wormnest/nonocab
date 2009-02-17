@@ -492,9 +492,6 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 		} else {
 			carry = -tileLength;
 		}
-
-		assert (carry >= 0);
-
 		lastDirection = currentDirection;
 
 	}

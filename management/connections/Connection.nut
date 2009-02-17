@@ -72,15 +72,6 @@ class Connection {
 		local cargoAlreadyTransported = 0;
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
-				
-				// This shouldn't happen!
-				assert (connection.pathInfo);
-				//if (connection.pathInfo == null)
-				//	continue;
-				
-				// We don't want multiple connections use the same source unless it is a bilateral connection! (need rewrite..)
-				//if (!connection.bilateralConnection && connection.pathInfo.build && connection.travelToNode != travelToNode)
-				//	return null;
 					
 				foreach (vehicleGroup in connection.vehiclesOperating) {
 					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
@@ -122,8 +113,6 @@ class Connection {
 	function Demolish(destroyFrom, destroyTo, destroyDepots) {
 		if (!pathInfo.build)
 			assert(false);
-		
-		
 		
 		if (destroyFrom) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
