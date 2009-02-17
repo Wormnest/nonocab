@@ -5,7 +5,7 @@
  * - Updating to newer engines.
  * - Etc.
  */
-class UpdateConnectionAdvisor extends Advisor/*, ConnectionListener */ {
+class UpgradeConnectionAdvisor extends Advisor/*, ConnectionListener */ {
 	
 	connections = null;					// The table of connections to manage.
 	reports = null;
@@ -20,7 +20,7 @@ class UpdateConnectionAdvisor extends Advisor/*, ConnectionListener */ {
 }
 
 // TODO: Subtract the utility of the removed connection.
-function UpdateConnectionAdvisor::Update(loopCounter) {
+function UpgradeConnectionAdvisor::Update(loopCounter) {
 	
 	reports = [];
 
@@ -89,7 +89,7 @@ function UpdateConnectionAdvisor::Update(loopCounter) {
  * Construct a report by finding the largest subset of buildable infrastructure given
  * the amount of money available to us, which in turn yields the largest income.
  */
-function UpdateConnectionAdvisor::GetReports() {
+function UpgradeConnectionAdvisor::GetReports() {
 	
 	local reportsToReturn = [];
 	local report;
@@ -134,7 +134,7 @@ function UpdateConnectionAdvisor::GetReports() {
 }
 
 // Functions related to the interface ConnectionListener.
-function UpdateConnectionAdvisor::ConnectionRealised(connection) {
+function UpgradeConnectionAdvisor::ConnectionRealised(connection) {
 //	for (local i = 0; i < connections.len(); i++)
 //		if (connections[i] == connection)
 //			assert(false);
@@ -144,7 +144,7 @@ function UpdateConnectionAdvisor::ConnectionRealised(connection) {
 //	Log.logWarning("[UC] Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 }
 
-function UpdateConnectionAdvisor::ConnectionDemolished(connection) {
+function UpgradeConnectionAdvisor::ConnectionDemolished(connection) {
 	for (local i = 0; i < connections.len(); i++) {
 		if (connections[i] == connection) {
 			connections.remove(i);

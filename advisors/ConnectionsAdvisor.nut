@@ -263,7 +263,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 				bestReport.isInvalid = true;
 
 			//connection.travelFromNode.bestReport = report;
-			bestReport = report;
+			connection.travelFromNode.AddBestReport(report);
+			//bestReport = report;
 			connection.forceReplan = false;
 			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
 		}
