@@ -178,14 +178,14 @@ function ConnectionAdvisor::Update(loopCounter) {
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
-		
+
+		// Check if the report is flagged invalid or already build in the mean time.		
 		if (report.isInvalid)
 			continue;
 
-		// Check if we already know the path or need to calculate it.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
-			assert(false);
+			continue;
 		
 		Log.logDebug("Considder: " + report.ToString());
 			
@@ -253,7 +253,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 				local originalReport = reportTable.rawget(connection.GetUID());
 				ignoreTable[originalReport.fromConnectionNode.GetUID(originalReport.cargoID) + "_" + originalReport.toConnectionNode.GetUID(originalReport.cargoID)] <- null;
 				Log.logDebug("Replace: " + report.Utility() + " > " + originalReport.Utility());
-				reportTable.rawdelete(connection.GetUID());
+				//reportTable.rawdelete(connection.GetUID());
 			}
 			
 			reportTable[connection.GetUID()] <- report;
@@ -264,7 +264,6 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 			//connection.travelFromNode.bestReport = report;
 			connection.travelFromNode.AddBestReport(report);
-			//bestReport = report;
 			connection.forceReplan = false;
 			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
 		}
@@ -355,15 +354,15 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
 	local industriesToCheck = {};
-	foreach (primIndustryConnectionNode in industry_tree) {
+	foreach (fromConnectionNode in industry_tree) {
 
 		// See if we need to add or remove some vehicles.
 		// Take a guess at the travel time and profit for each cargo type.
-		foreach (cargoID in primIndustryConnectionNode.cargoIdsProducing) {
+		foreach (cargoID in fromConnectionNode.cargoIdsProducing) {
 
 			// Make sure we don't serve any industry twice!
 			local skip = false;
-			foreach (activeConnection in primIndustryConnectionNode.activeConnections) {
+			foreach (activeConnection in fromConnectionNode.activeConnections) {
 				if (activeConnection.cargoID == cargoID) {
 					if (!activeConnection.bilateralConnection)
 						industriesToCheck[activeConnection.travelToNode] <- activeConnection.travelToNode;
@@ -375,8 +374,8 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 			if (skip)
 				continue;
 
-			foreach (secondConnectionNode in primIndustryConnectionNode.connectionNodeList) {
-				local manhattanDistance = AIMap.DistanceManhattan(primIndustryConnectionNode.GetLocation(), secondConnectionNode.GetLocation());
+			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
+				local manhattanDistance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
 		
 				// Check if the nodes are not to far away (we restrict it by an extra 
 				// percentage to avoid doing unnecessary work by envoking the pathfinder
@@ -384,16 +383,16 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				if (maxDistanceConstraints && manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) continue;			
 				
 				// Check if this connection isn't in the ignore table.
-				if (ignoreTable.rawin(primIndustryConnectionNode.GetUID(cargoID) + "_" + secondConnectionNode.GetUID(cargoID)))
+				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
 					continue;
 
 				// Check if we even have an engine to transport this cargo.
 				local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
 				if (engineID == -1)
-					continue;
+					continue;				
 
 				// Check if the connection is actually profitable.
-				local report = ConnectionReport(world, primIndustryConnectionNode, secondConnectionNode, cargoID, engineID, 0);
+				local report = ConnectionReport(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
 				if (report.Utility() > 0)
 					connectionReports.Insert(report, -report.Utility());
 			}
