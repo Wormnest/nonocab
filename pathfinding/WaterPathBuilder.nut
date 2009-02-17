@@ -4,14 +4,14 @@
  */
 class WaterPathBuilder {
 
-	connection = null;
+	roadList = null;
 	
 	/**
 	 * @param connection The connection to be realised.
 	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(connection) {
-		this.connection = connection;
+	constructor(roadList) {
+		this.roadList = roadList;
 	}
 
 	/**
@@ -103,7 +103,7 @@ function WaterPathBuilder::RealiseConnection()
 {
 	{
 	local test = AIExecMode();
-	return BuildPath(connection.pathInfo.roadList);
+	return BuildPath(roadList);
 	}
 }
 

@@ -8,9 +8,9 @@ class BuildAirfieldAction extends Action {
 						// Tuple: [calculation_date, cost].
 	
 	constructor(connection, world) {
+		Action.constructor();
 		this.connection = connection;
 		this.world = world;
-		Action.constructor();
 	}
 }
 

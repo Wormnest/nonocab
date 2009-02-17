@@ -123,20 +123,27 @@ class Connection {
 		if (!pathInfo.build)
 			assert(false);
 		
-		local startTileList = AIList();
-		local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
-		local endTileList = AIList();
-		local endStation = pathInfo.roadList[0].tile;
+		
 		
 		if (destroyFrom) {
-			startTileList.AddItem(startStation, startStation);
-			DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
+			if (vehicleTypes == AIVehicle.VT_ROAD) {
+				local startTileList = AIList();
+				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
+
+				startTileList.AddItem(startStation, startStation);
+				DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
+			}
 			AITile.DemolishTile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
 		}
 		
 		if (destroyTo) {
-			endTileList.AddItem(endStation, endStation);
-			DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
+			if (vehicleTypes == AIVehicle.VT_ROAD) {
+				local endTileList = AIList();
+				local endStation = pathInfo.roadList[0].tile;
+
+				endTileList.AddItem(endStation, endStation);
+				DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
+			}
 			AITile.DemolishTile(pathInfo.roadList[0].tile);
 		}
 		

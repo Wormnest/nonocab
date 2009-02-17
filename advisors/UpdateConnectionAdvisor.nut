@@ -33,8 +33,8 @@ function UpdateConnectionAdvisor::Update(loopCounter) {
 		}
 		
 		// Only consider road connections at this moment (remove later).
-		if (connection.vehicleTypes != AIVehicle.VT_ROAD)
-			continue;
+		//if (connection.vehicleTypes != AIVehicle.VT_ROAD)
+		//	continue;
 			
 		local originalReport = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID]);
 		local bestReport = null;
@@ -43,9 +43,12 @@ function UpdateConnectionAdvisor::Update(loopCounter) {
 		// Now check for alternative options and select the best one.
 		foreach (endNode in startNode.connectionNodeList) {
 			
-			// We don't want to reevaluate the exising connection.
-			if (endNode == connection.travelToNode)
-				continue;
+			// We don't want to reevaluate the exising connection, unless we
+			// can buy better vehicles :).
+//			if (endNode == connection.travelToNode) {
+//				if (connection.
+//				continue;
+//			}
 			
 			local report = ConnectionReport(world, startNode, endNode, connection.cargoID, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], 0);
 			
@@ -67,8 +70,14 @@ function UpdateConnectionAdvisor::Update(loopCounter) {
 		if (existingConnection == null) {
 			existingConnection = Connection(bestReport.cargoID, bestReport.fromConnectionNode, bestReport.toConnectionNode, pathInfo, connectionManager);
 			bestReport.fromConnectionNode.AddConnection(bestReport.toConnectionNode, existingConnection);
-		} else
+		} else {
+			
+			// In case of towns, the connection might already have been made,
+			// ignore this!
+			if (existingConnection.pathInfo.build)
+				continue;
 			existingConnection.pathInfo = pathInfo;
+		}
 		bestReport.oldReport = originalReport;
 		bestReport.connection = existingConnection;
 		reports.push(bestReport);
@@ -96,12 +105,25 @@ function UpdateConnectionAdvisor::GetReports() {
 		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
 		
-		assert(oldConnection.pathInfo.build);
+		if (connection != oldConnection) {
+			// Create a new connection and destroy the old one.
+			actionList.push(BuildRoadAction(connection, true, true, world));
+			actionList.push(TransferVehicles(world, oldConnection, connection));
+			actionList.push(DemolishAction(oldConnection, world, false, true, false));
+		} else {
+			// If old connection is the same, we want to update the vehicles!
+			foreach (group in connection.vehiclesOperating) {
+				local vehicleAction = ManageVehiclesAction();
+				vehicleAction.SellVehicles(group.engineID, group.vehicleIDs.len(), connection);
+				actionList.push(vehicleAction);
+			}
+			
+			// Now, buy enough new vehicles.
+			local vehicleAction = ManageVehiclesAction();
+			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
+			actionList.push(vehicleAction);
+		}
 		
-		// Fix report.
-		actionList.push(BuildRoadAction(connection, true, true, world));
-		actionList.push(TransferVehicles(world, oldConnection, connection));
-		actionList.push(DemolishAction(oldConnection, world, false, true, false));
 		report.actions = actionList;
 
 		// Create a report and store it!
@@ -119,7 +141,7 @@ function UpdateConnectionAdvisor::ConnectionRealised(connection) {
 	connections.push(connection);
 	assert(connection.pathInfo.build);
 	
-	Log.logWarning("Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
+	Log.logWarning("[UC] Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 }
 
 function UpdateConnectionAdvisor::ConnectionDemolished(connection) {
@@ -130,5 +152,9 @@ function UpdateConnectionAdvisor::ConnectionDemolished(connection) {
 		}
 	}
 	
-	Log.logWarning("Removed: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
+	for (local i = 0; i < connections.len(); i++)
+		if (connections[i] == connection)
+			assert(false);
+	
+	Log.logWarning("[UC] Removed: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 }

@@ -88,7 +88,7 @@ function BuildShipYardAction::Execute() {
 		return false;
 	}
 
-	local waterBuilder = WaterPathBuilder(connection);
+	local waterBuilder = WaterPathBuilder(connection.pathInfo.roadList);
 	if (!waterBuilder.RealiseConnection()) {
 		AILog.Error("Couldn't build the water way!");
 		return false;

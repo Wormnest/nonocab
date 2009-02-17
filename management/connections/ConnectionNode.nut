@@ -51,6 +51,8 @@ class ConnectionNode
  * Add a new connection from this industry to one of its children.
  */
 function ConnectionNode::AddConnection(connectionNode, connection) {
+	if (connections.rawin(connectionNode.GetUID(connection.cargoID)))
+		assert(false);
 	connections[connectionNode.GetUID(connection.cargoID)] <- connection;
 }
 

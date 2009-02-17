@@ -85,7 +85,7 @@ function BuildRoadAction::Execute() {
 	}
 
 	// Build the actual road.
-	local pathBuilder = PathBuilder(connection, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
+	local pathBuilder = PathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 		if (isConnectionBuild)

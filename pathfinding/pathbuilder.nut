@@ -3,17 +3,17 @@
  */
 class PathBuilder {
 
-	connection = null;
 	maxSpeed = null;
 	pathFixer = null;
+	roadList = null;
 	
 	/**
 	 * @param connection The connection to be realised.
 	 * @param maxSpeed The max speed of the vehicles which are going to use this connection.
 	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(connection, maxSpeed, pathFixer) {
-		this.connection = connection;
+	constructor(roadList, maxSpeed, pathFixer) {
+		this.roadList = roadList;
 		this.maxSpeed = maxSpeed;
 		this.pathFixer = pathFixer;
 	}
@@ -181,8 +181,8 @@ function PathBuilder::CheckError(buildResult)
 			// We make a special exception for the very first and last piece of the road,
 			// these are critical because without these we will be unable to build road
 			// stations!
-			if (buildResult[0] == connection.pathInfo.roadList[0].tile || buildResult[0] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile ||
-			buildResult[1] == connection.pathInfo.roadList[0].tile || buildResult[1] == connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile)
+			if (buildResult[0] == roadList[0].tile || buildResult[0] == roadList[roadList.len() - 1].tile ||
+			buildResult[1] == roadList[0].tile || buildResult[1] == roadList[roadList.len() - 1].tile)
 				return false;
 			pathFixer.AddBuildPieceToFix(buildResult);
 			return true;
@@ -228,7 +228,7 @@ function PathBuilder::RealiseConnection(buildRoadStations)
 {
 	{
 	local test = AIExecMode();
-	return BuildPath(connection.pathInfo.roadList, false);
+	return BuildPath(roadList, false);
 	}
 }
 
