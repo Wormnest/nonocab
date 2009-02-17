@@ -78,11 +78,11 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 			report.isInvalid = true;
 	}
 	
-	//world.worldChanged[vehicleType] = true;
+	world.worldChanged[vehicleType] = true;
 }
 
 function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
-	//world.worldChanged[vehicleType] = true;
+	world.worldChanged[vehicleType] = true;
 }
 
 /**

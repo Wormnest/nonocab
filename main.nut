@@ -30,7 +30,7 @@ class NoCAB extends AIController {
 			RoadConnectionAdvisor(world, connectionManager, eventManager),
 			AircraftAdvisor(world, connectionManager, eventManager),
 			ShipAdvisor(world, connectionManager, eventManager),
-			updateAdvisor
+			//updateAdvisor
 		];
 		
 		planner = Planner(world);
