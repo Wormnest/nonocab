@@ -14,6 +14,10 @@ function AircraftAdvisor::GetBuildAction(connection) {
 }
 
 function AircraftAdvisor::GetPathInfo(report) {
+	
+	// We don't do mail! :X
+	if (AICargo.HasCargoClass(report.cargoID, AICargo.CC_MAIL))
+		return null;
 	return PathInfo(null, 0);
 }
 

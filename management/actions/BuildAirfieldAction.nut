@@ -88,7 +88,9 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 	}
 
 	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
-
+    list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
+    list.KeepValue(1);
+    
 	if (getFirst) {
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
 			node.excludeList = excludeList;
@@ -101,9 +103,6 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 			list.KeepAboveValue(0);
 		}
 	}
-
-    list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
-    list.KeepValue(1);
     
     /* Couldn't find a suitable place for this town, skip to the next */
     if (list.Count() == 0) return -1;
@@ -113,7 +112,6 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     /* Walk all the tiles and see if we can build the airport at all */
     {
     	local test = AITestMode();
-		//local bestAcceptance = 0;
 
         for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
             if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW)) continue;
@@ -124,7 +122,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     
     // If we cannot find a suitable location, pick the best one and
     // resort to terraforming. However since the getfirst is only used
-    // to get
+    // to get the netto cost of building an airport we return a failure.
 	if (good_tile == -1) {
 		if (getFirst)
 			return -1;
