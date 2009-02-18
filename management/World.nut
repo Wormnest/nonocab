@@ -405,9 +405,18 @@ function World::RemoveIndustry(industryID) {
 	}
 	
 	// Remove all connections which are already build!
-	foreach (connection in industryNode.GetAllConnections())
-		if (connection.pathInfo.build)
-			connection.Demolish(true, true, true);
+	foreach (connection in industryNode.GetAllConnections()) {
+		if (connection.pathInfo.build) {
+			// If there are more connections dropping cargo off at
+			// the end destination, we don't destroy those road stations!
+			local demolishDestinationRoadStations = true;
+			if (connection.vehicleTypes == AIVehicle.VT_ROAD && 
+				connection.travelToNode.reverseActiveConnections.len() > 1)
+				demolishDestinationRoadStations = false;
+
+			connection.Demolish(true, demolishDestinationRoadStations, true);
+		}
+	}
 			
 	industry_table.rawdelete(industryID);
 }

@@ -19,7 +19,8 @@ class ConnectionNode
 	isNearWater = false;			// Is this node near water?
 
 	bestReports = null;			// The best report to serve this connection node.
-	activeConnections = null;	// The connection which serves this connection node.
+	activeConnections = null;	// The connections which serves this connection node.
+	reverseActiveConnections = null;	// The connections this connection node is served by.
 
 	/**
 	 * Construct a new connection node with the given ID an type.
@@ -32,6 +33,7 @@ class ConnectionNode
 		cargoIdsProducing = [];
 		cargoIdsAccepting = [];
 		activeConnections = [];
+		reverseActiveConnections = [];
 		connectionNodeList = [];
 		connectionNodeListReversed = [];
 		connections = {};

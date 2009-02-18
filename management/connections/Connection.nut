@@ -105,6 +105,7 @@ class Connection {
 		}
 		
 		travelFromNode.activeConnections.push(this);
+		travelToNode.reverseActiveConnections.push(this);
 		
 		connectionManager.ConnectionRealised(this);
 	}
@@ -131,7 +132,7 @@ class Connection {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
 				local startTileList = AIList();
 				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
-
+				
 				startTileList.AddItem(startStation, startStation);
 				DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
 			}
@@ -142,7 +143,7 @@ class Connection {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
 				local endTileList = AIList();
 				local endStation = pathInfo.roadList[0].tile;
-
+				
 				endTileList.AddItem(endStation, endStation);
 				DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
 			}
@@ -155,9 +156,21 @@ class Connection {
 				AITile.DemolishTile(pathInfo.depotOtherEnd);
 		}
 		
-		for (local i = 0; i < travelFromNode.activeConnections.len(); i++)
-			if (travelFromNode.activeConnections[i] == this)
+		for (local i = 0; i < travelFromNode.activeConnections.len(); i++) {
+			if (travelFromNode.activeConnections[i] == this) {
 				travelFromNode.activeConnections.remove(i);
+				break;
+			}
+		}
+		
+		for (local i = 0; i < travelToNode.reverseActiveConnections.len(); i++) {
+			if (travelToNode.reverseActiveConnections[i] == this) {
+				travelToNode.reverseActiveConnections.remove(i);
+				break;
+			}
+		}
+		
+		
 		
 		connectionManager.ConnectionDemolished(this);
 	}
