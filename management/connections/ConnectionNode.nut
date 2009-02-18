@@ -107,6 +107,21 @@ function ConnectionNode::GetBestReport(cargoID) {
 }
 
 /**
+ * Add a best report to the list of best reports, if a report already
+ * exists for the same cargo we replace it.
+ * @param report The new best report.
+ */
+function ConnectionNode::AddBestReport(report) {
+	for (local i = 0; i < bestReports.len(); i++) {
+		if (bestReports[i].cargoID == report.cargoID) {
+			bestReports[i] = report;
+			return;
+		}
+	}
+	bestReports.push(report);
+}
+
+/**
  * Get the unique name of this connectionNode which is used for a connection
  * to this node with a certain cargoID.
  * @param cargoID The cargo ID which is transported to this connection node.

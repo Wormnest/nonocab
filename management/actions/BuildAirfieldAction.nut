@@ -93,8 +93,13 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
 			node.excludeList = excludeList;
 	} else {
-		list.Valuate(AITile.GetCargoAcceptance, cargoID, airportX, airportY, airportRadius);
-		list.KeepAboveValue(30);
+		if (node.nodeType == ConnectionNode.TOWN_NODE || acceptingSide) {
+			list.Valuate(AITile.GetCargoAcceptance, cargoID, airportX, airportY, airportRadius);
+			list.KeepAboveValue(7);
+		} else {
+			list.Valuate(AITile.GetCargoProduction, cargoID, airportX, airportY, airportRadius);
+			list.KeepAboveValue(0);
+		}
 	}
 
     list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);

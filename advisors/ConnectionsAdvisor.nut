@@ -17,7 +17,7 @@ class ConnectionAdvisor extends Advisor { // EventListener
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 	vehicleType = null;			// The type of vehicles this class advises on.
 	connectionManager = null;           // The connection manager which handels events concerning construction and demolishing of connections.
-	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
+//	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
 
 	constructor(world, vehType, conManager, eventManager) {
 		Advisor.constructor(world);
@@ -68,6 +68,11 @@ class ConnectionAdvisor extends Advisor { // EventListener
 	function UpdateIndustryConnections(industry_tree);
 }
 
+// New industries are automatically picked up by the UpdateIndustryConnections function.
+function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
+	
+}
+
 function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 	// Remove all related reports from the report table.
 	foreach (report in reportTable) {
@@ -77,56 +82,6 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 			report.toConnectionNode == industryID)
 			report.isInvalid = true;
 	}
-	
-	// Remove all related connection reports.
-	for (local i = 0; i < connectionReports._count; i++) {
-		local report = connectionReports._queue[i];
-		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.fromConnectionNode == industryID ||
-			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.toConnectionNode == industryID)
-			report.isInvalid = true;
-	}
-	
-	//world.worldChanged[vehicleType] = true;
-}
-
-function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
-	local industryNode = world.industry_table.rawget(industryID);
-	
-	// Check if this industry produces or accepts (or both :P).
-	if (industryNode.cargoIdsAccepting.len() == 0) {
-		Log.logDebug(industryNode.GetName() + " is a root list industry!");
-		// It's in the root list.
-		local industryNodeArray = [industryNode];
-		UpdateIndustryConnections(industryNodeArray);
-	} else {
-		
-		Log.logDebug(industryNode.GetName() + " is a non-Root list industry!");
-		// If the industry is not in the root list, we search for
-		// industry nodes which can connect to this industry and 
-		// already have been build.
-		local originalConnectionNodeLists = [];
-		local constructedProducingIndustryNodes = [];
-		foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
-			//if (producingIndustryNode.activeConnection == null) {
-				
-				Log.logDebug("Attach: " + producingIndustryNode.GetName() + " to " + industryNode.GetName());
-				// Store orginal connection node lists and replace it with the new industry node.
-				originalConnectionNodeLists.push(clone producingIndustryNode.connectionNodeList);
-				producingIndustryNode.connectionNodeList = [industryNode];
-				constructedProducingIndustryNodes.push(producingIndustryNode);
-			//}
-		}
-		
-		UpdateIndustryConnections(constructedProducingIndustryNodes);
-		
-		// Restore original connection node lists..
-		foreach (producingIndustryNode in constructedProducingIndustryNodes)
-			producingIndustryNode.connectionNodeList = originalConnectionNodeLists.pop();
-	}
-	/// Add new 
-	//world.worldChanged[vehicleType] = true;
 }
 
 /**
@@ -153,14 +108,11 @@ function ConnectionAdvisor::Update(loopCounter) {
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
 	
-		if (world.worldChanged[vehicleType] || connectionReports == null || Date.GetDaysBetween(currentDate, lastConnectionUpdate) > world.DAYS_PER_YEAR) {
-			connectionReports = BinaryHeap();
-		
-			Log.logDebug("Update industry connections.");
+		// Every time something might have been build, we update all possible
+		// reports and consequentially get the latest data from the world.
+		if (loopCounter == 0) {
+			connectionReports = BinaryHeap();		
 			UpdateIndustryConnections(world.industry_tree);
-			world.worldChanged[vehicleType] = false;
-			lastConnectionUpdate = AIDate.GetCurrentDate();
-			Log.logDebug("Done...");
 		}
 	}
 
@@ -222,7 +174,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.engineID);
-		if (report == null || report.isInvalid || report.nrVehicles < 1)
+		if (report.isInvalid || report.nrVehicles < 1)
 			continue;
 
 		// If a connection already exists, see if it already has a report. If so we can only
@@ -253,7 +205,6 @@ function ConnectionAdvisor::Update(loopCounter) {
 				local originalReport = reportTable.rawget(connection.GetUID());
 				ignoreTable[originalReport.fromConnectionNode.GetUID(originalReport.cargoID) + "_" + originalReport.toConnectionNode.GetUID(originalReport.cargoID)] <- null;
 				Log.logDebug("Replace: " + report.Utility() + " > " + originalReport.Utility());
-				//reportTable.rawdelete(connection.GetUID());
 			}
 			
 			reportTable[connection.GetUID()] <- report;
@@ -285,8 +236,6 @@ function ConnectionAdvisor::GetReports() {
 
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
-//		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
-//			assert(false);
 
 		if (connection.forceReplan || report.isInvalid) {
 			// Only mark a connection as invalid if it's the same report!

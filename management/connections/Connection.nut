@@ -144,9 +144,9 @@ class Connection {
 				AITile.DemolishTile(pathInfo.depotOtherEnd);
 		}
 		
-		for (local i = 0; i < activeConnections.len(); i++)
-			if (activeConnections[i] == this)
-				activeConnections.remove(i);
+		for (local i = 0; i < travelFromNode.activeConnections.len(); i++)
+			if (travelFromNode.activeConnections[i] == this)
+				travelFromNode.activeConnections.remove(i);
 		
 		connectionManager.ConnectionDemolished(this);
 	}

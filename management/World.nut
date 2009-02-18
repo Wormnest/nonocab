@@ -15,8 +15,6 @@ class World extends EventListener {
 
 	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
 
-	worldChanged = null;			// Flag which determines whether the world changed in respect to the advisors.
-
 	industry_tree = null;
 	industryCacheAccepting = null;
 	industryCacheProducing = null;
@@ -39,7 +37,6 @@ class World extends EventListener {
 		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
-		worldChanged = [false, false, false, false];
 
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
@@ -143,8 +140,6 @@ function World::IncreaseMaxDistanceBetweenNodes() {
 
 	max_distance_between_nodes += 32;
 	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
-	for (local i = 0; i < 4; i++)
-		worldChanged[i] = true;
 }
 
 /**
@@ -347,9 +342,6 @@ function World::InsertIndustry(industryID) {
 	// If the industry doesn't accept anything we add it to the root list.
 	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
 		industry_tree.push(industryNode);
-
-	//for (local i = 0; i < 4; i++)
-	//	worldChanged[i] = true;
 }
 
 /**
@@ -416,10 +408,6 @@ function World::RemoveIndustry(industryID) {
 	foreach (connection in industryNode.GetAllConnections())
 		if (connection.pathInfo.build)
 			connection.Demolish(true, true, true);
-		
-
-	//for (local i = 0; i < 4; i++)
-	//	worldChanged[i] = true;
 }
 
 /**
