@@ -222,14 +222,7 @@ function VehiclesAdvisor::GetReports() {
 
 // Functions related to the interface ConnectionListener.
 function VehiclesAdvisor::ConnectionRealised(connection) {
-/*	for (local i = 0; i < connections.len(); i++)
-		if (connections[i] == connection)
-			assert(false);*/
 	connections.push(connection);
-/*	assert(connection.pathInfo.build);
-	
-	Log.logWarning("[VA] Added: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
-	*/
 }
 
 function VehiclesAdvisor::ConnectionDemolished(connection) {
@@ -239,13 +232,6 @@ function VehiclesAdvisor::ConnectionDemolished(connection) {
 			break;
 		}
 	}
-	/*
-	for (local i = 0; i < connections.len(); i++)
-		if (connections[i] == connection)
-			assert(false);
-	
-	Log.logWarning("[VA] Removed: " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
-	*/
 }
 
 function VehiclesAdvisor::HaltPlanner() {

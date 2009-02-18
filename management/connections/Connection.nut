@@ -116,6 +116,17 @@ class Connection {
 		if (!pathInfo.build)
 			assert(false);
 		
+		// Sell all vehicles.
+		foreach (group in vehiclesOperating) {
+			foreach (vehicleID in group.vehicleIDs) {	
+				if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
+					AIVehicle.ReverseVehicle(vehicleID);
+					AIController.Sleep(5);
+					AIVehicle.SendVehicleToDepot(vehicleID);
+		    	}
+			}
+		}
+		
 		if (destroyFrom) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
 				local startTileList = AIList();
