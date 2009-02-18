@@ -353,7 +353,7 @@ function World::RemoveIndustry(industryID) {
 	
 	if (!industry_table.rawin(industryID)) {
 		Log.logWarning("Industry removed which wasn't in our tree!");
-		return;
+		assert(false);
 	}
 	
 	local industryNode = industry_table.rawget(industryID);
@@ -408,6 +408,8 @@ function World::RemoveIndustry(industryID) {
 	foreach (connection in industryNode.GetAllConnections())
 		if (connection.pathInfo.build)
 			connection.Demolish(true, true, true);
+			
+	industry_table.rawdelete(industryID);
 }
 
 /**
