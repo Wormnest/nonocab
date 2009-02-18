@@ -18,13 +18,14 @@ class BuildAirfieldAction extends Action {
 function BuildAirfieldAction::Execute() {
 
 	local airportType = (AIAirport.IsValidAirportType(AIAirport.AT_LARGE) ? AIAirport.AT_LARGE : AIAirport.AT_SMALL);
-	local fromTile = this.FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false);
+	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+	local fromTile = this.FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false, townToTown);
 	if (fromTile < 0) {
 		Log.logWarning("No spot found for the first airfield!");
 		connection.forceReplan = true;
 		return false;
 	}
-	local toTile = this.FindSuitableAirportSpot(airportType, connection.travelToNode, connection.cargoID, true, false);
+	local toTile = this.FindSuitableAirportSpot(airportType, connection.travelToNode, connection.cargoID, true, false, townToTown);
 	if (toTile < 0) {
 		Log.logWarning("No spot found for the second airfield!");
 		connection.forceReplan = true;
@@ -73,9 +74,11 @@ function BuildAirfieldAction::Execute() {
  * @param acceptingSide If true this side is considered as begin the accepting side of the connection.
  * @param getFirst If true ignores the exclude list and gets the first suitable spot to build an airfield
  * ignoring terraforming (it's only used to determine the cost of building an airport).
+ * @param townToTown True if this airfield is part of a town to town connection. In that case we enforce
+ * stricter rules on placement of these airfields.
  * @return The tile where the airport can be build.
  */
-function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst) {
+function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst, townToTown) {
     local airportX = AIAirport.GetAirportWidth(airportType);
     local airportY = AIAirport.GetAirportHeight(airportType);
     local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
@@ -97,7 +100,10 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 	} else {
 		if (node.nodeType == ConnectionNode.TOWN_NODE || acceptingSide) {
 			list.Valuate(AITile.GetCargoAcceptance, cargoID, airportX, airportY, airportRadius);
-			list.KeepAboveValue(7);
+			if (townToTown)
+				list.KeepAboveValue(30);
+			else
+				list.KeepAboveValue(7);
 		} else {
 			list.Valuate(AITile.GetCargoProduction, cargoID, airportX, airportY, airportRadius);
 			list.KeepAboveValue(0);
@@ -160,7 +166,7 @@ function BuildAirfieldAction::GetAirportCost(node, cargoID, acceptingSide, useCa
 			return airportCostTuple[1];
 	}
 
-	if (BuildAirfieldAction.FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, true) < 0)
+	if (BuildAirfieldAction.FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, true, false) < 0)
 		return -1;
 
 	if (useCache)

@@ -45,7 +45,7 @@ function BuildRoadAction::Execute() {
 	
 	// For non-existing roads we want the AI to find the best route possible.
 	if (!isConnectionBuild)
-		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad;
+		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad + 10;
 		
 	// For existing routs, we want the new path to coher to the existing
 	// path as much as possible, therefor we calculate no additional
