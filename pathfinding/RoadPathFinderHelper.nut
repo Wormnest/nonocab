@@ -210,7 +210,8 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 		if (offset == -currentAnnotatedTile.direction)
 			continue;
 		
-		local nextTile = currentAnnotatedTile.tile + offset;
+		local currentTile = currentAnnotatedTile.tile;
+		local nextTile = currentTile + offset;
 		local isInClosedList = false;
 
 		// Skip if this node is already processed.
@@ -218,7 +219,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 			isInClosedList = true;
 
 		// Check if we can actually build this piece of road or if the slopes render this impossible.
-		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentAnnotatedTile.tile, currentAnnotatedTile.parentTile.tile, nextTile))
+		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
 
 		local isBridgeOrTunnelEntrance = false;
@@ -274,7 +275,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 				local tmp;
 				if (tmp = GetBridge(nextTile, offset))
 					tileArray.push(tmp);
-				if (tmp = GetTunnel(nextTile, currentAnnotatedTile.tile))
+				if (tmp = GetTunnel(nextTile, currentTile))
 					tileArray.push(tmp);
 			}
 
@@ -282,31 +283,35 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 			
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
-				if (!AIRoad.BuildRoad(currentAnnotatedTile.tile, nextTile) && !AIRoad.AreRoadTilesConnected(currentAnnotatedTile.tile, nextTile))
-					continue;
+				if (AIRoad.BuildRoad(currentTile, nextTile) || AIRoad.AreRoadTilesConnected(currentTile, nextTile)
+				|| (AITile.GetHeight(currentTile) == AITile.GetHeight(nextTile) && 
+				AITile.GetSlope(currentTile) + AITile.GetSlope(nextTile) == 0 &&
+				(AITile.IsBuildable(currentTile) || AIRoad.IsRoadTile(currentTile)) &&
+				(AITile.IsBuildable(nextTile) || AIRoad.IsRoadTile(nextTile)))) {
 
-				local annotatedTile = AnnotatedTile();
-				annotatedTile.type = Tile.ROAD;
-				annotatedTile.direction = offset;
-				annotatedTile.tile = nextTile;
-				annotatedTile.bridgeOrTunnelAlreadyBuild = false;
-
-				// Check if the road is sloped.
-				if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentAnnotatedTile.tile, annotatedTile.tile))
-					annotatedTile.distanceFromStart = costForSlope;
-			
-				// Check if the road makes a turn.
-				if (currentAnnotatedTile.direction != annotatedTile.direction)
-					annotatedTile.distanceFromStart += costForTurn;
-
-				// Check if there is already a road here.
-				if (AIRoad.IsRoadTile(annotatedTile.tile))
-					annotatedTile.distanceFromStart += costForRoad;
-				else
-					annotatedTile.distanceFromStart += costForNewRoad;
-
-
-				tileArray.push(annotatedTile);
+					local annotatedTile = AnnotatedTile();
+					annotatedTile.type = Tile.ROAD;
+					annotatedTile.direction = offset;
+					annotatedTile.tile = nextTile;
+					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+	
+					// Check if the road is sloped.
+					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, annotatedTile.tile))
+						annotatedTile.distanceFromStart = costForSlope;
+				
+					// Check if the road makes a turn.
+					if (currentAnnotatedTile.direction != annotatedTile.direction)
+						annotatedTile.distanceFromStart += costForTurn;
+	
+					// Check if there is already a road here.
+					if (AIRoad.IsRoadTile(annotatedTile.tile))
+						annotatedTile.distanceFromStart += costForRoad;
+					else
+						annotatedTile.distanceFromStart += costForNewRoad;
+	
+	
+					tileArray.push(annotatedTile);
+				}
 			}
 		}
 	}
