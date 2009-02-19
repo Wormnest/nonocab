@@ -14,6 +14,7 @@ class World extends EventListener {
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
 	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
+	maxCargoID = null;				// The highest cargo ID number
 
 	industry_tree = null;
 	industryCacheAccepting = null;
@@ -41,14 +42,11 @@ class World extends EventListener {
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
 		cargo_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
-		local nr_of_cargoes = cargo_list.Begin();
-		industryCacheAccepting = array(nr_of_cargoes + 1);
-		industryCacheProducing = array(nr_of_cargoes + 1);
+		maxCargoID = cargo_list.Begin();
+		industryCacheAccepting = array(maxCargoID + 1);
+		industryCacheProducing = array(maxCargoID + 1);
 		
-		cargoTransportEngineIds = array(4);
-		
-		for (local i = 0; i < cargoTransportEngineIds.len(); i++) 
-			cargoTransportEngineIds[i] = array(nr_of_cargoes + 1, -1);
+		InitCargoTransportEngineIds();
 	
 		industry_tree = [];
 	
@@ -429,6 +427,11 @@ function World::RemoveIndustry(industryID) {
  * which can cary the most (speed * capacity).
  */
 function World::InitCargoTransportEngineIds() {
+	
+	cargoTransportEngineIds = array(4);
+	
+	for (local i = 0; i < cargoTransportEngineIds.len(); i++) 
+		cargoTransportEngineIds[i] = array(maxCargoID + 1, -1);
 	
 	foreach (cargo, value in cargo_list) {
 

@@ -114,7 +114,8 @@ class ConnectionReport extends Report {
 			}
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(engineID));
-			assert(false);
+			isInvalid = true;
+			world.InitCargoTransportEngineIds();
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
 
