@@ -81,11 +81,14 @@ class ConnectionReport extends Report {
 			if (connection == null || !connection.pathInfo.build) {
 
 				local useCache = connection == null || !connection.forceReplan;
-				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, false, useCache);
+				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, isTowntoTown ? true : false, useCache);
 				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true, useCache);
 
-				if (costForFrom == -1 || costForTo == -1)
+				if (costForFrom == -1 || costForTo == -1) {
 					isInvalid = true;
+					return;
+				}
 					
 				initialCost = costForFrom + costForTo;
 			}
@@ -106,9 +109,10 @@ class ConnectionReport extends Report {
 				local costForFrom = BuildShipYardAction.GetShipYardCost(travelFromNode, cargoID, false, useCache);
 				local costForTo = BuildShipYardAction.GetShipYardCost(travelToNode, cargoID, true, useCache);
 
-				if (costForFrom == -1 || costForTo == -1)
+				if (costForFrom == -1 || costForTo == -1) {
 					isInvalid = true;
-					
+					return;
+				}	
 				
 				initialCost += costForFrom + costForTo;
 			}

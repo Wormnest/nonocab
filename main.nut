@@ -29,7 +29,7 @@ class NoCAB extends AIController {
 			vehicleAdvisor,
 			RoadConnectionAdvisor(world, connectionManager, eventManager),
 			AircraftAdvisor(world, connectionManager, eventManager),
-			ShipAdvisor(world, connectionManager, eventManager),
+			//ShipAdvisor(world, connectionManager, eventManager),
 			//updateAdvisor
 		];
 		
