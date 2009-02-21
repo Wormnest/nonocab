@@ -200,7 +200,7 @@ class Connection {
 					// Only explore this possibility if the station has the same name!
 					if (AIStation.GetName(stationID) != stationName)
 						continue;
-					AITile.DemolishTile(tile);
+					AITile.DemolishTile(surroundingTile);
 					
 					if (!newTileList.HasItem(surroundingTile))
 						newTileList.AddItem(surroundingTile, surroundingTile);
