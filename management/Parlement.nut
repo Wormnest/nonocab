@@ -3,10 +3,12 @@ import("queue.binary_heap", "BinaryHeap", 1);
 class Parlement
 {
 	reports = null;
+	ignoreList = null;
 	balance = null;
 	
 	constructor() {
 		reports = BinaryHeap();
+		ignoreList = [];
 	}
 }
 
@@ -28,19 +30,22 @@ function Parlement::ExecuteReports() {
 		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0)
 			continue;
 			
+		ignoreList.push(report);
+			
 		Log.logInfo(report.ToString());
 		foreach (action in report.actions) {
 		
 			// Break if one of the action fails!
 			if (!action.Execute()) {
 				Log.logWarning("Execution of raport: " + report.ToString() + " halted!");
-				break;
+				return false;
 			}
 		}
 	}
 	
 	// Pay back as much load as possible.
 	Finance.RepayLoan();	
+	return true;
 }
 
 /**
@@ -54,6 +59,18 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 
 	// Sort all the reports based on their utility.
 	foreach (report in reportlist) {
+		
+		// Check if the report isn't in the ignore list.
+		local skip = false;
+		for (local i = 0; i < ignoreList.len(); i++)
+			if (ignoreList[i] == report) {
+				skip = true;
+				break;
+			}
+			
+		if (skip)
+			continue;
+
 		local utility = report.UtilityForMoney(moneyToSpend);
 		Log.logDebug(utility + " for " + report.ToString());
 		// Only add when whe think that they will be profitable in the end.
@@ -68,4 +85,5 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 
 function Parlement::ClearReports() {
 	reports = [];
+	ignoreList = [];
 }

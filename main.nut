@@ -84,7 +84,10 @@ function NoCAB::Start()
 		world.Update();
 		eventManager.ProcessEvents();	
 		parlement.SelectReports(reports);
-		parlement.ExecuteReports();
+		
+		while (!parlement.ExecuteReports()) {
+			parlement.SelectReports(reports);
+		}
 	}
 	Log.logInfo("Done!");
 }
