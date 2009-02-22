@@ -110,7 +110,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 		// Every time something might have been build, we update all possible
 		// reports and consequentially get the latest data from the world.
-		if (loopCounter == 0 && Date.GetDaysBetween(lastConnectionUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_YEAR / 2 || connectionReports == null) {
+		if (loopCounter == 0 && Date.GetDaysBetween(lastConnectionUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_YEAR / 2 + (AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 4 || connectionReports == null) {
 			Log.logDebug("Start update... " + vehicleType);
 			connectionReports = BinaryHeap();		
 			UpdateIndustryConnections(world.industry_tree);
@@ -335,8 +335,12 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				// Check if the nodes are not to far away (we restrict it by an extra 
 				// percentage to avoid doing unnecessary work by envoking the pathfinder
 				// where this isn't necessary.
-				if (maxDistanceConstraints && manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) continue;			
-				else if ((AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 - world.max_distance_between_nodes > manhattanDistance) continue;
+				if (maxDistanceConstraints) {
+					if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
+						continue;			
+				} else if ((AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 - world.max_distance_between_nodes > manhattanDistance ||
+					(AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 + world.max_distance_between_nodes < manhattanDistance) 
+						continue;
 				
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
