@@ -26,6 +26,7 @@ class ConnectionAdvisor extends Advisor { // EventListener
 		connectionReports = null;
 		vehicleType = vehType;
 		connectionManager = conManager;
+		lastConnectionUpdate = AIDate.GetCurrentDate();
 	
 		if (eventManager != null) {
 			eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
@@ -90,7 +91,6 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
  */
 function ConnectionAdvisor::Update(loopCounter) {
 
-	local currentDate = AIDate.GetCurrentDate();
 	if (loopCounter == 0) {
 
 		if (!GameSettings.IsBuildable(vehicleType)) {
