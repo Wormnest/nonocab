@@ -17,7 +17,7 @@ class ConnectionAdvisor extends Advisor { // EventListener
 	connectionReports = null;		// A bineary heap which contains all connection reports this algorithm should investigate.
 	vehicleType = null;			// The type of vehicles this class advises on.
 	connectionManager = null;           // The connection manager which handels events concerning construction and demolishing of connections.
-//	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
+	lastConnectionUpdate = null;		// The last time the connections were updated (UpdateIndustryConnection).		
 
 	constructor(world, vehType, conManager, eventManager) {
 		Advisor.constructor(world);
@@ -110,9 +110,12 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 		// Every time something might have been build, we update all possible
 		// reports and consequentially get the latest data from the world.
-		if (loopCounter == 0) {
+		if (loopCounter == 0 && Date.GetDaysBetween(lastConnectionUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_YEAR / 2 || connectionReports == null) {
+			Log.logDebug("Start update... " + vehicleType);
 			connectionReports = BinaryHeap();		
 			UpdateIndustryConnections(world.industry_tree);
+			Log.logDebug("Done update!");
+			lastConnectionUpdate = AIDate.GetCurrentDate();
 		}
 	}
 
@@ -221,8 +224,11 @@ function ConnectionAdvisor::Update(loopCounter) {
 	}
 	
 	// If we find no other possible connections, extend our range!
-	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL))
+	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL)) {
 		world.IncreaseMaxDistanceBetweenNodes();
+		connectionReports = BinaryHeap();
+		UpdateIndustryConnections(world.industry_tree);
+	}
 }
 
 function ConnectionAdvisor::GetReports() {
@@ -254,7 +260,7 @@ function ConnectionAdvisor::GetReports() {
 			
 		// Update report.
 		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
-		if (report.isInvalid || report.nrVehicles < 1) {
+		if (report.isInvalid || report.nrVehicles < 1 || report.Utility() < 0) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)
 				connection.forceReplan = true;
@@ -330,6 +336,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				// percentage to avoid doing unnecessary work by envoking the pathfinder
 				// where this isn't necessary.
 				if (maxDistanceConstraints && manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) continue;			
+				else if ((AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 - world.max_distance_between_nodes > manhattanDistance) continue;
 				
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))

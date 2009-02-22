@@ -193,45 +193,15 @@ function World::BuildIndustryTree() {
 					connectionNode.connectionNodeList.push(townNode);
 				}
 			}
-		
+			
+			townNode.cargoIdsProducing.push(cargo);
+			townNode.cargoIdsAccepting.push(cargo);
 		}
 
 		// Add town <-> town connections, we only store these connections as 1-way directions
 		// because they are bidirectional.
-		foreach (townConnectionNode in townConnectionNodes) {
+		foreach (townConnectionNode in townConnectionNodes)
 			townNode.connectionNodeList.push(townConnectionNode);
-			
-			foreach (cargo, value in cargo_list) {
-
-				// Check if this town is near to water.
-				if (!isNearWater && AITown.GetMaxProduction(townNode.id, cargo) > 0) {
-					local townTiles = townNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
-					townTiles.Valuate(AITile.IsCoastTile);
-					townTiles.KeepValue(1);
-					if (townTiles.Count() > 0) {
-						townTiles.isNearWater = true;
-					}
-					isNearWater = true;
-				}
-
-				if (AITown.GetMaxProduction(townNode.id, cargo) + AITown.GetMaxProduction(townConnectionNode.id, cargo) > 0) {
-					
-					local doAdd = true;
-					foreach (c in townNode.cargoIdsProducing) {
-						if (c == cargo) {
-							doAdd = false;
-							break;
-						}
-					}
-					
-					if (!doAdd)
-						continue;
-
-					townNode.cargoIdsProducing.push(cargo);
-					townNode.cargoIdsAccepting.push(cargo);
-				}
-			}
-		}
 
 		townConnectionNodes.push(townNode);
 		industry_tree.push(townNode);
@@ -257,18 +227,20 @@ function World::InsertIndustry(industryID) {
 	// We want to preprocess all industries which can be build near water.
 	local isNearWater = industryNode.isNearWater;
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
+	local ignoreProducersList = {};
+	local ignoreAccepterssList = {};
 	
 	// Check which cargo is accepted.
 	foreach (cargo, value in cargo_list) {
-
-
-		local canHandleCargo = false;
+		
+		local acceptsCargo = false;
+		local producesCargo = false;
 		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetLastMonthProduction(industryID, cargo) != -1;
 		if (isBilateral)
 			hasBilateral = true;
 
 		if (AIIndustry.GetLastMonthProduction(industryID, cargo) != -1) {	
-			canHandleCargo = true;
+			producesCargo = true;
 			// Save production information.
 			industryNode.cargoIdsProducing.push(cargo);
 
@@ -277,18 +249,11 @@ function World::InsertIndustry(industryID) {
 
 			// Check for accepting industries for these products.
 			foreach (cachedIndustry in industryCacheAccepting[cargo]) {
-	
+
 				// Make sure we don't add industires double!
-				local skip = false;
-				foreach (node in industryNode.connectionNodeList) {
-					if (node == cachedIndustry) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
-					continue;
-					
+				if (ignoreProducersList.rawin(cachedIndustry)) continue;
+				
+				ignoreProducersList[cachedIndustry] <- null;
 				industryNode.connectionNodeList.push(cachedIndustry);
 				if (!isBilateral)
 					cachedIndustry.connectionNodeListReversed.push(industryNode);
@@ -297,7 +262,7 @@ function World::InsertIndustry(industryID) {
 
 		// Check if the industry actually accepts something.
 		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
-			canHandleCargo = true;
+			acceptsCargo = true;
 			industryNode.cargoIdsAccepting.push(cargo);
 
 			// Add to cache.
@@ -308,16 +273,9 @@ function World::InsertIndustry(industryID) {
 				foreach (cachedIndustry in industryCacheProducing[cargo]) {
 					
 					// Make sure we don't add industires double!
-					local skip = false;
-					foreach (node in industryNode.connectionNodeListReversed) {
-						if (node == cachedIndustry) {
-							skip = true;
-							break;
-						}
-					}
-					if (skip)
-						continue;
-										
+					if (ignoreAccepterssList.rawin(cachedIndustry)) continue;
+
+					ignoreAccepterssList[cachedIndustry] <- null;
 					cachedIndustry.connectionNodeList.push(industryNode);
 					industryNode.connectionNodeListReversed.push(cachedIndustry);
 				}
@@ -325,14 +283,12 @@ function World::InsertIndustry(industryID) {
 		}
 
 		// Check if this town is near to water.
-		if (canHandleCargo && !isNearWater) {
-			local industryTiles = industryNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
-			industryTiles.AddList(industryNode.GetProducingTiles(cargo, stationRadius, 1, 1));
+		if ((acceptsCargo || producesCargo) && !isNearWater) {
+			local industryTiles = acceptsCargo ? industryNode.GetAcceptingTiles(cargo, stationRadius, 1, 1) : industryNode.GetProducingTiles(cargo, stationRadius, 1, 1);
 			industryTiles.Valuate(AITile.IsCoastTile);
 			industryTiles.KeepValue(1);
-			if (industryTiles.Count() > 0) {
+			if (industryTiles.Count() > 0)
 				industryNode.isNearWater = true;
-			}
 			isNearWater = true;
 		}
 	}
