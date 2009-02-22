@@ -310,6 +310,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 	// actual pathfinding on that selection to find the best one(s).
 	local industriesToCheck = {};
 	foreach (fromConnectionNode in industry_tree) {
+		
+		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater)
+			continue;
 
 		// See if we need to add or remove some vehicles.
 		// Take a guess at the travel time and profit for each cargo type.
@@ -330,6 +333,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree) {
 				continue;
 
 			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
+				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater)
+					continue;
+				
 				local manhattanDistance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
 		
 				// Check if the nodes are not to far away (we restrict it by an extra 
