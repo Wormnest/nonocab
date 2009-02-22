@@ -37,8 +37,14 @@ class NoCAB extends AIController {
 	}
 }
 
-function NoCAB::Save() { return {};}
-function NoCAB::Load() {}
+function NoCAB::Save() { 
+	Log.logWarning("Safe is not implemented yet!");
+	return {};
+}
+
+function NoCAB::Load(version, data) {
+	Log.logWarning("Load is not implemented yet!");
+}
 function NoCAB::Start()
 {
 	// Required by the Framwork: start with sleep.
