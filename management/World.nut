@@ -192,10 +192,13 @@ function World::BuildIndustryTree() {
 				foreach (connectionNode in industryCacheProducing[cargo]) {
 					connectionNode.connectionNodeList.push(townNode);
 				}
+				
+				// Add this town to the accepting cache for future industries.
+				industryCacheAccepting[cargo].push(townNode);
+				
+				townNode.cargoIdsProducing.push(cargo);
+				townNode.cargoIdsAccepting.push(cargo);
 			}
-			
-			townNode.cargoIdsProducing.push(cargo);
-			townNode.cargoIdsAccepting.push(cargo);
 		}
 
 		// Add town <-> town connections, we only store these connections as 1-way directions

@@ -55,8 +55,10 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local costTillEnd = pathFinderHelper.costTillEnd;
 	pathFinderHelper.Reset();
 
-	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < 1000)
+	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < Finance.minimumBankReserve / 2) {
+		Finance.GetMaxLoan();
 		AIController.Sleep(1);
+	}
 
 	// Use the helper to prune all end positions which can't be reached.
 	pathFinderHelper.ProcessEndPositions(end, checkEndPositions);

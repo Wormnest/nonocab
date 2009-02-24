@@ -166,7 +166,7 @@ function BuildAirfieldAction::GetAirportCost(node, cargoID, acceptingSide, useCa
 			return airportCostTuple[1];
 	}
 
-	if (BuildAirfieldAction.FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, true, false) < 0)
+	if (BuildAirfieldAction.FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, false, false) < 0)
 		return -1;
 
 	if (useCache)
