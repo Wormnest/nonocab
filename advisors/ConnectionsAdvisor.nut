@@ -123,12 +123,12 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 
 	// Remove all related connection reports.
 	for (local i = 0; i < connectionReports._count; i++) {
-		local report = connectionReports._queue[i];
-			if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-				report.fromConnectionNode == industryID ||
-				report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-				report.toConnectionNode == industryID)
-				report.isInvalid = true;
+		local report = connectionReports._queue[i][0];
+		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.fromConnectionNode == industryID ||
+			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.toConnectionNode == industryID)
+			report.isInvalid = true;
 	}	
 }
 
@@ -138,36 +138,11 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
  * @param connection The realised connection.
  */
 function ConnectionAdvisor::ConnectionRealised(connection) {
-	// Check if the accepting side actually produces something.
-	if (connection.travelToNode.cargoIdsProducing.len() == 0)
+	// Check if the accepting side actually produces something and
+	// if it isn't a town!
+	if (connection.travelToNode.nodeType != ConnectionNode.INDUSTRY_NODE ||
+		connection.travelToNode.cargoIdsProducing.len() == 0)
 		return;
-	
-	// Check if we can remove an industry from the update list.
-	local allCargoCovered = true;
-	foreach (cargo in connection.travelFromNode.cargoIdsProducing) {
-		local cargoTransported = false;
-		foreach (activeConnection in connection.travelFromNode.activeConnections) {
-			if (activeConnection.cargoID == cargo) {
-				cargoTransported = true;
-				break;
-			}
-		}
-		
-		if (!cargoTransported) {
-			allCargoCovered = false;
-			break;
-		}
-	}
-	
-	// If all cargo is covered we can remove it from the updat list.
-	if (allCargoCovered) {
-		for (local i = 0; i < updateList.len(); i++) {
-			if (updateList[i] == connection.travelFromNode) {
-				updateList.remove(i);
-				break;
-			}
-		}
-	}
 	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
@@ -179,7 +154,7 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
  * @param connection The demolished connection.
  */
 function ConnectionAdvisor::ConnectionDemolished(connection) {
-	updateList.push(connection.travelFromNode);
+	UpdateIndustryConnections([connection.travelFromNode], true);
 }
 
 /**
@@ -215,7 +190,22 @@ function ConnectionAdvisor::Update(loopCounter) {
 			lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		} else if (loopCounter == 0) {
 			Log.logInfo("Start small update... " + vehicleType);
-			UpdateIndustryConnections(updateList, true);
+			
+			// Determine which industries can now be added as reports.
+			local addableIndustryList = [];
+			
+			for (local i = updateList.len() - 1; i > -1; i--) {
+				local industryNode = updateList[i];
+				foreach (cargo in industryNode.cargoIdsProducing) {
+					if (industryNode.GetProduction(cargo) > 50) {
+						addableIndustryList.push(industryNode);
+						updateList.remove(i);
+						break;
+					}
+				}
+			}
+			
+			UpdateIndustryConnections(addableIndustryList, true);
 			Log.logInfo("Done small update... " + vehicleType);
 		}
 	}
@@ -230,7 +220,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 	// Always try to get one more then currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
-
+	
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
@@ -325,12 +315,13 @@ function ConnectionAdvisor::Update(loopCounter) {
 	}
 	
 	// If we find no other possible connections, extend our range!
-	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL)) {
+	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL) ||
+		lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
 		world.IncreaseMaxDistanceBetweenNodes();
 		
 		if (lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
 			
-			//connectionReports = BinaryHeap();
+			Log.logInfo("Extend maximum range of all connections to world.max_distance_between_nodes.");
 			UpdateIndustryConnections(world.industry_tree, false);
 			lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		}
