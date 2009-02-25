@@ -317,7 +317,9 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// If we find no other possible connections, extend our range!
 	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL) ||
 		lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
-		world.IncreaseMaxDistanceBetweenNodes();
+		
+		if (lastMaxDistanceBetweenNodes == world.max_distance_between_nodes)
+			world.IncreaseMaxDistanceBetweenNodes();
 		
 		if (lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
 			
