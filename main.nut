@@ -10,27 +10,24 @@ class NoCAB extends AIController {
    	world = null;
    	advisors = null;
    	planner = null;
-   	eventManager = null;
 	
    	constructor() {
    		stop = false;
 		parlement = Parlement();
-		eventManager = EventManager();
-		world = World(eventManager);
+		world = World();
 		GameSettings.InitGameSettings();
 		
 		local connectionManager = ConnectionManager();
 		advisors = [
 			VehiclesAdvisor(world),
-			RoadConnectionAdvisor(world, connectionManager, eventManager),
-			AircraftAdvisor(world, connectionManager, eventManager),
-			ShipAdvisor(world, connectionManager, eventManager),
+			RoadConnectionAdvisor(world, connectionManager),
+			AircraftAdvisor(world, connectionManager),
+			ShipAdvisor(world, connectionManager),
 			//UpgradeConnectionAdvisor(world, connectionManager)
 		];
 		
-		foreach (advisor in advisors) {
+		foreach (advisor in advisors)
 			connectionManager.AddConnectionListener(advisor);
-		}
 		
 		planner = Planner(world);
 	}
@@ -86,8 +83,7 @@ function NoCAB::Start()
 		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		world.Update();
-		eventManager.ProcessEvents();	
+		world.Update();	
 		parlement.SelectReports(reports);
 		
 		while (!parlement.ExecuteReports()) {

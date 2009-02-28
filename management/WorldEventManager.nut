@@ -1,11 +1,13 @@
-class EventManager {
+class WorldEventManager {
 	
+	world = null;
 	eventListeners = null;
 	
 	/**
 	 * Enable all events we're interested in.
 	 */
-	constructor() {
+	constructor(world) {
+		this.world = world;
 		eventListeners = {};
 	}
 	
@@ -23,7 +25,7 @@ class EventManager {
 	function ProcessEvents();
 }
 
-function EventManager::AddEventListener(listener, event) {
+function WorldEventManager::AddEventListener(listener, event) {
 	local listeners;
 	if (!eventListeners.rawin("" + event))
 		eventListeners.rawset("" + event, []);
@@ -34,7 +36,7 @@ function EventManager::AddEventListener(listener, event) {
 /**
  * Check all events which are waiting and handle them properly.
  */
-function EventManager::ProcessEvents() {
+function WorldEventManager::ProcessEvents() {
 	while (AIEventController.IsEventWaiting()) {
 		
 		local e = AIEventController.GetNextEvent();
@@ -46,23 +48,25 @@ function EventManager::ProcessEvents() {
 				case AIEvent.AI_ET_ENGINE_AVAILABLE:
 					local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 					
-					foreach (listener in eventListeners.rawget("" + e.GetEventType())) {
-						listener.ProcessNewEngineAvailableEvent(newEngineID);
-					}
+					if (world.ProcessNewEngineAvailableEvent(newEngineID))
+						foreach (listener in eventListeners.rawget("" + e.GetEventType()))
+							listener.WE_EngineReplaced(newEngineID);
 					break;
 					
 				case AIEvent.AI_ET_INDUSTRY_OPEN:
 					local industryID = AIEventIndustryOpen.Convert(e).GetIndustryID();
+					local industryNode = world.ProcessIndustryOpenedEvent(industryID);
 					
 					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
-						listener.ProcessIndustryOpenedEvent(industryID);
+						listener.WE_IndustryOpened(industryNode);
 					break;
 					
 				case AIEvent.AI_ET_INDUSTRY_CLOSE:
 					local industryID = AIEventIndustryClose.Convert(e).GetIndustryID();
+					local industryNode = world.ProcessIndustryClosedEvent(industryID);
 					
 					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
-						listener.ProcessIndustryClosedEvent(industryID);
+						listener.WE_IndustryClosed(industryNode);
 					break;
 			}	
 		}		

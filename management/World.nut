@@ -1,7 +1,7 @@
 /**
  * World holds the current status of the world as the AI sees it.
  */
-class World extends EventListener {
+class World {
 	static DAYS_PER_MONTH = 30.0;
 	static DAYS_PER_YEAR = 364.0;
 	static MONTHS_PER_YEAR = 12.0;
@@ -20,6 +20,8 @@ class World extends EventListener {
 	industryCacheAccepting = null;
 	industryCacheProducing = null;
 	
+	worldEvenManager = null;     // Manager to fire events to all world event listeners.
+	
 	starting_year = null;
 	years_passed = null;
 	
@@ -29,7 +31,7 @@ class World extends EventListener {
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor(eventManager) {
+	constructor() {
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -38,6 +40,8 @@ class World extends EventListener {
 		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
+		
+		worldEvenManager = WorldEventManager(this);
 
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
@@ -59,11 +63,6 @@ class World extends EventListener {
 		}
 		
 		max_distance_between_nodes = 128;
-		
-		//InitEvents();
-		eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
-		eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
-		eventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		InitCargoTransportEngineIds();
 		
 		BuildIndustryTree();
@@ -106,7 +105,7 @@ class World extends EventListener {
  */
 function World::Update()
 {
-	//UpdateEvents();
+	worldEvenManager.ProcessEvents();
 
 	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 2) {
 		IncreaseMaxDistanceBetweenNodes();
@@ -299,6 +298,8 @@ function World::InsertIndustry(industryID) {
 	// If the industry doesn't accept anything we add it to the root list.
 	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
 		industry_tree.push(industryNode);
+		
+	return industryNode;
 }
 
 /**
@@ -376,6 +377,7 @@ function World::RemoveIndustry(industryID) {
 	}
 			
 	industry_table.rawdelete(industryID);
+	return industryNode;
 }
 
 /**
@@ -409,13 +411,19 @@ function World::InitCargoTransportEngineIds() {
 	}
 }
 
-// Handle events:
+/**
+ * Handle the insertion of a new engine.
+ * @param engineID The new engine ID.
+ * @return true If the new engine replaced other onces, otherwise false.
+ */
 function World::ProcessNewEngineAvailableEvent(engineID) {
 	local vehicleType = AIEngine.GetVehicleType(engineID);
 	
 	// We skip trams for now.
 	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
-		return;
+		return false;
+		
+	local engineReplaced = false;
 	
 	foreach (cargo, value in cargo_list) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
@@ -425,22 +433,36 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 				
 			Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
 			cargoTransportEngineIds[vehicleType][cargo] = engineID;
+			engineReplaced = true;
 		}
 	}
+	
+	return engineReplaced;
 }				
 
+/**
+ * Handle the event where an industry is opened in the world. We add it to
+ * the data structures and return the stored node.
+ * @param industryID The new industry ID.
+ * @return The stored industry node.
+ */
 function World::ProcessIndustryOpenedEvent(industryID) {
 	industry_list = AIIndustryList();
-	InsertIndustry(industryID);
 	Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
+	return InsertIndustry(industryID);
 }			
 
+/**
+ * Handle the event where an industry is closed in the world. We remove it from
+ * the data structures and return the deleted node.
+ * @param industryID The removed industry ID.
+ * @return The removed industry node.
+ */
 function World::ProcessIndustryClosedEvent(industryID) {
 	industry_list = AIIndustryList();
-	RemoveIndustry(industryID);
 	Log.logInfo("Industry: " + AIIndustry.GetName(industryID) + " removed from the world!");
+	return RemoveIndustry(industryID);
 }
-
 
 /**
  * Debug purposes only.

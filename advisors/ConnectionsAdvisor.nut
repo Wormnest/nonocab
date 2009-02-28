@@ -20,7 +20,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	lastMaxDistanceBetweenNodes = null;	// Cached last distance between nodes.
 	updateList = null;					// List of industry nodes that need regulair updating.
 
-	constructor(world, vehType, conManager, eventManager) {
+	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
 		reportTable = {};
 		ignoreTable = {};
@@ -30,10 +30,9 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		connectionManager = conManager;
 		lastMaxDistanceBetweenNodes = 0;
 	
-		if (eventManager != null) {
-			eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
-			eventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
-		}
+		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
+		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
+		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 	}
 	
 	/**
@@ -75,8 +74,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 }
 
 // New industries are automatically picked up by the UpdateIndustryConnections function.
-function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
-	local industryNode = world.industry_table.rawget(industryID);
+function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
 
 	// Check if this industry produces or accepts (or both :P).
 	if (industryNode.cargoIdsProducing.len() != 0) {
@@ -110,7 +108,9 @@ function ConnectionAdvisor::ProcessIndustryOpenedEvent(industryID) {
 	}
 }
 
-function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
+function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
+	local industryID = industryNode.id;
+	
 	// Remove all related reports from the report table.
 	foreach (report in reportTable) {
 		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
@@ -119,7 +119,6 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 			report.toConnectionNode == industryID)
 			report.isInvalid = true;
 	}
-	
 
 	// Remove all related connection reports.
 	for (local i = 0; i < connectionReports._count; i++) {
@@ -130,6 +129,22 @@ function ConnectionAdvisor::ProcessIndustryClosedEvent(industryID) {
 			report.toConnectionNode == industryID)
 			report.isInvalid = true;
 	}	
+}
+
+
+/**
+ * If a new engine become available and it is the first engine to carry a certain
+ * cargo load which hasn't been available until now, update all relevant industries!
+ * @param engineID The new available engineID.
+ */
+function ConnectionAdvisor::WE_EngineReplaced(engineID) {
+	
+	// Check if this new engine applies to this class.
+	if (AIEngine.GetVehicleType(engineID) != vehicleType)
+		return;
+		
+	// Update relevant part of the world.
+	Log.logWarning("WE_EngineReplaced not yet implemented!");
 }
 
 /**
