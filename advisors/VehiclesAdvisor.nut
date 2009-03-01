@@ -97,6 +97,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
 		local rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID);
+		
+		// Check if the connection is actually being served by any vehiles.
+		local nrVehicles = connection.GetNumberOfVehicles();
 
 		if (connection.bilateralConnection) {
 			local productionOtherEnd = AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
@@ -112,11 +115,11 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
 		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
 
-		if (!hasVehicles || rating < 60 || production > 100) {
+		if (!hasVehicles || rating < 60 || production > 100 || nrVehicles == 0) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
 			// cargo a vehicle can carry.
-			if (AIEngine.GetCapacity(report.engineID) * 1.5 > production && rating > 35)
+			if (nrVehicles > 0 && AIEngine.GetCapacity(report.engineID) * 1.5 > production && rating > 35)
 				continue;
 			
 			// If we have multiple stations we want to take this into account. Each station
@@ -132,7 +135,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isAir || isShip) 
+			if (production < 200 || isAir || isShip || nrVehicles == 0) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;

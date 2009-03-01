@@ -111,6 +111,18 @@ class Connection {
 	}
 	
 	/**
+	 * Get the number of vehicles operating.
+	 */
+	function GetNumberOfVehicles() {
+		local nrVehicles = 0;
+		
+		foreach (group in vehiclesOperating)
+			nrVehicles += group.vehicleIDs.len();
+			
+		return nrVehicles;
+	}
+	
+	/**
 	 * Destroy this connection.
 	 */
 	function Demolish(destroyFrom, destroyTo, destroyDepots) {

@@ -319,16 +319,16 @@ function World::RemoveIndustry(industryID) {
 	// Remove the industry from the caches.
 	foreach (cargo in industryNode.cargoIdsProducing) {
 		for (local i = 0; i < industryCacheProducing[cargo].len(); i++) {
-			local producingIndustryNode = industryCacheProducing[cargo][i];
-			if (producingIndustryNode.id == industryNode.id) {
+			if (industryCacheProducing[cargo][i].id == industryNode.id) {
 				industryCacheProducing[cargo].remove(i);
 				break;
 			}
 		}
-
+	}
+	
+	foreach (cargo in industryNode.cargoIdsAccepting) {
 		for (local i = 0; i < industryCacheAccepting[cargo].len(); i++) {
-			local acceptingIndustryNode = industryCacheAccepting[cargo][i];
-			if (acceptingIndustryNode.id == industryNode.id) {
+			if (industryCacheAccepting[cargo][i].id == industryNode.id) {
 				industryCacheAccepting[cargo].remove(i);
 				break;
 			}
@@ -349,8 +349,8 @@ function World::RemoveIndustry(industryID) {
 	// cargo this industry used to accept.
 	foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
 		// Remove all connections which are already build!
-		foreach (connection in producingIndustryNode.GetAllConnections())
-			if (connection.pathInfo.build && connection.travelToNode == industryNode)
+		foreach (connection in producingIndustryNode.activeConnections)
+			if (connection.travelToNode == industryNode)
 				connection.Demolish(true, true, true);		
 		
 		for (local i = 0; i < producingIndustryNode.connectionNodeList.len(); i++) {
@@ -363,17 +363,15 @@ function World::RemoveIndustry(industryID) {
 	}
 	
 	// Remove all connections which are already build!
-	foreach (connection in industryNode.GetAllConnections()) {
-		if (connection.pathInfo.build) {
-			// If there are more connections dropping cargo off at
-			// the end destination, we don't destroy those road stations!
-			local demolishDestinationRoadStations = true;
-			if (connection.vehicleTypes == AIVehicle.VT_ROAD && 
-				connection.travelToNode.reverseActiveConnections.len() > 1)
-				demolishDestinationRoadStations = false;
+	foreach (connection in industryNode.activeConnections) {
+		// If there are more connections dropping cargo off at
+		// the end destination, we don't destroy those road stations!
+		local demolishDestinationRoadStations = true;
+		if (connection.vehicleTypes == AIVehicle.VT_ROAD && 
+			connection.travelToNode.reverseActiveConnections.len() > 1)
+			demolishDestinationRoadStations = false;
 
-			connection.Demolish(true, demolishDestinationRoadStations, true);
-		}
+		connection.Demolish(true, demolishDestinationRoadStations, true);
 	}
 			
 	industry_table.rawdelete(industryID);

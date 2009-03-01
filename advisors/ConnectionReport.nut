@@ -27,6 +27,12 @@ class ConnectionReport extends Report {
 		this.cargoID = cargoID;
 		isInvalid = false;
 		
+		// Check if the engine is valid.
+		if (!AIEngine.IsValidEngine(engineID)) {
+			isInvalid = true;
+			return;
+		}
+		
 		// Calculate the travel times for the prospected engine ID.
 		local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 		

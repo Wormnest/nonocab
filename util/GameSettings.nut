@@ -63,9 +63,13 @@ function GameSettings::UpdateGameSettings() {
 }
 
 function GameSettings::GetMaxBuildableVehicles(vehicleType) {
+	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len())
+		return 0;
 	return GameSettings.maxVehiclesBuildLimit[vehicleType];
 }
 
 function GameSettings::IsBuildable(vehicleType) {
+	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len())
+		return false;
 	return GameSettings.maxVehiclesLimit[vehicleType] > 0;
 }

@@ -21,6 +21,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	updateList = null;					// List of industry nodes that need regulair updating.
 	activeUpdateList = null;            // The part of the update list that needs updating.
 	lastUpdate = null;
+	needUpdate = null;
 
 	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
@@ -32,6 +33,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		connectionManager = conManager;
 		lastMaxDistanceBetweenNodes = 0;
 		lastUpdate = -100;
+		needUpdate = false;
 	
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
@@ -84,7 +86,8 @@ function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
 		updateList.push(industryNode);
 		//activeUpdateList = clone updateList;
 	}
-	connectionReports = null;
+	//connectionReports = null;
+	needUpdate = true;
 	
 /*
 	// Check if this industry produces or accepts (or both :P).
@@ -159,7 +162,7 @@ function ConnectionAdvisor::WE_EngineReplaced(engineID) {
 		return;
 		
 	// Update relevant part of the world.
-	Log.logWarning("WE_EngineReplaced not yet implemented!");
+	needUpdate = true;
 }
 
 /**
@@ -181,17 +184,18 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 			break;
 		}
 	}
-	
+	/*
 	for (local i = 0; i < activeUpdateList.len(); i++) {
 		if (connection.travelToNode == activeUpdateList[i]) {
 			activeUpdateList.remove(i);
 			break;
 		}
-	}
+	}*/
 	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
-	activeUpdateList.push(connection.travelToNode);
+	needUpdate = true;
+	//activeUpdateList.push(connection.travelToNode);
 	//connectionReports = null;
 }
 
@@ -212,8 +216,7 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
 	
 	// Readd the old connection node to our update list.
 	updateList.push(connection.travelToNode);
-	connectionReports = null;
-	//activeUpdateList = clone updateList;
+	needUpdate = true;
 }
 
 /**
@@ -242,12 +245,13 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null) {
+	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
 		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		UpdateIndustryConnections(activeUpdateList);
+		lastUpdate = AIDate.GetCurrentDate();
 		Log.logInfo("Done populating!");
 	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
 		Log.logInfo("Start update... " + vehicleType);
