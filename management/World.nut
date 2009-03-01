@@ -351,7 +351,7 @@ function World::RemoveIndustry(industryID) {
 		// Remove all connections which are already build!
 		foreach (connection in producingIndustryNode.activeConnections)
 			if (connection.travelToNode == industryNode)
-				connection.Demolish(true, true, true);		
+				connection.Demolish(true, true, false);		
 		
 		for (local i = 0; i < producingIndustryNode.connectionNodeList.len(); i++) {
 			if (producingIndustryNode.connectionNodeList[i].nodeType == industryNode.nodeType &&
@@ -371,7 +371,7 @@ function World::RemoveIndustry(industryID) {
 			connection.travelToNode.reverseActiveConnections.len() > 1)
 			demolishDestinationRoadStations = false;
 
-		connection.Demolish(true, demolishDestinationRoadStations, true);
+		connection.Demolish(true, demolishDestinationRoadStations, false);
 	}
 			
 	industry_table.rawdelete(industryID);
