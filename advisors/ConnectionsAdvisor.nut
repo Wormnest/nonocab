@@ -191,7 +191,7 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
-	updateList.push(connection.travelToNode);
+	activeUpdateList.push(connection.travelToNode);
 	//connectionReports = null;
 }
 
