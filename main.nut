@@ -17,18 +17,6 @@ class NoCAB extends AIController {
 		world = World();
 		GameSettings.InitGameSettings();
 		
-		local connectionManager = ConnectionManager();
-		advisors = [
-			VehiclesAdvisor(world),
-			RoadConnectionAdvisor(world, connectionManager),
-			AircraftAdvisor(world, connectionManager),
-			ShipAdvisor(world, connectionManager),
-			//UpgradeConnectionAdvisor(world, connectionManager)
-		];
-		
-		foreach (advisor in advisors)
-			connectionManager.AddConnectionListener(advisor);
-		
 		planner = Planner(world);
 	}
 }
@@ -43,6 +31,21 @@ function NoCAB::Load(version, data) {
 }
 function NoCAB::Start()
 {
+	world.BuildIndustryTree();
+	
+		
+	local connectionManager = ConnectionManager();
+	advisors = [
+		VehiclesAdvisor(world),
+		RoadConnectionAdvisor(world, connectionManager),
+		AircraftAdvisor(world, connectionManager),
+		ShipAdvisor(world, connectionManager),
+		//UpgradeConnectionAdvisor(world, connectionManager)
+	];
+	
+	foreach (advisor in advisors)
+		connectionManager.AddConnectionListener(advisor);
+			
 	// Required by the Framwork: start with sleep.
 	this.Sleep(1);
 
@@ -65,12 +68,10 @@ function NoCAB::Start()
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
 	
-	
-	foreach (advisor in advisors) {
+	foreach (advisor in advisors)
 		planner.AddThread(advisor);
-	}
+	
 	// Do what we have to do.
-	world.Update();
 	while(true) {
 		GameSettings.UpdateGameSettings();
 		planner.ScheduleAndExecute();

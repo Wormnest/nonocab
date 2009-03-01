@@ -40,8 +40,6 @@ class World {
 		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
-		
-		worldEvenManager = WorldEventManager(this);
 
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
@@ -49,7 +47,7 @@ class World {
 		maxCargoID = cargo_list.Begin();
 		industryCacheAccepting = array(maxCargoID + 1);
 		industryCacheProducing = array(maxCargoID + 1);
-		
+
 		InitCargoTransportEngineIds();
 	
 		industry_tree = [];
@@ -65,7 +63,8 @@ class World {
 		max_distance_between_nodes = 128;
 		InitCargoTransportEngineIds();
 		
-		BuildIndustryTree();
+		//BuildIndustryTree();
+		worldEvenManager = WorldEventManager(this);
 	}
 	
 	/**
@@ -133,10 +132,11 @@ function World::Update()
  */
 function World::IncreaseMaxDistanceBetweenNodes() {
 	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY())
-		return;
+		return false;
 
 	max_distance_between_nodes += 32;
 	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
+	return true;
 }
 
 /**
@@ -160,13 +160,15 @@ function World::BuildIndustryTree() {
 	//
 	//
 	// Every industry is stored in an IndustryNode.
-	foreach (industry, value in industry_list) {
+	Log.logInfo("Build industry list.");
+	foreach (industry, value in industry_list)
 		InsertIndustry(industry);
-	}
-
+	Log.logInfo("Build industry list - done.");
+	
 	// We want to preprocess all industries which can be build near water.
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	
+	Log.logInfo("Build town list.");
 	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
 		
@@ -188,9 +190,8 @@ function World::BuildIndustryTree() {
 				}
 
 				// Check if we have an industry which actually produces this cargo.
-				foreach (connectionNode in industryCacheProducing[cargo]) {
+				foreach (connectionNode in industryCacheProducing[cargo])
 					connectionNode.connectionNodeList.push(townNode);
-				}
 				
 				// Add this town to the accepting cache for future industries.
 				industryCacheAccepting[cargo].push(townNode);
@@ -208,6 +209,8 @@ function World::BuildIndustryTree() {
 		townConnectionNodes.push(townNode);
 		industry_tree.push(townNode);
 	}
+	
+	Log.logInfo("Build town list - done.");
 }
 
 /**
@@ -219,10 +222,10 @@ function World::InsertIndustry(industryID) {
 	local industryNode = IndustryConnectionNode(industryID);
 	
 	// Make sure this industry hasn't already been added.
-	if (!industry_table.rawin(industryID))
+	//if (!industry_table.rawin(industryID))
 		industry_table[industryID] <- industryNode;
-	else
-		assert(false);
+	//else
+	//	assert(false);
 
 	local hasBilateral = false;
 
@@ -235,14 +238,14 @@ function World::InsertIndustry(industryID) {
 	// Check which cargo is accepted.
 	foreach (cargo, value in cargo_list) {
 		
-		local acceptsCargo = false;
-		local producesCargo = false;
-		local isBilateral = AIIndustry.IsCargoAccepted(industryID, cargo) && AIIndustry.GetLastMonthProduction(industryID, cargo) != -1;
+		local acceptsCargo = AIIndustry.IsCargoAccepted(industryID, cargo);
+		local producesCargo = AIIndustry.GetLastMonthProduction(industryID, cargo) != -1;
+		local isBilateral =  acceptsCargo && producesCargo;
 		if (isBilateral)
 			hasBilateral = true;
 
-		if (AIIndustry.GetLastMonthProduction(industryID, cargo) != -1) {	
-			producesCargo = true;
+		if (producesCargo) {
+			
 			// Save production information.
 			industryNode.cargoIdsProducing.push(cargo);
 
@@ -263,8 +266,7 @@ function World::InsertIndustry(industryID) {
 		}
 
 		// Check if the industry actually accepts something.
-		if (AIIndustry.IsCargoAccepted(industryID, cargo)) {
-			acceptsCargo = true;
+		if (acceptsCargo) {
 			industryNode.cargoIdsAccepting.push(cargo);
 
 			// Add to cache.
@@ -298,8 +300,6 @@ function World::InsertIndustry(industryID) {
 	// If the industry doesn't accept anything we add it to the root list.
 	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
 		industry_tree.push(industryNode);
-		
-	return industryNode;
 }
 
 /**
@@ -406,6 +406,7 @@ function World::InitCargoTransportEngineIds() {
 			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 
 				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine) * AIEngine.GetCapacity(engine)) {
 				cargoTransportEngineIds[vehicleType][cargo] = engine;
+				Log.logDebug("Engine: " + vehicleType + " " + AICargo.GetCargoLabel(cargo) + " = " + AIEngine.GetName(engine));
 			}
 		}
 	}
@@ -449,7 +450,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 function World::ProcessIndustryOpenedEvent(industryID) {
 	industry_list = AIIndustryList();
 	Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
-	return InsertIndustry(industryID);
+	InsertIndustry(industryID);
+	return industry_table[industryID];
 }			
 
 /**

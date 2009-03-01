@@ -19,6 +19,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	connectionManager = null;           // The connection manager which handels events concerning construction and demolishing of connections.
 	lastMaxDistanceBetweenNodes = null;	// Cached last distance between nodes.
 	updateList = null;					// List of industry nodes that need regulair updating.
+	activeUpdateList = null;            // The part of the update list that needs updating.
 
 	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
@@ -33,6 +34,8 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
+		
+		updateList = clone world.industry_tree;
 	}
 	
 	/**
@@ -66,19 +69,26 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	 * needs specialized treatment this function can be overloaded.
 	 * @param industry_tree An array containing all connection nodes the algorithm
 	 * should iterate over and expand to fill the bineary queue.
-	 * @param is_new_list If this is false and we are updating an existing list, we
-	 * apply extra pruning as to not reevaulate nodes we have already evaluated in
-	 * the past. 
 	 */
-	function UpdateIndustryConnections(industry_tree, is_new_list);
+	function UpdateIndustryConnections(industry_tree);
 }
 
 // New industries are automatically picked up by the UpdateIndustryConnections function.
 function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
-
+	
+	// Only add this industry to the update list if it is in the root list.
+	if (industryNode.cargoIdsProducing.len() != 0 &&
+	industryNode.cargoIdsAccepting.len() == 0) {
+		updateList.push(industryNode);
+		//activeUpdateList = clone updateList;
+	}
+	connectionReports = null;
+	
+/*
 	// Check if this industry produces or accepts (or both :P).
 	if (industryNode.cargoIdsProducing.len() != 0) {
 		Log.logDebug(industryNode.GetName() + " produces stuff!");
+		updateList.push(industryNode);
 		
 		local industryNodeArray = [industryNode];
 		UpdateIndustryConnections(industryNodeArray, true);
@@ -106,6 +116,7 @@ function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
 		foreach (producingIndustryNode in constructedProducingIndustryNodes)
 			producingIndustryNode.connectionNodeList = originalConnectionNodeLists.pop();
 	}
+	*/
 }
 
 function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
@@ -119,8 +130,10 @@ function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
 			report.toConnectionNode == industryID)
 			report.isInvalid = true;
 	}
+	
+	connectionReports = null;
 
-	// Remove all related connection reports.
+/*	// Remove all related connection reports.
 	for (local i = 0; i < connectionReports._count; i++) {
 		local report = connectionReports._queue[i][0];
 		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
@@ -128,7 +141,7 @@ function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
 			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
 			report.toConnectionNode == industryID)
 			report.isInvalid = true;
-	}	
+	}*/	
 }
 
 
@@ -158,9 +171,20 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 	if (connection.travelToNode.nodeType != ConnectionNode.INDUSTRY_NODE ||
 		connection.travelToNode.cargoIdsProducing.len() == 0)
 		return;
+		
+	// Remove the start point of the new connection from our lists.
+	for (local i = 0; i < updateList.len(); i++) {
+		if (connection.travelToNode == updateList[i]) {
+			updateList.remove(i);
+			break;
+		}
+	}
 	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
+	connectionReports = null;
+	//activeUpdateList = clone updateList;
+	//activeUpdateList.push(connection.travelToNode);
 }
 
 /**
@@ -169,7 +193,19 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
  * @param connection The demolished connection.
  */
 function ConnectionAdvisor::ConnectionDemolished(connection) {
-	UpdateIndustryConnections([connection.travelFromNode], true);
+
+	// Remove the end point of the demolished connection from our lists.
+	for (local i = 0; i < updateList.len(); i++) {
+		if (connection.travelToNode == updateList[i]) {
+			updateList.remove(i);
+			break;
+		}
+	}
+	
+	// Readd the old connection node to our update list.
+	updateList.push(connection.travelToNode);
+	connectionReports = null;
+	//activeUpdateList = clone updateList;
 }
 
 /**
@@ -194,35 +230,21 @@ function ConnectionAdvisor::Update(loopCounter) {
 		
 		foreach (report in reportsToBeRemoved)
 			reportTable.rawdelete(report.connection.GetUID());
+	}
 	
-		// Every time something might have been build, we update all possible
-		// reports and consequentially get the latest data from the world.
-		if (connectionReports == null) {
-			Log.logInfo("Start update... " + vehicleType);
-			connectionReports = BinaryHeap();		
-			UpdateIndustryConnections(world.industry_tree, false);
-			Log.logInfo("Done update!");
-			lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
-		} else if (loopCounter == 0) {
-			Log.logInfo("Start small update... " + vehicleType);
-			
-			// Determine which industries can now be added as reports.
-			local addableIndustryList = [];
-			
-			for (local i = updateList.len() - 1; i > -1; i--) {
-				local industryNode = updateList[i];
-				foreach (cargo in industryNode.cargoIdsProducing) {
-					if (industryNode.GetProduction(cargo) > 50) {
-						addableIndustryList.push(industryNode);
-						updateList.remove(i);
-						break;
-					}
-				}
-			}
-			
-			UpdateIndustryConnections(addableIndustryList, true);
-			Log.logInfo("Done small update... " + vehicleType);
-		}
+	// Every time something might have been build, we update all possible
+	// reports and consequentially get the latest data from the world.
+	if (connectionReports == null) {
+		Log.logDebug("Reset active update list.");
+		connectionReports = BinaryHeap();
+		activeUpdateList = clone updateList;
+		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
+	}
+	
+	if (loopCounter == 0) {
+		Log.logInfo("Start update... " + vehicleType);
+		UpdateIndustryConnections(activeUpdateList);
+		Log.logInfo("Done update!");
 	}
 
 	if (disabled)
@@ -235,7 +257,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 
 	// Always try to get one more then currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
-	
+	assert(connectionReports != null);
 	while (reportTable.len() < minNrReports &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
@@ -332,14 +354,10 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// If we find no other possible connections, extend our range!
 	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL) ||
 		lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
-		
-		if (lastMaxDistanceBetweenNodes == world.max_distance_between_nodes)
-			world.IncreaseMaxDistanceBetweenNodes();
-		
-		if (lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
 			
-			Log.logInfo("Extend maximum range of all connections to world.max_distance_between_nodes.");
-			UpdateIndustryConnections(world.industry_tree, false);
+		if (world.IncreaseMaxDistanceBetweenNodes()) {
+			Log.logInfo("Extend maximum range of " + vehicleType + " to " + world.max_distance_between_nodes + ".");
+			connectionReports = null;
 			lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		}
 	}
@@ -405,11 +423,14 @@ function ConnectionAdvisor::GetReports() {
 	return reports;
 }
 
-function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list) {
-	local maxDistanceConstraints = vehicleType != AIVehicle.VT_AIR;
+function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	local maxDistanceMultiplier = 1;
 	if (vehicleType == AIVehicle.VT_WATER)
 		maxDistanceMultiplier = 0.75;
+	else if (vehicleType == AIVehicle.VT_AIR)
+		maxDistanceMultiplier = 0.25;
+
+	local startTicks = AIController.GetTick();
 
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't
@@ -422,11 +443,18 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
-	local industriesToCheck = {};
-	foreach (fromConnectionNode in industry_tree) {
+	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
+		if (AIController.GetTick() - startTicks > 1000)
+			break;
+		i = AIBase.RandRange(connectionNodeList.len());	
+		local fromConnectionNode = connectionNodeList[i];
 		
-		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater)
+		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater) {
+			connectionNodeList.remove(i);
 			continue;
+		}
+		
+		local doDelete = true;
 
 		// See if we need to add or remove some vehicles.
 		// Take a guess at the travel time and profit for each cargo type.
@@ -434,15 +462,22 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list
 
 			// Check if we even have an engine to transport this cargo.
 			local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
-			if (engineID == -1)
+			if (engineID == -1) {
+				doDelete = false;
 				continue;
+			}
+				
+			// Check if this building produces enough (yet) to be considered.
+			if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+				fromConnectionNode.GetProduction(cargoID) < 50) {
+				doDelete = false;
+				continue;
+			}
 
 			// Make sure we don't serve any industry twice!
 			local skip = false;
 			foreach (activeConnection in fromConnectionNode.activeConnections) {
 				if (activeConnection.cargoID == cargoID) {
-					if (!activeConnection.bilateralConnection)
-						industriesToCheck[activeConnection.travelToNode] <- activeConnection.travelToNode;
 					skip = true;
 					break;
 				}
@@ -450,7 +485,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list
 			
 			if (skip)
 				continue;
-
+				
 			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
 				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater)
 					continue;
@@ -460,18 +495,12 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list
 				// Check if the nodes are not to far away (we restrict it by an extra 
 				// percentage to avoid doing unnecessary work by envoking the pathfinder
 				// where this isn't necessary.
-				if (maxDistanceConstraints) {
-					if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
-						continue;			
-				} else if ((AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 - world.max_distance_between_nodes > manhattanDistance ||
-					(AIMap.GetMapSizeX() + AIMap.GetMapSizeY()) / 2 + world.max_distance_between_nodes < manhattanDistance) 
-						continue;
-				if (!is_new_list && lastMaxDistanceBetweenNodes > manhattanDistance)
-					continue;
+				if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
+					continue;			
 				
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
-					continue;				
+					continue;
 
 				// Check if the connection is actually profitable.
 				local report = ConnectionReport(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
@@ -479,9 +508,11 @@ function ConnectionAdvisor::UpdateIndustryConnections(industry_tree, is_new_list
 					connectionReports.Insert(report, -report.Utility());
 			}
 		}
+		
+		// Remove this item from our update list once we're done.
+		if (doDelete)
+			connectionNodeList.remove(i);
 	}
 	
-	// Also check for other connection starting from this node.
-	if (industriesToCheck.len() > 0)
-		UpdateIndustryConnections(industriesToCheck, is_new_list);
+	Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks));
 }
