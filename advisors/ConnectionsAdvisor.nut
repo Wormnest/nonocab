@@ -20,6 +20,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	lastMaxDistanceBetweenNodes = null;	// Cached last distance between nodes.
 	updateList = null;					// List of industry nodes that need regulair updating.
 	activeUpdateList = null;            // The part of the update list that needs updating.
+	lastUpdate = null;
 
 	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
@@ -30,6 +31,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		vehicleType = vehType;
 		connectionManager = conManager;
 		lastMaxDistanceBetweenNodes = 0;
+		lastUpdate = -100;
 	
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
 		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
@@ -180,11 +182,17 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 		}
 	}
 	
+	for (local i = 0; i < activeUpdateList.len(); i++) {
+		if (connection.travelToNode == activeUpdateList[i]) {
+			activeUpdateList.remove(i);
+			break;
+		}
+	}
+	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
-	connectionReports = null;
-	//activeUpdateList = clone updateList;
-	//activeUpdateList.push(connection.travelToNode);
+	updateList.push(connection.travelToNode);
+	//connectionReports = null;
 }
 
 /**
@@ -235,16 +243,17 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
 	if (connectionReports == null) {
-		Log.logDebug("Reset active update list.");
+		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
 		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
-	}
-	
-	if (loopCounter == 0) {
+		UpdateIndustryConnections(activeUpdateList);
+		Log.logInfo("Done populating!");
+	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
 		Log.logInfo("Start update... " + vehicleType);
 		UpdateIndustryConnections(activeUpdateList);
-		Log.logInfo("Done update!");
+		lastUpdate = AIDate.GetCurrentDate();
+		Log.logInfo("Done updating!");
 	}
 
 	if (disabled)
@@ -444,7 +453,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
-		if (AIController.GetTick() - startTicks > 1000)
+		if (AIController.GetTick() - startTicks > 1500)
 			break;
 		i = AIBase.RandRange(connectionNodeList.len());	
 		local fromConnectionNode = connectionNodeList[i];
