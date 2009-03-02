@@ -21,6 +21,7 @@ class ConnectionNode
 	bestReports = null;			// The best report to serve this connection node.
 	activeConnections = null;	// The connections which serves this connection node.
 	reverseActiveConnections = null;	// The connections this connection node is served by.
+	isInvalid = null;
 
 	/**
 	 * Construct a new connection node with the given ID an type.
@@ -38,6 +39,7 @@ class ConnectionNode
 		connectionNodeListReversed = [];
 		connections = {};
 		bestReports = [];
+		isInvalid = false;
 	}
 
 	/**

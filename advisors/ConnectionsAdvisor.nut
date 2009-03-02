@@ -462,7 +462,8 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		i = AIBase.RandRange(connectionNodeList.len());	
 		local fromConnectionNode = connectionNodeList[i];
 		
-		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater) {
+		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater ||
+			fromConnectionNode.isInvalid) {
 			connectionNodeList.remove(i);
 			continue;
 		}
@@ -500,7 +501,8 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				continue;
 				
 			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
-				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater)
+				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater ||
+					toConnectionNode.isInvalid)
 					continue;
 
 				local manhattanDistance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
