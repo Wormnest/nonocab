@@ -63,13 +63,13 @@ function GameSettings::UpdateGameSettings() {
 }
 
 function GameSettings::GetMaxBuildableVehicles(vehicleType) {
-	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len())
+	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len() || AIGameSettings.IsDisabledVehicleType(vehicleType))
 		return 0;
 	return GameSettings.maxVehiclesBuildLimit[vehicleType];
 }
 
 function GameSettings::IsBuildable(vehicleType) {
-	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len())
+	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len() || AIGameSettings.IsDisabledVehicleType(vehicleType))
 		return false;
 	return GameSettings.maxVehiclesLimit[vehicleType] > 0;
 }
