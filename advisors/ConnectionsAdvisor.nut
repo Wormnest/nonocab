@@ -456,10 +456,22 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
+	local closedList = {};
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
+		
 		if (AIController.GetTick() - startTicks > 1500)
 			break;
-		i = AIBase.RandRange(connectionNodeList.len());	
+		i = AIBase.RandRange(connectionNodeList.len());
+		
+		while (closedList.rawin(i)) {
+			if (AIController.GetTick() - startTicks > 1500) {
+				Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks));
+				return;
+			}
+			i = AIBase.RandRange(connectionNodeList.len());
+		}
+		
+		closedList[i] <- null;
 		local fromConnectionNode = connectionNodeList[i];
 		
 		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater ||
