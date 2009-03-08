@@ -28,7 +28,8 @@ class ConnectionReport extends Report {
 		isInvalid = false;
 		
 		// Check if the engine is valid.
-		if (!AIEngine.IsValidEngine(engineID)) {
+		if (!AIEngine.IsValidEngine(engineID) ||
+			toConnectionNode.isInvalid || fromConnectionNode.isInvalid) {
 			isInvalid = true;
 			return;
 		}

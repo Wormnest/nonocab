@@ -456,22 +456,11 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	//
 	// The next step would be to look at the most prommising connection nodes and do some
 	// actual pathfinding on that selection to find the best one(s).
-	local closedList = {};
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
 		
 		if (AIController.GetTick() - startTicks > 1500)
 			break;
 		i = AIBase.RandRange(connectionNodeList.len());
-		
-		while (closedList.rawin(i)) {
-			if (AIController.GetTick() - startTicks > 1500) {
-				Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks));
-				return;
-			}
-			i = AIBase.RandRange(connectionNodeList.len());
-		}
-		
-		closedList[i] <- null;
 		local fromConnectionNode = connectionNodeList[i];
 		
 		if (vehicleType == AIVehicle.VT_WATER && !fromConnectionNode.isNearWater ||
@@ -480,25 +469,19 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 			continue;
 		}
 		
-		local doDelete = true;
-
 		// See if we need to add or remove some vehicles.
 		// Take a guess at the travel time and profit for each cargo type.
 		foreach (cargoID in fromConnectionNode.cargoIdsProducing) {
 
 			// Check if we even have an engine to transport this cargo.
 			local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
-			if (engineID == -1) {
-				doDelete = false;
+			if (engineID == -1)
 				continue;
-			}
 				
 			// Check if this building produces enough (yet) to be considered.
 			if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
-				fromConnectionNode.GetProduction(cargoID) < 50) {
-				doDelete = false;
+				fromConnectionNode.GetProduction(cargoID) == 0)
 				continue;
-			}
 
 			// Make sure we don't serve any industry twice!
 			local skip = false;
@@ -531,14 +514,13 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 
 				// Check if the connection is actually profitable.
 				local report = ConnectionReport(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
-				if (report.Utility() > 0)
+				if (report.Utility() > 0 && !report.isInvalid)
 					connectionReports.Insert(report, -report.Utility());
 			}
 		}
 		
 		// Remove this item from our update list once we're done.
-		if (doDelete)
-			connectionNodeList.remove(i);
+		connectionNodeList.remove(i);
 	}
 	
 	Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks));
