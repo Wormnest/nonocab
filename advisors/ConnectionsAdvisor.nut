@@ -444,6 +444,8 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		maxDistanceMultiplier = 0.25;
 
 	local startTicks = AIController.GetTick();
+	
+	local processedConnections = {};
 
 	// Upon initialisation we look at all possible connections in the world and try to
 	// find the most prommising once in terms of cost to build to profit ratio. We can't
@@ -514,8 +516,23 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 
 				// Check if the connection is actually profitable.
 				local report = ConnectionReport(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
-				if (report.Utility() > 0 && !report.isInvalid)
+				
+				if (report.Utility() > 0 && !report.isInvalid) {
+					
+					if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+						vehicleType != AIVehicle.VT_WATER) {
+						local uid = fromConnectionNode.GetUID(cargoID);
+						if (processedConnections.rawin(uid)) {
+							local existingConnection = processedConnections.rawget(uid);
+							if (existingConnection.Utility() >= report.Utility())
+								continue;
+						}
+						
+						processedConnections[uid] <- report;
+					}
+											
 					connectionReports.Insert(report, -report.Utility());
+				}
 			}
 		}
 		
