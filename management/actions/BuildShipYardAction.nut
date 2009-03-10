@@ -15,15 +15,7 @@ class BuildShipYardAction extends Action {
 }
 
 
-function BuildShipYardAction::Execute() {
-
-	// Check if we have enough permission to build here.
-	if (AITown.GetRating(AITile.GetClosestTown(connection.travelFromNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
-		return false;
-		
-	// Check if we have enough permission to build here.
-	if (AITown.GetRating(AITile.GetClosestTown(connection.travelToNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
-		return false;	
+function BuildShipYardAction::Execute() {	
 
 	local pathFindingHelper = WaterPathFinderHelper();
 	local pathFinder = RoadPathFinding(pathFindingHelper);
@@ -70,6 +62,14 @@ function BuildShipYardAction::Execute() {
 		connection.forceReplan = true;
 		return false;
 	}
+	
+	// Check if we have enough permission to build here.
+	if (AITown.GetRating(AITile.GetClosestTown(producingTiles.Begin()), AICompany.COMPANY_SELF) < -200)
+		return false;
+		
+	// Check if we have enough permission to build here.
+	if (AITown.GetRating(AITile.GetClosestTown(acceptingTiles.Begin()), AICompany.COMPANY_SELF) < -200)
+		return false;	
 	
 	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 3);
 

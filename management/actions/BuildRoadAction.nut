@@ -32,17 +32,6 @@ function BuildRoadAction::Execute() {
 	local isConnectionBuild = connection.pathInfo.build;
 	local newConnection = null;
 	local originalRoadList = null;
-	
-	// Check if we can build the road stations.
-	if (buildRoadStations) {
-		// Check if we have enough permission to build here.
-		if (AITown.GetRating(AITile.GetClosestTown(connection.travelFromNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
-			return false;
-			
-		// Check if we have enough permission to build here.
-		if (AITown.GetRating(AITile.GetClosestTown(connection.travelToNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
-			return false;	
-	}
 
 	// If the connection is already build we will try to add additional road stations.
 	if (isConnectionBuild) {
@@ -94,6 +83,17 @@ function BuildRoadAction::Execute() {
 		connection.forceReplan = true;
 		return false;
 	}
+	
+	// Check if we can build the road stations.
+	if (buildRoadStations) {
+		// Check if we have enough permission to build here.
+		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
+			return false;
+			
+		// Check if we have enough permission to build here.
+		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
+			return false;	
+	}	
 
 	// Build the actual road.
 	local pathBuilder = PathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);

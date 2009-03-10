@@ -53,9 +53,9 @@ function NoCAB::Start()
 	AICompany.SetPresidentName("B.C. Ridder");
 	
 	// Set company name.
-	if(!AICompany.SetName("NoCAB")) {
+	if(!AICompany.SetName("NoCAB - SVN 271")) {
 		local i = 2;
-		while(!AICompany.SetName("NoCAB #" + i)) { i++; }
+		while(!AICompany.SetName("NoCAB #" + i + " - SVN 271")) { i++; }
 	}
 
 	AICompany.SetAutoRenewMonths(World.MONTHS_BEFORE_AUTORENEW);
