@@ -17,6 +17,14 @@ class BuildShipYardAction extends Action {
 
 function BuildShipYardAction::Execute() {
 
+	// Check if we have enough permission to build here.
+	if (AITown.GetRating(AITile.GetClosestTown(connection.travelFromNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
+		return false;
+		
+	// Check if we have enough permission to build here.
+	if (AITown.GetRating(AITile.GetClosestTown(connection.travelToNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
+		return false;	
+
 	local pathFindingHelper = WaterPathFinderHelper();
 	local pathFinder = RoadPathFinding(pathFindingHelper);
 

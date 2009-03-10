@@ -86,6 +86,10 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 	local excludeList;
 	
 	if (getFirst && node.nodeType == ConnectionNode.TOWN_NODE) {
+		// Check if we have enough permission to build here.
+		if (AITown.GetRating(AITile.GetClosestTown(tile), AICompany.COMPANY_SELF) < -200)
+			return -1;
+		
 		excludeList = clone node.excludeList;
 		node.excludeList = {};
 	}

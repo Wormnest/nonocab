@@ -245,7 +245,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
+	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 6) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
@@ -253,7 +253,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		UpdateIndustryConnections(activeUpdateList);
 		lastUpdate = AIDate.GetCurrentDate();
 		Log.logInfo("Done populating!");
-	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
+	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 3) {
 		Log.logInfo("Start update... " + vehicleType);
 		UpdateIndustryConnections(activeUpdateList);
 		lastUpdate = AIDate.GetCurrentDate();

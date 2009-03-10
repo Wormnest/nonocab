@@ -32,6 +32,17 @@ function BuildRoadAction::Execute() {
 	local isConnectionBuild = connection.pathInfo.build;
 	local newConnection = null;
 	local originalRoadList = null;
+	
+	// Check if we can build the road stations.
+	if (buildRoadStations) {
+		// Check if we have enough permission to build here.
+		if (AITown.GetRating(AITile.GetClosestTown(connection.travelFromNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
+			return false;
+			
+		// Check if we have enough permission to build here.
+		if (AITown.GetRating(AITile.GetClosestTown(connection.travelToNode.GetLocation()), AICompany.COMPANY_SELF) < -200)
+			return false;	
+	}
 
 	// If the connection is already build we will try to add additional road stations.
 	if (isConnectionBuild) {
