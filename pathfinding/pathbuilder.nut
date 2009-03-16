@@ -249,7 +249,7 @@ function PathBuilder::CheckError(buildResult)
 function PathBuilder::RealiseConnection(buildRoadStations)
 {
 	// Check if we have enough money...
-	local estimatedCost = GetCostForRoad(roadList, maxSpeed);
+	local estimatedCost = GetCostForRoad();
 	if (estimatedCost > Finance.GetMaxMoneyToSpend()) {
 		Log.logWarning("Not enough money, aborting construction!");
 		return false;
@@ -376,7 +376,7 @@ function PathBuilder::BuildPath(roadList, estimateCost)
  * Plan and check how much it cost to create the fastest route
  * from start to end.
  */
-function PathBuilder::GetCostForRoad(roadList, maxSpeed)
+function PathBuilder::GetCostForRoad()
 {
 	local test = AITestMode();			// Switch to test mode...
 	local additionalCosts = 0;

@@ -229,7 +229,7 @@ function WaterPathBuilder::BuildPath(roadList)
  * Plan and check how much it cost to create the fastest route
  * from start to end.
  */
-function WaterPathBuilder::GetCostForRoad(roadList)
+function WaterPathBuilder::GetCostForRoad()
 {
 	local test = AITestMode();			// Switch to test mode...
 

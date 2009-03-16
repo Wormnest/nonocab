@@ -50,7 +50,7 @@ class ConnectionReport extends Report {
 				travelTimeFrom = connection.pathInfo.GetTravelTime(engineID, false);
 
 				if (!connection.pathInfo.build)
-					initialCost = PathBuilder.GetCostForRoad(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID));
+					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), null).GetCostForRoad();
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
@@ -104,7 +104,7 @@ class ConnectionReport extends Report {
 			if (connection != null && connection.pathInfo.roadList != null) {
 				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 				travelTimeFrom = travelTimeTo;
-				initialCost = WaterPathBuilder.GetCostForRoad(connection.pathInfo.roadList);
+				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
@@ -151,6 +151,7 @@ class ConnectionReport extends Report {
 
 			if (nrVehiclesOtherDirection < nrVehicles)
 				nrVehicles = nrVehiclesOtherDirection;
+
 			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
 		}
 
