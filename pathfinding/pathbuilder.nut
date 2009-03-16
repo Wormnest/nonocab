@@ -386,44 +386,4 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
 	
 	return accounting.GetCosts();
-	/*
-	local previousRoadTile = roadList[roadList.len() - 1].tile;
-	
-	local tmpArray = roadList.slice(0, roadList.len() - 1);
-	tmpArray.reverse();
-	foreach (at in tmpArray) {
-
-		if (at.type == Tile.ROAD) {
-			AIRoad.BuildRoad(at.tile, previousRoadTile);
-		} else if (at.type == Tile.TUNNEL && !AITunnel.IsTunnelTile(previousRoadTile + at.direction)) {
-			AITunnel.BuildTunnel(AIVehicle.VT_ROAD, previousRoadTile + at.direction);
-		} else if (at.type == Tile.BRIDGE && !AIBridge.IsBridgeTile(previousRoadTile + at.direction)) {
-
-			local length = (at.tile - previousRoadTile) / at.direction;
-			if (length < 0)
-				length = -length;		
-
-			// Find the cheapest and fastest bridge.
-			local bridgeTypes = AIBridgeList_Length(length);
-			local bestBridgeType = null;
-			for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
-				local bridge = bridgeTypes.Next();
-				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
-					bestBridgeType = bridge;
-			}		
-
-			//AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, previousRoadTile + at.direction, at.tile);
-			additionalCosts += AIBridge.GetPrice(bestBridgeType, length);
-		}
-
-		previousRoadTile = at.tile;
-	}
-
-	// Including 2 road stations.
-	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-
-
-	return accounting.GetCosts() + additionalCosts;		// Automatic memory management will kill accounting and testmode! :)
-	*/
 }
