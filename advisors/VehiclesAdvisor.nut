@@ -40,7 +40,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 					isAir = true;
 
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 5) &&
+					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) &&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
@@ -115,7 +115,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
 		// road stations from the number of vehicles waiting.
-		report.nrVehicles += (connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
+		if (report.nrVehicles > -connection.pathInfo.nrRoadStations)
+			report.nrVehicles = 0;
+		//report.nrVehicles += nrVehiclesInStation / 2;//(connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
 
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
@@ -150,7 +152,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60 || dropoffOverload))
 			continue;
 
-		if ((isAir || isShip) && report.nrVehicles == -1)
+		if ((isAir || isShip) && report.nrVehicles < 0 && report.nrVehicles > -4)
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!

@@ -261,7 +261,7 @@ function PathBuilder::RealiseConnection(buildRoadStations)
 		
 		local result = BuildPath(roadList, false);
 		local costs = account.GetCosts();
-		Log.logWarning("Estimated costs: " + estimatedCost + " actual costs: " + costs);
+		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
 		return result;
 	}
 }

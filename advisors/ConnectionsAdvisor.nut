@@ -245,7 +245,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 3) {
+	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
@@ -253,7 +253,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		UpdateIndustryConnections(activeUpdateList);
 		lastUpdate = AIDate.GetCurrentDate();
 		Log.logInfo("Done populating!");
-	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 3) {
+	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
 		Log.logInfo("Start update... " + vehicleType);
 		UpdateIndustryConnections(activeUpdateList);
 		lastUpdate = AIDate.GetCurrentDate();
@@ -460,8 +460,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	// actual pathfinding on that selection to find the best one(s).
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
 		
-		if (AIController.GetTick() - startTicks > 1500)
+		if (AIController.GetTick() - startTicks > 1500) {
+			Log.logDebug("Time's up! " + connectionNodeList.len());
 			break;
+		}
 		i = AIBase.RandRange(connectionNodeList.len());
 		local fromConnectionNode = connectionNodeList[i];
 		
