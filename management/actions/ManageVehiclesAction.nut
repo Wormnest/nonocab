@@ -86,7 +86,7 @@ function ManageVehiclesAction::Execute()
 				}
 			} 
 
-			if (vehiclesDeleted == vehicleNumbers && AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
+			if (vehiclesDeleted == vehicleNumbers/* && AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR*/) {
 				// Update the creation date of the connection so vehicles don't get
 				// removed twice!
 				connection.pathInfo.buildDate = AIDate.GetCurrentDate();

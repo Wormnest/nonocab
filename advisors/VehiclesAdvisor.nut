@@ -40,7 +40,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 					isAir = true;
 
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 15) &&
+					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 5) &&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
@@ -110,6 +110,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 			if (ratingOtherEnd > rating)
 				rating = ratingOtherEnd;
 		}
+		
+			
+		// If we have multiple stations we want to take this into account. Each station
+		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
+		// road stations from the number of vehicles waiting.
+		report.nrVehicles += (connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
 
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
@@ -121,11 +127,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 			// cargo a vehicle can carry.
 			if (nrVehicles > 0 && AIEngine.GetCapacity(report.engineID) * 1.5 > production && rating > 35)
 				continue;
-			
-			// If we have multiple stations we want to take this into account. Each station
-			// is allowed to have 1 vehicle waiting in them. So we subtract the number of
-			// road stations from the number of vehicles waiting.
-			report.nrVehicles += (connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
 
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
