@@ -28,10 +28,10 @@ class PathBuilder {
 	/**
 	 * Build the actual road.
 	 * @param roadList The road list to construct.
-	 * @param ignoreError If true, any errors which might occur during construction are ignored.
+	 * @param estimateCost If true, any errors which might occur during construction are ignored.
 	 * @return True if the construction was succesful, false otherwise.
 	 */
-	function BuildPath(roadList, ignoreError);
+	function BuildPath(roadList, estimateCost);
 	
 	/**
 	 * Build a road / tunnel / bridge piece.
@@ -39,10 +39,10 @@ class PathBuilder {
 	 * @param toTile The tile to build to.
 	 * @param tileType The type of road to build (road, tunnel, bridge).
 	 * @param length The length of the piece (only for tunnels).
-	 * @param ignoreError If true all errors are ignored.
+	 * @param estimateCost If true all errors are ignored.
 	 * @return True if the construction succeded, false otherwise.
 	 */
-	function BuildRoadPiece(fromTile, toTile, tileType, length, ignoreError);
+	function BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost);
 	
 	/**
 	 * This function checks the last error and determines whether this 
@@ -98,7 +98,7 @@ class PathFixer extends Thread {
 }
 
 
-function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreError) {
+function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
 	
@@ -106,6 +106,30 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 		
 		case Tile.ROAD:
 			buildSucceded = AIRoad.BuildRoad(fromTile, toTile);
+			
+			// If we couldn't build a road in one try, try to break it down.
+			if (estimateCost && !buildSucceded) {
+				local direction = toTile - fromTile;
+				// Check which direction we're going.
+				if ((direction < 0 ? -direction : direction) < AIMap.GetMapSizeX())
+					length = direction;
+				else {
+					length = direction / AIMap.GetMapSizeX();
+				}
+				
+				if (length < 0)
+					length = -length;
+				
+				// Now build all road pieces bit by bit.
+				local tmpTile = fromTile;
+				local direction = direction / length;
+				
+				while (tmpTile != toTile) {
+					AIRoad.BuildRoad(tmpTile, tmpTile + direction);
+					tmpTile += direction;
+				}
+			}
+			
 			break;
 			
 		case Tile.TUNNEL:
@@ -139,10 +163,8 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, ignoreE
 	if (!buildSucceded) {
 		
 		// If the error is such we are unable to solve, stop.
-		if (!ignoreError && !CheckError([fromTile, toTile, tileType, length]))
+		if (!estimateCost && !CheckError([fromTile, toTile, tileType, length]))
 			return false;
-		
-		return true;
 	}
 	
 	return true;
@@ -226,9 +248,21 @@ function PathBuilder::CheckError(buildResult)
 
 function PathBuilder::RealiseConnection(buildRoadStations)
 {
+	// Check if we have enough money...
+	local estimatedCost = GetCostForRoad(roadList, maxSpeed);
+	if (estimatedCost > Finance.GetMaxMoneyToSpend()) {
+		Log.logWarning("Not enough money, aborting construction!");
+		return false;
+	}
+	
 	{
-	local test = AIExecMode();
-	return BuildPath(roadList, false);
+		local account = AIAccounting();
+		local test = AIExecMode();
+		
+		local result = BuildPath(roadList, false);
+		local costs = account.GetCosts();
+		Log.logWarning("Estimated costs: " + estimatedCost + " actual costs: " + costs);
+		return result;
 	}
 }
 
@@ -237,8 +271,12 @@ function PathBuilder::RealiseConnection(buildRoadStations)
  * the landscape. We use the A* pathfinding algorithm.
  * If something goes wrong during the building process the fallBackMethod
  * is called to handle things for us.
+ * @param roadList An array with annotated tiles to build.
+ * @estimateCost If this is true we will not invoke the path fixer and try
+ * to get as close an estimate of the true cost of building this path as
+ * possible.
  */
-function PathBuilder::BuildPath(roadList, ignoreError)
+function PathBuilder::BuildPath(roadList, estimateCost)
 {
 	if(roadList == null || roadList.len() < 2)
 		return false;
@@ -265,7 +303,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 				// don't require terraforming
 				// Terraform(buildFrom, currentDirection);
 					
-				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
 					return false;
 
 				currentDirection = direction;
@@ -276,12 +314,12 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 		else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
-				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, null, estimateCost))
 					return false;
 			} else {
 				// If the tunnel is already build, make sure the road before the bridge is connected to the
 				// already build tunnel. (the part after the tunnel is handled in the next part).
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 		} 
@@ -293,14 +331,14 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 				if (length < 0)
 					length = -length;		
 				
-				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost))
 					return false;
 
 			} else {
 
 				// If the bridge is already build, make sure the road before the bridge is connected to the
 				// already build bridge. (the part after the bridge is handled in the next part).			
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 		}
@@ -311,13 +349,13 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 
 			// Build road before the tunnel or bridge.
 			if (buildFromIndex != a + 1)
-				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
 					return false;
 			
 			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
 			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
 			if (a > 0 && roadList[a - 1].type == Tile.ROAD)
-				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, Tile.ROAD, null, ignoreError))
+				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, Tile.ROAD, null, estimateCost))
 					return false;
 
 			// Update the status before moving on.
@@ -328,7 +366,7 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 	
 	// Build the last part (if any).
 	if (buildFromIndex > 0)
-		if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, ignoreError))
+		if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
 
 	return true;
@@ -341,8 +379,14 @@ function PathBuilder::BuildPath(roadList, ignoreError)
 function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 {
 	local test = AITestMode();			// Switch to test mode...
-
+	local additionalCosts = 0;
 	local accounting = AIAccounting();	// Start counting costs
+	BuildPath(roadList, true);
+	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+	
+	return accounting.GetCosts();
+	/*
 	local previousRoadTile = roadList[roadList.len() - 1].tile;
 	
 	local tmpArray = roadList.slice(0, roadList.len() - 1);
@@ -354,7 +398,6 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 		} else if (at.type == Tile.TUNNEL && !AITunnel.IsTunnelTile(previousRoadTile + at.direction)) {
 			AITunnel.BuildTunnel(AIVehicle.VT_ROAD, previousRoadTile + at.direction);
 		} else if (at.type == Tile.BRIDGE && !AIBridge.IsBridgeTile(previousRoadTile + at.direction)) {
-			
 
 			local length = (at.tile - previousRoadTile) / at.direction;
 			if (length < 0)
@@ -368,8 +411,9 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
 					bestBridgeType = bridge;
 			}		
-		
-			AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, previousRoadTile + at.direction, at.tile);
+
+			//AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, previousRoadTile + at.direction, at.tile);
+			additionalCosts += AIBridge.GetPrice(bestBridgeType, length);
 		}
 
 		previousRoadTile = at.tile;
@@ -380,5 +424,6 @@ function PathBuilder::GetCostForRoad(roadList, maxSpeed)
 	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
 
 
-	return accounting.GetCosts();		// Automatic memory management will kill accounting and testmode! :)
+	return accounting.GetCosts() + additionalCosts;		// Automatic memory management will kill accounting and testmode! :)
+	*/
 }
