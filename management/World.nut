@@ -347,20 +347,17 @@ function World::RemoveIndustry(industryID) {
 	
 	// Now we need to remove this industry from all industry nodes which produces
 	// cargo this industry used to accept.
-	foreach (producingIndustryNode in industryNode.reverseActiveConnections) {
+	
+	// We add all connection to demolish in a tupple, because if we call the Demolish
+	// function it will remove an element from the array and this will screw up the
+	// iterators below resulting in a run-time error. After all connections which must
+	// be destroyed are identified they will be demolished out side the iterators.
+	local toDemolishList = [];
+	foreach (producingIndustryNode in industryNode.reverseActiveConnections)
 		// Remove all connections which are already build!
 		foreach (connection in producingIndustryNode.activeConnections)
 			if (connection.travelToNode == industryNode)
-				connection.Demolish(true, true, false);		
-/*		
-		for (local i = 0; i < producingIndustryNode.connectionNodeList.len(); i++) {
-			if (producingIndustryNode.connectionNodeList[i].nodeType == industryNode.nodeType &&
-				producingIndustryNode.connectionNodeList[i].id == industryNode.id) {					
-					producingIndustryNode.connectionNodeList.remove(i);
-					break;
-			}
-		}*/
-	}
+				toDemolishList.push([connection, true]);
 	
 	// Remove all connections which are already build!
 	foreach (connection in industryNode.activeConnections) {
@@ -371,9 +368,13 @@ function World::RemoveIndustry(industryID) {
 			connection.travelToNode.reverseActiveConnections.len() > 1)
 			demolishDestinationRoadStations = false;
 
-		connection.Demolish(true, demolishDestinationRoadStations, false);
+		toDemolishList.push([connection, demolishDestinationRoadStations]);
+		//connection.Demolish(true, demolishDestinationRoadStations, false);
 	}
-			
+
+	foreach (connectionTuple in toDemolishList)
+		connectionTuple[0].Demolish(true, connectionTuple[1], false);
+
 	industry_table.rawdelete(industryID);
 	industryNode.isInvalid = true;
 	return industryNode;
