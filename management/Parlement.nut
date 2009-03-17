@@ -76,7 +76,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 		// Only add when whe think that they will be profitable in the end.
 		// Don't look for things if they are to expensive.
 		if(utility > 0)
-			sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility / (report.initialCost + report.nrVehicles * report.initialCostPerVehicle)));
+			sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility / (report.initialCost + report.utilityForMoneyNrVehicles * report.initialCostPerVehicle)));
 	}
 
 	// Do the selection, by using a greedy subsum algorithm.

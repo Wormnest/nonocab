@@ -11,17 +11,20 @@
 class Report
 {
 	
-	actions = null;				// The list of actions.
-	brutoIncomePerMonth = 0;		// The bruto income per month which is invariant of the number of vehicles.
-	brutoCostPerMonth = 0;			// The bruto cost per month which is invariant of the number of vehicles.
-	initialCost = 0;			// Initial cost, which is only paid once!
-	runningTimeBeforeReplacement = 0;	// The running time in which profit can be made.
+	actions = null;                   // The list of actions.
+	brutoIncomePerMonth = 0;          // The bruto income per month which is invariant of the number of vehicles.
+	brutoCostPerMonth = 0;            // The bruto cost per month which is invariant of the number of vehicles.
+	initialCost = 0;                  // Initial cost, which is only paid once!
+	runningTimeBeforeReplacement = 0; // The running time in which profit can be made.
 	
-	brutoIncomePerMonthPerVehicle = 0;	// The bruto income per month per vehicle.
-	brutoCostPerMonthPerVehicle = 0;	// The bruto cost per month per vehicle.
-	initialCostPerVehicle = 0;		// The initial cost per vehicle which is only paid once!
-	nrVehicles = 0;				// The total number of vehicles.
-	engineID = 0;				// The engine ID for all vehicles.
+	brutoIncomePerMonthPerVehicle = 0; // The bruto income per month per vehicle.
+	brutoCostPerMonthPerVehicle = 0;   // The bruto cost per month per vehicle.
+	initialCostPerVehicle = 0;         // The initial cost per vehicle which is only paid once!
+	nrVehicles = 0;                    // The total number of vehicles.
+	engineID = 0;                      // The engine ID for all vehicles.
+	utilityForMoneyNrVehicles = 0;     // After a call to 'UtilityForMoney', the number of
+	                                   // vehicles used for the utility function is stored
+	                                   // in this parameter.
 	
 	/**
 	 * The utility for a report is the netto profit per month times
@@ -60,6 +63,7 @@ class Report
 		local utility = Utility();
 		
 		// Restore values.
+		utilityForMoneyNrVehicles = nrVehicles;
 		nrVehicles = oldNrVehicles;
 		
 		// Return the utility;
