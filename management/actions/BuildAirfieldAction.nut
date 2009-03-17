@@ -122,11 +122,12 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     	local test = AITestMode();
 
         for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-        	
+        	local nearestTown = AIAirport.GetNearestTown(tile, airportType);
         	// Check if we can build an airport here, either directly or by terraforming.
             if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
             	(getFirst || !Terraform.Terraform(tile, airportX, airportY) &&
-				AITown.GetRating(AIAirport.GetNearestTown(tile, airportType), AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50)) continue;
+				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
+				AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;
 			break;
     	}
