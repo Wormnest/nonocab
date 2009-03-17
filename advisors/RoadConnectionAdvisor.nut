@@ -8,7 +8,7 @@ class RoadConnectionAdvisor extends ConnectionAdvisor {
 	constructor(world, connectionManager) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_ROAD, connectionManager);
 		local pathFindingHelper = RoadPathFinderHelper();
-		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRoad;
+		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRoad + 10;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}
 }

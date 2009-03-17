@@ -522,7 +522,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				if (report.Utility() > 0 && !report.isInvalid) {
 					
 					if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
-						vehicleType != AIVehicle.VT_WATER) {
+						vehicleType == AIVehicle.VT_AIR) {
 						local uid = fromConnectionNode.GetUID(cargoID);
 						if (processedConnections.rawin(uid)) {
 							local existingConnection = processedConnections.rawget(uid);
