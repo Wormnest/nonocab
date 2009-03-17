@@ -84,10 +84,6 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
 	local tile = node.GetLocation();
 	local excludeList;
-
-	// Check if we have enough permission to build here.
-	if (AITown.GetRating(AITile.GetClosestTown(tile), AICompany.COMPANY_SELF) < -200)
-		return -1;
 	
 	if (getFirst && node.nodeType == ConnectionNode.TOWN_NODE) {
 		
@@ -98,6 +94,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
     list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
     list.KeepValue(1);
+    
     
 	if (getFirst) {
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
@@ -125,26 +122,16 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
     	local test = AITestMode();
 
         for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-            if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW)) continue;
+        	
+        	// Check if we can build an airport here, either directly or by terraforming.
+            if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
+            	(getFirst || !Terraform.Terraform(tile, airportX, airportY) &&
+				AITown.GetRating(AIAirport.GetNearestTown(tile, airportType), AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50)) continue;
 			good_tile = tile;
 			break;
     	}
     }
     
-    // If we cannot find a suitable location, pick the best one and
-    // resort to terraforming. However since the getfirst is only used
-    // to get the netto cost of building an airport we return a failure.
-	if (good_tile == -1) {
-		if (getFirst)
-			return -1;
-		local test = AITestMode();
-		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-			if (Terraform.Terraform(tile, airportX, airportY)) {
-				good_tile = tile;
-				break;
-			}
-		}
-	}
 	return good_tile;
 }
 

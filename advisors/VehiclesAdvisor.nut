@@ -115,7 +115,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
 		// road stations from the number of vehicles waiting.
-		if (report.nrVehicles > -connection.pathInfo.nrRoadStations)
+		if (report.nrVehicles > -connection.pathInfo.nrRoadStations + 1)
 			report.nrVehicles = 0;
 		//report.nrVehicles += nrVehiclesInStation / 2;//(connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
 

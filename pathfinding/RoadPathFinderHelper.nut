@@ -87,7 +87,8 @@ function RoadPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		// Check if we can actually start here!
 		if(checkStartPositions) {
 		
-			if (!Tile.IsBuildable(i))
+			if (!Tile.IsBuildable(i) || 
+				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 			
 			// We preprocess all start nodes to see if a road station can be build on them.
@@ -117,7 +118,8 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 	
 	foreach (i, value in endList) {
 		if (checkEndPositions) {
-			if (!Tile.IsBuildable(i))
+			if (!Tile.IsBuildable(i) || 
+				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 			dummyAnnotatedTile.tile = i;
 

@@ -6,12 +6,21 @@ class Terraform {
 	/**
 	 * Perform terraforming on a rectangle, we choose the
 	 * cheapest action to do this.
-	 * @param startType The top left tile to start from.
+	 * @param startTyle The top left tile to start from.
 	 * @param width The width of the rectangle.
 	 * @param height The height of the rectangle.
 	 * @return True if completed, false otherwise.
 	 */
 	function Terraform(startTile, width, height);
+	
+	/**
+	 * Get the number of tiles that will be changed due to terraforming.
+	 * @param startTyle The top left tile to start from.
+	 * @param width The width of the rectangle.
+	 * @param height The height of the rectangle.
+	 * @return The number of tiles that will be affected by terraforming.
+	 */
+	function GetAffectedTiles(startTile, width, height);
 	
 	/**
 	 * This function explores the terrain and determines the
@@ -109,6 +118,27 @@ function Terraform::Terraform(startTile, width, height) {
 	if (!AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX()))
 		return false;
 	return true;
+}
+
+function Terraform::GetAffectedTiles(startTile, width, height) {
+	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
+	if (preferedHeight == 0)
+		preferedHeight = 1;
+		
+	local affectedTiles = 0;
+	
+	for (local x = 0; x < width; x++) {
+		for (local y = 0; y < height; y++) {
+			local tile = startTile + x + AIMap.GetMapSizeX() * y;
+			
+			if (AITile.GetSlope(tile) == AITile.SLOPE_FLAT &&
+				AITile.GetHeight(tile) == preferedHeight)
+					continue;
+			affectedTiles++;
+		}
+	}
+	
+	return affectedTiles;
 }
 
 function Terraform::CalculatePreferedHeight(startTile, width, height) {
