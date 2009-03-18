@@ -353,11 +353,11 @@ function World::RemoveIndustry(industryID) {
 	// iterators below resulting in a run-time error. After all connections which must
 	// be destroyed are identified they will be demolished out side the iterators.
 	local toDemolishList = [];
-	foreach (producingIndustryNode in industryNode.reverseActiveConnections)
+	foreach (connection in industryNode.reverseActiveConnections)
 		// Remove all connections which are already build!
-		foreach (connection in producingIndustryNode.activeConnections)
-			if (connection.travelToNode == industryNode)
-				toDemolishList.push([connection, true]);
+		foreach (fromConnnection in connection.travelFromNode.activeConnections)
+			if (fromConnnection.travelToNode == industryNode)
+				toDemolishList.push([fromConnnection, true]);
 	
 	// Remove all connections which are already build!
 	foreach (connection in industryNode.activeConnections) {
@@ -369,7 +369,6 @@ function World::RemoveIndustry(industryID) {
 			demolishDestinationRoadStations = false;
 
 		toDemolishList.push([connection, demolishDestinationRoadStations]);
-		//connection.Demolish(true, demolishDestinationRoadStations, false);
 	}
 
 	foreach (connectionTuple in toDemolishList)
