@@ -40,6 +40,7 @@ function BuildAirfieldAction::Execute() {
 	!(Terraform.Terraform(fromTile, airportX, airportY) && AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW))) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
+	    AISign.BuildSign(fromTile, "T");
 		connection.forceReplan = true;
 	    return false;
 	}
@@ -47,6 +48,7 @@ function BuildAirfieldAction::Execute() {
 	!(Terraform.Terraform(toTile, airportX, airportY) && AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW))) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
+	    AISign.BuildSign(toTile, "T");
 		connection.forceReplan = true;
 	    AIAirport.RemoveAirport(fromTile);
 	    return false;
@@ -125,7 +127,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
         	local nearestTown = AIAirport.GetNearestTown(tile, airportType);
         	// Check if we can build an airport here, either directly or by terraforming.
             if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
-            	(getFirst || !Terraform.Terraform(tile, airportX, airportY) &&
+            	(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
 				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
 				AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;

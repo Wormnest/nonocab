@@ -37,6 +37,8 @@ function Terraform::Terraform(startTile, width, height) {
 	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
 	if (preferedHeight == 0)
 		preferedHeight = 1;
+	else if (preferedHeight == -1)
+		return false;
 	
 	// With the prefered height in hand, lets get busy!
 	// Make the first tile flat and the correct level and make the other tiles
@@ -49,14 +51,7 @@ function Terraform::Terraform(startTile, width, height) {
 	
 	// Rules to lower a tile.
 	if (tileHeight > preferedHeight ||
-	slope != AITile.SLOPE_N &&
-	slope != AITile.SLOPE_NE &&
-	slope != AITile.SLOPE_NW &&
-	slope != AITile.SLOPE_NWS &&
-	slope != AITile.SLOPE_SEN &&
-	slope != AITile.SLOPE_ENW &&
-	slope != AITile.SLOPE_NS &&
-	tileHeight == preferedHeight) {
+	!(slope & AITile.SLOPE_N) && tileHeight == preferedHeight) {
 		
 		local slopeTip = AITile.SLOPE_INVALID;
 		if (slope == AITile.SLOPE_STEEP_N)
@@ -70,22 +65,19 @@ function Terraform::Terraform(startTile, width, height) {
 		
 		if (slopeTip != AITile.SLOPE_INVALID)		
 			AITile.LowerTile(startTile, slopeTip);
-		AITile.LowerTile(startTile, slope);
+			
+		if (slopeTip == AITile.SLOPE_INVALID || slopeTip != AITile.SLOPE_N)
+			AITile.LowerTile(startTile, slope);
+		else
+			AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
 		
 		for (local i = AITile.GetHeight(startTile); i > preferedHeight; i--)
-			AITile.LowerTile(startTile, AITile.SLOPE_FLAT);
+			AITile.LowerTile(startTile, AITile.SLOPE_ELEVATED);
 	}
 	
 	// Rules to make a tile higher.
 	else if (tileHeight < preferedHeight ||
-		(slope == AITile.SLOPE_N ||
-		slope == AITile.SLOPE_NE ||
-		slope == AITile.SLOPE_NW ||
-		slope == AITile.SLOPE_NWS ||
-		slope == AITile.SLOPE_SEN ||
-		slope == AITile.SLOPE_ENW ||
-		slope == AITile.SLOPE_NS) &&
-		tileHeight == preferedHeight) {
+		slope & AITile.SLOPE_N && tileHeight == preferedHeight) {
 		
 		local slopeTip = AITile.SLOPE_INVALID;
 		if (slope == AITile.SLOPE_STEEP_N)
@@ -104,13 +96,19 @@ function Terraform::Terraform(startTile, width, height) {
 			slope = AITile.GetSlope(startTile);
 		}		
 		
-		
-		AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
+		if (slopeTip == AITile.SLOPE_INVALID || slopeTip != AITile.SLOPE_N)
+			AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
+		else
+			AITile.LowerTile(startTile, slope);
+//		AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
 		raiseSlope = true;
 		
 		for (local i = AITile.GetHeight(startTile); i < preferedHeight; i++)
-			AITile.RaiseTile(startTile, AITile.SLOPE_FLAT);
+			AITile.RaiseTile(startTile, AITile.SLOPE_ELEVATED);
 	}
+	
+//	AISign.BuildSign(startTile, "Raise to height: " + preferedHeight);
+//	AISign.BuildSign(startTile + width + height * AIMap.GetMapSizeX(), "Level to here!");
 	
 	if (AITile.GetHeight(startTile) != preferedHeight)
 		return false;
@@ -124,6 +122,8 @@ function Terraform::GetAffectedTiles(startTile, width, height) {
 	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
 	if (preferedHeight == 0)
 		preferedHeight = 1;
+	else if (preferedHeight == -1)
+		return 0;
 		
 	local affectedTiles = 0;
 	
@@ -142,6 +142,43 @@ function Terraform::GetAffectedTiles(startTile, width, height) {
 }
 
 function Terraform::CalculatePreferedHeight(startTile, width, height) {
+	
+	// Check if we have any choice; If the surrounding tiles are build we must
+	// adhere to that height because we won't be able to terraform.
+	local dictatedHeight = -1;
+	local tilesToCheck = [];
+	for (local i = -1; i < width + 1; i++) {
+		tilesToCheck.push(startTile - AIMap.GetMapSizeX() + i);
+		tilesToCheck.push(startTile + height * AIMap.GetMapSizeX() + i);
+	}
+	
+	for (local i = 0; i < height; i++) {
+		tilesToCheck.push(startTile - 1 + i * AIMap.GetMapSizeX());
+		tilesToCheck.push(startTile + height + 1 + i * AIMap.GetMapSizeX());
+	}
+	
+	foreach (tile in tilesToCheck) {
+		local test = AIExecMode();
+		if (AITile.IsBuildable(tile) || AITile.IsWaterTile(tile))
+			continue;
+		
+		local slopeHeight = AITile.GetHeight(tile);
+		local slope = AITile.GetSlope(tile);
+		local neededHeight = 0;
+		if (slope & AITile.SLOPE_N || slope == AITile.SLOPE_FLAT)
+			neededHeight = slopeHeight;
+		else
+			neededHeight = slopeHeight + 1;
+		
+		//AISign.BuildSign(tile, "NH: " + neededHeight);	
+		if (dictatedHeight == -1)
+			dictatedHeight = neededHeight;
+		else if (dictatedHeight != neededHeight)
+			return -1;
+	}
+	
+	if (dictatedHeight != -1)
+		return dictatedHeight;
 	
 	// The first thing we do is try to estimate the average height
 	// and use this height to determine how to terraform each square.
@@ -183,14 +220,8 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 			local slope = AITile.GetSlope(tileID);
 			if (slope == AITile.SLOPE_FLAT)
 				continue;
-							
-			if (slope == AITile.SLOPE_N ||
-				slope == AITile.SLOPE_NE ||
-				slope == AITile.SLOPE_NW ||
-				slope == AITile.SLOPE_NWS ||
-				slope == AITile.SLOPE_SEN ||
-				slope == AITile.SLOPE_ENW ||
-				slope == AITile.SLOPE_NS) 
+
+			if (slope & AITile.SLOPE_N) 
 			    totalHeight -= 0.5;
 			else if (!(slope & AITile.SLOPE_STEEP))
 				totalHeight += 0.5
