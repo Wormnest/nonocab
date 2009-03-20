@@ -45,6 +45,10 @@ function WorldEventManager::ProcessEvents() {
 		if (eventListeners.rawin("" + e.GetEventType())) {
 			switch (e.GetEventType()) {
 				
+				case AIEvent.AI_ET_ENGINE_PREVIEW:
+					AIEventEnginePreview.AcceptPreview();
+					break;
+
 				case AIEvent.AI_ET_ENGINE_AVAILABLE:
 					local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 					
