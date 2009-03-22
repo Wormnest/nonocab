@@ -132,6 +132,14 @@ class ConnectionReport extends Report {
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(engineID);
+		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(engineID), AICargo.CC_PASSENGERS) && 
+		    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
+			if (AICargo.GetTownEffect(cargoID) == AICargo.TE_GOODS)
+				transportedCargoPerVehiclePerMonth *= 0.6;
+			else
+				transportedCargoPerVehiclePerMonth *= 0.3;
+		}
 		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
 
 		if (nrVehicles > 0.5 && nrVehicles < 1)
