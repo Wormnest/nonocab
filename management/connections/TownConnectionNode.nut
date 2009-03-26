@@ -53,7 +53,17 @@ class TownConnectionNode extends ConnectionNode
 function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnly, stationRadius, stationSizeX, stationSizeY) {
 
 	local tile = GetLocation();
-	local list = Tile.GetRectangle(tile, 20, 20);
+
+	// Check how large the town is.
+	local maxXSpread = 0;
+	while (AITile.IsWithinTownInfluence(tile + maxXSpread, id) || AITile.IsWithinTownInfluence(tile - maxXSpread, id))
+		maxXSpread += 10;
+
+	local maxYSpread = 0;
+	while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), id) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), id))
+		maxYSpread += 10;
+
+	local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
 	
 	// Purge all unnecessary entries from the list.
 	list.Valuate(AITile.IsWithinTownInfluence, id);
