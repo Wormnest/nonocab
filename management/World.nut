@@ -102,10 +102,20 @@ class World {
 function World::LoadData(data, connectionManager) {
 	// First we build the industry try before inserting the data.
 	BuildIndustryTree();
+
+	foreach (sd in data["activeConnections"]) {
+		Log.logInfo(sd["travelToNode"] + " " + sd["travelFromNode"] + " " + AICargo.GetCargoLabel(sd["cargoID"]));
+	}
 	
 	local openList = clone industry_tree;
 	local activeConnections = [];
-	
+
+	local closedList = {};
+
+	// Add all connections from the root list to the closed list.
+	foreach (connectionNode in openList)
+		closedList[connectionNode.nodeType + connectionNode.id] <- true;
+
 	while (openList.len() != 0) {
 		local connectionFromNode = openList.remove(0);
 		foreach (connectionToNode in connectionFromNode.connectionNodeList) {
@@ -117,9 +127,13 @@ function World::LoadData(data, connectionManager) {
 						local existingConnection = Connection(cargoID, connectionFromNode, connectionToNode, null, connectionManager);
 						existingConnection.LoadData(connectionSaveData);
 						connectionFromNode.AddConnection(connectionToNode, existingConnection);
-						
-						if (!existingConnection.bilateralConnection)
+
+
+						if (!closedList.rawin(connectionToNode.nodeType + connectionToNode.id))
 							openList.push(connectionToNode);
+						closedList[connectionToNode.nodeType + connectionToNode.id] <- true;
+
+						Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + connectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
 						activeConnections.push(existingConnection);
 						break;
 					}
@@ -139,23 +153,22 @@ function World::SaveData(saveTable) {
 	 * Only safe data of constructed connections.
 	 */
 	local activeConnections = [];
-	local openList = [];
+	local openList = clone industry_tree;
+	local closedList = {};
+
+	// Add all connections from the root list to the closed list.
+	foreach (connectionNode in openList)
+		closedList[connectionNode.nodeType + connectionNode.id] <- true;
 	
-	for (local i = 0; i < industry_tree.len(); i++) {
-		foreach (connection in industry_tree[i].activeConnections) {
-			activeConnections.push(connection.SaveData());
-			Log.logInfo("saved: " + connection.GetUID());
-			if (!connection.bilateralConnection)
-				openList.push(connection.travelToNode);
-		}
-	}
-	
-	while (openList.len() > 0) {
+	while (openList.len() != 0) {
 		foreach (connection in openList.remove(0).activeConnections) {
+
 			activeConnections.push(connection.SaveData());
-			Log.logInfo("saved: " + connection.GetUID());
-			if (!connection.bilateralConnection)
+			Log.logInfo("Saved connection from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " carrying " + AICargo.GetCargoLabel(connection.cargoID));
+			
+			if (!closedList.rawin(connection.travelToNode.nodeType + connection.travelToNode.id))
 				openList.push(connection.travelToNode);
+			closedList[connection.travelToNode.nodeType + connection.travelToNode.id] <- true;
 		}
 	}
 	
@@ -164,7 +177,6 @@ function World::SaveData(saveTable) {
 	saveTable["years_passed"] <- years_passed;
 
 	saveTable["max_distance_between_nodes"] <- max_distance_between_nodes;		// The maximum distance between industries.
-	//saveTable["pathFixer"] <- pathFixer;
 	return saveTable;
 }
 
