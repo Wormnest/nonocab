@@ -99,6 +99,75 @@ class World {
 	function PrintNode(node, depth);	
 }
 
+function World::LoadData(data, connectionManager) {
+	// First we build the industry try before inserting the data.
+	BuildIndustryTree();
+	
+	local openList = clone industry_tree;
+	local activeConnections = [];
+	
+	while (openList.len() != 0) {
+		local connectionFromNode = openList.remove(0);
+		foreach (connectionToNode in connectionFromNode.connectionNodeList) {
+			foreach (connectionSaveData in data["activeConnections"]) {
+				foreach (cargoID in connectionFromNode.cargoIdsProducing) {
+					if (connectionToNode.GetUID(cargoID) == connectionSaveData["travelToNode"] &&
+					connectionFromNode.GetUID(cargoID) == connectionSaveData["travelFromNode"] &&
+					cargoID == connectionSaveData["cargoID"]) {
+						local existingConnection = Connection(cargoID, connectionFromNode, connectionToNode, null, connectionManager);
+						existingConnection.LoadData(connectionSaveData);
+						connectionFromNode.AddConnection(connectionToNode, existingConnection);
+						
+						if (!existingConnection.bilateralConnection)
+							openList.push(connectionToNode);
+						activeConnections.push(existingConnection);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	starting_year = data["starting_year"];
+	years_passed = data["years_passed"];
+	max_distance_between_nodes = data["max_distance_between_nodes"];
+	return activeConnections;
+}
+
+function World::SaveData(saveTable) {
+	/**
+	 * Only safe data of constructed connections.
+	 */
+	local activeConnections = [];
+	local openList = [];
+	
+	for (local i = 0; i < industry_tree.len(); i++) {
+		foreach (connection in industry_tree[i].activeConnections) {
+			activeConnections.push(connection.SaveData());
+			Log.logInfo("saved: " + connection.GetUID());
+			if (!connection.bilateralConnection)
+				openList.push(connection.travelToNode);
+		}
+	}
+	
+	while (openList.len() > 0) {
+		foreach (connection in openList.remove(0).activeConnections) {
+			activeConnections.push(connection.SaveData());
+			Log.logInfo("saved: " + connection.GetUID());
+			if (!connection.bilateralConnection)
+				openList.push(connection.travelToNode);
+		}
+	}
+	
+	saveTable["activeConnections"] <- activeConnections;
+	saveTable["starting_year"] <- starting_year;
+	saveTable["years_passed"] <- years_passed;
+
+	saveTable["max_distance_between_nodes"] <- max_distance_between_nodes;		// The maximum distance between industries.
+	//saveTable["pathFixer"] <- pathFixer;
+	return saveTable;
+}
+
 /**
  * Updates the view on the world.
  */

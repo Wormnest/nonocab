@@ -236,7 +236,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// Check if some connections in the reportTable have been build, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
-			if (report.isInvalid || report.connection.pathInfo.build)
+			if (report.isInvalid || report.connection.pathInfo.build || report.connection.forceReplan)
 				reportsToBeRemoved.push(report);
 		
 		foreach (report in reportsToBeRemoved)
@@ -444,7 +444,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		maxDistanceMultiplier = 0.25;
 
 	local startTicks = AIController.GetTick();
-	
 	local processedConnections = {};
 
 	// Upon initialisation we look at all possible connections in the world and try to

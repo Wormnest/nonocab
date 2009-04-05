@@ -63,6 +63,14 @@ class PathFixer extends Thread {
 		buildPiecesToFix = [];
 	}
 	
+	function SaveData(saveData) {
+		saveData["buildPiecesToFix"] <- buildPiecesToFix;
+	}
+	
+	function LoadData(data) {
+		buildPiecesToFix = data["buildPiecesToFix"];
+	}
+	
 	/**
 	 * Add an additional piece of road which couldn't be build due to 
 	 * temporal issues.

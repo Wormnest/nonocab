@@ -117,7 +117,6 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// road stations from the number of vehicles waiting.
 		if (report.nrVehicles > -connection.pathInfo.nrRoadStations + 1)
 			report.nrVehicles = 0;
-		//report.nrVehicles += nrVehiclesInStation / 2;//(connection.pathInfo.nrRoadStations - 1) - nrVehiclesInStation;
 
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;

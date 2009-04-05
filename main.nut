@@ -10,31 +10,52 @@ class NoCAB extends AIController {
    	world = null;
    	advisors = null;
    	planner = null;
+   	didLoad = null;
+   	activeConnections = null;
+   	connectionManager = null;
+   	pathFixer = null;
 	
    	constructor() {
    		stop = false;
 		parlement = Parlement();
 		world = World();
 		GameSettings.InitGameSettings();
+		connectionManager = ConnectionManager();
+		pathFixer = PathFixer();
+		didLoad = false;
 		
 		planner = Planner(world);
 	}
 }
 
 function NoCAB::Save() { 
-	Log.logWarning("Safe is not implemented yet!");
-	return {};
+	Log.logInfo("Saving game using version 1... (might take a while...)");
+	local saveTable = {};
+	pathFixer.SaveData(saveTable);
+	world.SaveData(saveTable);
+	saveTable["SaveVersion"] <- 1;
+	Log.logInfo("Save successful!");
+	return saveTable;
 }
 
 function NoCAB::Load(version, data) {
-	Log.logWarning("Load is not implemented yet!");
+	local saveVersion = data["SaveVersion"];
+	Log.logInfo("Loading game saved using version " + saveVersion + "... (might take a while...)");
+	if (saveVersion != 1) {
+		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
+		AILog.logWarning("Only save version 1 is supported, your version is: " + saveVersion);
+		return;
+	}
+	pathFixer.LoadData(data);
+	activeConnections = world.LoadData(data, connectionManager);
+	didLoad = true;
 }
+
 function NoCAB::Start()
-{
-	world.BuildIndustryTree();
+{	
+	if (!didLoad)
+		world.BuildIndustryTree();
 	
-		
-	local connectionManager = ConnectionManager();
 	advisors = [
 		VehiclesAdvisor(world),
 		RoadConnectionAdvisor(world, connectionManager),
@@ -45,18 +66,26 @@ function NoCAB::Start()
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
-			
+	
+	// If we loaded a game, add all active connections to the listeners.
+	if (didLoad) {
+		foreach (connection in activeConnections) {
+			connectionManager.ConnectionRealised(connection);
+		}
+	}
+	
 	// Required by the Framwork: start with sleep.
 	this.Sleep(1);
-
+	
 	// Set president name.
 	AICompany.SetPresidentName("B.C. Ridder");
 	
 	// Set company name.
 	if(!AICompany.SetName("NoCAB - Version 1.15")) {
 		local i = 2;
-		while(!AICompany.SetName("NoCAB - Version 1.15 #" + i + " - SVN 286")) { i++; }
+		while(!AICompany.SetName("NoCAB - Version 1.15 #" + i)) { i++; }
 	}
+
 
 	AICompany.SetAutoRenewMonths(World.MONTHS_BEFORE_AUTORENEW);
 	AICompany.SetAutoRenewStatus(true);
@@ -64,7 +93,7 @@ function NoCAB::Start()
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	
 	// Start the threads!
-	local pathFixer = PathFixer();
+	
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
 	
@@ -75,13 +104,11 @@ function NoCAB::Start()
 	while(true) {
 		GameSettings.UpdateGameSettings();
 		planner.ScheduleAndExecute();
-		
 		// Get all reports from our advisors.
 		local reports = [];
 		foreach (advisor in advisors) {
 			reports.extend(advisor.GetReports());
 		}
-		
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
 		world.Update();	
@@ -91,7 +118,6 @@ function NoCAB::Start()
 			parlement.SelectReports(reports);
 		}
 	}
-	Log.logInfo("Done!");
 }
 
 /**

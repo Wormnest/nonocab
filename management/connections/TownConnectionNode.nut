@@ -55,11 +55,11 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	local tile = GetLocation();
 
 	// Check how large the town is.
-	local maxXSpread = 0;
+	local maxXSpread = 20;
 	while (AITile.IsWithinTownInfluence(tile + maxXSpread, id) || AITile.IsWithinTownInfluence(tile - maxXSpread, id))
 		maxXSpread += 10;
 
-	local maxYSpread = 0;
+	local maxYSpread = 20;
 	while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), id) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), id))
 		maxYSpread += 10;
 

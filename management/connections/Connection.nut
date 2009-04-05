@@ -57,6 +57,36 @@ class Connection {
 		vehiclesOperating = [];
 	}
 	
+	function LoadData(data) {
+		pathInfo = PathInfo(null, null);
+		vehicleTypes = data["vehicleTypes"];
+		pathInfo.LoadData(data["pathInfo"]);
+		vehiclesOperating = [];
+		
+		foreach (vo in data["vehiclesOperating"]) {
+			local vehicleGroup = VehicleGroup();
+			vehicleGroup.LoadData(vo);
+			vehiclesOperating.push(vehicleGroup);
+		}
+		
+		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
+	}
+	
+	function SaveData() {
+		local saveData = {};
+		saveData["cargoID"] <- cargoID;
+		saveData["travelFromNode"] <- travelFromNode.GetUID(cargoID);
+		saveData["travelToNode"] <- travelToNode.GetUID(cargoID);
+		saveData["vehicleTypes"] <- vehicleTypes;
+		saveData["pathInfo"] <- pathInfo.SaveData();
+		saveData["vehiclesOperating"] <- [];
+		
+		foreach (vo in vehiclesOperating) {
+			saveData["vehiclesOperating"].push(vo.SaveData());
+		}
+		return saveData;
+	}
+	
 	/**
 	 * Based on this connection get a report which tells how many vehicles
 	 * of type engineID are supported on top of the already existing fleet of

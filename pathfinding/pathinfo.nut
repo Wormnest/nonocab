@@ -22,6 +22,38 @@ class PathInfo {
 		nrRoadStations = 0;
 	}
 	
+	function LoadData(data) {
+		roadList = [];
+		foreach (tile in data["roadList"]) {
+			local at = AnnotatedTile();
+			at.tile = tile;
+			roadList.push(at);
+		}
+		roadCost = data["roadCost"];
+		depot = data["depot"];
+		depotOtherEnd = data["depotOtherEnd"];
+		build = data["build"];
+		travelTimesCache = data["travelTimesCache"];
+		buildDate = data["buildDate"];
+		nrRoadStations = data["nrRoadStations"];
+	}
+	
+	function SaveData() {
+		local saveData = {};
+		saveData["roadList"] <- [];
+		foreach (at in roadList) {
+			saveData["roadList"].push(at.tile);
+		}
+		saveData["roadCost"] <- roadCost;
+		saveData["depot"] <- depot;
+		saveData["depotOtherEnd"] <- depotOtherEnd;
+		saveData["build"] <- build;
+		saveData["travelTimesCache"] <- travelTimesCache;
+		saveData["buildDate"] <- buildDate;
+		saveData["nrRoadStations"] <- nrRoadStations;
+		return saveData;
+	}
+	
 	/**
 	 * Get the traveltime for a vehicle with a certain maxSpeed for this road.
 	 * @maxSpeed The maximum speed of the engine in question.

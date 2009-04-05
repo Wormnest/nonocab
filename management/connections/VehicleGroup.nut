@@ -19,4 +19,22 @@ class VehicleGroup
 	constructor() {
 		vehicleIDs = [];
 	}
+	
+	function LoadData(data) {
+		timeToTravelTo = data["timeToTravelTo"];
+		timeToTravelFrom = data["timeToTravelFrom"];
+		incomePerRun = data["incomePerRun"];
+		engineID = data["engineID"];
+		vehicleIDs = data["vehicleIDs"];		
+	}
+	
+	function SaveData() {
+		local saveData = {};
+		saveData["timeToTravelTo"] <- timeToTravelTo;
+		saveData["timeToTravelFrom"] <- timeToTravelFrom;
+		saveData["incomePerRun"] <- incomePerRun;
+		saveData["engineID"] <- engineID;
+		saveData["vehicleIDs"] <- vehicleIDs;
+		return saveData;
+	}
 }
