@@ -82,6 +82,8 @@ class Report
 		
 
 		// For the remainder of the money calculate the number of vehicles we could buy.
+		if (initialCostPerVehicle == 0)
+			return nrVehicles;
 		local vehiclesToBuy = (money / initialCostPerVehicle).tointeger();
 		if (vehiclesToBuy > nrVehicles)
 			vehiclesToBuy = nrVehicles;
