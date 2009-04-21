@@ -100,8 +100,6 @@ class World {
 }
 
 function World::LoadData(data, connectionManager) {
-	// First we build the industry try before inserting the data.
-	BuildIndustryTree();
 
 	foreach (sd in data["activeConnections"]) {
 		Log.logInfo(sd["travelToNode"] + " " + sd["travelFromNode"] + " " + AICargo.GetCargoLabel(sd["cargoID"]));
@@ -196,6 +194,32 @@ function World::Update()
 	local vehicleList = AIVehicleList();
 	foreach (vehicleID, value in vehicleList) {
 		if (AIVehicle.IsStoppedInDepot(vehicleID)) {
+			
+			// If the vehicle is very old, we assume it needs to be replaced
+			// by a new vehicle.
+			if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
+				local currentEngineID = AIVehicle.GetEngineType(vehicleID);
+				local vehicleType = AIVehicle.GetVehicleType(vehicleID);
+				
+				// Check what the best engine at the moment is.
+				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentEngineID];
+				
+				if (AIEngine.IsValidEngine(replacementEngineID)) {
+					// Create a new vehicle.
+					local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
+					if (AIVehicle.IsValidVehicle(newVehicleID)) {
+						
+						// Let is share orders with the vehicle.
+						AIOrder.ShareOrders(newVehicleID, vehicleID);
+						AIVehicle.StartStopVehicle(newVehicleID);
+					} else {
+						// If we failed, simply try again next time.
+						continue;
+					}
+				}
+			}
+			
+			
 			AIVehicle.SellVehicle(vehicleID);
 		}
 		

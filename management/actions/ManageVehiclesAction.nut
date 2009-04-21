@@ -145,7 +145,8 @@ function ManageVehiclesAction::Execute()
 		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
-		local directionToggle = false;
+		local directionToggle = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) 
+		< AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local roadList = connection.pathInfo.roadList;
@@ -257,9 +258,26 @@ function ManageVehiclesAction::Execute()
 				
 				if (vehicleType == AIVehicle.VT_ROAD)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
+						
+				// As a last order, make a vehicle return to a depot when it's old enough.
+				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_STOP_IN_DEPOT);
+				
+				local orderPosition = AIOrder.GetOrderCount(vehicleID) - 1;
+				
+				// Now make sure we only do this if the vehicle is old enough otherwise
+				// it will jump back to the first order.
+				AIOrder.InsertConditionalOrder(vehicleID, orderPosition, 0);
+				AIOrder.InsertConditionalOrder(vehicleID, orderPosition, orderPosition + 1);
+				
+				// Set orders to stop the vehicle in a depot once it reached its max age.
+				AIOrder.SetOrderCondition(vehicleID, orderPosition, AIOrder.OC_AGE);
+				AIOrder.SetOrderCompareFunction(vehicleID, orderPosition, AIOrder.CF_MORE_EQUALS);
+				AIOrder.SetOrderCompareValue(vehicleID, orderPosition, AIEngine.GetMaxAge(engineID) / 366);
+				
+				// Set orders to skip to the first order if it's still young enough.
+				AIOrder.SetOrderCondition(vehicleID, orderPosition + 1, AIOrder.OC_UNCONDITIONALLY);
 			}
-
-
+			
 			if(connection.bilateralConnection)
 				directionToggle = !directionToggle;
 
