@@ -10,7 +10,7 @@ class NoCAB extends AIController {
    	world = null;
    	advisors = null;
    	planner = null;
-   	didLoad = null;
+   	loadData = null;
    	activeConnections = null;
    	connectionManager = null;
    	pathFixer = null;
@@ -18,11 +18,11 @@ class NoCAB extends AIController {
    	constructor() {
    		stop = false;
 		parlement = Parlement();
-		world = World();
+		world = World(GetSetting("NiceCAB"));
 		GameSettings.InitGameSettings();
 		connectionManager = ConnectionManager();
 		pathFixer = PathFixer();
-		didLoad = false;
+		loadData = null;
 		
 		planner = Planner(world);
 	}
@@ -40,35 +40,55 @@ function NoCAB::Save() {
 
 function NoCAB::Load(version, data) {
 	local saveVersion = data["SaveVersion"];
-	Log.logInfo("Loading game saved using version " + saveVersion + "... (might take a while...)");
 	if (saveVersion != 1) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
 		AILog.logWarning("Only save version 1 is supported, your version is: " + saveVersion);
 		return;
 	}
-	pathFixer.LoadData(data);
-	activeConnections = world.LoadData(data, connectionManager);
-	didLoad = true;
+	loadData = data;
 }
 
 function NoCAB::Start()
 {	
-	if (!didLoad)
-		world.BuildIndustryTree();
+	if (loadData) {
+		Log.logInfo("Loading game saved using version " + loadData["SaveVersion"] + "... (might take a while...)");
+		Log.logInfo("(1/4) Build industry tree");
+	}
+
+	world.BuildIndustryTree();
+
+	if (loadData) {
+		Log.logInfo("(2/4) Load path fixer data");
+		pathFixer.LoadData(loadData);
+		Log.logInfo("(3/4) Load active connections");
+		activeConnections = world.LoadData(loadData, connectionManager);
+		Log.logInfo("(4/4) Load successfull!");
+	}
 	
 	advisors = [
-		VehiclesAdvisor(world),
-		RoadConnectionAdvisor(world, connectionManager),
-		AircraftAdvisor(world, connectionManager),
-		ShipAdvisor(world, connectionManager),
-		//UpgradeConnectionAdvisor(world, connectionManager)
+		VehiclesAdvisor(world)
 	];
+
+	if (GetSetting("Enable road vehicles")) {
+		Log.logInfo("Road vehicle advisor initiated!");
+		advisors.push(RoadConnectionAdvisor(world, connectionManager));
+	}
+	if (GetSetting("Enable airplanes")) {
+		Log.logInfo("Airplane advisor initiated!");
+		advisors.push(AircraftAdvisor(world, connectionManager));
+	}
+	if (GetSetting("Enable ships")) {
+		Log.logInfo("Ship advisor initiated!");
+		advisors.push(ShipAdvisor(world, connectionManager));
+	}
+
+	//UpgradeConnectionAdvisor(world, connectionManager)
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
 	
 	// If we loaded a game, add all active connections to the listeners.
-	if (didLoad) {
+	if (loadData) {
 		foreach (connection in activeConnections) {
 			connectionManager.ConnectionRealised(connection);
 		}
@@ -81,25 +101,22 @@ function NoCAB::Start()
 	AICompany.SetPresidentName("B.C. Ridder");
 	
 	// Set company name.
-	if(!AICompany.SetName("NoCAB - Version 1.17")) {
+	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
+	if(!AICompany.SetName(companyName + " - v1.17")) {
 		local i = 2;
-		while(!AICompany.SetName("NoCAB - Version 1.17 #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v1.17#" + i)) { i++; }
 	}
-
-
-	AICompany.SetAutoRenewMonths(World.MONTHS_BEFORE_AUTORENEW);
-	AICompany.SetAutoRenewStatus(true);
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	
 	// Start the threads!
-	
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
 	
 	foreach (advisor in advisors)
 		planner.AddThread(advisor);
 	
+
 	// Do what we have to do.
 	while(true) {
 		GameSettings.UpdateGameSettings();

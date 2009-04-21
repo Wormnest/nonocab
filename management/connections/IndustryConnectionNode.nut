@@ -4,9 +4,11 @@
  */
 class IndustryConnectionNode extends ConnectionNode
 {
+	checkCompetitors = false;
 
-	constructor(id) {
+	constructor(id, check_competitors) {
 		ConnectionNode.constructor(INDUSTRY_NODE, id);
+		this.checkCompetitors = check_competitors;
 	}
 	
 	/**
@@ -30,6 +32,14 @@ class IndustryConnectionNode extends ConnectionNode
 	}
 	
 	function GetProduction(cargoID) {
+		if (checkCompetitors) {
+			local nrStationsAround = AIIndustry.GetAmountOfStationsAround(id);
+
+			if (AIIndustry.GetLastMonthTransported(id, cargoID) == 0 || nrStationsAround < 0)
+				return AIIndustry.GetLastMonthProduction(id, cargoID);
+			else
+				return AIIndustry.GetLastMonthProduction(id, cargoID) / (nrStationsAround + 1);
+		}
 		return AIIndustry.GetLastMonthProduction(id, cargoID);
 	}
 }

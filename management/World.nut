@@ -27,11 +27,13 @@ class World {
 	
 	max_distance_between_nodes = null;		// The maximum distance between industries.
 	pathFixer = null;
+	niceCABEnabled = null;
 	
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor() {
+	constructor(niceCAB) {
+		niceCABEnabled = niceCAB;
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -324,7 +326,7 @@ function World::BuildIndustryTree() {
  */
 function World::InsertIndustry(industryID) {
 
-	local industryNode = IndustryConnectionNode(industryID);
+	local industryNode = IndustryConnectionNode(industryID, niceCABEnabled);
 	
 	// Make sure this industry hasn't already been added.
 	//if (!industry_table.rawin(industryID))
