@@ -30,7 +30,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 		local nrVehiclesInStation = 0;
 		local hasVehicles = false;
 		local isAir = false;
-			
+
 		// Check if there are any vehicles waiting on this tile and if so, sell them!
 		foreach (vehicleGroup in connection.vehiclesOperating) {
 			foreach (vehicleID in vehicleGroup.vehicleIDs) {
@@ -42,8 +42,10 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
 					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) &&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
-					AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING &&
+					(AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING ||
+					AIVehicle.GetState(vehicleID) == AIVehicle.VS_BROKEN) &&
 					AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
+
 					nrVehicles--;
 					
 					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
@@ -111,16 +113,19 @@ function VehiclesAdvisor::Update(loopCounter) {
 				rating = ratingOtherEnd;
 		}
 		
+		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
+		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
+		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
+
+		Log.logWarning(report.nrVehicles);
 			
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
 		// road stations from the number of vehicles waiting.
-		if (report.nrVehicles > -connection.pathInfo.nrRoadStations + 1)
-			report.nrVehicles = 0;
+		report.nrVehicles += connection.pathInfo.nrRoadStations;
 
-		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
-		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
-		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
+		if (report.nrVehicles > 0)
+			report.nrVehicles = 0;
 
 		if (!hasVehicles || rating < 60 || production > 100 || nrVehicles == 0) {
 
@@ -148,10 +153,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		} 
 		
 		// If we want to sell vehicle but the road isn't old enough, don't!
-		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 60 || dropoffOverload))
-			continue;
-
-		if ((isAir || isShip) && report.nrVehicles < 0 && report.nrVehicles > -4)
+		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 30 || dropoffOverload))
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!

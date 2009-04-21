@@ -63,6 +63,9 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), id) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), id))
 		maxYSpread += 10;
 
+	maxXSpread += 20;
+	maxYSpread += 20;
+
 	local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
 	
 	// Purge all unnecessary entries from the list.
