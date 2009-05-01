@@ -116,9 +116,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
 		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
 		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
-
-		Log.logWarning(report.nrVehicles);
-			
+	
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
 		// road stations from the number of vehicles waiting.

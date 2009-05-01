@@ -205,9 +205,8 @@ function ManageVehiclesAction::Execute()
 			} else if (mainVehicleIDReverse != -1 && connection.bilateralConnection && directionToggle) {
 				AIOrder.ShareOrders(vehicleID, mainVehicleIDReverse);
 			} else {
-				if(connection.bilateralConnection) {
-	
-					if (directionToggle) {
+				
+				if (connection.bilateralConnection && (directionToggle = !directionToggle)) {
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						// If it's a ship, give it additional orders!
 						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
@@ -222,22 +221,7 @@ function ManageVehiclesAction::Execute()
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						}
 						mainVehicleIDReverse = vehicleID;
-					} else {
-						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-						// If it's a ship, give it additional orders!
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							roadList.reverse();
-							foreach (at in roadList.slice(1, -1))
-								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-							roadList.reverse();
-						}
-						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							foreach (at in roadList.slice(1, -1))
-								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-						}
-						mainVehicleID = vehicleID;
-					}
+						AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 	
@@ -254,32 +238,25 @@ function ManageVehiclesAction::Execute()
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 					}
 					mainVehicleID = vehicleID;
+					
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				}
 				
-				if (vehicleType == AIVehicle.VT_ROAD)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
-						
-				// As a last order, make a vehicle return to a depot when it's old enough.
-				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_STOP_IN_DEPOT);
-				
-				local orderPosition = AIOrder.GetOrderCount(vehicleID) - 1;
-				
-				// Now make sure we only do this if the vehicle is old enough otherwise
-				// it will jump back to the first order.
-				AIOrder.InsertConditionalOrder(vehicleID, orderPosition, 0);
-				AIOrder.InsertConditionalOrder(vehicleID, orderPosition, orderPosition + 1);
+				// As a first order, let the vehicle do it's normal actions when not old enough.
+				AIOrder.InsertConditionalOrder(vehicleID, 0, 0);
 				
 				// Set orders to stop the vehicle in a depot once it reached its max age.
-				AIOrder.SetOrderCondition(vehicleID, orderPosition, AIOrder.OC_AGE);
-				AIOrder.SetOrderCompareFunction(vehicleID, orderPosition, AIOrder.CF_MORE_EQUALS);
-				AIOrder.SetOrderCompareValue(vehicleID, orderPosition, AIEngine.GetMaxAge(engineID) / 366);
+				AIOrder.SetOrderCondition(vehicleID, 0, AIOrder.OC_AGE);
+				AIOrder.SetOrderCompareFunction(vehicleID, 0, AIOrder.CF_LESS_THAN);
+				AIOrder.SetOrderCompareValue(vehicleID, 0, AIEngine.GetMaxAge(engineID) / 366);
 				
-				// Set orders to skip to the first order if it's still young enough.
-				AIOrder.SetOrderCondition(vehicleID, orderPosition + 1, AIOrder.OC_UNCONDITIONALLY);
+				// Insert the stopping order, which will be skipped by the previous conditional order
+				// if the vehicle hasn't reached its maximum age.
+				if (connection.bilateralConnection && directionToggle)
+					AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_STOP_IN_DEPOT);
+				else
+					AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depot, AIOrder.AIOF_STOP_IN_DEPOT);
 			}
-			
-			if(connection.bilateralConnection)
-				directionToggle = !directionToggle;
 
 			AIVehicle.StartStopVehicle(vehicleID);
 

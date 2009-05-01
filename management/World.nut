@@ -203,8 +203,16 @@ function World::Update()
 				local currentEngineID = AIVehicle.GetEngineType(vehicleID);
 				local vehicleType = AIVehicle.GetVehicleType(vehicleID);
 				
+				// Check the type of cargo the vehicle was carrying.
+				local mostCargo = 0;
+				local currentCargoID = -1;
+				foreach (index, value in cargo_list) {
+					if (AIVehicle.GetCapacity(vehicleID, index) > mostCargo)
+						currentCargoID = index;
+				}
+				
 				// Check what the best engine at the moment is.
-				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentEngineID];
+				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentCargoID];
 				
 				if (AIEngine.IsValidEngine(replacementEngineID)) {
 					// Create a new vehicle.
