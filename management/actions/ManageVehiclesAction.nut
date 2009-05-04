@@ -185,7 +185,7 @@ function ManageVehiclesAction::Execute()
 					
 			local vehicleID;
 
-			if (directionToggle && connection.pathInfo.depotOtherEnd)
+			if (!directionToggle && connection.pathInfo.depotOtherEnd)
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depotOtherEnd, engineID);
 			else
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
