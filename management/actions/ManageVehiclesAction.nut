@@ -200,25 +200,25 @@ function ManageVehiclesAction::Execute()
 			vehicleGroup.vehicleIDs.push(vehicleID);
 			
 			// Send the vehicles on their way.
-			if (mainVehicleID != -1 && (!connection.bilateralConnection || !directionToggle)) {
+			if (mainVehicleID != -1 && (!connection.bilateralConnection || directionToggle)) {
 				AIOrder.ShareOrders(vehicleID, mainVehicleID);
-			} else if (mainVehicleIDReverse != -1 && connection.bilateralConnection && directionToggle) {
+			} else if (mainVehicleIDReverse != -1 && connection.bilateralConnection && !directionToggle) {
 				AIOrder.ShareOrders(vehicleID, mainVehicleIDReverse);
 			} else {
 				
-				if (connection.bilateralConnection && (directionToggle = !directionToggle)) {
+				if (connection.bilateralConnection && !directionToggle) {
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						// If it's a ship, give it additional orders!
 						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							roadList.reverse();
-							foreach (at in roadList.slice(1, -1))
+							foreach (at in roadList.slice(1, -2))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-							roadList.reverse();
 						}
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							foreach (at in roadList.slice(1, -1))
+							roadList.reverse();
+							foreach (at in roadList.slice(2, -1))
 								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
+							roadList.reverse();
 						}
 						mainVehicleIDReverse = vehicleID;
 						AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_SERVICE_IF_NEEDED);
@@ -228,17 +228,20 @@ function ManageVehiclesAction::Execute()
 					// If it's a ship, give it additional orders!
 					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
 						roadList.reverse();
-						foreach (at in roadList.slice(1, -1))
+						foreach (at in roadList.slice(2, -1))
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 						roadList.reverse();
 					}
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+
+					if (connection.bilateralConnection)
+						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+					else
+						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
 					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-						foreach (at in roadList.slice(1, -1))
+						foreach (at in roadList.slice(1, -2))
 							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
 					}
 					mainVehicleID = vehicleID;
-					
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				}
 				
@@ -263,6 +266,8 @@ function ManageVehiclesAction::Execute()
 			// Update the game setting so subsequent actions won't build more vehicles then possible!
 			// (this will be overwritten anyway during the update).
 			GameSettings.maxVehiclesBuildLimit[vehicleType]--;
+
+			directionToggle = !directionToggle;
 		}			
 	}
 	CallActionHandlers();

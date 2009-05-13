@@ -113,7 +113,7 @@ function Terraform::Terraform(startTile, width, height) {
 	if (AITile.GetHeight(startTile) != preferedHeight)
 		return false;
 	
-	if (!AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX()))
+	if (!AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX()) && AIError.GetLastError() != AITile.ERR_AREA_ALREADY_FLAT)
 		return false;
 	return true;
 }
