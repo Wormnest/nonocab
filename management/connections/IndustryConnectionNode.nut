@@ -24,7 +24,10 @@ class IndustryConnectionNode extends ConnectionNode
 	}
 	
 	function GetAcceptingTiles(cargoID, stationRadius, stationSizeX, stationSizeY) {
-		return AITileList_IndustryAccepting(id, stationRadius);
+		local acceptingList =  AITileList_IndustryAccepting(id, stationRadius);
+		acceptingList.Valuate(AITile.GetCargoAcceptance, cargoID, stationSizeX, stationSizeY, stationRadius);
+		acceptingList.KeepAboveValue(7);
+		return acceptingList;
 	}
 	
 	function GetName() {

@@ -87,10 +87,9 @@ class ConnectionReport extends Report {
 			travelTimeFrom = travelTimeTo;
 			if (connection == null || !connection.pathInfo.build) {
 
-				local useCache = true;//connection == null || !connection.forceReplan;
 				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
-				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, isTowntoTown ? true : false, useCache);
-				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true, useCache);
+				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, isTowntoTown ? true : false);
+				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true);
 
 				if (costForFrom == -1 || costForTo == -1) {
 					isInvalid = true;

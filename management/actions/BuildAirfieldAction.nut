@@ -145,26 +145,10 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
  * @param node The connection node where the airport needs to be build.
  * @param cargoID The cargo the connection should transport.
  * @param acceptingSide If true it means that the node will be evaluated as the accepting side.
- * @param useCache If true the result will be retrieved from cache, no check is made to see
- * if the airport can actually be build!
  * @return The total cost of building the airport.
  */
-function BuildAirfieldAction::GetAirportCost(node, cargoID, acceptingSide, useCache) {
+function BuildAirfieldAction::GetAirportCost(node, cargoID, acceptingSide) {
 
-	local accounter = AIAccounting();
 	local airportType = (AIAirport.IsValidAirportType(AIAirport.AT_LARGE) ? AIAirport.AT_LARGE : AIAirport.AT_SMALL);
-
-	if (useCache && BuildAirfieldAction.airportCosts.rawin("" + airportType)) {
-		
-		local airportCostTuple = BuildAirfieldAction.airportCosts.rawget("" + airportType);
-		if (Date.GetDaysBetween(AIDate.GetCurrentDate(), airportCostTuple[0]) < 300)
-			return airportCostTuple[1];
-	}
-
-	if (BuildAirfieldAction.FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, true, false) < 0)
-		return -1;
-
-	if (useCache)
-		BuildAirfieldAction.airportCosts["" + airportType] <- [AIDate.GetCurrentDate(), accounter.GetCosts()];
-	return accounter.GetCosts();
+	return AIAirport.GetPrice(airportType);
 }

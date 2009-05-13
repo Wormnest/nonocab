@@ -21,8 +21,8 @@ function AircraftAdvisor::GetPathInfo(report) {
 	
 	// Check if the airport is actually constructable!
 	local isTowntoTown = report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE;
-//	if (BuildAirfieldAction.GetAirportCost(report.fromConnectionNode, report.cargoID, isTowntoTown ? true : false, false) == -1 ||
-//		BuildAirfieldAction.GetAirportCost(report.toConnectionNode, report.cargoID, true, false) == -1)
+//	if (BuildAirfieldAction.GetAirportCost(report.fromConnectionNode, report.cargoID, isTowntoTown ? true : false) == -1 ||
+//		BuildAirfieldAction.GetAirportCost(report.toConnectionNode, report.cargoID, true) == -1)
 //		return null;
 			
 	return PathInfo(null, 0);
