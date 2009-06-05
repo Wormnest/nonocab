@@ -107,13 +107,13 @@ function BuildShipYardAction::Execute() {
 	local end = AnnotatedTile();
 	end.tile = toTile;
 
-	/* Now build some docks... */
-	connection.pathInfo.depot = BuildDepot(roadList);
+	/* Now build some depots... */
+	connection.pathInfo.depot = BuildDepot(roadList, true);
 	if (connection.pathInfo.depot == null)
 		return false;
 
 	if (connection.bilateralConnection) {
-		connection.pathInfo.depotOtherEnd = BuildDepot(roadList);
+		connection.pathInfo.depotOtherEnd = BuildDepot(roadList, false);
 		if (connection.pathInfo.depotOtherEnd == null)
 			return false;
 	}
@@ -137,10 +137,10 @@ function BuildShipYardAction::Execute() {
 	return true;
 }
 
-function BuildShipYardAction::BuildDepot(roadList) {
+function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 
 	local depotLoc = null;
-	for (local i = roadList.len() - 3; i > 2; i--) {
+	for (local i = (fromTile ? roadList.len() - 3 : 3); i > 2; i += (fromTile ? -1 : 1)) {
 		
 		local pos = roadList[i].tile;
 		foreach (tile in Tile.GetTilesAround(pos, false)) {
