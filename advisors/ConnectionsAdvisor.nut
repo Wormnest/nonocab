@@ -520,6 +520,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				
 				if (report.Utility() > 0 && !report.isInvalid) {
 					
+					// For airlines we can very accurately estimate the travel times and
+					// income, so we can already prune connections here since we know
+					// that connections with lower utility values will (almost certain)
+					// be worse than those with higher values.
 					if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
 						vehicleType == AIVehicle.VT_AIR) {
 						local uid = fromConnectionNode.GetUID(cargoID);
