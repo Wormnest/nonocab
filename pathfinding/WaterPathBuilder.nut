@@ -122,7 +122,7 @@ function WaterPathBuilder::BuildPath(roadList)
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
 	local buoyBuildTimeout = 5;
-	local newRoadList = [roadList[0]];
+//	local newRoadList = [roadList[0]];
 
 	for(local a = roadList.len() - 2; 5 < a; a--) {
 
@@ -196,7 +196,7 @@ function WaterPathBuilder::BuildPath(roadList)
 					if (foundLocalBuoy) {
 						localBuoy = buoyTile;
 						roadList[a + 1].tile = localBuoy;
-						newRoadList.push(roadList[a + 1]);
+//						newRoadList.push(roadList[a + 1]);
 						break;
 					}
 				}
@@ -215,13 +215,12 @@ function WaterPathBuilder::BuildPath(roadList)
 			} else
 				buoyBuildTimeout = 5;
 
-			newRoadList.push(roadList[a + 1]);
+//			newRoadList.push(roadList[a + 1]);
 			currentDirection = direction;
 		}
 	}
 	
-	newRoadList.push(roadList[roadList.len() - 1]);
-	roadList = newRoadList;
+//	newRoadList.push(roadList[roadList.len() - 1]);
 	return true;
 }
 

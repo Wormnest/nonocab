@@ -130,7 +130,7 @@ function BuildShipYardAction::Execute() {
 	newRoadList.push(start);
 	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
 		start.tile = connection.travelFromNode.GetLocation();
-		
+	connection.pathInfo.roadList = newRoadList;
 	connection.UpdateAfterBuild(AIVehicle.VT_WATER, fromTile, toTile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 
 	CallActionHandlers();
