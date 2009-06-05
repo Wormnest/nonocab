@@ -205,42 +205,40 @@ function ManageVehiclesAction::Execute()
 			} else if (mainVehicleIDReverse != -1 && connection.bilateralConnection && !directionToggle) {
 				AIOrder.ShareOrders(vehicleID, mainVehicleIDReverse);
 			} else {
-				
 				if (connection.bilateralConnection && !directionToggle) {
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
+
 						// If it's a ship, give it additional orders!
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							foreach (at in roadList.slice(1, -2))
-								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-						}
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
+							for (local i = 1; i < roadList.len() - 1; i++)
+								AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
+						
 						AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-							roadList.reverse();
-							foreach (at in roadList.slice(2, -1))
-								AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-							roadList.reverse();
-						}
+
+						if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) 
+							for (local i = roadList.len() - 2; i > 0; i--)
+								AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
+						
 						mainVehicleIDReverse = vehicleID;
 						AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				} else {
 					AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 	
+	
 					// If it's a ship, give it additional orders!
-					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-						roadList.reverse();
-						foreach (at in roadList.slice(2, -1))
-							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-						roadList.reverse();
-					}
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
+						for (local i = roadList.len() - 2; i > 0; i--)
+								AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
 
 					if (connection.bilateralConnection)
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 					else
 						AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
-					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-						foreach (at in roadList.slice(1, -2))
-							AIOrder.AppendOrder(vehicleID, at.tile, AIOrder.AIOF_NONE);
-					}
+						
+					if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
+						for (local i = 1; i < roadList.len() - 1; i++)
+								AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
+
 					mainVehicleID = vehicleID;
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_SERVICE_IF_NEEDED);
 				}
