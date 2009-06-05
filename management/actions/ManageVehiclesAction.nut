@@ -45,6 +45,7 @@ function ManageVehiclesAction::Execute()
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
 		local connection = engineInfo[2];	
+		local vehicleType = AIEngine.GetVehicleType(engineID);
 		
 		// First of all we need to find suitable candidates to remove.
 		local vehicleList = AIList();
@@ -69,8 +70,12 @@ function ManageVehiclesAction::Execute()
 		local vehiclesDeleted = 0;
 		
 		foreach (vehicleID, value in vehicleList) {
-				
-        	if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
+			
+			// Take a different approach with ships, as they might get lost.
+			if (vehicleType == AIVehicle.VT_WATER) {
+				AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
+				++vehiclesDeleted;
+			} else if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
         		AIVehicle.ReverseVehicle(vehicleID);
 				AIController.Sleep(5);
 				if (AIVehicle.SendVehicleToDepot(vehicleID))
