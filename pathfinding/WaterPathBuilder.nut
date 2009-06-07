@@ -114,36 +114,34 @@ function WaterPathBuilder::RealiseConnection()
  * ships in the good direction. We don't want to build to many and not to
  * close together!
  */
-function WaterPathBuilder::BuildPath(roadList)
-{
+function WaterPathBuilder::BuildPath(roadList) {
+
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
 	local buoyBuildTimeout = 5;
-//	local newRoadList = [roadList[0]];
 
 	for(local a = roadList.len() - 2; 5 < a; a--) {
 
 		// If we recently saw / build a buoy we add an additional timeout
 		// constraint.
-		if (buoyBuildTimeout != 0) {
-			if (--buoyBuildTimeout != 0)
-				currentDirection = roadList[a].direction;
-			else
-				continue;
-		}
+		if (--buoyBuildTimeout > 0)
+			continue;
+		else if(buoyBuildTimeout == 0)
+			currentDirection = roadList[a].direction;
 				
 		local direction = roadList[a].direction;
 		local currentTile = roadList[a + 1].tile;
 		
 		/**
-		 * Every time we make a call to the OpenTTD engine (i.e. build something) we hand over the
-		 * control to the next AI, therefor we try to envoke as less calls as posible by building
-		 * large segments of roads at the time instead of single tiles.
+		 * Every time the path changed direction we build an aditional buoy to guide the ships. The pathfinding
+		 * is truely idiotic so there is no need to be smart here. We also impose a buoy every 25 tiles, I am
+		 * not sure what the maximal distance is a ship can travel without guidance, but even if the connection
+		 * is a straight line over 100 tiles, it will fail.
 		 */
-		if (direction != currentDirection) {
+		if (direction != currentDirection || buoyBuildTimeout == -25) {
 	
 			// Check if there is no buoy close to this tile.
 			local list = Tile.GetRectangle(currentTile, 5, 5);
@@ -196,7 +194,6 @@ function WaterPathBuilder::BuildPath(roadList)
 					if (foundLocalBuoy) {
 						localBuoy = buoyTile;
 						roadList[a + 1].tile = localBuoy;
-//						newRoadList.push(roadList[a + 1]);
 						break;
 					}
 				}
@@ -215,12 +212,10 @@ function WaterPathBuilder::BuildPath(roadList)
 			} else
 				buoyBuildTimeout = 5;
 
-//			newRoadList.push(roadList[a + 1]);
 			currentDirection = direction;
 		}
 	}
 	
-//	newRoadList.push(roadList[roadList.len() - 1]);
 	return true;
 }
 
