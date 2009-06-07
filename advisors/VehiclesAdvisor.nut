@@ -79,12 +79,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID]);
 		report.nrVehicles = 0;
 		
-		local stationDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelFromNodeStationID), connection);
+		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.travelFromNodeStationID), connection);
 		report.nrVehicles = stationDetails[0];
 		local nrVehiclesInStation = stationDetails[1];
 		local hasVehicles = stationDetails[2];
 
-		local stationOtherDetails = GetVehiclesWaiting(AIStation().GetLocation(connection.travelToNodeStationID), connection);
+		local stationOtherDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.travelToNodeStationID), connection);
 		local dropoffOverload = false;
 			
 		// If the other station has more vehicles, check that station.
@@ -98,14 +98,14 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		// Now we check whether we need more vehicles
 		local production = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID);
-		local rating = AIStation().GetCargoRating(connection.travelFromNodeStationID, connection.cargoID);
+		local rating = AIStation.GetCargoRating(connection.travelFromNodeStationID, connection.cargoID);
 		
 		// Check if the connection is actually being served by any vehiles.
 		local nrVehicles = connection.GetNumberOfVehicles();
 
 		if (connection.bilateralConnection) {
 			local productionOtherEnd = AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
-			local ratingOtherEnd = AIStation().GetCargoRating(connection.travelToNodeStationID, connection.cargoID);
+			local ratingOtherEnd = AIStation.GetCargoRating(connection.travelToNodeStationID, connection.cargoID);
 
 			if (productionOtherEnd < production)
 				production = productionOtherEnd;
