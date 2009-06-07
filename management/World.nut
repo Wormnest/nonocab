@@ -401,13 +401,17 @@ function World::InsertIndustry(industryID) {
 			}
 		}
 
-		// Check if this town is near to water.
+		// Check if this industry is near to water.
 		if ((acceptsCargo || producesCargo) && !isNearWater) {
-			local industryTiles = acceptsCargo ? industryNode.GetAcceptingTiles(cargo, stationRadius, 1, 1) : industryNode.GetProducingTiles(cargo, stationRadius, 1, 1);
-			industryTiles.Valuate(AITile.IsCoastTile);
-			industryTiles.KeepValue(1);
-			if (industryTiles.Count() > 0)
+			if (AIIndustry.IsBuiltOnWater(industryNode.id))
 				industryNode.isNearWater = true;
+			else {
+				local industryTiles = acceptsCargo ? industryNode.GetAcceptingTiles(cargo, stationRadius, 1, 1) : industryNode.GetProducingTiles(cargo, stationRadius, 1, 1);
+				industryTiles.Valuate(AITile.IsCoastTile);
+				industryTiles.KeepValue(1);
+				if (industryTiles.Count() > 0)
+					industryNode.isNearWater = true;
+			}
 			isNearWater = true;
 		}
 	}
