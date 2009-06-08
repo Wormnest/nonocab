@@ -4,9 +4,7 @@
 class BuildAirfieldAction extends Action {
 	connection = null;			// Connection object of the road to build.
 	world = null;				// The world.
-	static airportCosts = {};		// Table which holds the costs per airport type and the date when they were calculated.
-						// Tuple: [calculation_date, cost].
-	
+
 	constructor(connection, world) {
 		Action.constructor();
 		this.connection = connection;
@@ -16,26 +14,82 @@ class BuildAirfieldAction extends Action {
 
 
 function BuildAirfieldAction::Execute() {
+	// List all possible airports, big to small.
+	local airportList = [
+		AIAirport.AT_INTERCON,
+		AIAirport.AT_INTERNATIONAL,
+		AIAirport.AT_METROPOLITAN,
+		AIAirport.AT_LARGE,
+		AIAirport.AT_COMMUTER,
+		AIAirport.AT_SMALL,
+	];
 
-	local airportType = (AIAirport.IsValidAirportType(AIAirport.AT_LARGE) ? AIAirport.AT_LARGE : AIAirport.AT_SMALL);
-	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
-	local fromTile = this.FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false, townToTown);
-	if (fromTile < 0) {
-		Log.logWarning("No spot found for the first airfield!");
-		connection.forceReplan = true;
-		return false;
+	// List all possible airports, big to small.
+	local heliportList = [
+		AIAirport.AT_HELISTATION,
+		AIAirport.AT_HELIDEPOT,
+	];
+	
+
+	// Try to build the biggest airport possible.
+	local airportType = null;
+	foreach (at in airportList) {
+		if (AIAirport.IsValidAirportType(at)) {
+			airportType = at;
+			break;
+		}
 	}
-	local toTile = this.FindSuitableAirportSpot(airportType, connection.travelToNode, connection.cargoID, true, false, townToTown);
+
+/*
+	local heliportType = null;
+	foreach (at in heliportList) {
+		if (AIAirport.IsValidAirportType(at)) {
+			heliportType = at;
+			Log.logInfo("helipad found!");
+			break;
+		}
+	}
+*/
+
+	local useHelipadAtFromNode = false;
+	local useHelipadAtToNode = false;
+	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+	local fromTile = FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false, townToTown);
+	if (fromTile < 0) {
+/*
+		// If no tile was found, check if the industry has a helipad to land on.
+		if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+			AIIndustry.HasHeliport(connection.travelFromNode.id) &&
+			heliportType != null) {
+			useHelipadAtFromNode = true;
+			airportType = heliportType;
+		} else {
+*/
+			Log.logWarning("No spot found for the first airfield!");
+			connection.forceReplan = true;
+			return false;
+//		}
+	}
+	local toTile = FindSuitableAirportSpot(airportType, connection.travelToNode, connection.cargoID, true, false, townToTown);
 	if (toTile < 0) {
-		Log.logWarning("No spot found for the second airfield!");
-		connection.forceReplan = true;
-		return false;
+/*
+		if (connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+			AIIndustry.HasHeliport(connection.travelToNode.id) &&
+			heliportType != null) {
+			useHelipadAtToNode = true;
+			airportType = heliportType;
+		} else {
+*/
+			Log.logWarning("No spot found for the second airfield!");
+			connection.forceReplan = true;
+			return false;
+//		}
 	}
 	
 	/* Build the airports for real */
 	local test = AIExecMode();
 	local airportX = AIAirport.GetAirportWidth(airportType);
-    local airportY = AIAirport.GetAirportHeight(airportType);	
+	local airportY = AIAirport.GetAirportHeight(airportType);	
 	if (!AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW) && 
 	!(Terraform.Terraform(fromTile, airportX, airportY) && AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW))) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
@@ -81,23 +135,21 @@ function BuildAirfieldAction::Execute() {
  * @return The tile where the airport can be build.
  */
 function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst, townToTown) {
-    local airportX = AIAirport.GetAirportWidth(airportType);
-    local airportY = AIAirport.GetAirportHeight(airportType);
-    local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
+	local airportX = AIAirport.GetAirportWidth(airportType);
+	local airportY = AIAirport.GetAirportHeight(airportType);
+	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
 	local tile = node.GetLocation();
 	local excludeList;
 	
 	if (getFirst && node.nodeType == ConnectionNode.TOWN_NODE) {
-		
 		excludeList = clone node.excludeList;
 		node.excludeList = {};
 	}
 
 	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
-    list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
-    list.KeepValue(1);
-    
-    
+	list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
+	list.KeepValue(1);
+
 	if (getFirst) {
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
 			node.excludeList = excludeList;
@@ -114,27 +166,25 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 		}
 	}
     
-    /* Couldn't find a suitable place for this town, skip to the next */
-    if (list.Count() == 0) return -1;
-    list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+	/* Couldn't find a suitable place for this town, skip to the next */
+	if (list.Count() == 0) return -1;
+	list.Sort(AIAbstractList.SORT_BY_VALUE, false);
     
 	local good_tile = -1;
-    /* Walk all the tiles and see if we can build the airport at all */
-    {
-    	local test = AITestMode();
-
-        for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-        	local nearestTown = AIAirport.GetNearestTown(tile, airportType);
-        	// Check if we can build an airport here, either directly or by terraforming.
-            if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
-            	(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
+	/* Walk all the tiles and see if we can build the airport at all */
+	{
+    		local test = AITestMode();
+		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+        		local nearestTown = AIAirport.GetNearestTown(tile, airportType);
+			// Check if we can build an airport here, either directly or by terraforming.
+			if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
+				(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
 				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
 				AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;
 			break;
-    	}
-    }
-    
+		}
+	}
 	return good_tile;
 }
 
