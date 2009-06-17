@@ -22,6 +22,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	activeUpdateList = null;            // The part of the update list that needs updating.
 	lastUpdate = null;
 	needUpdate = null;
+	reportTableLength = null;
 
 	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
@@ -81,47 +82,9 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
 	
 	// Only add this industry to the update list if it is in the root list.
-	if (industryNode.cargoIdsProducing.len() != 0 &&
-	industryNode.cargoIdsAccepting.len() == 0) {
+	if (industryNode.cargoIdsProducing.len() != 0 && industryNode.cargoIdsAccepting.len() == 0)
 		updateList.push(industryNode);
-		//activeUpdateList = clone updateList;
-	}
-	//connectionReports = null;
 	needUpdate = true;
-	
-/*
-	// Check if this industry produces or accepts (or both :P).
-	if (industryNode.cargoIdsProducing.len() != 0) {
-		Log.logDebug(industryNode.GetName() + " produces stuff!");
-		updateList.push(industryNode);
-		
-		local industryNodeArray = [industryNode];
-		UpdateIndustryConnections(industryNodeArray, true);
-	}
-	
-	if (industryNode.cargoIdsAccepting.len() != 0) {
-		Log.logDebug(industryNode.GetName() + " is a non-Root list industry!");
-		// If the industry is not in the root list, we search for
-		// industry nodes which can connect to this industry and 
-		// already have been build.
-		local originalConnectionNodeLists = [];
-		local constructedProducingIndustryNodes = [];
-		foreach (producingIndustryNode in industryNode.connectionNodeListReversed) {
-
-			Log.logDebug("Attach: " + producingIndustryNode.GetName() + " to " + industryNode.GetName());
-			// Store orginal connection node lists and replace it with the new industry node.
-			originalConnectionNodeLists.push(clone producingIndustryNode.connectionNodeList);
-			producingIndustryNode.connectionNodeList = [industryNode];
-			constructedProducingIndustryNodes.push(producingIndustryNode);
-		}
-
-		UpdateIndustryConnections(constructedProducingIndustryNodes, true);
-
-		// Restore original connection node lists..
-		foreach (producingIndustryNode in constructedProducingIndustryNodes)
-			producingIndustryNode.connectionNodeList = originalConnectionNodeLists.pop();
-	}
-	*/
 }
 
 function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
@@ -137,16 +100,6 @@ function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
 	}
 	
 	connectionReports = null;
-
-/*	// Remove all related connection reports.
-	for (local i = 0; i < connectionReports._count; i++) {
-		local report = connectionReports._queue[i][0];
-		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.fromConnectionNode == industryID ||
-			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.toConnectionNode == industryID)
-			report.isInvalid = true;
-	}*/	
 }
 
 
@@ -184,19 +137,10 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 			break;
 		}
 	}
-	/*
-	for (local i = 0; i < activeUpdateList.len(); i++) {
-		if (connection.travelToNode == activeUpdateList[i]) {
-			activeUpdateList.remove(i);
-			break;
-		}
-	}*/
 	
 	// Now push the new served connection to the update list.
 	updateList.push(connection.travelToNode);
 	needUpdate = true;
-	//activeUpdateList.push(connection.travelToNode);
-	//connectionReports = null;
 }
 
 /**
@@ -214,7 +158,7 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
 		}
 	}
 	
-	// Readd the old connection node to our update list.
+	// Read the old connection node to our update list.
 	updateList.push(connection.travelToNode);
 	needUpdate = true;
 }
@@ -245,19 +189,15 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null || needUpdate && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
+	if (connectionReports == null || reportTable.len() < reportTableLength / 4) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
 		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		UpdateIndustryConnections(activeUpdateList);
+		reportTableLength = reportTable.len();
 		lastUpdate = AIDate.GetCurrentDate();
 		Log.logInfo("Done populating!");
-	} else if (loopCounter == 0 && Date.GetDaysBetween(lastUpdate, AIDate.GetCurrentDate()) > World.DAYS_PER_MONTH * 2) {
-		Log.logInfo("Start update... " + vehicleType);
-		UpdateIndustryConnections(activeUpdateList);
-		lastUpdate = AIDate.GetCurrentDate();
-		Log.logInfo("Done updating!");
 	}
 
 	if (disabled)
@@ -510,7 +450,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				// where this isn't necessary.
 				if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
 					continue;			
-				
+
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
 					continue;
