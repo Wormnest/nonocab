@@ -203,7 +203,6 @@ function PathBuilder::CheckPath(roadList)
 
 			tile = AIBridge.GetOtherBridgeEnd(nextTile);/// - roadList[i].direction;
 		} else if (nextTileType == Tile.TUNNEL) {
-			AISign.BuildSign(nextTile, "Check Tunnel");
 			if (!AITunnel.IsTunnelTile(nextTile))
 				return false;
 
@@ -299,12 +298,12 @@ function PathBuilder::RealiseConnection(buildRoadStations)
 	}
 	
 	{
-		local account = AIAccounting();
+//		local account = AIAccounting();
 		local test = AIExecMode();
 		
 		local result = BuildPath(roadList, false);
-		local costs = account.GetCosts();
-		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
+//		local costs = account.GetCosts();
+//		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
 		if (result && !CheckPath(roadList)) {
 			Log.logWarning("Path build but with errors!!!");
 			return false;

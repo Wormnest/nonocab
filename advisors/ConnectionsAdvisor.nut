@@ -189,7 +189,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null || reportTable.len() < reportTableLength / 4) {
+	if (connectionReports == null || reportTable.len() <= reportTableLength / 4) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;

@@ -24,10 +24,10 @@ class BuildRoadAction extends Action
 	}
 }
 
-
 function BuildRoadAction::Execute() {
 
 	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
+	local accounter = AIAccounting();
 
 	local isConnectionBuild = connection.pathInfo.build;
 	local newConnection = null;
@@ -164,6 +164,7 @@ function BuildRoadAction::Execute() {
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
+	totalCosts = accounter.GetCosts();
 	return true;
 }
 

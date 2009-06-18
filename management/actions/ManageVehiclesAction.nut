@@ -151,7 +151,7 @@ function ManageVehiclesAction::Execute()
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
 		local directionToggle = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) 
-		< AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
+		> AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local roadList = connection.pathInfo.roadList;
@@ -180,10 +180,12 @@ function ManageVehiclesAction::Execute()
 				vehicleNumbers = 15;
 		}
 			
+		local vehiclePrice = AIEngine.GetPrice(engineID);
+		totalCosts = vehiclePrice;
 
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
-			if (Finance.GetMaxMoneyToSpend() - AIEngine.GetPrice(engineID) < 0) {
+			if (Finance.GetMaxMoneyToSpend() - vehiclePrice < 0) {
 				Log.logDebug("Not enough money to build all prescibed vehicles!");
 				break;
 			}

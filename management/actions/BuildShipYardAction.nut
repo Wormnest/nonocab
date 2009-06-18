@@ -17,6 +17,7 @@ class BuildShipYardAction extends Action {
 
 function BuildShipYardAction::Execute() {	
 
+	local accounter = AIAccounting();
 	local pathFindingHelper = WaterPathFinderHelper();
 	local pathFinder = RoadPathFinding(pathFindingHelper);
 
@@ -134,6 +135,7 @@ function BuildShipYardAction::Execute() {
 	connection.UpdateAfterBuild(AIVehicle.VT_WATER, start.tile, end.tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 
 	CallActionHandlers();
+	totalCosts = accounter.GetCosts();
 	return true;
 }
 

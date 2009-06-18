@@ -14,6 +14,7 @@ class BuildAirfieldAction extends Action {
 
 
 function BuildAirfieldAction::Execute() {
+
 	// List all possible airports, big to small.
 	local airportList = [
 		AIAirport.AT_INTERCON,
@@ -34,10 +35,15 @@ function BuildAirfieldAction::Execute() {
 	// Try to build the biggest airport possible.
 	local airportType = null;
 	foreach (at in airportList) {
-		if (AIAirport.IsValidAirportType(at)) {
+		if (AIAirport.IsValidAirportType(at) && Finance.GetMaxMoneyToSpend() > AIAirport.GetPrice(at) * 2) {
 			airportType = at;
 			break;
 		}
+	}
+
+	if (airportType == null) {
+		Log.logWarning("Not enough money to build any airport!");
+		return false;
 	}
 
 /*
@@ -119,6 +125,7 @@ function BuildAirfieldAction::Execute() {
 	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, AIAirport.GetAirportCoverageRadius(airportType));
 
 	CallActionHandlers();
+	totalCosts = AIAirport.GetPrice(airportType) * 2;
 	return true;
 }
 

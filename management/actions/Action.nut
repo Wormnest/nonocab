@@ -1,6 +1,7 @@
 class Action
 {
 	actionHandlers = null;
+	totalCosts = null;		// The total costs of the last constructed road.
 	
 	/**
 	 * Constructor with the world.
@@ -14,6 +15,13 @@ class Action
 	 * @return True if the action was successful, false otherwise.
 	 */
 	function Execute();
+
+	/**
+	 * Get the cost of the action AFTER executing it.
+	 */
+	function GetExecutionCosts() {
+		return totalCosts;
+	}
 	
 	/**
 	 * Call this function each time you wish the action handlers to

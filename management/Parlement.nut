@@ -5,10 +5,12 @@ class Parlement
 	reports = null;
 	ignoreList = null;
 	balance = null;
+	mostExpensiveConnectionBuild = null;
 	
 	constructor() {
 		reports = BinaryHeap();
 		ignoreList = [];
+		mostExpensiveConnectionBuild = 0;
 	}
 }
 
@@ -28,12 +30,14 @@ function Parlement::ExecuteReports() {
 		// negative because we don't have enough money to buy - for instance -
 		// a couple of vehicles and can only pay for the road.
 		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0 ||
-			!report.connection.pathInfo.build && Finance.GetMaxMoneyToSpend() < AICompany.GetMaxLoanAmount() / 2)
+			!report.connection.pathInfo.build && Finance.GetMaxMoneyToSpend() < 
+			(AICompany.GetMaxLoanAmount() / 2 < mostExpensiveConnectionBuild ? mostExpensiveConnectionBuild : AICompany.GetMaxLoanAmount() / 2))
 			continue;
 			
 		ignoreList.push(report);
 			
 		Log.logInfo(report.ToString());
+		local minimalMoneyNeeded = 0;
 		foreach (action in report.actions) {
 		
 			// Break if one of the action fails!
@@ -41,11 +45,15 @@ function Parlement::ExecuteReports() {
 				Log.logWarning("Execution of raport: " + report.ToString() + " halted!");
 				return false;
 			}
+			minimalMoneyNeeded += action.GetExecutionCosts();
 		}
+
+		if (minimalMoneyNeeded > mostExpensiveConnectionBuild)
+			mostExpensiveConnectionBuild = minimalMoneyNeeded;
 	}
 	
 	// Pay back as much load as possible.
-	Finance.RepayLoan();	
+	Finance.RepayLoan();
 	return true;
 }
 
