@@ -8,6 +8,7 @@ class Action
 	 */
 	constructor() { 
 		actionHandlers = [];
+		totalCosts = 0;
 	}
 
 	/**
