@@ -32,6 +32,13 @@ class PathBuilder {
 	 * @return True if the construction was succesful, false otherwise.
 	 */
 	function BuildPath(roadList, estimateCost);
+
+	/**
+	 * Check if the complete road is build.
+	 * @param roadList The road list which contains all tiles to construct.
+	 * @return True if the construction was succesful, false otherwise.
+	 */
+	function CheckPath(roadList);
 	
 	/**
 	 * Build a road / tunnel / bridge piece.
@@ -178,6 +185,34 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 	return true;
 }
 
+function PathBuilder::CheckPath(roadList)
+{
+	local test = AIExecMode();
+	local tile = roadList[0].tile;
+	for (local i = 1; i < roadList.len() - 1; i++) {
+		local nextTile = roadList[i].tile;
+		local nextTileType = roadList[i].type
+		if (nextTileType == Tile.ROAD) {
+			if (!AIRoad.AreRoadTilesConnected(tile, nextTile) && !BuildRoadPiece(nextTile, tile, Tile.ROAD, 1, false))
+					return false;
+
+			tile = nextTile;
+		} else if (nextTileType == Tile.BRIDGE) {
+			if (!AIBridge.IsBridgeTile(nextTile))
+				return false;
+
+			tile = AIBridge.GetOtherBridgeEnd(nextTile);/// - roadList[i].direction;
+		} else if (nextTileType == Tile.TUNNEL) {
+			AISign.BuildSign(nextTile, "Check Tunnel");
+			if (!AITunnel.IsTunnelTile(nextTile))
+				return false;
+
+			tile = AITunnel.GetOtherTunnelEnd(nextTile);/// - roadList[i].direction;
+		}
+	}
+	return true;
+}
+
 /**
  * If an error occurs during the construction phase, this method is called
  * to replan the road and finish what has been started.
@@ -270,6 +305,11 @@ function PathBuilder::RealiseConnection(buildRoadStations)
 		local result = BuildPath(roadList, false);
 		local costs = account.GetCosts();
 		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
+		if (result && !CheckPath(roadList)) {
+			Log.logWarning("Path build but with errors!!!");
+			return false;
+		}
+
 		return result;
 	}
 }
