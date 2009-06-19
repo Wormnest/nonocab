@@ -451,6 +451,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
 					continue;			
 
+				// Check if the distance is to big for pathfinders to solve.
+				if ((vehicleType == AIVehicle.VT_WATER || vehicleType == AIVehicle.VT_ROAD) && manhattanDistance > 256)
+					continue;
+
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
 					continue;

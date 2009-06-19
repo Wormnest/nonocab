@@ -184,12 +184,24 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
         		local nearestTown = AIAirport.GetNearestTown(tile, airportType);
 			// Check if we can build an airport here, either directly or by terraforming.
-			if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
-				(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
-				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
+			if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) ||
+				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 ||
 				AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;
 			break;
+		}
+
+		if (good_tile == -1) {
+			for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+        			local nearestTown = AIAirport.GetNearestTown(tile, airportType);
+				// Check if we can build an airport here, either directly or by terraforming.
+				if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
+					(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
+					AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
+					AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
+				good_tile = tile;
+				break;
+			}
 		}
 	}
 	return good_tile;
