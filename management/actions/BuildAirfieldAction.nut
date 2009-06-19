@@ -197,7 +197,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 				// Check if we can build an airport here, either directly or by terraforming.
 				if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
 					(getFirst || Terraform.CalculatePreferedHeight(tile, airportX, airportY) == -1 ||
-					AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 50) ||
+					AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 - Terraform.GetAffectedTiles(tile, airportX, airportY) * 100) ||
 					AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 				good_tile = tile;
 				break;
