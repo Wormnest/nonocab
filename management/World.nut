@@ -549,7 +549,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
 		
 		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo)) && 
-			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID))) {
+			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) && !AIEngine.IsArticulated(engineID)) {
 				
 			Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
 			cargoTransportEngineIds[vehicleType][cargo] = engineID;
