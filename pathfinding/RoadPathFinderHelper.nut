@@ -298,16 +298,19 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 	
 					// Check if the road is sloped.
-					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, annotatedTile.tile))
+					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
 						annotatedTile.distanceFromStart = costForSlope;
 				
 					// Check if the road makes a turn.
-					if (currentAnnotatedTile.direction != annotatedTile.direction)
+					if (currentAnnotatedTile.direction != offset)
 						annotatedTile.distanceFromStart += costForTurn;
 	
 					// Check if there is already a road here.
-					if (AIRoad.IsRoadTile(annotatedTile.tile))
+					if (AIRoad.IsRoadTile(nextTile)) {
 						annotatedTile.distanceFromStart += costForRoad;
+						if (AIRoad.IsDriveThroughRoadStationTile(nextTile))
+							annotatedTile.distanceFromStart += costForRoad * 10;
+					}
 					else
 						annotatedTile.distanceFromStart += costForNewRoad;
 	
