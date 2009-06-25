@@ -21,6 +21,17 @@ class Terraform {
 	 * @return The number of tiles that will be affected by terraforming.
 	 */
 	function GetAffectedTiles(startTile, width, height);
+
+
+	/**
+	 * Check it the nearby towns aren't going to stop the terraforming.
+	 * @param startTyle The top left tile to start from.
+	 * @param width The width of the rectangle.
+	 * @param height The height of the rectangle.
+	 * @return True if the local authoraties aren't going to complain,
+	 * false otherwise.
+	 */
+	function Terraform::CheckTownRatings(startTile, width, height);
 	
 	/**
 	 * This function explores the terrain and determines the
@@ -39,83 +50,31 @@ function Terraform::Terraform(startTile, width, height) {
 		preferedHeight = 1;
 	else if (preferedHeight == -1)
 		return false;
+
+	local mapSizeX = AIMap.GetMapSizeX();
 	
-	// With the prefered height in hand, lets get busy!
-	// Make the first tile flat and the correct level and make the other tiles
-	// the same height.
-	local slope = AITile.GetSlope(startTile);
-	local tileHeight = AITile.GetHeight(startTile);
-	local raiseSlope = false;
-	
-	//AISign.BuildSign(startTile, "T");
-	
-	// Rules to lower a tile.
-	if (tileHeight > preferedHeight ||
-	!(slope & AITile.SLOPE_N) && tileHeight == preferedHeight) {
-		
-		local slopeTip = AITile.SLOPE_INVALID;
-		if (slope == AITile.SLOPE_STEEP_N)
-			slopeTip = AITile.SLOPE_N;
-		else if (slope == AITile.SLOPE_STEEP_W)
-			slopeTip = AITile.SLOPE_W;
-		else if (slope == AITile.SLOPE_STEEP_S)
-			slopeTip = AITile.SLOPE_S;
-		else if (slope == AITile.SLOPE_STEEP_E)
-			slopeTip = AITile.SLOPE_E;
-		
-		if (slopeTip != AITile.SLOPE_INVALID)		
-			AITile.LowerTile(startTile, slopeTip);
-			
-		if (slopeTip == AITile.SLOPE_INVALID || slopeTip != AITile.SLOPE_N)
-			AITile.LowerTile(startTile, slope);
-		else
-			AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
-		
-		for (local i = AITile.GetHeight(startTile); i > preferedHeight; i--)
-			AITile.LowerTile(startTile, AITile.SLOPE_ELEVATED);
+        for (local i =0; i < width; i++) {
+		for (local j = 0; j < height; j++) {
+			local tileToSearch = startTile + i + j * mapSizeX;
+			if (AITile.GetHeight(tileToSearch) == preferedHeight) {
+
+				AISign.BuildSign(tileToSearch, "HERE");
+				AISign.BuildSign(startTile, "S");
+				AISign.BuildSign(startTile + width, "W");
+				AISign.BuildSign(startTile + height * mapSizeX, "H");
+				AISign.BuildSign(startTile + width + height * mapSizeX, "WH");
+				if ((tileToSearch == startTile || AITile.LevelTiles(tileToSearch, startTile)) &&
+				    (tileToSearch == startTile + width || AITile.LevelTiles(tileToSearch, startTile + width)) &&
+				    (tileToSearch == startTile + width + height * mapSizeX || AITile.LevelTiles(tileToSearch, startTile + width + height * mapSizeX)) &&
+				    (tileToSearch == startTile + height * mapSizeX || AITile.LevelTiles(tileToSearch, startTile + height * mapSizeX)))
+					return true;
+				AISign.BuildSign(tileToSearch, "FAILZZZZ");
+				return false;
+			}
+		}
 	}
-	
-	// Rules to make a tile higher.
-	else if (tileHeight < preferedHeight ||
-		slope & AITile.SLOPE_N && tileHeight == preferedHeight) {
-		
-		local slopeTip = AITile.SLOPE_INVALID;
-		if (slope == AITile.SLOPE_STEEP_N)
-			slopeTip = AITile.SLOPE_S;
-		else if (slope == AITile.SLOPE_STEEP_W)
-			slopeTip = AITile.SLOPE_E;
-		else if (slope == AITile.SLOPE_STEEP_S)
-			slopeTip = AITile.SLOPE_N;
-		else if (slope == AITile.SLOPE_STEEP_E)
-			slopeTip = AITile.SLOPE_W;
-		
-		if (slopeTip != AITile.SLOPE_INVALID) {		
-			AITile.RaiseTile(startTile, slopeTip);
-			
-			// Reevaluate the slope since it has changed now.
-			slope = AITile.GetSlope(startTile);
-		}		
-		
-		if (slopeTip == AITile.SLOPE_INVALID || slopeTip != AITile.SLOPE_N)
-			AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
-		else
-			AITile.LowerTile(startTile, slope);
-//		AITile.RaiseTile(startTile, AITile.GetComplementSlope(slope));
-		raiseSlope = true;
-		
-		for (local i = AITile.GetHeight(startTile); i < preferedHeight; i++)
-			AITile.RaiseTile(startTile, AITile.SLOPE_ELEVATED);
-	}
-	
-//	AISign.BuildSign(startTile, "Raise to height: " + preferedHeight);
-//	AISign.BuildSign(startTile + width + height * AIMap.GetMapSizeX(), "Level to here!");
-	
-	if (AITile.GetHeight(startTile) != preferedHeight)
-		return false;
-	
-	if (!AITile.LevelTiles(startTile, startTile + width + height * AIMap.GetMapSizeX()) && AIError.GetLastError() != AITile.ERR_AREA_ALREADY_FLAT)
-		return false;
-	return true;
+
+	return false;
 }
 
 function Terraform::GetAffectedTiles(startTile, width, height) {
@@ -139,6 +98,49 @@ function Terraform::GetAffectedTiles(startTile, width, height) {
 	}
 	
 	return affectedTiles;
+}
+
+function Terraform::CheckTownRatings(startTile, width, height) {
+	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
+	if (preferedHeight == 0)
+		preferedHeight = 1;
+	else if (preferedHeight == -1)
+		return 0;
+		
+	local ratings = [];
+	
+	for (local x = 0; x < width; x++) {
+		for (local y = 0; y < height; y++) {
+			local tile = startTile + x + AIMap.GetMapSizeX() * y;
+			
+			if (AITile.GetSlope(tile) == AITile.SLOPE_FLAT &&
+				AITile.GetHeight(tile) == preferedHeight)
+					continue;
+
+			if (!AITile.HasTreeOnTile(tile))
+				continue;
+
+			// Check which town this belongs to.
+			local townID = AITile.GetClosestTown(tile);
+			local townFound = false;
+			foreach (pair in ratings) {
+				if (pair[0] == townID) {
+					if ((pair[1] -= 35) < -200) {
+						local a = AIExecMode();
+						AISign.BuildSign(tile, "TOWN FAILZZZ!");
+						return false;
+					}
+					townFound = true;
+					break;
+				}
+			}
+
+			if (!townFound)
+				ratings.push([townID, AITown.GetRating(townID, AICompany.COMPANY_SELF)]);
+		}
+	}
+	
+	return true;
 }
 
 function Terraform::CalculatePreferedHeight(startTile, width, height) {
