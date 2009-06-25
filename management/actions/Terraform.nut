@@ -31,7 +31,7 @@ class Terraform {
 	 * @return True if the local authoraties aren't going to complain,
 	 * false otherwise.
 	 */
-	function Terraform::CheckTownRatings(startTile, width, height);
+	function CheckTownRatings(startTile, width, height);
 	
 	/**
 	 * This function explores the terrain and determines the
