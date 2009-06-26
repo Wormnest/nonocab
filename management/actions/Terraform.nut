@@ -58,18 +58,12 @@ function Terraform::Terraform(startTile, width, height) {
 			local tileToSearch = startTile + i + j * mapSizeX;
 			if (AITile.GetHeight(tileToSearch) == preferedHeight) {
 
-				AISign.BuildSign(tileToSearch, "HERE");
-				AISign.BuildSign(startTile, "S");
-				AISign.BuildSign(startTile + width, "W");
-				AISign.BuildSign(startTile + height * mapSizeX, "H");
-				AISign.BuildSign(startTile + width + height * mapSizeX, "WH");
-				if ((tileToSearch == startTile || AITile.LevelTiles(tileToSearch, startTile)) &&
-				    (tileToSearch == startTile + width || AITile.LevelTiles(tileToSearch, startTile + width)) &&
-				    (tileToSearch == startTile + width + height * mapSizeX || AITile.LevelTiles(tileToSearch, startTile + width + height * mapSizeX)) &&
-				    (tileToSearch == startTile + height * mapSizeX || AITile.LevelTiles(tileToSearch, startTile + height * mapSizeX)))
-					return true;
-				AISign.BuildSign(tileToSearch, "FAILZZZZ");
-				return false;
+				if ((i == 0 || j == 0 || AITile.LevelTiles(tileToSearch, startTile)) &&
+				   (i == width - 1 || j == 0 || AITile.LevelTiles(tileToSearch, startTile + width)) &&
+				   (i == width - 1 || j == height - 1 || AITile.LevelTiles(tileToSearch, startTile + width + height * mapSizeX)) &&
+				   (i == 0 || j == height - 1 || AITile.LevelTiles(tileToSearch, startTile + height * mapSizeX)))
+					return false;
+				return true;
 			}
 		}
 	}
@@ -125,11 +119,8 @@ function Terraform::CheckTownRatings(startTile, width, height) {
 			local townFound = false;
 			foreach (pair in ratings) {
 				if (pair[0] == townID) {
-					if ((pair[1] -= 35) < -200) {
-						local a = AIExecMode();
-						AISign.BuildSign(tile, "TOWN FAILZZZ!");
+					if ((pair[1] -= 35) < -200)
 						return false;
-					}
 					townFound = true;
 					break;
 				}
@@ -172,7 +163,6 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 		else
 			neededHeight = slopeHeight + 1;
 		
-		//AISign.BuildSign(tile, "NH: " + neededHeight);	
 		if (dictatedHeight == -1)
 			dictatedHeight = neededHeight;
 		else if (dictatedHeight != neededHeight)
