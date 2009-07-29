@@ -172,6 +172,8 @@ function ManageVehiclesAction::Execute()
 		local vehiclePrice = AIEngine.GetPrice(engineID);
 		totalCosts = vehiclePrice;
 
+		local vehicleCloneID = -1;
+		local vehicleCloneIDReverse = -1;
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - vehiclePrice < 0) {
@@ -181,10 +183,23 @@ function ManageVehiclesAction::Execute()
 					
 			local vehicleID;
 
-			if (!directionToggle && connection.pathInfo.depotOtherEnd)
+			if (!directionToggle && connection.pathInfo.depotOtherEnd) {
+				if (vehicleCloneIDReverse != -1) {
+					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, false);
+					directionToggle = !directionToggle;
+					vehicleGroup.vehicleIDs.push(vehicleID);
+					continue;
+				}
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depotOtherEnd, engineID);
-			else
+			} else {
+				if (vehicleCloneID != -1) {
+					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depot, vehicleCloneID, false);
+					directionToggle = !directionToggle;
+					vehicleGroup.vehicleIDs.push(vehicleID);
+					continue;
+				}
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
+			}
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
 				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + connection.pathInfo.depotOtherEnd + "!");
 				continue;
@@ -213,7 +228,6 @@ function ManageVehiclesAction::Execute()
 				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_SERVICE_IF_NEEDED);
 			} else {
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-
 
 				// If it's a ship, give it additional orders!
 				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
