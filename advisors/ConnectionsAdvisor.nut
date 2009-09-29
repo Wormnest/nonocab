@@ -23,6 +23,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	lastUpdate = null;
 	needUpdate = null;
 	reportTableLength = null;
+	closedIndustryList = null;  // Keep track of which industries have recently closed. We won't allow the AI to work on these.
 
 	constructor(world, vehType, conManager) {
 		Advisor.constructor(world);
@@ -35,10 +36,11 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		lastMaxDistanceBetweenNodes = 0;
 		lastUpdate = -100;
 		needUpdate = false;
+		closedIndustryList = {};
 	
-		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
-		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
-		world.worldEvenManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
+		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
+		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
+		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		
 		updateList = clone world.industry_tree;
 	}
@@ -93,13 +95,14 @@ function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
 	// Remove all related reports from the report table.
 	foreach (report in reportTable) {
 		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.fromConnectionNode == industryID ||
+			report.fromConnectionNode.id == industryID ||
 			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.toConnectionNode == industryID)
+			report.toConnectionNode.id == industryID)
 			report.isInvalid = true;
 	}
 	
-	connectionReports = null;
+	closedIndustryList[industryID] <- true;
+//	connectionReports = null;
 }
 
 
@@ -122,6 +125,8 @@ function ConnectionAdvisor::WE_EngineReplaced(engineID) {
  * If a connection is realised, we must periodically check the accepting side
  * and see if the production is high enough to allow for a connection.
  * @param connection The realised connection.
+ * @note Possible bug, if a connection produces more than 1 product it could be
+ * that the 2nd product is ignored.
  */
 function ConnectionAdvisor::ConnectionRealised(connection) {
 	// Check if the accepting side actually produces something and
@@ -159,7 +164,7 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
 	}
 	
 	// Read the old connection node to our update list.
-	updateList.push(connection.travelToNode);
+	updateList.push(connection.travelFromNode);
 	needUpdate = true;
 }
 
@@ -189,14 +194,15 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been build, we update all possible
 	// reports and consequentially get the latest data from the world.
-	if (connectionReports == null || reportTable.len() <= reportTableLength / 4) {
+	if (connectionReports == null || connectionReports.Count() <= reportTableLength / 4) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
 		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		UpdateIndustryConnections(activeUpdateList);
-		reportTableLength = reportTable.len();
+		reportTableLength = connectionReports.Count();
 		lastUpdate = AIDate.GetCurrentDate();
+		closedIndustryList = {};
 		Log.logInfo("Done populating!");
 	}
 
@@ -215,8 +221,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
 
-		// Check if the report is flagged invalid or already build in the mean time.		
-		if (report.isInvalid)
+		// Check if the report is flagged invalid or already build / closed in the mean time.		
+		if (report.isInvalid || closedIndustryList.rawin(report.fromConnectionNode.id) || closedIndustryList.rawin(report.toConnectionNode.id))
 			continue;
 
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
@@ -460,7 +466,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 					continue;
 
 				// Check if the connection is actually profitable.
-				local report = ConnectionReport(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
+				local report = Report(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
 				
 				if (report.Utility() > 0 && !report.isInvalid) {
 					

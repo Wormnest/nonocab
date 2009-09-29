@@ -72,6 +72,32 @@ function WorldEventManager::ProcessEvents() {
 					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
 						listener.WE_IndustryClosed(industryNode);
 					break;
+
+				// Subsidy:
+				case AIEvent.AI_ET_SUBSIDY_OFFER:
+					local subsidyID = AIEventSubsidyOffer.Convert(e).GetSubsidyID();
+					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
+						listener.WE_SubsidyOffer(subsidyID);
+					break;
+					
+				case AIEvent.AI_ET_SUBSIDY_EXPIRED:
+					local subsidyID = AIEventSubsidyExpired.Convert(e).GetSubsidyID();
+					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
+						listener.WE_SubsidyExpired(subsidyID);
+					break;
+				
+				case AIEvent.AI_ET_SUBSIDY_OFFER_EXPIRED:
+					local subsidyID = AIEventSubsidyOfferExpired.Convert(e).GetSubsidyID();
+					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
+						listener.WE_SubsidyOfferExpired(subsidyID);
+					break;
+				
+				case AIEvent.AI_ET_SUBSIDY_AWARDED:
+					local subsidyID = AIEventSubsidyAwarded.Convert(e).GetSubsidyID();
+					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
+						listener.WE_SubsidyAwarded(subsidyID);
+					break;
+				
 			}	
 		}		
 	}

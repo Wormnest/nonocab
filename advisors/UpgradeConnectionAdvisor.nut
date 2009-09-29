@@ -50,7 +50,7 @@ function UpgradeConnectionAdvisor::Update(loopCounter) {
 //				continue;
 //			}
 			
-			local report = ConnectionReport(world, startNode, endNode, connection.cargoID, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], 0);
+			local report = Report(world, startNode, endNode, connection.cargoID, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], 0);
 			
 			// Check if the new report is better than the origional.
 			if (bestReport == null || report.Utility() > bestReport.Utility())

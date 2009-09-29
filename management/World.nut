@@ -20,7 +20,7 @@ class World {
 	industryCacheAccepting = null;
 	industryCacheProducing = null;
 	
-	worldEvenManager = null;     // Manager to fire events to all world event listeners.
+	worldEventManager = null;     // Manager to fire events to all world event listeners.
 	
 	starting_year = null;
 	years_passed = null;
@@ -66,7 +66,7 @@ class World {
 		InitCargoTransportEngineIds();
 		
 		//BuildIndustryTree();
-		worldEvenManager = WorldEventManager(this);
+		worldEventManager = WorldEventManager(this);
 	}
 	
 	/**
@@ -185,7 +185,7 @@ function World::SaveData(saveTable) {
  */
 function World::Update()
 {
-	worldEvenManager.ProcessEvents();
+	worldEventManager.ProcessEvents();
 
 	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 2) {
 		IncreaseMaxDistanceBetweenNodes();

@@ -80,7 +80,7 @@ function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
 					if (skip)
 						continue;
 				}
-				local report = ConnectionReport(world, from, to, cargoID, engineID, 0);
+				local report = Report(world, from, to, cargoID, engineID, 0);
 				if (report.Utility() > 0)
 					connectionReports.Insert(report, -report.Utility());
 			}

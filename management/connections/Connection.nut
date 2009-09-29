@@ -93,7 +93,7 @@ class Connection {
 	 * vehicles.
 	 * @param world The world.
 	 * @param enginID The engine id to build.
-	 * @return A ConnectionReport instance.
+	 * @return A Report instance.
 	 */
 	function CompileReport(world, engineID) {
 		// First we check how much we already transport.
@@ -109,7 +109,7 @@ class Connection {
 			}
 		}
 	
-		return ConnectionReport(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
+		return Report(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
 	}
 	
 	/**

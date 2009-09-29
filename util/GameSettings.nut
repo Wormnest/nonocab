@@ -4,6 +4,8 @@ class GameSettings {
 	static maxVehiclesBuildLimit = array(4); 	// List with the maximum vehicles still buildable per vehicle type.
 	static vehicleTypes = array(4);
 	static vehicleGameSettingNames = ["vehicle.max_trains", "vehicle.max_roadveh", "vehicle.max_ships", "vehicle.max_aircraft"];	// List with the corresponding setting names.
+	static subsidy = array(1);
+	static subsidy_multipliers = [1.5, 2, 3, 4];
 
 	function InitGameSettings();
 
@@ -41,6 +43,11 @@ function GameSettings::InitGameSettings() {
 
 function GameSettings::UpdateGameSettings() {
 
+	if (AIGameSettings.IsValid("difficulty.subsidy_multiplier"))
+	{
+		GameSettings.subsidy[0] = AIGameSettings.GetValue("difficulty.subsidy_multiplier");
+	}
+
 	for (local i = 0; i < GameSettings.maxVehiclesLimit.len(); i++) {
 
 		local gameSettingName = GameSettings.vehicleGameSettingNames[i];
@@ -60,6 +67,10 @@ function GameSettings::UpdateGameSettings() {
 			Log.logWarning("Setting " + gameSettingName + " couldn't be found, not sure if we can actually build this type of vehicles!");
 		}
 	}
+}
+
+function GameSettings::GetSubsidyMultiplier() {
+	return GameSettings.subsidy_multipliers[GameSettings.subsidy[0]];
 }
 
 function GameSettings::GetMaxBuildableVehicles(vehicleType) {

@@ -52,23 +52,43 @@ function Terraform::Terraform(startTile, width, height) {
 		return false;
 
 	local mapSizeX = AIMap.GetMapSizeX();
+	local endTile = startTile + width + height * mapSizeX;
 	
-        for (local i =0; i < width; i++) {
+    for (local i =0; i < width; i++) {
 		for (local j = 0; j < height; j++) {
 			local tileToSearch = startTile + i + j * mapSizeX;
 			if (AITile.GetHeight(tileToSearch) == preferedHeight) {
 
-				if ((i == 0 || j == 0 || AITile.LevelTiles(tileToSearch, startTile)) &&
-				   (i == width - 1 || j == 0 || AITile.LevelTiles(tileToSearch, startTile + width)) &&
-				   (i == width - 1 || j == height - 1 || AITile.LevelTiles(tileToSearch, startTile + width + height * mapSizeX)) &&
-				   (i == 0 || j == height - 1 || AITile.LevelTiles(tileToSearch, startTile + height * mapSizeX)))
-					return false;
-				return true;
+				if ((tileToSearch == startTile && 
+						(Terraform.IsFlat(tileToSearch, width, height) || 
+						 AITile.LevelTiles(tileToSearch, endTile))
+					) ||
+				    (AITile.LevelTiles(tileToSearch, startTile) && 
+				   		(Terraform.IsFlat(startTile, width, height) || 
+				   		AITile.LevelTiles(startTile, endTile))
+				   ))
+					return true;
+				return false;
 			}
 		}
 	}
 
 	return false;
+}
+
+function Terraform::IsFlat(startTile, width, height)
+{
+	local mapSizeX = AIMap.GetMapSizeX();
+	local goalHeight = AITile.GetHeight(startTile);
+	
+	// Check if the terrain isn't already flat.
+	for (local i = 0; i < width; i++)
+		for (local j = 0; j < height; j++)
+			if (AITile.GetHeight(startTile + i + j * mapSizeX) != goalHeight ||
+				AITile.GetSlope(startTile + i + j * mapSizeX) != AITile.SLOPE_FLAT)
+				return false;
+	
+	return true;
 }
 
 function Terraform::GetAffectedTiles(startTile, width, height) {
