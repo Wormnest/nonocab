@@ -90,25 +90,17 @@ function BuildRoadAction::Execute() {
 			return false;	
 	}	
 
-	// Build the actual road.
-	local pathBuilder = PathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
-
-	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
-		if (isConnectionBuild)
-			connection.pathInfo.roadList = originalRoadList;
-		else
-			connection.forceReplan = true;
-		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
-		return false;
-	}
-		
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 
+	// Before building the road we will first build the road stations to make sure
+	// we are able to place them.
 	if (buildRoadStations) {
 
 		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK; 
-		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
+		if (!AIRoad.BuildRoad(roadList[0].tile, roadList[1].tile) ||
+			!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
+			!AIRoad.BuildRoad(roadList[len - 1].tile, roadList[len - 2].tile) ||
 			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, roadVehicleType, isConnectionBuild, isConnectionBuild)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
 				if (isConnectionBuild)
@@ -130,6 +122,19 @@ function BuildRoadAction::Execute() {
 			connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
 		}
 	}
+
+	// Build the actual road.
+	local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
+
+	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
+		if (isConnectionBuild)
+			connection.pathInfo.roadList = originalRoadList;
+		else
+			connection.forceReplan = true;
+		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
+		return false;
+	}
+		
 
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
