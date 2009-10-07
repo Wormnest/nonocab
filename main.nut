@@ -31,20 +31,20 @@ class NoCAB extends AIController {
 }
 
 function NoCAB::Save() { 
-	Log.logInfo("Saving game using version 1... (might take a while...)");
+	Log.logInfo("Saving game using version 2... (might take a while...)");
 	local saveTable = {};
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
-	saveTable["SaveVersion"] <- 1;
+	saveTable["SaveVersion"] <- 2;
 	Log.logInfo("Save successful!");
 	return saveTable;
 }
 
 function NoCAB::Load(version, data) {
 	local saveVersion = data["SaveVersion"];
-	if (saveVersion != 1) {
+	if (saveVersion != 2) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
-		AILog.logWarning("Only save version 1 is supported, your version is: " + saveVersion);
+		AILog.logWarning("Only save version 2 is supported, your version is: " + saveVersion);
 		return;
 	}
 	loadData = data;
@@ -104,9 +104,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v1.23")) {
+	if(!AICompany.SetName(companyName + " - v1.25")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v1.23#" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v1.25#" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

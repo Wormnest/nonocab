@@ -9,7 +9,7 @@ class ManageVehiclesAction extends Action {
 		vehiclesToBuy = [];
 		Action.constructor();
 
-		local pathFinderHelper = RoadPathFinderHelper();
+		local pathFinderHelper = RoadPathFinderHelper(false);
 		pathFinderHelper.costTillEnd = pathFinderHelper.costForNewRoad;
 
 		pathfinder = RoadPathFinding(pathFinderHelper);
@@ -46,6 +46,8 @@ function ManageVehiclesAction::Execute()
 		local vehicleNumbers = engineInfo[1];
 		local connection = engineInfo[2];	
 		local vehicleType = AIEngine.GetVehicleType(engineID);
+		
+		pathfinder.pathFinderHelper.SetStationBuilder(AIEngine.IsArticulated(engineID));
 		
 		// First of all we need to find suitable candidates to remove.
 		local vehicleList = AIList();

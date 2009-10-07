@@ -133,18 +133,28 @@ function Tile::GetSlope(tile, direction)
 	return 0;
 }
 
-function Tile::IsBuildable(tile) {
+function Tile::IsBuildable(tile, driveThrough) {
 
 	// Check if we can actually build here!
 	local test = AITestMode();
 
 	// Check if we can build a road station on this tile (then we know for sure it's
 	// save to build here :)
-	foreach(directionTile in Tile.GetTilesAround(tile, false)) {
-		if(AIRoad.BuildRoadStation(tile, directionTile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT)) {
-			return true;
+	if (driveThrough)
+	{
+		foreach(directionTile in Tile.GetTilesAround(tile, false)) {
+			if(AIRoad.BuildDriveThroughRoadStation(tile, directionTile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT)) {
+				return true;
+			}
+		}		
+	} else {
+		foreach(directionTile in Tile.GetTilesAround(tile, false)) {
+			if(AIRoad.BuildRoadStation(tile, directionTile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT)) {
+				return true;
+			}
 		}
 	}
+	
 	return false;
 }
 

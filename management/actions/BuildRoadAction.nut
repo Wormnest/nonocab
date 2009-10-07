@@ -39,7 +39,7 @@ function BuildRoadAction::Execute() {
 		originalRoadList = clone connection.pathInfo.roadList;
 	}
 
-	local pathFinderHelper = RoadPathFinderHelper();
+	local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]));
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
 	// For existing routs, we want the new path to coher to the existing
@@ -93,14 +93,22 @@ function BuildRoadAction::Execute() {
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 
-	// Before building the road we will first build the road stations to make sure
-	// we are able to place them.
-	if (buildRoadStations) {
+	// Build the actual road.
+	local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
 
+	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
+		if (isConnectionBuild)
+			connection.pathInfo.roadList = originalRoadList;
+		else
+			connection.forceReplan = true;
+		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
+		return false;
+	}
+		
+	if (buildRoadStations) {
+		
 		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK; 
-		if (!AIRoad.BuildRoad(roadList[0].tile, roadList[1].tile) ||
-			!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
-			!AIRoad.BuildRoad(roadList[len - 1].tile, roadList[len - 2].tile) ||
+		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
 			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, roadVehicleType, isConnectionBuild, isConnectionBuild)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
 				if (isConnectionBuild)
@@ -122,19 +130,6 @@ function BuildRoadAction::Execute() {
 			connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
 		}
 	}
-
-	// Build the actual road.
-	local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
-
-	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
-		if (isConnectionBuild)
-			connection.pathInfo.roadList = originalRoadList;
-		else
-			connection.forceReplan = true;
-		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
-		return false;
-	}
-		
 
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
@@ -166,6 +161,13 @@ function BuildRoadAction::Execute() {
 	// We only specify a connection as build if both the depots and the roads are build.
 	else
 		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
+	
+	if (!connection.refittedForArticulatedVehicles &&
+		AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
+	{
+		assert(buildRoadStations);
+		connection.refittedForArticulatedVehicles = true;
+	}
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
@@ -174,14 +176,27 @@ function BuildRoadAction::Execute() {
 }
 
 function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoadStationTile, roadVehicleType, isConnectionBuild, joinAdjacentStations) {
+	
+	// Determine which kind of road station we are looking for. This depends if the 
+	// vehicle type to be constructed is articulated or not.
+	if (AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
+	{
+		if (!AIRoad.IsDriveThroughRoadStationTile(roadStationTile) && 
+			!AIRoad.BuildDriveThroughRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
+			return false;
+		} else if (!isConnectionBuild) {
+			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
+		}
+	} else {
 		if (!AIRoad.IsRoadStationTile(roadStationTile) && 
 			!AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
 			return false;
 		} else if (!isConnectionBuild) {
 			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
 		}
-		
-		return true;
+	}
+	
+	return true;
 }
 
 function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {
@@ -196,7 +211,7 @@ function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {
 		foreach (direction in directions) {
 			if (direction == roadList[i].direction || direction == -roadList[i].direction)
 				continue;
-			if (Tile.IsBuildable(roadList[i].tile + direction) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
+			if (Tile.IsBuildable(roadList[i].tile + direction, false) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
 				
 				// Switch to test mode so we don't build the depot, but just test its location.
 				{

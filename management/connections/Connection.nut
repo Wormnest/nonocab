@@ -29,6 +29,7 @@ class Connection {
 	connectionManager = null;       // Updates are send to all listeners when connection is realised, demolished or updated.
 
 	forceReplan = null;		// Force this connection to be replanned.
+	refittedForArticulatedVehicles = null; // It this connection able to support articulated vehicles?
 	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info, connection_manager) {
 		cargoID = cargo_id;
@@ -38,6 +39,7 @@ class Connection {
 		connectionManager = connection_manager;
 		forceReplan = false;
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
+		refittedForArticulatedVehicles = false;
 		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 			if (travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
@@ -60,6 +62,7 @@ class Connection {
 	function LoadData(data) {
 		pathInfo = PathInfo(null, null);
 		vehicleTypes = data["vehicleTypes"];
+		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		pathInfo.LoadData(data["pathInfo"]);
 		vehiclesOperating = [];
 		
@@ -78,6 +81,7 @@ class Connection {
 		saveData["travelFromNode"] <- travelFromNode.GetUID(cargoID);
 		saveData["travelToNode"] <- travelToNode.GetUID(cargoID);
 		saveData["vehicleTypes"] <- vehicleTypes;
+		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
 		saveData["pathInfo"] <- pathInfo.SaveData();
 		saveData["vehiclesOperating"] <- [];
 		

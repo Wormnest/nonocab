@@ -522,8 +522,10 @@ function World::InitCargoTransportEngineIds() {
 		foreach (engine, value in engineList) {
 			local vehicleType = AIEngine.GetVehicleType(engine);
 			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine) * AIEngine.GetCapacity(engine) &&
-				!AIEngine.IsArticulated(engine)) {
+				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine) * AIEngine.GetCapacity(engine)
+				// &&
+				//!AIEngine.IsArticulated(engine)) {
+				) {
 				cargoTransportEngineIds[vehicleType][cargo] = engine;
 				Log.logDebug("Engine: " + vehicleType + " " + AICargo.GetCargoLabel(cargo) + " = " + AIEngine.GetName(engine));
 			}
@@ -549,7 +551,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
 		
 		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo)) && 
-			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) && !AIEngine.IsArticulated(engineID)) {
+			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID))) {
+				// && !AIEngine.IsArticulated(engineID)) {
 				
 			Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
 			cargoTransportEngineIds[vehicleType][cargo] = engineID;

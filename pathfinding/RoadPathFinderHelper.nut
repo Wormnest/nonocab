@@ -10,15 +10,27 @@ class RoadPathFinderHelper extends PathFinderHelper {
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
+	buildStationsFunction = null;
+	buildDriveThroughStations = null;
 	
-	constructor() {
+	constructor(buildDriveThroughStations_) {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
 		// Optimalization, use a prefat annotated tile for heuristics.
 		dummyAnnotatedTile = AnnotatedTile();
 		dummyAnnotatedTile.type = Tile.ROAD;
 		dummyAnnotatedTile.parentTile = dummyAnnotatedTile;
+		
+		SetStationBuilder(buildDriveThroughStations_);
 	}
+	
+	/**
+	 * By using this function you can configure if the road pathfinder should work
+	 * with 'normal' station or drive through stations.
+	 * @param buildDriveThroughStations_ Determines if it should build drive through
+	 * stations.
+	 */
+	function SetStationBuilder(buildDriveThroughStations_);
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or
@@ -75,6 +87,14 @@ class RoadPathFinderHelper extends PathFinderHelper {
 
 }
 
+function RoadPathFinderHelper::SetStationBuilder(buildDriveThroughStations_) {
+	buildDriveThroughStations = buildDriveThroughStations_;
+	if (buildDriveThroughStations)
+		buildStationsFunction = AIRoad.BuildDriveThroughRoadStation;
+	else
+		buildStationsFunction = AIRoad.BuildRoadStation;
+}
+
 function RoadPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 
 	foreach (i, value in startList) {
@@ -87,7 +107,7 @@ function RoadPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		// Check if we can actually start here!
 		if(checkStartPositions) {
 		
-			if (!Tile.IsBuildable(i) || 
+			if (!Tile.IsBuildable(i, buildDriveThroughStations) || 
 				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 			
@@ -118,7 +138,7 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 	
 	foreach (i, value in endList) {
 		if (checkEndPositions) {
-			if (!Tile.IsBuildable(i) || 
+			if (!Tile.IsBuildable(i, buildDriveThroughStations) || 
 				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 			dummyAnnotatedTile.tile = i;
@@ -150,7 +170,7 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (!AIRoad.BuildRoadStation(at.tile, at.parentTile.tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
+	if (checkEndPositions && (!buildStationsFunction(at.tile, at.parentTile.tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
 
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.

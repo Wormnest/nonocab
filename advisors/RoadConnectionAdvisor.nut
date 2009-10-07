@@ -7,7 +7,7 @@ class RoadConnectionAdvisor extends ConnectionAdvisor {
 
 	constructor(world, connectionManager) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_ROAD, connectionManager);
-		local pathFindingHelper = RoadPathFinderHelper();
+		local pathFindingHelper = RoadPathFinderHelper(false);
 		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRoad + 10;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}
@@ -24,6 +24,8 @@ function RoadConnectionAdvisor::GetPathInfo(report) {
 
 	local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
+
+	pathFinder.pathFinderHelper.SetStationBuilder(AIEngine.IsArticulated(report.engineID));
 
 	local pathInfo = pathFinder.FindFastestRoad(report.fromConnectionNode.GetProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20);
 	if (pathInfo == null)

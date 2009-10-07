@@ -187,7 +187,15 @@ function VehiclesAdvisor::GetReports() {
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
 
-		if (report.nrRoadStations > 1) {
+		// Check if we need to build more road stations. This is necessary if
+		// we detect large jams before either the drop-off or pick-up places
+		// or if we want to introduce an articulated vehicle whils using 'normal'
+		// stations and not drive-through stations.
+		if (report.nrRoadStations > 1 ||
+			connection.vehicleTypes == AIVehicle.VT_ROAD &&
+			!connection.refittedForArticulatedVehicles &&
+			AIEngine.IsArticulated(report.engineID)) {
+			
 			if (connection.vehicleTypes == AIVehicle.VT_ROAD)
 				actionList.push(BuildRoadAction(report.connection, false, true, world));
 
