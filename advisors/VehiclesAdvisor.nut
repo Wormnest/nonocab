@@ -76,7 +76,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 		
 		connection.lastChecked = currentDate;
-		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID]);
+		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.travelFromNodeStationID), connection);
@@ -114,8 +114,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 		
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
-		local isAir = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_AIR;
-		local isShip = AIEngine.GetVehicleType(report.engineID) == AIVehicle.VT_WATER;
+		local isAir = AIEngine.GetVehicleType(report.transportEngineID) == AIVehicle.VT_AIR;
+		local isShip = AIEngine.GetVehicleType(report.transportEngineID) == AIVehicle.VT_WATER;
 	
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
@@ -129,7 +129,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
 			// cargo a vehicle can carry.
-			if (nrVehicles > 0 && AIEngine.GetCapacity(report.engineID) * 1.5 > production && rating > 35)
+			if (nrVehicles > 0 && AIEngine.GetCapacity(report.transportEngineID) * 1.5 > production && rating > 35)
 				continue;
 
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
@@ -155,7 +155,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!
-		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.engineID)))
+		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
 			continue;
 
 		if (report.nrVehicles != 0)
@@ -194,7 +194,7 @@ function VehiclesAdvisor::GetReports() {
 		if (report.nrRoadStations > 1 ||
 			connection.vehicleTypes == AIVehicle.VT_ROAD &&
 			!connection.refittedForArticulatedVehicles &&
-			AIEngine.IsArticulated(report.engineID)) {
+			AIEngine.IsArticulated(report.transportEngineID)) {
 			
 			if (connection.vehicleTypes == AIVehicle.VT_ROAD)
 				actionList.push(BuildRoadAction(report.connection, false, true, world));
@@ -212,15 +212,15 @@ function VehiclesAdvisor::GetReports() {
 			// check if an extra airport can actually be build! If not we simple obmit building
 			// more aircrafts. This will be handled better in the future.
 			if (connection.vehicleTypes == AIVehicle.VT_AIR && 
-				AIEngine.GetPlaneType(report.engineID) == AIAirport.PT_BIG_PLANE &&
+				AIEngine.GetPlaneType(report.transportEngineID) == AIAirport.PT_BIG_PLANE &&
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
 					continue;
 
-			vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
+			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, connection);
 		}
 		else if(report.nrVehicles < 0)
-			vehicleAction.SellVehicles(report.engineID, -report.nrVehicles, connection);
+			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);
 
 		actionList.push(vehicleAction);
 

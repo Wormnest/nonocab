@@ -1,7 +1,7 @@
 /**
  * Path builder who handles all aspects of building a road (including roadstations and depots).
  */
-class PathBuilder {
+class RailPathBuilder {
 
 	maxSpeed = null;
 	pathFixer = null;
@@ -96,7 +96,7 @@ class PathFixer extends Thread {
 			local test = AIExecMode();
 			
 			for (local i = 0; i < 5; i++) {
-				if (PathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
+				if (RailPathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
 					toRemoveIndexes.push(index);
 					break;
 				}
@@ -113,15 +113,42 @@ class PathFixer extends Thread {
 }
 
 
-function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost) {
+function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
+	local l = AIRailTypeList();
+	foreach (rt in l) {
+		if (AIRail.IsRailTypeAvailable(rt)) {
+			AIRail.SetCurrentRailType(rt);
+			Log.logDebug("Set Rail type!!!");
+			break;
+		}
+	}
 	
 	switch (tileType) {
 		
 		case Tile.ROAD:
-			buildSucceded = AIRoad.BuildRoad(fromTile, toTile);
-			
+
+			local direction = 0;
+			local distanceX = AIMap.GetTileX(toTile) - AIMap.GetTileX(fromTile);
+			local distanceY = AIMap.GetTileY(toTile) - AIMap.GetTileY(fromTile);
+			if (distanceY > AIMap.GetMapSizeX())
+				direction = AIMap.GetMapSizeX();
+			else if (distanceY < -AIMap.GetMapSizeX())
+				direction = -AIMap.GetMapSizeX();
+
+			if (distanceX < 0)
+				direction -= 1;
+			else if (distanceX > 0)
+				direction += 1;
+					
+			Log.logWarning("BUILD@!!!");
+			AISign.BuildSign(fromTile - direction, "From");
+			AISign.BuildSign(fromTile, "Tile");
+			AISign.BuildSign(toTile, "To");
+			buildSucceded = AIRail.BuildRail(fromTile - direction, fromTile, toTile);
+			Log.logWarning("Succceed? : " + buildSucceded);
+		/*	
 			// If we couldn't build a road in one try, try to break it down.
 			if (estimateCost && !buildSucceded) {
 				local direction = toTile - fromTile;
@@ -140,17 +167,18 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 				local direction = direction / length;
 				
 				while (tmpTile != toTile) {
-					AIRoad.BuildRoad(tmpTile, tmpTile + direction);
+					AIRail.BuildRail(tmpTile - direction, tmpTile, tmpTile + direction);
 					tmpTile += direction;
 				}
 			}
+*/
 			
 			break;
 			
 		case Tile.TUNNEL:
 			if (!AITile.IsBuildable(fromTile))
 				AITile.DemolishTile(fromTile);
-			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VT_ROAD, fromTile);
+			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VT_RAIL, fromTile);
 			break;
 			
 		case Tile.BRIDGE:
@@ -167,7 +195,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 			// be straight, we have to substract a tile in the opposite direction from where the bridge is
 			// going. Because we calculated the pathlist in the other direction, the direction is in the
 			// opposite direction so we need to add it.
-			buildSucceded = AIBridge.BuildBridge(AIVehicle.VT_ROAD, bestBridgeType, fromTile, toTile);
+			buildSucceded = AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, fromTile, toTile);
 			break;
 			
 		default:
@@ -185,15 +213,15 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 	return true;
 }
 
-function PathBuilder::CheckPath(roadList)
+function RailPathBuilder::CheckPath(roadList)
 {
-	local test = AIExecMode();
+/*	local test = AIExecMode();
 	local tile = roadList[0].tile;
 	for (local i = 1; i < roadList.len() - 1; i++) {
 		local nextTile = roadList[i].tile;
 		local nextTileType = roadList[i].type
 		if (nextTileType == Tile.ROAD) {
-			if (!AIRoad.AreRoadTilesConnected(tile, nextTile) && !BuildRoadPiece(nextTile, tile, Tile.ROAD, 1, false))
+			if (!AIRail.AreTilesConnected(tile, nextTile) && !BuildRoadPiece(nextTile, tile, Tile.ROAD, 1, false))
 					return false;
 
 			tile = nextTile;
@@ -209,6 +237,7 @@ function PathBuilder::CheckPath(roadList)
 			tile = AITunnel.GetOtherTunnelEnd(nextTile);/// - roadList[i].direction;
 		}
 	}
+*/
 	return true;
 }
 
@@ -222,7 +251,7 @@ function PathBuilder::CheckPath(roadList)
  * the CreateRoad method must be ceased as the pathfinder found a different 
  * road and will issue a new construction command.
  */
-function PathBuilder::CheckError(buildResult)
+function RailPathBuilder::CheckError(buildResult)
 {
 	/**
 	 * First determine whether the error is of temporeral nature (i.e. lack
@@ -237,7 +266,7 @@ function PathBuilder::CheckError(buildResult)
 
 			// Retry the same action 5 times...
 			for (local i = 0; i < 50; i++) {
-				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
+				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRail.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
 				AIController.Sleep(1);
 			}
@@ -259,8 +288,9 @@ function PathBuilder::CheckError(buildResult)
 		case AIError.ERR_LAND_SLOPED_WRONG:
 		case AIError.ERR_SITE_UNSUITABLE:
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
-		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		case AIError.ERR_NOT_ENOUGH_CASH:		
+		case AIRail.ERR_CROSSING_ON_ONEWAY_ROAD:		
+		case AIRail.ERR_UNSUITABLE_TRACK:		
 
 			AISign.BuildSign(buildResult[0], "From");
 			if (buildResult[1])
@@ -272,7 +302,6 @@ function PathBuilder::CheckError(buildResult)
 			
 		// Trival onces:
 		case AIError.ERR_ALREADY_BUILT:
-		case AIRoad.ERR_ROAD_CANNOT_BUILD_ON_TOWN_ROAD:
 			return true;
 			
 		// Unsolvable ones:
@@ -280,6 +309,9 @@ function PathBuilder::CheckError(buildResult)
 			Log.logError("Build from " + AIMap.GetTileX(buildResult[0]) + ", " + AIMap.GetTileY(buildResult[0]) + " to " + AIMap.GetTileX(buildResult[1]) + ", " + AIMap.GetTileY(buildResult[1]) + " tileType: " + buildResult[2]);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
+			AISign.BuildSign(buildResult[0], "From");
+			if (buildResult[1])
+				AISign.BuildSign(buildResult[1], "To");
 			assert(false);
 			
 		default:
@@ -288,7 +320,7 @@ function PathBuilder::CheckError(buildResult)
 	}
 }
 
-function PathBuilder::RealiseConnection(buildRoadStations)
+function RailPathBuilder::RealiseConnection(buildRoadStations)
 {
 	// Check if we have enough money...
 	local estimatedCost = GetCostForRoad();
@@ -323,9 +355,9 @@ function PathBuilder::RealiseConnection(buildRoadStations)
  * to get as close an estimate of the true cost of building this path as
  * possible.
  */
-function PathBuilder::BuildPath(roadList, estimateCost)
+function RailPathBuilder::BuildPath(roadList, estimateCost)
 {
-	Log.logDebug("Build path (road)");
+	Log.logDebug("Build path (rail)");
 	if(roadList == null || roadList.len() < 2)
 		return false;
 
@@ -424,15 +456,15 @@ function PathBuilder::BuildPath(roadList, estimateCost)
  * Plan and check how much it cost to create the fastest route
  * from start to end.
  */
-function PathBuilder::GetCostForRoad()
+function RailPathBuilder::GetCostForRoad()
 {
-	Log.logDebug("Get cost for raod (pathbuilder.nut)");
+	Log.logDebug("Get cost for road");
 	local test = AITestMode();			// Switch to test mode...
 	local additionalCosts = 0;
 	local accounting = AIAccounting();	// Start counting costs
 	BuildPath(roadList, true);
-	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-	Log.logDebug("Get cost for raod (pathbuilder.nut) - Done");
+//	AIRail.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRail.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+//	AIRail.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRail.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+	
 	return accounting.GetCosts();
 }

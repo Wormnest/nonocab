@@ -232,7 +232,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		Log.logDebug("Considder: " + report.ToString());
 			
 		local bestReport = report.fromConnectionNode.GetBestReport(report.cargoID);
-
+		
 		// Check if this connection has already been checked.
 		if (connection != null && !connection.forceReplan && reportTable.rawin(connection.GetUID())) {
 			local otherCon = reportTable.rawget(connection.GetUID());
@@ -250,7 +250,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 				bestReport = null;
 			continue;
 		}
-
+		
 		// Check if the industry connection node actually exists else create it, and update it! If it exists
 		// we must be carefull because an other report may already have clamed it.
 		local oldPathInfo;
@@ -263,9 +263,10 @@ function ConnectionAdvisor::Update(loopCounter) {
 		}
 						
 		// Compile the report :)
-		report = connection.CompileReport(world, report.engineID);
-		if (report.isInvalid || report.nrVehicles < 1)
+		report = connection.CompileReport(world, report.transportEngineID, report.holdingEngineID);
+		if (report.isInvalid || report.nrVehicles < 1) {
 			continue;
+		}
 
 		// If a connection already exists, see if it already has a report. If so we can only
 		// overwrite it if our report is better or if the original needs a rewrite.
@@ -275,7 +276,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 				connection.pathInfo = oldPathInfo;
 			continue;
 		}
-
+		
 		// If the report yields a positive result we add it to the list of possible connections.
 		if (report.Utility() > 0) {
 		
@@ -350,7 +351,7 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID]);
+		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID], world.cargoHoldingEngineIds[vehicleType][connection.cargoID]);
 		if (report.isInvalid || report.nrVehicles < 1 || report.Utility() < 0) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)
@@ -369,7 +370,8 @@ function ConnectionAdvisor::GetReports() {
 		// Buy only half of the vehicles needed, build the rest gradualy.
 		if (report.nrVehicles != 1)
 			report.nrVehicles = report.nrVehicles / 2;
-		vehicleAction.BuyVehicles(report.engineID, report.nrVehicles, connection);
+		// TODO: Change this for trains.
+		vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, connection);
 		
 		actionList.push(vehicleAction);
 		report.actions = actionList;
@@ -423,8 +425,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		foreach (cargoID in fromConnectionNode.cargoIdsProducing) {
 
 			// Check if we even have an engine to transport this cargo.
-			local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
-			if (engineID == -1)
+			local transportEngineID = world.cargoTransportEngineIds[vehicleType][cargoID];
+			local holdingEngineID = world.cargoHoldingEngineIds[vehicleType][cargoID];
+			if (transportEngineID == -1 || holdingEngineID == -1)
 				continue;
 				
 			// Check if this building produces enough (yet) to be considered.
@@ -466,7 +469,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 					continue;
 
 				// Check if the connection is actually profitable.
-				local report = Report(world, fromConnectionNode, toConnectionNode, cargoID, engineID, 0);
+				local report = Report(world, fromConnectionNode, toConnectionNode, cargoID, transportEngineID, holdingEngineID, 0);
 				
 				if (report.Utility() > 0 && !report.isInvalid) {
 					

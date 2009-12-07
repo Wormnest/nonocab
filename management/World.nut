@@ -13,7 +13,14 @@ class World {
 	cargo_list = null;			// List with all cargos.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
-	cargoTransportEngineIds = null;		// The fastest engine IDs to transport the cargos.
+	/**
+	 * Because some engines are only there to hold cargo (e.g. wagons) while others
+	 * only move the cargo without holding any (e.g. locomotives), we split these
+	 * duties into two separate arrays. Although for the same entry they can contain
+	 * the same engine IDs (e.g. for trucks).
+	 */
+	cargoTransportEngineIds = null;		// The best engine IDs to transport cargo.
+	cargoHoldingEngineIds = null;		// The best engine IDs to hold cargo.
 	maxCargoID = null;				// The highest cargo ID number
 
 	industry_tree = null;
@@ -508,29 +515,24 @@ function World::RemoveIndustry(industryID) {
 function World::InitCargoTransportEngineIds() {
 	
 	cargoTransportEngineIds = array(4);
+	cargoHoldingEngineIds = array(4);
 	
-	for (local i = 0; i < cargoTransportEngineIds.len(); i++) 
+	for (local i = 0; i < cargoTransportEngineIds.len(); i++) {
 		cargoTransportEngineIds[i] = array(maxCargoID + 1, -1);
-	
-	foreach (cargo, value in cargo_list) {
-
-		local engineList = AIEngineList(AIVehicle.VT_ROAD);
-		engineList.Valuate(AIEngine.GetRoadType);
-		engineList.KeepValue(AIRoad.ROADTYPE_ROAD);
-		engineList.AddList(AIEngineList(AIVehicle.VT_AIR));
-		engineList.AddList(AIEngineList(AIVehicle.VT_WATER));
-		foreach (engine, value in engineList) {
-			local vehicleType = AIEngine.GetVehicleType(engine);
-			if ((AIEngine.GetCargoType(engine) == cargo || AIEngine.CanRefitCargo(engine, cargo)) && 
-				AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engine) * AIEngine.GetCapacity(engine)
-				// &&
-				//!AIEngine.IsArticulated(engine)) {
-				) {
-				cargoTransportEngineIds[vehicleType][cargo] = engine;
-				Log.logDebug("Engine: " + vehicleType + " " + AICargo.GetCargoLabel(cargo) + " = " + AIEngine.GetName(engine));
-			}
-		}
+		cargoHoldingEngineIds[i] = array(maxCargoID + 1, -1);
 	}
+	
+	local engineList = AIEngineList(AIVehicle.VT_ROAD);
+	engineList.Valuate(AIEngine.GetRoadType);
+	engineList.KeepValue(AIRoad.ROADTYPE_ROAD);
+	engineList.AddList(AIEngineList(AIVehicle.VT_AIR));
+	engineList.AddList(AIEngineList(AIVehicle.VT_WATER));
+	engineList.AddList(AIEngineList(AIVehicle.VT_RAIL));
+	
+	// Handle initializing new engines by using the event method
+	// already present :).
+	foreach (engine, value in engineList)
+		ProcessNewEngineAvailableEvent(engine);
 }
 
 /**
@@ -546,20 +548,39 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 		return false;
 		
 	local engineReplaced = false;
-	
+
 	foreach (cargo, value in cargo_list) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
 		
-		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo)) && 
-			(oldEngineID == - 1 || AIEngine.GetMaxSpeed(oldEngineID) * AIEngine.GetCapacity(oldEngineID) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID))) {
-				// && !AIEngine.IsArticulated(engineID)) {
-				
-			Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID));
-			cargoTransportEngineIds[vehicleType][cargo] = engineID;
-			engineReplaced = true;
+		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo) || (!AIEngine.IsWagon(engineID) && AIEngine.CanPullCargo(engineID, cargo)))) {
+			
+			// Different case for trains as the wagons cannot transport themselves and the locomotives
+			// are unable to carry any cargo (ignorable cases aside).
+			if (vehicleType == AIVehicle.VT_RAIL) {
+				if (AIEngine.IsWagon(engineID)) {
+					// We only judge a weagon on its merrit to transport cargo.
+					if (AIEngine.GetCapacity(cargoHoldingEngineIds[vehicleType][cargo]) < AIEngine.GetCapacity(engineID)) {
+						cargoHoldingEngineIds[vehicleType][cargo] = engineID;
+						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to carry: " + AICargo.GetCargoLabel(cargo));
+						engineReplaced = true;
+					}						
+				} else {
+					// We only judge a locomotive on its merrit to transport weagons (don't care about the
+					// accidental bit of cargo it can move around).
+					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID)) {
+						cargoTransportEngineIds[vehicleType][cargo] = engineID;
+						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport: " + AICargo.GetCargoLabel(cargo));
+						engineReplaced = true;
+					}
+				}
+			} else if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) {
+				cargoTransportEngineIds[vehicleType][cargo] = engineID;
+				cargoHoldingEngineIds[vehicleType][cargo] = engineID;
+				Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport and carry: " + AICargo.GetCargoLabel(cargo));
+				engineReplaced = true;
+			}
 		}
 	}
-	
 	return engineReplaced;
 }				
 

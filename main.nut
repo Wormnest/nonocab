@@ -36,11 +36,12 @@ function NoCAB::Save() {
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
 	saveTable["SaveVersion"] <- 2;
-	Log.logInfo("Save successful!");
+	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	return saveTable;
 }
 
 function NoCAB::Load(version, data) {
+	local test = data["starting_year"];
 	local saveVersion = data["SaveVersion"];
 	if (saveVersion != 2) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
@@ -70,7 +71,7 @@ function NoCAB::Start()
 	advisors = [
 		VehiclesAdvisor(world)
 	];
-
+	
 	if (GetSetting("Enable road vehicles")) {
 		Log.logInfo("Road vehicle advisor initiated!");
 		advisors.push(RoadConnectionAdvisor(world, connectionManager));
@@ -83,7 +84,12 @@ function NoCAB::Start()
 		Log.logInfo("Ship advisor initiated!");
 		advisors.push(ShipAdvisor(world, connectionManager));
 	}
-
+/*
+	if (GetSetting("Enable trains")) {
+		Log.logInfo("Train advisor initiated!");
+		advisors.push(TrainConnectionAdvisor(world, connectionManager));
+	}
+*/
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	
 	foreach (advisor in advisors)

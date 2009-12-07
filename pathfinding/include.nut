@@ -6,3 +6,5 @@ require("pathfinderhelper.nut");
 require("pathfinding.nut");
 require("RoadPathFinderHelper.nut");
 require("WaterPathFinderHelper.nut");
+require("RailPathBuilder.nut");
+require("RailPathFinderHelper.nut");

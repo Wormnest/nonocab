@@ -96,10 +96,11 @@ class Connection {
 	 * of type engineID are supported on top of the already existing fleet of
 	 * vehicles.
 	 * @param world The world.
-	 * @param enginID The engine id to build.
+	 * @param transportingEngineID The engine id to build which will transport the cargo.
+	 * @param holdingEngineID The engine id to build which will hold the cargo to transport.
 	 * @return A Report instance.
 	 */
-	function CompileReport(world, engineID) {
+	function CompileReport(world, transportingEngineID, holdingEngineID) {
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
 		// the number of vehicles we need to build.
@@ -112,8 +113,8 @@ class Connection {
 				}
 			}
 		}
-	
-		return Report(world, travelFromNode, travelToNode, cargoID, engineID, cargoAlreadyTransported);
+		
+		return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
 	}
 	
 	/**
