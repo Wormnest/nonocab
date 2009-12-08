@@ -426,13 +426,11 @@ function PathBuilder::BuildPath(roadList, estimateCost)
  */
 function PathBuilder::GetCostForRoad()
 {
-	Log.logDebug("Get cost for raod (pathbuilder.nut)");
 	local test = AITestMode();			// Switch to test mode...
 	local additionalCosts = 0;
 	local accounting = AIAccounting();	// Start counting costs
 	BuildPath(roadList, true);
 	AIRoad.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
 	AIRoad.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-	Log.logDebug("Get cost for raod (pathbuilder.nut) - Done");
 	return accounting.GetCosts();
 }
