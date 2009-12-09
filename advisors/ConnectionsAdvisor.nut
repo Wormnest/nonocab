@@ -264,9 +264,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 						
 		// Compile the report :)
 		report = connection.CompileReport(world, report.transportEngineID, report.holdingEngineID);
-		if (report.isInvalid || report.nrVehicles < 1) {
+		if (report.isInvalid || report.nrVehicles < 1)
 			continue;
-		}
 
 		// If a connection already exists, see if it already has a report. If so we can only
 		// overwrite it if our report is better or if the original needs a rewrite.

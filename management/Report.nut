@@ -168,9 +168,9 @@ class Report
 		travelTime = travelTimeTo + travelTimeFrom;
 
 		// Calculate netto income per vehicle.
-		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(transportEngineID);
+		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
 		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(transportEngineID), AICargo.CC_PASSENGERS) && 
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
 		    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
 			if (AICargo.GetTownEffect(cargoID) == AICargo.TE_GOODS)
 				transportedCargoPerVehiclePerMonth *= 0.6;

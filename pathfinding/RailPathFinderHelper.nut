@@ -215,7 +215,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
 	local mapSizeX = AIMap.GetMapSizeX();
-	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward) {
+	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward //&&
+		// Only consider diagonal tracks if the slope is flat.
+		//AITile.GetSlope(currentAnnotatedTile.tile) == AITile.SLOPE_FLAT
+	) {
 		if (currentAnnotatedTile.direction == 1)
 			offsets = [1, 1 + mapSizeX, 1 - mapSizeX];
 		else if (currentAnnotatedTile.direction == -1)
@@ -224,7 +227,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			offsets = [mapSizeX, mapSizeX - 1, mapSizeX + 1];
 		else if (currentAnnotatedTile.direction == -mapSizeX)
 			offsets = [-mapSizeX, -mapSizeX - 1, -mapSizeX + 1];
-				
+		
 		else if (currentAnnotatedTile.direction == 1 + mapSizeX)
 			offsets = [1, mapSizeX, 1 + mapSizeX];
 		else if (currentAnnotatedTile.direction == 1 - mapSizeX)
@@ -450,10 +453,10 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 		switch (roadList[i].type) {
 			case Tile.ROAD:
 				if(lastDirection != currentDirection) {		// Bend
-					tileLength = Tile.bendedRailLength - carry;
+					tileLength = Tile.bendedRoadLength - carry;
 					currentSpeed = maxSpeed / 2;
 				} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
-					tileLength = Tile.upDownHillRailLength - carry;
+					tileLength = Tile.upDownHillRoadLength - carry;
 					
 					local slowDowns = 0;
 		
@@ -477,7 +480,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 					}
 					
 				} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
-					tileLength = Tile.upDownHillRailLength - carry;
+					tileLength = Tile.upDownHillRoadLength - carry;
 		
 					while (tileLength > 0) {
 						tileLength -= currentSpeed;
@@ -490,7 +493,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 						}
 					}
 				} else {					// Straight
-					tileLength = Tile.straightRailLength - carry;
+					tileLength = Tile.straightRoadLength - carry;
 					
 					// Calculate the number of days needed to traverse the tile
 					while (tileLength > 0) {
@@ -510,7 +513,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 			case Tile.TUNNEL:
 				local length = (tile - roadList[i + 1].tile) / currentDirection;
 				if (length < 0) length = -length;
-				tileLength = Tile.straightRailLength * length - carry;
+				tileLength = Tile.straightRoadLength * length - carry;
 				while (tileLength > 0) {
 					tileLength -= currentSpeed;
 					days++;

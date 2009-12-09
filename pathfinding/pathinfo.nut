@@ -83,6 +83,8 @@ function PathInfo::GetTravelTime(engineID, forward) {
 		time = RoadPathFinderHelper.GetTime(roadList, maxSpeed, forward);
 	else if (vehicleType == AIVehicle.VT_WATER)
 		time = WaterPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+	else if (vehicleType == AIVehicle.VT_RAIL)
+		time = RailPathFinderHelper.GetTime(roadList, maxSpeed, forward);
 	else
 		Log.logWarning("Unknown vehicle type: " + vehicleType);
 	
