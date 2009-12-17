@@ -18,15 +18,7 @@ class NoCAB extends AIController {
 	
    	constructor() {
    		stop = false;
-		parlement = Parlement();
-		world = World(GetSetting("NiceCAB"));
-		GameSettings.InitGameSettings();
-		connectionManager = ConnectionManager();
-		pathFixer = PathFixer();
 		loadData = null;
-		subsidyManager = SubsidyManager(world.worldEventManager);
-		
-		planner = Planner(world);
 	}
 }
 
@@ -53,6 +45,16 @@ function NoCAB::Load(version, data) {
 
 function NoCAB::Start()
 {	
+	// Initialize the AI.
+	parlement = Parlement();
+	world = World(GetSetting("NiceCAB"));
+	GameSettings.InitGameSettings();
+	connectionManager = ConnectionManager();
+	pathFixer = PathFixer();
+	subsidyManager = SubsidyManager(world.worldEventManager);
+		
+	planner = Planner(world);
+
 	if (loadData) {
 		Log.logInfo("Loading game saved using version " + loadData["SaveVersion"] + "... (might take a while...)");
 		Log.logInfo("(1/4) Build industry tree");
@@ -110,9 +112,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v1.25")) {
+	if(!AICompany.SetName(companyName + " - v1.26")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v1.25#" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v1.26#" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
