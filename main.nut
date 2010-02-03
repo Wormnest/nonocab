@@ -23,11 +23,11 @@ class NoCAB extends AIController {
 }
 
 function NoCAB::Save() { 
-	Log.logInfo("Saving game using version 2... (might take a while...)");
+	Log.logInfo("Saving game using version 3... (might take a while...)");
 	local saveTable = {};
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
-	saveTable["SaveVersion"] <- 2;
+	saveTable["SaveVersion"] <- 3;
 	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	return saveTable;
 }
@@ -35,9 +35,9 @@ function NoCAB::Save() {
 function NoCAB::Load(version, data) {
 	local test = data["starting_year"];
 	local saveVersion = data["SaveVersion"];
-	if (saveVersion != 2) {
+	if (saveVersion != 3) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
-		AILog.logWarning("Only save version 2 is supported, your version is: " + saveVersion);
+		AILog.logWarning("Only save version 3 is supported, your version is: " + saveVersion);
 		return;
 	}
 	loadData = data;
@@ -86,12 +86,10 @@ function NoCAB::Start()
 		Log.logInfo("Ship advisor initiated!");
 		advisors.push(ShipAdvisor(world, connectionManager));
 	}
-/*
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
 		advisors.push(TrainConnectionAdvisor(world, connectionManager));
 	}
-*/
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	
 	foreach (advisor in advisors)

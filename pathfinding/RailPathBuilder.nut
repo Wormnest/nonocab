@@ -142,7 +142,7 @@ function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, est
 			else if (distanceX > 0)
 				direction += 1;
 					
-			Log.logWarning("BUILD@!!!");
+			Log.logWarning("BUILD@!!! " + direction);
 			AISign.BuildSign(fromTile - direction, "From");
 			AISign.BuildSign(fromTile, "Tile");
 			AISign.BuildSign(toTile, "To");
@@ -309,9 +309,9 @@ function RailPathBuilder::CheckError(buildResult)
 			Log.logError("Build from " + AIMap.GetTileX(buildResult[0]) + ", " + AIMap.GetTileY(buildResult[0]) + " to " + AIMap.GetTileX(buildResult[1]) + ", " + AIMap.GetTileY(buildResult[1]) + " tileType: " + buildResult[2]);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
-			AISign.BuildSign(buildResult[0], "From");
+			AISign.BuildSign(buildResult[0], "From *");
 			if (buildResult[1])
-				AISign.BuildSign(buildResult[1], "To");
+				AISign.BuildSign(buildResult[1], "To *");
 			assert(false);
 			
 		default:

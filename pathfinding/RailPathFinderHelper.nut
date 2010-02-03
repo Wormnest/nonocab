@@ -11,6 +11,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
 	
+	vehicleType = AIVehicle.VT_RAIL;	
+	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 

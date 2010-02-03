@@ -1,5 +1,5 @@
 /**
- * Action class for the creation of roads.
+ * Action class for the creation of rails.
  */
 class BuildRailAction extends Action
 {
@@ -74,7 +74,7 @@ function BuildRailAction::Execute() {
 		connection.pathInfo.roadList = newConnection.pathInfo.roadList;
 		connection.pathInfo.build = true;
 	} else if (connection.pathInfo == null) {
-		connection.pathInfo = PathInfo(null, 0);
+		connection.pathInfo = PathInfo(null, 0, AIVehicle.VT_RAIL);
 		connection.forceReplan = true;
 		return false;
 	}

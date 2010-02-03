@@ -3,20 +3,22 @@
  */
 class PathInfo {
 
-	roadList = null;		// List of all road tiles the road needs to follow.
-	roadCost = null;		// The cost to create this road.
-	depot = null;			// The location of the depot.
-	depotOtherEnd = null;		// The location of the depot at the other end (if it any).
-	build = null;			// Is this path build?
+	roadList = null;          // List of all road tiles the road needs to follow.
+	roadCost = null;          // The cost to create this road.
+	depot = null;             // The location of the depot.
+	depotOtherEnd = null;     // The location of the depot at the other end (if it any).
+	build = null;             // Is this path build?
+	vehicleType = null;       // The vehicle type this path info is for.
 							
-	travelTimesCache = null;	// An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesCache = null;  // An array containing the travel times in days for vehicles with a certain speed.
 
-	buildDate = null;		// The date this connection is build.
-	nrRoadStations = null;          // The number of road stations.
+	buildDate = null;         // The date this connection is build.
+	nrRoadStations = null;    // The number of road stations.
 
-	constructor(_roadList, _roadCost) {
+	constructor(_roadList, _roadCost, _vehicleType) {
 		roadList = _roadList;
 		roadCost = _roadCost;
+		vehicleType = _vehicleType;
 		build = false;
 		travelTimesCache = {};
 		nrRoadStations = 0;
@@ -30,6 +32,7 @@ class PathInfo {
 			roadList.push(at);
 		}
 		roadCost = data["roadCost"];
+		vehicleType = data["vehicleType"];
 		depot = data["depot"];
 		depotOtherEnd = data["depotOtherEnd"];
 		build = data["build"];
@@ -45,6 +48,7 @@ class PathInfo {
 			saveData["roadList"].push(at.tile);
 		}
 		saveData["roadCost"] <- roadCost;
+		saveDate["vehicleType"] <- vehicleType;
 		saveData["depot"] <- depot;
 		saveData["depotOtherEnd"] <- depotOtherEnd;
 		saveData["build"] <- build;

@@ -71,7 +71,7 @@ class Report
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
-			if (connection != null && connection.pathInfo.roadList != null) {
+			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_ROAD) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
 				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
 
@@ -126,7 +126,7 @@ class Report
 			}
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
 
-			if (connection != null && connection.pathInfo.roadList != null) {
+			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
 				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), true);
 				travelTimeFrom = travelTimeTo;
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
@@ -149,7 +149,7 @@ class Report
 				initialCost += costForFrom + costForTo;
 			}
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
-			if (connection != null && connection.pathInfo.roadList != null) {
+			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
 				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
 

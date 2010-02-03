@@ -74,7 +74,7 @@ function BuildRoadAction::Execute() {
 		connection.pathInfo.roadList = newConnection.pathInfo.roadList;
 		connection.pathInfo.build = true;
 	} else if (connection.pathInfo == null) {
-		connection.pathInfo = PathInfo(null, 0);
+		connection.pathInfo = PathInfo(null, 0, AIVehicle.VT_ROAD);
 		connection.forceReplan = true;
 		return false;
 	}

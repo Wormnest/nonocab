@@ -25,7 +25,7 @@ function AircraftAdvisor::GetPathInfo(report) {
 //		BuildAirfieldAction.GetAirportCost(report.toConnectionNode, report.cargoID, true) == -1)
 //		return null;
 			
-	return PathInfo(null, 0);
+	return PathInfo(null, 0, AIVehicle.VT_AIR);
 }
 
 /**

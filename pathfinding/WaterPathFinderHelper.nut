@@ -6,6 +6,8 @@ class WaterPathFinderHelper extends PathFinderHelper {
 	startLocationIsBuildOnWater = false;
 	endLocationIsBuildOnWater = false;
 	
+	vehicleType = AIVehicle.VT_WATER;
+	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0),
 				   AIMap.GetTileIndex(1, 1), AIMap.GetTileIndex(1, -1), AIMap.GetTileIndex(-1, -1), AIMap.GetTileIndex(-1, 1)];

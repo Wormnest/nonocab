@@ -113,7 +113,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			}
 		
 			resultList.push(resultTile);
-			return PathInfo(resultList, null);
+			return PathInfo(resultList, null, pathFinderHelper.vehicleType);
 		} else if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;

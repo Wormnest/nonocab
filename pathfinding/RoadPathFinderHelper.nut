@@ -13,6 +13,8 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	buildStationsFunction = null;
 	buildDriveThroughStations = null;
 	
+	vehicleType = AIVehicle.VT_ROAD;	
+	
 	constructor(buildDriveThroughStations_) {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
