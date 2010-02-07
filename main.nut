@@ -73,7 +73,7 @@ function NoCAB::Start()
 	advisors = [
 		VehiclesAdvisor(world)
 	];
-	
+	/*
 	if (GetSetting("Enable road vehicles")) {
 		Log.logInfo("Road vehicle advisor initiated!");
 		advisors.push(RoadConnectionAdvisor(world, connectionManager));
@@ -85,12 +85,21 @@ function NoCAB::Start()
 	if (GetSetting("Enable ships")) {
 		Log.logInfo("Ship advisor initiated!");
 		advisors.push(ShipAdvisor(world, connectionManager));
-	}
+	}*/
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
 		advisors.push(TrainConnectionAdvisor(world, connectionManager));
 	}
 	//UpgradeConnectionAdvisor(world, connectionManager)
+	
+	local l = AIRailTypeList();
+	foreach (rt in l) {
+		if (AIRail.IsRailTypeAvailable(rt)) {
+			AIRail.SetCurrentRailType(rt);
+			Log.logDebug("Set Rail type!!!");
+			break;
+		}
+	}	
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);

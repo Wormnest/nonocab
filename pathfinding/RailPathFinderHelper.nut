@@ -26,7 +26,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	 * Search for all tiles which are reachable from the given tile, either by road or
 	 * by building bridges and tunnels or exploiting existing onces.
 	 * @param currentAnnotatedTile An instance of AnnotatedTile from where to search from.
-	 * @param onlyRails Take only roads into acccount?
+	 * @param onlyRails Take only rails into acccount?
 	 * @param closedList All tiles which should not be considered.
 	 * @return An array of annotated tiles.
 	 */
@@ -77,47 +77,108 @@ class RailPathFinderHelper extends PathFinderHelper {
 
 }
 
+/**
+ * For now, we simply select the first possible place where we can put down a station. We explore
+ * other options later.
+ */
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
-
+	
+	// TODO: Make this a global value...
+	local stationLength = 3;
+	
+	local mapSizeX = AIMap.GetMapSizeX();
 	foreach (i, value in startList) {
 	
-		local annotatedTile = AnnotatedTile();
-		annotatedTile.tile = i;
-		annotatedTile.type = Tile.ROAD;
-		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
-		
 		// Check if we can actually start here!
-		if(checkStartPositions) {
+//		if(checkStartPositions) {
 		
 			if (!Tile.IsBuildable(i, false) || 
 				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
+
+			local offsets = [1, -1, mapSizeX, -mapSizeX];
+			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NE_SW,
+				AIRail.RAILTRACK_NW_SE, AIRail.RAILTRACK_NW_SE];
 			
-			// We preprocess all start nodes to see if a road station can be build on them.
-			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
-			
-			// We only consider roads which don't go down hill because we can't build road stations
-			// on them!
-			foreach (neighbour in neighbours) {
-				local slope = Tile.GetSlope(i, neighbour.direction);
-				if (slope == 2)
-					continue;
-					
-				neighbour.distanceFromStart += (slope == 0 ? costForRail : costForSlope);
-				neighbour.parentTile = annotatedTile;
-				neighbour.length = 1;
+			for (local j = 0; j < 4; j++) {
 				
-				heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
+				// Check if we can actually build a train station here.
+				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, stationLength, AIStation.STATION_JOIN_ADJACENT))
+					continue;
+
+				// The tile at the beginning of the station.
+				local stationBegin = AnnotatedTile();
+				stationBegin.tile = i;
+				stationBegin.type = Tile.ROAD;
+				stationBegin.parentTile = stationBegin;               // Small hack ;)
+
+				// If we can, we store the tile in front of the station.
+				local stationBeginFront = AnnotatedTile();
+				stationBeginFront.type = Tile.ROAD;
+				stationBeginFront.direction = offsets[j];
+				stationBeginFront.tile = i + offsets[j];
+				stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
+				stationBeginFront.distanceFromStart = costForRail;
+				stationBeginFront.parentTile = stationBegin;
+				stationBeginFront.length = 1;
+				
+				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
+				
+				// The tile at the end of the station.
+				local stationEnd = AnnotatedTile();
+				stationEnd.tile = i + stationLength * offsets[j];
+				stationEnd.type = Tile.ROAD;
+				stationEnd.parentTile = stationEnd;               // Small hack ;)
+
+				// If we can, we store the tile in front of the end of the station.
+				local stationEndFront = AnnotatedTile();
+				stationEndFront.type = Tile.ROAD;
+				stationEndFront.direction = offsets[j];
+				stationEndFront.tile = i + offsets[j] + stationLength * offsets[j];
+				stationEndFront.bridgeOrTunnelAlreadyBuild = false;
+				stationEndFront.distanceFromStart = costForRail;
+				stationEndFront.parentTile = stationEnd;
+				stationEndFront.length = 1;
+				
+				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}
-		} else
-			heap.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
+//		} else
+//			heap.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
 	}
 }
 
 function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 	local newEndLocations = AIList();
+	local mapSizeX = AIMap.GetMapSizeX();
 	
+	foreach (i, value in endList) {
+		
+		// Check if we can actually start here!
+//		if(checkStartPositions) {
+		
+			if (!Tile.IsBuildable(i, false) || 
+				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
+				continue;
+
+			local offsets = [1, -1, mapSizeX, -mapSizeX];
+			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NE_SW,
+				AIRail.RAILTRACK_NW_SE, AIRail.RAILTRACK_NW_SE];
+			
+			for (local j = 0; j < 4; j++) {
+
+				// Check if we can actually build a train station here.
+				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, 3, AIStation.STATION_JOIN_ADJACENT))
+					continue;
+					
+				newEndLocations.AddItem(i, i);
+				break;
+			}
+//		} else
+//			heap.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
+	}
+
+/*
 	foreach (i, value in endList) {
 		if (checkEndPositions) {
 			if (!Tile.IsBuildable(i, false) || 
@@ -138,7 +199,7 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 			}
 		}
 	}
-
+*/
 	if (checkEndPositions)
 		endList = newEndLocations;
 }
@@ -202,12 +263,12 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
-/*
+
 	{
 		local abc = AIExecMode();
 		AISign.BuildSign(currentAnnotatedTile.tile, "X");
 	}
-*/
+
 	local tileArray = [];
 	local offsets;
 	
@@ -258,14 +319,14 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		if (closedList.rawin(nextTile))
 			isInClosedList = true;
 
-		// Check if we can actually build this piece of road or if the slopes render this impossible.
+		// Check if we can actually build this piece of rail or if the slopes render this impossible.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
 
 		local isBridgeOrTunnelEntrance = false;
 		
 		// Check if we can exploit excising bridges and tunnels.
-		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
+		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL)) {
 			local type = Tile.NONE;
 			local otherEnd;
 			if (AIBridge.IsBridgeTile(nextTile)) {
@@ -306,8 +367,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 
 		/** 
-		 * If it is neither a tunnel or a bridge, we try to build one
-		 * our selves.
+		 * If neither a bridge or tunnel has been found to exploit, we try to:
+		 * 1) Build a bridge or tunnel ourselves.
+		 * 2) Build a piece of rail.
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
@@ -318,16 +380,65 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				if (tmp = GetTunnel(nextTile, currentTile))
 					tileArray.push(tmp);
 			}
+			//local asdfsda = AIExecMode();
 
 			if (!isInClosedList) {
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
+				
 				if (AIRail.BuildRail(previousTile, currentTile, nextTile) || AIRail.AreTilesConnected(previousTile, currentTile, nextTile)
 				|| (AITile.GetHeight(currentTile) == AITile.GetHeight(nextTile) && 
 				AITile.GetSlope(currentTile) + AITile.GetSlope(nextTile) == 0 &&
 				(AITile.IsBuildable(currentTile) || AIRail.IsRailTile(currentTile)) &&
-				(AITile.IsBuildable(nextTile) || AIRail.IsRailTile(nextTile)))) {
+				(AITile.IsBuildable(nextTile) || AIRail.IsRailTile(nextTile))))
+				
+				
+				// Check if we can build a piece of rail here.
+
+/*
+				RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west).
+				RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east).
+				RAILTRACK_NW_NE 	Track in the upper corner of the tile (north).
+				RAILTRACK_SW_SE 	Track in the lower corner of the tile (south).
+				RAILTRACK_NW_SW 	Track in the left corner of the tile (west).
+				RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 
+*/
+/*
+				// Rail going north / south.
+				if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
+					// Rail can be going west and east from here.
+					
+					if (offset == 1 || offset == -AIMap.GetMapSizeX())
+						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+							continue;
+					else if (offset == -1 || offset == AIMap.GetMapSizeX())
+						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+							continue;
+					else
+						assert(false);
+				}
+				
+				// Rail going east / west.
+				else if (currentAnnotatedTile.direction == -1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == 1 - AIMap.GetMapSizeX()) {
+					// Rail can be going north and south from here.
+					if (offset == -AIMap.GetMapSizeX() || offset == -1)
+						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+							continue;
+					else if (offset == AIMap.GetMapSizeX() || offset == 1)
+						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+							continue;
+					else
+						assert(false);
+				} 
+				else if ((offset == 1 || offset == -1) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
+					continue;
+				else if ((offset == mapSizeX || offset == -mapSizeX) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
+				 	continue;
+				//else if (currentAnnotatedTile.parentTile != currentAnnotatedTile)
+					continue;
+					*/
+				{
 
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = Tile.ROAD;

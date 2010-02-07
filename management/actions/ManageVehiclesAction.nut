@@ -142,7 +142,11 @@ function ManageVehiclesAction::Execute()
 			} else if (vehicleType == AIVehicle.VT_WATER) {
 				vehicleGroup.timeToTravelTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
 				vehicleGroup.timeToTravelFrom = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			}
+			} else if (vehicleType == AIVehicle.VT_RAIL) {
+				vehicleGroup.timeToTravelTo = RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				vehicleGroup.timeToTravelFrom = RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+			} else
+				assert (false);
 			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 
 				AIMap.DistanceManhattan(connection.pathInfo.roadList[0].tile, connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), 
 				vehicleGroup.timeToTravelTo) * AIEngine.GetCapacity(engineID);	

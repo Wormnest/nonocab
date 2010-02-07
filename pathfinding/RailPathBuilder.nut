@@ -113,9 +113,10 @@ class PathFixer extends Thread {
 }
 
 
-function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost) {
+function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
+/*
 	local l = AIRailTypeList();
 	foreach (rt in l) {
 		if (AIRail.IsRailTypeAvailable(rt)) {
@@ -124,7 +125,7 @@ function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, est
 			break;
 		}
 	}
-	
+	*/
 	switch (tileType) {
 		
 		case Tile.ROAD:
@@ -143,10 +144,12 @@ function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, est
 				direction += 1;
 					
 			Log.logWarning("BUILD@!!! " + direction);
-			AISign.BuildSign(fromTile - direction, "From");
-			AISign.BuildSign(fromTile, "Tile");
-			AISign.BuildSign(toTile, "To");
-			buildSucceded = AIRail.BuildRail(fromTile - direction, fromTile, toTile);
+//			AISign.BuildSign(fromTile - direction, "From");
+			AISign.BuildSign(prevTile, "---Prev---");
+			AISign.BuildSign(fromTile, "---Tile---");
+			AISign.BuildSign(toTile, "---To---");
+			//buildSucceded = AIRail.BuildRail(fromTile - direction, fromTile, toTile);
+			buildSucceded = AIRail.BuildRail(prevTile, fromTile, toTile);
 			Log.logWarning("Succceed? : " + buildSucceded);
 		/*	
 			// If we couldn't build a road in one try, try to break it down.
@@ -205,6 +208,10 @@ function RailPathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, est
 	// Next check if the build was succesful, and if not store all relevant information.
 	if (!buildSucceded) {
 		
+		//AISign.BuildSign(prevTile, "From *");
+		//AISign.BuildSign(fromTile, "Tile *");
+		//AISign.BuildSign(toTile, "To *");
+//		quit();
 		// If the error is such we are unable to solve, stop.
 		if (!estimateCost && !CheckError([fromTile, toTile, tileType, length]))
 			return false;
@@ -358,13 +365,15 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
 function RailPathBuilder::BuildPath(roadList, estimateCost)
 {
 	Log.logDebug("Build path (rail)");
-	if(roadList == null || roadList.len() < 2)
+	if(roadList == null || roadList.len() < 3)
 		return false;
 
-	local buildFromIndex = roadList.len() - 1;
-	local currentDirection = roadList[roadList.len() - 2].direction;
+	local buildFromIndex = roadList.len() - 2;
+	local currentDirection = roadList[roadList.len() - 3].direction;
+	local prevCurrentDirection = roadList[roadList.len() - 3].direction;
+	local extraRailTile = null;
 
-	for(local a = roadList.len() - 2; -1 < a; a--) {
+	for(local a = roadList.len() - 3; -1 < a; a--) {
 
 		local buildToIndex = a;
 		local direction = roadList[a].direction;
@@ -382,10 +391,63 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				// Not needed ATM, as we make sure we only consider roads which
 				// don't require terraforming
 				// Terraform(buildFrom, currentDirection);
-					
-				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
+				//AISign.BuildSign(roadList[buildFromIndex + 1].tile, "From *");
+				//AISign.BuildSign(roadList[buildFromIndex].tile, "Tile *");
+				//AISign.BuildSign(roadList[a + 1].tile, "To *");
+				if (extraRailTile != null)
+					Log.logWarning("EXTRA RAIL TILE!!!");
+				else
+					Log.logWarning("NO NO NO - EXTRA RAIL TILE!!!");
+				if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
 					return false;
+					
+				// If we just build a diagonal piece of rail and next we're moving in a direction which
+				// is not the the same as the previous direction (before going diagonal), we need to:
+				// 1) Add a little piece of rail.
+				// 2) Move the road list index one lower.
+				if (/*direction != prevCurrentDirection &&*/ currentDirection != -1 && currentDirection != 1 && currentDirection != AIMap.GetMapSizeX() && currentDirection != -AIMap.GetMapSizeX()) {
+					
+					//extraRailTile = roadList[a + 1].tile - direction;
+					AISign.BuildSign(roadList[a + 1].tile - direction, "Extra rail tile");
+					a--;
+					
+					// Build the extra rail piece.
+					
+					// Rail going south / north.
+					if (currentDirection == 1 + AIMap.GetMapSizeX() || currentDirection == -1 - AIMap.GetMapSizeX()) {
+						// Rail can be going west and east from here.
+						
+						if (direction == 1 || direction == -AIMap.GetMapSizeX())
+							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW))
+								assert(false);
+						else if (direction == -1 || direction == AIMap.GetMapSizeX())
+							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE))
+								assert(false);
+						else
+							assert(false);
+					}
+					
+					// Rail going east / west.
+					else if (currentDirection == -1 + AIMap.GetMapSizeX() || currentDirection == 1 - AIMap.GetMapSizeX()) {
+						// Rail can be going north and south from here.
+						if (direction == -AIMap.GetMapSizeX() || direction == -1)
+							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE))
+								assert(false);
+						else if (direction == AIMap.GetMapSizeX() || direction == 1)
+							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE))
+								assert(false);
+						else
+							assert(false);
+					} else {
+						Log.logWarning("Direction is: " + currentDirection);
+						assert(false);
+					}
 
+				} else {
+					extraRailTile = null;
+				}
+
+				prevCurrentDirection = currentDirection;
 				currentDirection = direction;
 				buildFromIndex = a + 1;
 			}
@@ -446,7 +508,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 	
 	// Build the last part (if any).
 	if (buildFromIndex > 0)
-		if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
+		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
 
 	return true;

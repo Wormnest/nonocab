@@ -117,7 +117,7 @@ function BuildRailAction::Execute() {
 			return false;
 		}
 		
-		connection.pathInfo.nrRailStations++;
+		connection.pathInfo.nrRoadStations++;
 
 		// In the case of a bilateral connection we want to make sure that
 		// we don't hinder ourselves; Place the stations not to near each
@@ -214,14 +214,44 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				
 				if (depotLocation) {
 					local abc = AIExecMode();
+					
+/*
+RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west).
+RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east).
+RAILTRACK_NW_NE 	Track in the upper corner of the tile (north).
+RAILTRACK_SW_SE 	Track in the lower corner of the tile (south).
+RAILTRACK_NW_SW 	Track in the left corner of the tile (west).
+RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 
+*/
+
+					// Build the rails leading to the depot.
+					if (direction == 1) {
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_SW_SE);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SW);
+					} else if (direction == -1) {
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_NE);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SE);
+					} else if (direction == AIMap.GetMapSizeX()) {
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SE);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_SW_SE);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SE);
+					} else if (direction == -AIMap.GetMapSizeX()) {
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_NE);
+						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SW);
+					}
+					
 					// If we found the correct location switch to exec mode and build it.
 					// Note that we need to build the road first, else we are unable to do
 					// so again in the future.
-					if (!AIRail.BuildRail(depotLocation, depotFront) || !AIRail.BuildRailDepot(depotLocation, depotFront)) {
+					if (!AIRail.BuildRailDepot(depotLocation, depotFront)) {
 						depotLocation = null;
 						depotFront = null;
 					} else
 						break;
+					
 				}
 			}
 		}
