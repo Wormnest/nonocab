@@ -111,6 +111,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBegin.tile = i;
 				stationBegin.type = Tile.ROAD;
 				stationBegin.parentTile = stationBegin;               // Small hack ;)
+				stationBegin.forceForward = true;
 
 				// If we can, we store the tile in front of the station.
 				local stationBeginFront = AnnotatedTile();
@@ -121,6 +122,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.distanceFromStart = costForRail;
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
+				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 				
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 				
@@ -129,6 +131,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEnd.tile = i + stationLength * offsets[j];
 				stationEnd.type = Tile.ROAD;
 				stationEnd.parentTile = stationEnd;               // Small hack ;)
+				stationEnd.forceForward = true;
 
 				// If we can, we store the tile in front of the end of the station.
 				local stationEndFront = AnnotatedTile();
@@ -139,6 +142,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.distanceFromStart = costForRail;
 				stationEndFront.parentTile = stationEnd;
 				stationEndFront.length = 1;
+				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}
@@ -263,11 +267,11 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
-
-	//{
-	//	local abc = AIExecMode();
-	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	//}
+	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
+	{
+		local abc = AIExecMode();
+		AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	}
 
 	local tileArray = [];
 	local offsets;
@@ -376,14 +380,14 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			if (!onlyRails) {
+			// Dissable bridges for now...
+			/*if (!onlyRails) {
 				local tmp;
 				if (tmp = GetBridge(nextTile, offset))
 					tileArray.push(tmp);
 				if (tmp = GetTunnel(nextTile, currentTile))
 					tileArray.push(tmp);
-			}
-			//local asdfsda = AIExecMode();
+			}*/
 
 			if (!isInClosedList) {
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
@@ -396,52 +400,244 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				(AITile.IsBuildable(currentTile) || AIRail.IsRailTile(currentTile)) &&
 				(AITile.IsBuildable(nextTile) || AIRail.IsRailTile(nextTile))))
 				*/
-				
-				// Check if we can build a piece of rail here.
+				local railTrackDirection = -1;
 
+				// 
+				/**
+				 * Check if we can build a rail track in the direction of offset.
+				 * For the first 2 cases (NE, NW, SE, SW) this is quite straightforeward. However,
+				 * for the diagonal offsets (N, S, E, W) we need to do some extra work. It is important
+				 * to remember that we only check every other tile (as we go diagonal we cut through 2
+				 * tiles, but we only really check the first).
+				 */
+				if (offset == 1 || offset == -1) {
+					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
+						continue;
+					railTrackDirection = AIRail.RAILTRACK_NE_SW;
+				} else if (offset == mapSizeX || offset == -mapSizeX) {
+					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
+						continue;
+					railTrackDirection = AIRail.RAILTRACK_NW_SE;
+				// TODO: FIX THIS. Doesn't work now :(.
+				} else {
+					// To build here depends on the previous rail piece and direction.
+					if (offset == mapSizeX - 1) {
+						
+						// Going East.
+
+						// If the previous rail track is going NE, build in the lower corner.
+						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+						}
+						
+						// If the previous rail track is going SE, build in the upper corner.
+						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_NE;
+						}
+						
+						// If the previous rail track is going E, build according to the previous railtrack.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+								
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+						} else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+								
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_NE;
+						} else {
+							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+							assert(false);
+						}
+					} else if (offset == -mapSizeX + 1) {
+						
+						// Going West.
+						
+						// If the previous rail track is going NW, build in the lower corner.
+						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+						}
+						
+						// If the previous rail track is going SW, build in the upper corner.
+						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_NE;
+						}
+						
+						// If the previous rail track is going W, build according to the previous railtrack.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+						} else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+								
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+						} else {
+							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+							assert(false);
+						}
+					} else if (offset == -mapSizeX - 1) {
+					
+						// Going North.
+						
+						// If the previous rail track is going NW, build in the right corner.
+						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+						}
+						
+						// If the previous rail track is going NE, build in the left corner.
+						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+						}
+						
+						// If the previous rail track is going N, build according to the previous railtrack.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+								
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+						} else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+								continue;
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NE_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+						} else {
+							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+							assert(false);
+						}
+					} else if (offset == mapSizeX + 1) {
+						
+						// Going South.
+
+						// If the previous rail track is going SE, build in the left corner.
+						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+						}
+						
+						// If the previous rail track is going SW, build in the right corner.
+						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+						}
+						
+						// If the previous rail track is going S, build according to the previous railtrack.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+						} else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+								continue
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_NE_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+						} else {
+							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+							assert(false);
+						}
+					}
+				}
+				
+				assert (railTrackDirection != -1);
+				/*		
+				else if ((offset == mapSizeX + 1 || offset == -mapSizeX - 1) && (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW) || !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE)))
+					continue;
+				
+				}*/
+				
+				// If the rail isn't going along the X and Y axis, we need to do things a little
+				// different.
+			
 /*
-				RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west).
-				RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east).
-				RAILTRACK_NW_NE 	Track in the upper corner of the tile (north).
-				RAILTRACK_SW_SE 	Track in the lower corner of the tile (south).
-				RAILTRACK_NW_SW 	Track in the left corner of the tile (west).
-				RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 
+				RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west). 1
+				RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east). 2
+				RAILTRACK_NW_NE 	Track in the upper corner of the tile (north). 4
+				RAILTRACK_SW_SE 	Track in the lower corner of the tile (south). 8
+				RAILTRACK_NW_SW 	Track in the left corner of the tile (west). 16
+				RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 32
 */
 
+				
+				
+/*
 				// Rail going north / south.
-				/*if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
+				if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
 					// Rail can be going west and east from here.
 					
-					if (offset == 1 || offset == -AIMap.GetMapSizeX())
+					if (offset == 1 || offset == -AIMap.GetMapSizeX()) {
 						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
 							continue;
-					else if (offset == -1 || offset == AIMap.GetMapSizeX())
+					} else if (offset == -1 || offset == AIMap.GetMapSizeX()) {
 						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
 							continue;
-					else
+					} else {
+						assert (currentAnnotatedTile.direction == offset);
+						Log.logWarning("Direction: " + offset + " v.s. " + currentAnnotatedTile.direction);
 						assert(false);
+					}
 				}
 				
 				// Rail going east / west.
 				else if (currentAnnotatedTile.direction == -1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == 1 - AIMap.GetMapSizeX()) {
 					// Rail can be going north and south from here.
-					if (offset == -AIMap.GetMapSizeX() || offset == -1)
+					if (offset == -AIMap.GetMapSizeX() || offset == -1) {
 						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
 							continue;
-					else if (offset == AIMap.GetMapSizeX() || offset == 1)
+					} else if (offset == AIMap.GetMapSizeX() || offset == 1) {
 						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
 							continue;
-					else
+					} else
 						assert(false);
 				} 
 
 				// If the rail is going in another direction, we can simply build the piece of rail.
-				else {*/
-					//if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
-					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+				else {
+					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
 						continue;
-				//}
-				
+				}
+*/
 				
 //				 if ((currentAnnotatedTile.direction == 1 || currentAnnotatedTile.direction == -1) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
 //					continue;
@@ -461,6 +657,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.direction = offset;
 					annotatedTile.tile = nextTile;
 					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+					annotatedTile.lastBuildRailTrack = railTrackDirection;
 	
 					// Check if the road is sloped.
 					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
@@ -477,13 +674,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						annotatedTile.distanceFromStart += costForNewRail;
 
 					tileArray.push(annotatedTile);
-
-/*
-					{
-						local asdf = AIExecMode();
-						AISign.BuildSign(nextTile, "CHECK");
-					}
-*/
 				}
 			}
 		}

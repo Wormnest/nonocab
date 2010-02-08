@@ -3,16 +3,16 @@
  */
 class BuildRailAction extends Action
 {
-	connection = null;		// Connection object of the road to build.
+	connection = null;		// Connection object of the rails to build.
 	buildDepot = false;		// Should we create a depot?
-	buildRailStations = false;	// Should we build road stations?
+	buildRailStations = false;	// Should we build rail stations?
 	directions = null;		// A list with all directions.
 	world = null;			// The world.
 	
 	/**
-	 * @param pathList A PathInfo object, the road to be build.
+	 * @param pathList A PathInfo object, the rails to be build.
 	 * @buildDepot Should a depot be build?
-	 * @param buildRailStaions Should road stations be build?
+	 * @param buildRailStaions Should rail stations be build?
 	 */
 	constructor(connection, buildDepot, buildRailStations, world) {
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
@@ -33,7 +33,7 @@ function BuildRailAction::Execute() {
 	local newConnection = null;
 	local originalRailList = null;
 
-	// If the connection is already build we will try to add additional road stations.
+	// If the connection is already build we will try to add additional rail stations.
 	if (isConnectionBuild) {
 		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0, null);
 		originalRailList = clone connection.pathInfo.roadList;
@@ -63,9 +63,9 @@ function BuildRailAction::Execute() {
 	else 
 		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20);
 
-	// If we need to build additional road stations we will temporaly overwrite the 
+	// If we need to build additional rail stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional
-	// road stations. 
+	// rail stations. 
 	if (isConnectionBuild) {
 
 		if (newConnection.pathInfo == null)
@@ -79,7 +79,7 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 	
-	// Check if we can build the road stations.
+	// Check if we can build the rail stations.
 	if (buildRailStations) {
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
@@ -90,15 +90,15 @@ function BuildRailAction::Execute() {
 			return false;	
 	}	
 
-	// Build the actual road.
-	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
+	// Build the actual rails.
+	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
 		if (isConnectionBuild)
 			connection.pathInfo.roadList = originalRailList;
 		else
 			connection.forceReplan = true;
-		Log.logError("BuildRailAction: Failed to build a road " + AIError.GetLastErrorString());
+		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
 		
@@ -107,8 +107,8 @@ function BuildRailAction::Execute() {
 
 	if (buildRailStations) {
 
-		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, isConnectionBuild, true) ||
-			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isConnectionBuild, isConnectionBuild)) {
+		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, isConnectionBuild, true, true) ||
+			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isConnectionBuild, isConnectionBuild, true)) {
 				Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
 				if (isConnectionBuild)
 					connection.pathInfo.roadList = originalRailList;
@@ -153,14 +153,14 @@ function BuildRailAction::Execute() {
 	}
 	
 	// We must make sure that the original road list is restored because we join the new
-	// road station with the existing one, but OpenTTD only recognices the original one!
+	// rail station with the existing one, but OpenTTD only recognices the original one!
 	// If we don't do this all vehicles which are build afterwards get wrong orders and
 	// the AI fails :(.
 	if (isConnectionBuild)
 		connection.pathInfo.roadList = originalRailList;
-	// We only specify a connection as build if both the depots and the roads are build.
+	// We only specify a connection as build if both the depots and the rails are build.
 	else
-		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
+		connection.UpdateAfterBuild(AIVehicle.VT_RAIL, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
@@ -168,19 +168,30 @@ function BuildRailAction::Execute() {
 	return true;
 }
 
-function BuildRailAction::BuildRailStation(connection, roadStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations) {
+function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
 	local direction;
-	if (roadStationTile - frontRailStationTile < AIMap.GetMapSizeX() &&
-	    roadStationTile - frontRailStationTile > -AIMap.GetMapSizeX())
+	if (railStationTile - frontRailStationTile < AIMap.GetMapSizeX() &&
+	    railStationTile - frontRailStationTile > -AIMap.GetMapSizeX()) {
 		direction = AIRail.RAILTRACK_NE_SW;
-	else
+		
+		if (railStationTile - frontRailStationTile == -1 && isStartStation ||
+			railStationTile - frontRailStationTile == 1 && !isStartStation)
+			railStationTile -= 2;
+		
+	} else {
 		direction = AIRail.RAILTRACK_NW_SE;
+		
+		if (railStationTile - frontRailStationTile == -AIMap.GetMapSizeX() && isStartStation ||
+			railStationTile - frontRailStationTile == AIMap.GetMapSizeX() && !isStartStation)
+			railStationTile -= 2 * AIMap.GetMapSizeX();
+	}
 
-	if (!AIRail.IsRailStationTile(roadStationTile) && 
-		!AIRail.BuildRailStation(roadStationTile, direction, 1, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
+	if (!AIRail.IsRailStationTile(railStationTile) && 
+		!AIRail.BuildRailStation(railStationTile, direction, 1, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
+		AISign.BuildSign(railStationTile, "Couldn't build STATION");
 		return false;
 	} else if (!isConnectionBuild) {
-		connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
+		connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
 	}
 		
 	return true;
