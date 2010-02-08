@@ -268,10 +268,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
+//	{
+//		local abc = AIExecMode();
+//		AISign.BuildSign(currentAnnotatedTile.tile, "X");
+//	}
 
 	local tileArray = [];
 	local offsets;
@@ -414,10 +414,63 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
 						continue;
 					railTrackDirection = AIRail.RAILTRACK_NE_SW;
+					
+					// If the previous tile is not alligned on the same axis, it means that
+					// the tile right before the turn isn't checked if we can build there.
+					if (currentTile != nextTile - offset) {
+						// Check if we can build here.
+						
+						// From North to SW.
+						if (offset == 1 && currentAnnotatedTile.direction == -1 - mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NW_SW))
+							continue;
+						
+						// From East to SW.
+						else if (offset == 1 && currentAnnotatedTile.direction == -1 + mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_SW_SE))
+							continue;
+						
+						// From West to NE.
+						else if (offset == -1 && currentAnnotatedTile.direction == -mapSizeX + 1 &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NW_NE))
+							continue;
+						
+						// From South to NE.
+						else if (offset == -1 && currentAnnotatedTile.direction == 1 + mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NE_SE))
+							continue;
+					}
 				} else if (offset == mapSizeX || offset == -mapSizeX) {
 					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
 						continue;
 					railTrackDirection = AIRail.RAILTRACK_NW_SE;
+					
+					// If the previous tile is not alligned on the same axis, it means that
+					// the tile right before the turn isn't checked if we can build there.
+					if (currentTile != nextTile - offset) {
+						// Check if we can build here.
+						
+						// From South to NW.
+						if (offset == -mapSizeX && currentAnnotatedTile.direction == 1 + mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NW_SW))
+							continue;
+						
+						// From West to SE.
+						else if (offset == mapSizeX && currentAnnotatedTile.direction == 1 - mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_SW_SE))
+							continue;
+						
+						// From East to NW.
+						else if (offset == -mapSizeX && currentAnnotatedTile.direction == mapSizeX - 1 &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NW_NE))
+							continue;
+						
+						// From North to SE.
+						else if (offset == mapSizeX && currentAnnotatedTile.direction == -1 - mapSizeX &&
+							!AIRail.BuildRailTrack(nextTile - offset, AIRail.RAILTRACK_NE_SE))
+							continue;
+					}					
+					
 				// TODO: FIX THIS. Doesn't work now :(.
 				} else {
 					// To build here depends on the previous rail piece and direction.
@@ -425,18 +478,28 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						
 						// Going East.
 
-						// If the previous rail track is going NE, build in the lower corner.
-						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_SW_SE;
-						}
-						
 						// If the previous rail track is going SE, build in the upper corner.
-						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NW_NE) ||
+								!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_SW_SE))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NW_NE;
+						}
+
+						// If the previous rail track is going NE, build in the lower corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_SW_SE) ||
+								!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+							
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
 						}
 						
 						// If the previous rail track is going E, build according to the previous railtrack.
@@ -464,18 +527,28 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						
 						// Going West.
 						
-						// If the previous rail track is going NW, build in the lower corner.
-						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_SW_SE;
-						}
-						
 						// If the previous rail track is going SW, build in the upper corner.
-						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NW_NE) ||
+								!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NW_NE;
+						}
+						
+						// If the previous rail track is going NW, build in the lower corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_SW_SE) ||
+								!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_NE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
 						}
 						
 						// If the previous rail track is going W, build according to the previous railtrack.
@@ -503,18 +576,28 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					
 						// Going North.
 						
-						// If the previous rail track is going NW, build in the right corner.
-						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_NE_SE;
-						}
-						
 						// If the previous rail track is going NE, build in the left corner.
-						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW) ||
+								!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NW_SW))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NE_SE))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+						}
+
+						// If the previous rail track is going NW, build in the right corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE) ||
+								!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
 						}
 						
 						// If the previous rail track is going N, build according to the previous railtrack.
@@ -542,18 +625,29 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						
 						// Going South.
 
-						// If the previous rail track is going SE, build in the left corner.
-						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_NW_SW;
-						}
-						
 						// If the previous rail track is going SW, build in the right corner.
-						else if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
+						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE) ||
+								!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NE_SE))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+						}
+						
+						// If the previous rail track is going SE, build in the left corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+
+							if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW) ||
+								!AIRail.BuildRailTrack(currentTile, AIRail.RAILTRACK_NW_SW))
+								continue;
+
+							// Check intermediate tile.
+							if (!AIRail.BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_NE_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
 						}
 						
 						// If the previous rail track is going S, build according to the previous railtrack.
