@@ -394,10 +394,6 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				//AISign.BuildSign(roadList[buildFromIndex + 1].tile, "From *");
 				//AISign.BuildSign(roadList[buildFromIndex].tile, "Tile *");
 				//AISign.BuildSign(roadList[a + 1].tile, "To *");
-				if (extraRailTile != null)
-					Log.logWarning("EXTRA RAIL TILE!!!");
-				else
-					Log.logWarning("NO NO NO - EXTRA RAIL TILE!!!");
 				if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
 					return false;
 					
@@ -405,42 +401,45 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				// is not the the same as the previous direction (before going diagonal), we need to:
 				// 1) Add a little piece of rail.
 				// 2) Move the road list index one lower.
-				if (/*direction != prevCurrentDirection &&*/ currentDirection != -1 && currentDirection != 1 && currentDirection != AIMap.GetMapSizeX() && currentDirection != -AIMap.GetMapSizeX()) {
-					
-					//extraRailTile = roadList[a + 1].tile - direction;
-					AISign.BuildSign(roadList[a + 1].tile - direction, "Extra rail tile");
-					a--;
-					
-					// Build the extra rail piece.
-					
-					// Rail going south / north.
-					if (currentDirection == 1 + AIMap.GetMapSizeX() || currentDirection == -1 - AIMap.GetMapSizeX()) {
-						// Rail can be going west and east from here.
-						
-						if (direction == 1 || direction == -AIMap.GetMapSizeX())
-							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW))
-								assert(false);
-						else if (direction == -1 || direction == AIMap.GetMapSizeX())
-							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE))
-								assert(false);
-						else
-							assert(false);
-					}
-					
-					// Rail going east / west.
-					else if (currentDirection == -1 + AIMap.GetMapSizeX() || currentDirection == 1 - AIMap.GetMapSizeX()) {
-						// Rail can be going north and south from here.
-						if (direction == -AIMap.GetMapSizeX() || direction == -1)
-							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE))
-								assert(false);
-						else if (direction == AIMap.GetMapSizeX() || direction == 1)
-							if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE))
-								assert(false);
-						else
-							assert(false);
+				if (currentDirection != -1 && currentDirection != 1 && currentDirection != AIMap.GetMapSizeX() && currentDirection != -AIMap.GetMapSizeX()) {
+
+					if (prevCurrentDirection == direction) {
+						extraRailTile = roadList[a + 1].tile - direction;
 					} else {
-						Log.logWarning("Direction is: " + currentDirection);
-						assert(false);
+
+						a--;
+						
+						// Build the extra rail piece.
+						
+						// Rail going south / north.
+						if (currentDirection == 1 + AIMap.GetMapSizeX() || currentDirection == -1 - AIMap.GetMapSizeX()) {
+							// Rail can be going west and east from here.
+							
+							if (direction == 1 || direction == -AIMap.GetMapSizeX()) {
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW))
+									assert(false);
+							} else if (direction == -1 || direction == AIMap.GetMapSizeX()) {
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE))
+									assert(false);
+							} else
+								assert(false);
+						}
+						
+						// Rail going east / west.
+						else if (currentDirection == -1 + AIMap.GetMapSizeX() || currentDirection == 1 - AIMap.GetMapSizeX()) {
+							// Rail can be going north and south from here.
+							if (direction == -AIMap.GetMapSizeX() || direction == -1) {
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE))
+									assert(false);
+							} else if (direction == AIMap.GetMapSizeX() || direction == 1) {
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE))
+									assert(false);
+							} else
+								assert(false);
+						} else {
+							Log.logWarning("Direction is: " + currentDirection);
+							assert(false);
+						}
 					}
 
 				} else {

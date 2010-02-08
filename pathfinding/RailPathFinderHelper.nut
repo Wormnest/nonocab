@@ -264,10 +264,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	//}
 
 	local tileArray = [];
 	local offsets;
@@ -324,7 +324,8 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			continue;
 
 		local isBridgeOrTunnelEntrance = false;
-		
+
+/*
 		// Check if we can exploit excising bridges and tunnels.
 		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL)) {
 			local type = Tile.NONE;
@@ -365,7 +366,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			}
 		}
 
+*/
 
+		onlyRails = true;
 		/** 
 		 * If neither a bridge or tunnel has been found to exploit, we try to:
 		 * 1) Build a bridge or tunnel ourselves.
@@ -386,13 +389,13 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
-				
+				/*
 				if (AIRail.BuildRail(previousTile, currentTile, nextTile) || AIRail.AreTilesConnected(previousTile, currentTile, nextTile)
 				|| (AITile.GetHeight(currentTile) == AITile.GetHeight(nextTile) && 
 				AITile.GetSlope(currentTile) + AITile.GetSlope(nextTile) == 0 &&
 				(AITile.IsBuildable(currentTile) || AIRail.IsRailTile(currentTile)) &&
 				(AITile.IsBuildable(nextTile) || AIRail.IsRailTile(nextTile))))
-				
+				*/
 				
 				// Check if we can build a piece of rail here.
 
@@ -404,9 +407,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				RAILTRACK_NW_SW 	Track in the left corner of the tile (west).
 				RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 
 */
-/*
+
 				// Rail going north / south.
-				if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
+				/*if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
 					// Rail can be going west and east from here.
 					
 					if (offset == 1 || offset == -AIMap.GetMapSizeX())
@@ -431,13 +434,26 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					else
 						assert(false);
 				} 
-				else if ((offset == 1 || offset == -1) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
-					continue;
-				else if ((offset == mapSizeX || offset == -mapSizeX) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
-				 	continue;
+
+				// If the rail is going in another direction, we can simply build the piece of rail.
+				else {*/
+					//if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
+					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
+						continue;
+				//}
+				
+				
+//				 if ((currentAnnotatedTile.direction == 1 || currentAnnotatedTile.direction == -1) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
+//					continue;
+//				else if ((currentAnnotatedTile.direction == mapSizeX || currentAnnotatedTile.direction == -mapSizeX) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
+//				 	continue;
+
 				//else if (currentAnnotatedTile.parentTile != currentAnnotatedTile)
-					continue;
-					*/
+				//	continue;
+				//else if (offset != 1 && offset != -1 && offset != mapSizeX && offset != -mapSizeX)
+				//	continue;
+
+				//if (AITile.IsBuildable(nextTile))
 				{
 
 					local annotatedTile = AnnotatedTile();
@@ -459,9 +475,15 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						annotatedTile.distanceFromStart += costForRail;
 					else
 						annotatedTile.distanceFromStart += costForNewRail;
-	
-	
+
 					tileArray.push(annotatedTile);
+
+/*
+					{
+						local asdf = AIExecMode();
+						AISign.BuildSign(nextTile, "CHECK");
+					}
+*/
 				}
 			}
 		}
