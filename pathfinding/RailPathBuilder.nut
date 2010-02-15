@@ -144,10 +144,9 @@ function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, l
 				direction += 1;
 					
 			Log.logWarning("BUILD@!!! " + direction);
-//			AISign.BuildSign(fromTile - direction, "From");
-			AISign.BuildSign(prevTile, "---Prev---");
-			AISign.BuildSign(fromTile, "---Tile---");
-			AISign.BuildSign(toTile, "---To---");
+			//AISign.BuildSign(prevTile, "---Prev---");
+			//AISign.BuildSign(fromTile, "---Tile---");
+			//AISign.BuildSign(toTile, "---To---");
 			//buildSucceded = AIRail.BuildRail(fromTile - direction, fromTile, toTile);
 			buildSucceded = AIRail.BuildRail(prevTile, fromTile, toTile);
 			Log.logWarning("Succceed? : " + buildSucceded);
@@ -364,6 +363,10 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
  */
 function RailPathBuilder::BuildPath(roadList, estimateCost)
 {
+	for(local a = 0; a < roadList.len(); a++) {
+		AISign.BuildSign(roadList[a].tile, "X");
+	}
+	
 	Log.logDebug("Build path (rail)");
 	if(roadList == null || roadList.len() < 3)
 		return false;
@@ -410,17 +413,27 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 						a--;
 						
 						// Build the extra rail piece.
-						
+						// TODO: Check if the railpiece was already build!
 						// Rail going south / north.
 						if (currentDirection == 1 + AIMap.GetMapSizeX() || currentDirection == -1 - AIMap.GetMapSizeX()) {
 							// Rail can be going west and east from here.
 							
 							if (direction == 1 || direction == -AIMap.GetMapSizeX()) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW))
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW) &&
+									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NW_SW)) {
+									local abc = AIExecMode();
+									Log.logWarning("Build here failed: " + (roadList[a + 1].tile - direction));
+									AISign.BuildSign(roadList[a + 1].tile - direction, "Build here failed: ");
 									assert(false);
+								}
 							} else if (direction == -1 || direction == AIMap.GetMapSizeX()) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE))
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE) &&
+									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NE_SE)) {
+									local abc = AIExecMode();
+									Log.logWarning("Build here failed: " + (roadList[a + 1].tile - direction));
+									AISign.BuildSign(roadList[a + 1].tile - direction, "Build here failed: ");
 									assert(false);
+								}
 							} else
 								assert(false);
 						}
@@ -429,10 +442,16 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 						else if (currentDirection == -1 + AIMap.GetMapSizeX() || currentDirection == 1 - AIMap.GetMapSizeX()) {
 							// Rail can be going north and south from here.
 							if (direction == -AIMap.GetMapSizeX() || direction == -1) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE))
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE) &&
+									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NW_NE)) {
+									local abc = AIExecMode();
+									Log.logWarning("Build here failed: " + roadList[a + 1].tile);
+									AISign.BuildSign(roadList[a + 1].tile, "Build here failed: ");
 									assert(false);
+								}
 							} else if (direction == AIMap.GetMapSizeX() || direction == 1) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE))
+								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE) &&
+									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_SW_SE))
 									assert(false);
 							} else
 								assert(false);
@@ -486,7 +505,8 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 		
 		// For both bridges and tunnels we need to build the piece of road prior and after
 		// the bridge and tunnels.
-		if (roadList[a].type != Tile.ROAD) {
+		// TODO: The a > -1 check shouldn't be necessary.
+		if (a > -1 && roadList[a].type != Tile.ROAD) {
 
 			// Build road before the tunnel or bridge.
 			if (buildFromIndex != a + 1)
