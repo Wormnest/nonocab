@@ -217,7 +217,7 @@ function VehiclesAdvisor::GetReports() {
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
 					continue;
 
-			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, connection);
+			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
 		}
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);

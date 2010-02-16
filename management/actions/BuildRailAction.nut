@@ -106,8 +106,8 @@ function BuildRailAction::Execute() {
 	local len = roadList.len();
 
 	if (buildRailStations) {
-
-		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, isConnectionBuild, true, true) ||
+		local abc = AIExecMode();
+		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, isConnectionBuild, true, false) ||
 			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, isConnectionBuild, isConnectionBuild, true)) {
 				Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
 				if (isConnectionBuild)
@@ -124,9 +124,10 @@ function BuildRailAction::Execute() {
 		// other.
 		if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
 
-			local stationType = roadVehicleType == AIRail.ROADVEHTYPE_TRUCK ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP;
-			connection.travelFromNode.AddExcludeTiles(connection.cargoID, roadList[len - 1].tile, AIStation.GetCoverageRadius(stationType));
-			connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
+			// TODO: Fix this :)
+			//local stationType = roadVehicleType == AIRail.ROADVEHTYPE_TRUCK ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP;
+			//connection.travelFromNode.AddExcludeTiles(connection.cargoID, roadList[len - 1].tile, AIStation.GetCoverageRadius(stationType));
+			//connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
 		}
 	}
 
@@ -169,6 +170,9 @@ function BuildRailAction::Execute() {
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
+	
+	AISign.BuildSign(railStationTile, "Original location");
+	
 	local direction;
 	if (railStationTile - frontRailStationTile < AIMap.GetMapSizeX() &&
 	    railStationTile - frontRailStationTile > -AIMap.GetMapSizeX()) {
@@ -181,10 +185,12 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	} else {
 		direction = AIRail.RAILTRACK_NW_SE;
 		
-		if (railStationTile - frontRailStationTile == -AIMap.GetMapSizeX() && isStartStation ||
-			railStationTile - frontRailStationTile == AIMap.GetMapSizeX() && !isStartStation)
+		if (railStationTile - frontRailStationTile == AIMap.GetMapSizeX() && isStartStation ||
+			railStationTile - frontRailStationTile == -AIMap.GetMapSizeX() && !isStartStation)
 			railStationTile -= 2 * AIMap.GetMapSizeX();
 	}
+
+	AISign.BuildSign(railStationTile, "Final location");
 
 	if (!AIRail.IsRailStationTile(railStationTile) && 
 		!AIRail.BuildRailStation(railStationTile, direction, 1, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {

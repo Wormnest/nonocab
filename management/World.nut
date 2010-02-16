@@ -541,8 +541,14 @@ function World::InitCargoTransportEngineIds() {
  * @return true If the new engine replaced other onces, otherwise false.
  */
 function World::ProcessNewEngineAvailableEvent(engineID) {
+	if (!AIEngine.IsValidEngine(engineID))
+		return false;
+
 	local vehicleType = AIEngine.GetVehicleType(engineID);
-	
+
+	if (vehicleType == AIVehicle.VT_RAIL && !AIEngine.CanRunOnRail(engineID, AIRail.GetCurrentRailType()))
+		return false;
+
 	// We skip trams for now.
 	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
 		return false;

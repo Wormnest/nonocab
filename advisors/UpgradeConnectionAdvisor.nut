@@ -121,7 +121,7 @@ function UpgradeConnectionAdvisor::GetReports() {
 			// Now, buy enough new vehicles.
 			local vehicleAction = ManageVehiclesAction();
 			// TODO: Change this for trains.
-			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, connection);
+			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
 			actionList.push(vehicleAction);
 		}
 		

@@ -31,9 +31,9 @@ function ManageVehiclesAction::SellVehicles(engineID, number, connection)
  * @param number The number of vehicles to build.
  * @param connection The connection where the vehicles are to operate on.
  */
-function ManageVehiclesAction::BuyVehicles(engineID, number, connection)
+function ManageVehiclesAction::BuyVehicles(engineID, number, wagonEngineID, connection)
 {
-	vehiclesToBuy.push([engineID, number, connection]);
+	vehiclesToBuy.push([engineID, number, wagonEngineID, connection]);
 }
 
 function ManageVehiclesAction::Execute()
@@ -44,7 +44,7 @@ function ManageVehiclesAction::Execute()
 	foreach (engineInfo in vehiclesToSell) {
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
-		local connection = engineInfo[2];	
+		local connection = engineInfo[2];
 		local vehicleType = AIEngine.GetVehicleType(engineID);
 		
 		pathfinder.pathFinderHelper.SetStationBuilder(AIEngine.IsArticulated(engineID));
@@ -107,7 +107,8 @@ function ManageVehiclesAction::Execute()
 	foreach (engineInfo in vehiclesToBuy) {
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
-		local connection = engineInfo[2];
+		local wagonEngineID = engineInfo[2];
+		local connection = engineInfo[3];
 
 		local vehicleID = null;
 		local vehicleGroup = null;
@@ -117,8 +118,8 @@ function ManageVehiclesAction::Execute()
 		if (vehicleNumbers > maxBuildableVehicles)
 			vehicleNumbers = maxBuildableVehicles;
 		
-		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + ".");
-		
+		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + AIEngine.GetName(wagonEngineID) + ".");
+
 		// Search if there are already have a vehicle group with this engine ID.
 		foreach (vGroup in connection.vehiclesOperating) {
 			if (vGroup.engineID == engineID) {
@@ -212,9 +213,23 @@ function ManageVehiclesAction::Execute()
 			}
 
 			// Refit if necessary.
-			if (connection.cargoID != AIEngine.GetCargoType(engineID))
-				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
-			vehicleGroup.vehicleIDs.push(vehicleID);
+			//if (connection.cargoID != AIEngine.GetCargoType(engineID))
+			//	AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
+			//vehicleGroup.vehicleIDs.push(vehicleID);
+
+			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
+			// TODO: Make sure to make this also works for cloned vehicles.
+			for (local j = 0; j < 3; j++) {
+				local wagonVehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, wagonEngineID);
+				Log.logError("Wagon engine ID : " + wagonEngineID + " " + AIEngine.GetName(wagonEngineID) + " " + AIEngine.IsValidEngine(wagonEngineID));
+				
+				if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
+					Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
+					continue;
+				}
+				
+				AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
+			}
 			
 			// Send the vehicles on their way.
 			if (connection.bilateralConnection && !directionToggle) {

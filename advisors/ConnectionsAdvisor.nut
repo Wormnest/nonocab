@@ -370,7 +370,7 @@ function ConnectionAdvisor::GetReports() {
 		if (report.nrVehicles != 1)
 			report.nrVehicles = report.nrVehicles / 2;
 		// TODO: Change this for trains.
-		vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, connection);
+		vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
 		
 		actionList.push(vehicleAction);
 		report.actions = actionList;

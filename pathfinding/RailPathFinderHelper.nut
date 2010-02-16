@@ -96,11 +96,10 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 
-			local offsets = [1, -1, mapSizeX, -mapSizeX];
-			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NE_SW,
-				AIRail.RAILTRACK_NW_SE, AIRail.RAILTRACK_NW_SE];
+			local offsets = [1, mapSizeX];
+			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NW_SE];
 			
-			for (local j = 0; j < 4; j++) {
+			for (local j = 0; j < 2; j++) {
 				
 				// Check if we can actually build a train station here.
 				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, stationLength, AIStation.STATION_JOIN_ADJACENT))
@@ -108,7 +107,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 
 				// The tile at the beginning of the station.
 				local stationBegin = AnnotatedTile();
-				stationBegin.tile = i;
+				stationBegin.tile = i + (stationLength - 1) * offsets[j];
 				stationBegin.type = Tile.ROAD;
 				stationBegin.parentTile = stationBegin;               // Small hack ;)
 				stationBegin.forceForward = true;
@@ -117,7 +116,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				local stationBeginFront = AnnotatedTile();
 				stationBeginFront.type = Tile.ROAD;
 				stationBeginFront.direction = offsets[j];
-				stationBeginFront.tile = i + offsets[j];
+				stationBeginFront.tile = i + stationLength * offsets[j];
 				stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
 				stationBeginFront.distanceFromStart = costForRail;
 				stationBeginFront.parentTile = stationBegin;
@@ -128,7 +127,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				
 				// The tile at the end of the station.
 				local stationEnd = AnnotatedTile();
-				stationEnd.tile = i + stationLength * offsets[j];
+				stationEnd.tile = i;// + stationLength * offsets[j];
 				stationEnd.type = Tile.ROAD;
 				stationEnd.parentTile = stationEnd;               // Small hack ;)
 				stationEnd.forceForward = true;
@@ -136,8 +135,8 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				// If we can, we store the tile in front of the end of the station.
 				local stationEndFront = AnnotatedTile();
 				stationEndFront.type = Tile.ROAD;
-				stationEndFront.direction = offsets[j];
-				stationEndFront.tile = i + offsets[j] + stationLength * offsets[j];
+				stationEndFront.direction = -offsets[j];
+				stationEndFront.tile = i - offsets[j];
 				stationEndFront.bridgeOrTunnelAlreadyBuild = false;
 				stationEndFront.distanceFromStart = costForRail;
 				stationEndFront.parentTile = stationEnd;
@@ -165,17 +164,17 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 				continue;
 
-			local offsets = [1, -1, mapSizeX, -mapSizeX];
-			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NE_SW,
-				AIRail.RAILTRACK_NW_SE, AIRail.RAILTRACK_NW_SE];
+			local offsets = [1, mapSizeX];
+			local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NW_SE];
 			
-			for (local j = 0; j < 4; j++) {
+			for (local j = 0; j < 2; j++) {
 
 				// Check if we can actually build a train station here.
 				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, 3, AIStation.STATION_JOIN_ADJACENT))
 					continue;
 					
 				newEndLocations.AddItem(i, i);
+				newEndLocations.AddItem(i + 2 * offsets[j], i + 2 * offsets[j]);
 				break;
 			}
 //		} else
@@ -219,16 +218,16 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 		direction = AIRail.RAILTRACK_NE_SW;
 	else
 		direction = AIRail.RAILTRACK_NW_SE;
-	return true;
+	//return true;
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (!AIRail.BuildRailStation(at.tile, direction, 1, 3, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
+	if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (direction == -1 || direction == AIMap.GetMapSizeX() ? 2 * direction : 0), direction, 1, 3, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
 
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.
 		end.RemoveValue(at.tile);
-
+/*
 		// Check the remaining nodes too!
 		local listToRemove = AITileList();
 
@@ -251,9 +250,11 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 
 			if (!foundSuitableNeighbour)
 				listToRemove.AddTile(i);
+
 		}
 
 		end.RemoveList(listToRemove);
+*/
 
 		if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
@@ -567,7 +568,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 							// Check intermediate tile.
 							if (!AIRail.BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
 								continue;
-							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+							railTrackDirection = AIRail.RAILTRACK_NW_NE;
 						} else {
 							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
 							assert(false);
