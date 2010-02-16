@@ -44,8 +44,17 @@ function NoCAB::Load(version, data) {
 }
 
 function NoCAB::Start()
-{	
+{
 	// Initialize the AI.
+	local l = AIRailTypeList();
+	foreach (rt in l) {
+		if (AIRail.IsRailTypeAvailable(rt)) {
+			AIRail.SetCurrentRailType(rt);
+			Log.logDebug("Set Rail type!!!");
+			break;
+		}
+	}
+	
 	parlement = Parlement();
 	world = World(GetSetting("NiceCAB"));
 	GameSettings.InitGameSettings();
@@ -91,15 +100,6 @@ function NoCAB::Start()
 		advisors.push(TrainConnectionAdvisor(world, connectionManager));
 	}
 	//UpgradeConnectionAdvisor(world, connectionManager)
-	
-	local l = AIRailTypeList();
-	foreach (rt in l) {
-		if (AIRail.IsRailTypeAvailable(rt)) {
-			AIRail.SetCurrentRailType(rt);
-			Log.logDebug("Set Rail type!!!");
-			break;
-		}
-	}	
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
