@@ -143,13 +143,13 @@ function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, l
 			else if (distanceX > 0)
 				direction += 1;
 					
-			Log.logWarning("BUILD@!!! " + direction);
+//			Log.logWarning("BUILD@!!! " + direction);
 			//AISign.BuildSign(prevTile, "---Prev---");
 			//AISign.BuildSign(fromTile, "---Tile---");
 			//AISign.BuildSign(toTile, "---To---");
 			//buildSucceded = AIRail.BuildRail(fromTile - direction, fromTile, toTile);
 			buildSucceded = AIRail.BuildRail(prevTile, fromTile, toTile);
-			Log.logWarning("Succceed? : " + buildSucceded);
+//			Log.logWarning("Succceed? : " + buildSucceded);
 		/*	
 			// If we couldn't build a road in one try, try to break it down.
 			if (estimateCost && !buildSucceded) {
@@ -529,6 +529,11 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 	if (buildFromIndex > 0)
 		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
+
+	// Now build the signals.
+	for (local a = 5; a < roadList.len(); a += 5) {
+		AIRail.BuildSignal(roadList[a].tile, roadList[a - 1].tile, AIRail.SIGNALTYPE_NORMAL_TWOWAY);
+	}
 
 	return true;
 }

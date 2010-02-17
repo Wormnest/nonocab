@@ -48,7 +48,7 @@ class PathInfo {
 			saveData["roadList"].push(at.tile);
 		}
 		saveData["roadCost"] <- roadCost;
-		saveDate["vehicleType"] <- vehicleType;
+		saveData["vehicleType"] <- vehicleType;
 		saveData["depot"] <- depot;
 		saveData["depotOtherEnd"] <- depotOtherEnd;
 		saveData["build"] <- build;

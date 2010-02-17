@@ -83,8 +83,24 @@ class RailPathFinderHelper extends PathFinderHelper {
  */
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 	
+	//if (startList.Count() == 0)
+	//	return;
+	
 	// TODO: Make this a global value...
 	local stationLength = 3;
+	
+	// Determine middle point.
+	local x = 0;
+	local y = 0;
+	foreach (i, value in startList) {
+		x += AIMap.GetTileX(i);
+		y += AIMap.GetTileY(i);
+	}
+	if (x == 0 || y == 0)
+		return;
+	x = x / startList.Count();
+	y = y / startList.Count();
+	local middleTile = x + AIMap.GetMapSizeX() * y;
 	
 	local mapSizeX = AIMap.GetMapSizeX();
 	foreach (i, value in startList) {
@@ -105,45 +121,50 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, stationLength, AIStation.STATION_JOIN_ADJACENT))
 					continue;
 
-				// The tile at the beginning of the station.
-				local stationBegin = AnnotatedTile();
-				stationBegin.tile = i + (stationLength - 1) * offsets[j];
-				stationBegin.type = Tile.ROAD;
-				stationBegin.parentTile = stationBegin;               // Small hack ;)
-				stationBegin.forceForward = true;
-
-				// If we can, we store the tile in front of the station.
-				local stationBeginFront = AnnotatedTile();
-				stationBeginFront.type = Tile.ROAD;
-				stationBeginFront.direction = offsets[j];
-				stationBeginFront.tile = i + stationLength * offsets[j];
-				stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
-				stationBeginFront.distanceFromStart = costForRail;
-				stationBeginFront.parentTile = stationBegin;
-				stationBeginFront.length = 1;
-				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
+				// Only add the tile furthest away from the industry to the open list.
+				if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile)) {
+	
+					// The tile at the beginning of the station.
+					local stationBegin = AnnotatedTile();
+					stationBegin.tile = i + (stationLength - 1) * offsets[j];
+					stationBegin.type = Tile.ROAD;
+					stationBegin.parentTile = stationBegin;               // Small hack ;)
+					stationBegin.forceForward = true;
+	
+					// If we can, we store the tile in front of the station.
+					local stationBeginFront = AnnotatedTile();
+					stationBeginFront.type = Tile.ROAD;
+					stationBeginFront.direction = offsets[j];
+					stationBeginFront.tile = i + stationLength * offsets[j];
+					stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
+					stationBeginFront.distanceFromStart = costForRail;
+					stationBeginFront.parentTile = stationBegin;
+					stationBeginFront.length = 1;
+					stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
+					
+					heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
+				} else {
 				
-				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
-				
-				// The tile at the end of the station.
-				local stationEnd = AnnotatedTile();
-				stationEnd.tile = i;// + stationLength * offsets[j];
-				stationEnd.type = Tile.ROAD;
-				stationEnd.parentTile = stationEnd;               // Small hack ;)
-				stationEnd.forceForward = true;
-
-				// If we can, we store the tile in front of the end of the station.
-				local stationEndFront = AnnotatedTile();
-				stationEndFront.type = Tile.ROAD;
-				stationEndFront.direction = -offsets[j];
-				stationEndFront.tile = i - offsets[j];
-				stationEndFront.bridgeOrTunnelAlreadyBuild = false;
-				stationEndFront.distanceFromStart = costForRail;
-				stationEndFront.parentTile = stationEnd;
-				stationEndFront.length = 1;
-				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
-				
-				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
+					// The tile at the end of the station.
+					local stationEnd = AnnotatedTile();
+					stationEnd.tile = i;// + stationLength * offsets[j];
+					stationEnd.type = Tile.ROAD;
+					stationEnd.parentTile = stationEnd;               // Small hack ;)
+					stationEnd.forceForward = true;
+	
+					// If we can, we store the tile in front of the end of the station.
+					local stationEndFront = AnnotatedTile();
+					stationEndFront.type = Tile.ROAD;
+					stationEndFront.direction = -offsets[j];
+					stationEndFront.tile = i - offsets[j];
+					stationEndFront.bridgeOrTunnelAlreadyBuild = false;
+					stationEndFront.distanceFromStart = costForRail;
+					stationEndFront.parentTile = stationEnd;
+					stationEndFront.length = 1;
+					stationEndFront.lastBuildRailTrack = rail_track_directions[j];
+					
+					heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
+				}
 			}
 //		} else
 //			heap.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
@@ -154,7 +175,22 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 	local newEndLocations = AIList();
 	local mapSizeX = AIMap.GetMapSizeX();
+
+	// Determine middle point.
+	local x = 0;
+	local y = 0;
+	foreach (i, value in endList) {
+		x += AIMap.GetTileX(i);
+		y += AIMap.GetTileY(i);
+	}
+	if (x == 0 || y == 0)
+		return;
+	x = x / endList.Count();
+	y = y / endList.Count();
+	local middleTile = x + AIMap.GetMapSizeX() * y;
 	
+	local stationLength = 2;
+
 	foreach (i, value in endList) {
 		
 		// Check if we can actually start here!
@@ -172,10 +208,12 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				// Check if we can actually build a train station here.
 				if (!AIRail.BuildRailStation(i, rail_track_directions[j], 1, 3, AIStation.STATION_JOIN_ADJACENT))
 					continue;
-					
-				newEndLocations.AddItem(i, i);
-				newEndLocations.AddItem(i + 2 * offsets[j], i + 2 * offsets[j]);
-				break;
+
+				// Only add the point furthest away from the industry / town we try to connect.
+				if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
+					newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
+				else
+					newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
 			}
 //		} else
 //			heap.Insert(annotatedTile, AIMap.DistanceManhattan(i, expectedEnd) * costTillEnd);
@@ -216,13 +254,18 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	local direction;
 	if (at.direction == -1 || at.direction == 1)
 		direction = AIRail.RAILTRACK_NE_SW;
-	else
+	else if (at.direction == AIMap.GetMapSizeX() || at.direction == -AIMap.GetMapSizeX())
 		direction = AIRail.RAILTRACK_NW_SE;
+	else
+		return false;
+		
+	if (at.parentTile.direction != at.direction)
+		return false;
 	//return true;
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (direction == -1 || direction == AIMap.GetMapSizeX() ? 2 * direction : 0), direction, 1, 3, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
+	if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 2 * at.direction : 0), direction, 1, 3, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
 
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.
@@ -305,8 +348,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		else if (currentAnnotatedTile.direction ==  -1 - mapSizeX)
 			offsets = [-1, -mapSizeX, -1 - mapSizeX];
 		else
-			offsets = [1, -1, mapSizeX, -mapSizeX, 1 + mapSizeX, 1 - mapSizeX, -1 + mapSizeX, -1 - mapSizeX];
+			//offsets = [1, -1, mapSizeX, -mapSizeX, 1 + mapSizeX, 1 - mapSizeX, -1 + mapSizeX, -1 - mapSizeX];
+			assert(false);
 		//offsets = standardOffsets;
+		
 	} else
 		offsets = [currentAnnotatedTile.direction];
 
