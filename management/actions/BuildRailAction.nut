@@ -178,15 +178,13 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	    railStationTile - frontRailStationTile > -AIMap.GetMapSizeX()) {
 		direction = AIRail.RAILTRACK_NE_SW;
 		
-		if (railStationTile - frontRailStationTile == -1 && isStartStation ||
-			railStationTile - frontRailStationTile == 1 && !isStartStation)
+		if (railStationTile - frontRailStationTile == -1)
 			railStationTile -= 2;
 		
 	} else {
 		direction = AIRail.RAILTRACK_NW_SE;
 		
-		if (railStationTile - frontRailStationTile == AIMap.GetMapSizeX() && isStartStation ||
-			railStationTile - frontRailStationTile == -AIMap.GetMapSizeX() && !isStartStation)
+		if (railStationTile - frontRailStationTile == -AIMap.GetMapSizeX())
 			railStationTile -= 2 * AIMap.GetMapSizeX();
 	}
 
@@ -194,7 +192,7 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 
 	if (!AIRail.IsRailStationTile(railStationTile) && 
 		!AIRail.BuildRailStation(railStationTile, direction, 1, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
-		AISign.BuildSign(railStationTile, "Couldn't build STATION");
+		AISign.BuildSign(railStationTile, "Couldn't build STATION " + (direction == AIRail.RAILTRACK_NE_SW ? "NE_SW" : "NW_SE"));
 		return false;
 	} else if (!isConnectionBuild) {
 		connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
@@ -221,6 +219,30 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				{
 					local test = AITestMode();
 					if (AIRail.BuildRailDepot(roadList[i].tile + direction, roadList[i].tile)) {
+						
+						
+						if (direction == 1) {
+							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_SW_SE) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SW))
+									continue;
+						} else if (direction == -1) {
+							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_NE) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SE))
+									continue
+						} else if (direction == AIMap.GetMapSizeX()) {
+							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SE) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_SW_SE) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SE))
+									continue;
+						} else if (direction == -AIMap.GetMapSizeX()) {
+							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_NE) ||
+								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SW))
+									continue;
+						}						
+						
 						
 						// We can't build the depot instantly, because OpenTTD crashes if we
 						// switch to exec mode at this point (stupid bug...).
@@ -268,7 +290,6 @@ RAILTRACK_NE_SE 	Track in the right corner of the tile (east).
 						depotFront = null;
 					} else
 						break;
-					
 				}
 			}
 		}
