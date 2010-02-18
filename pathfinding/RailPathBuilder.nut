@@ -212,7 +212,7 @@ function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, l
 		//AISign.BuildSign(toTile, "To *");
 //		quit();
 		// If the error is such we are unable to solve, stop.
-		if (!estimateCost && !CheckError([fromTile, toTile, tileType, length]))
+		if (!estimateCost && !CheckError([prevTile, fromTile, toTile, tileType, length]))
 			return false;
 	}
 	
@@ -272,7 +272,7 @@ function RailPathBuilder::CheckError(buildResult)
 
 			// Retry the same action 5 times...
 			for (local i = 0; i < 50; i++) {
-				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRail.ERR_ROAD_WORKS_IN_PROGRESS)
+				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], buildResult[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRail.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
 				AIController.Sleep(1);
 			}
@@ -298,9 +298,11 @@ function RailPathBuilder::CheckError(buildResult)
 		case AIRail.ERR_CROSSING_ON_ONEWAY_ROAD:		
 		case AIRail.ERR_UNSUITABLE_TRACK:		
 
-			AISign.BuildSign(buildResult[0], "From");
-			if (buildResult[1])
-				AISign.BuildSign(buildResult[1], "To");
+			AISign.BuildSign(buildResult[0], "Prev");
+			//if (buildResult[1])
+			AISign.BuildSign(buildResult[1], "From");
+			AISign.BuildSign(buildResult[2], "To");
+			assert(false);
 			/**
 			 * We handle these kind of errors elsewhere.
 			 */
@@ -315,9 +317,11 @@ function RailPathBuilder::CheckError(buildResult)
 			Log.logError("Build from " + AIMap.GetTileX(buildResult[0]) + ", " + AIMap.GetTileY(buildResult[0]) + " to " + AIMap.GetTileX(buildResult[1]) + ", " + AIMap.GetTileY(buildResult[1]) + " tileType: " + buildResult[2]);
 			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
 			Log.logError("/me slaps developer! ;)");
-			AISign.BuildSign(buildResult[0], "From *");
-			if (buildResult[1])
-				AISign.BuildSign(buildResult[1], "To *");
+			AISign.BuildSign(buildResult[0], "Prev *");
+			//if (buildResult[1])
+			AISign.BuildSign(buildResult[1], "From *");
+			AISign.BuildSign(buildResult[2], "To *");
+			
 			assert(false);
 			
 		default:
@@ -474,12 +478,12 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 		else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
-				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, null, Tile.TUNNEL, null, estimateCost))
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, estimateCost))
 					return false;
 			} else {
 				// If the tunnel is already build, make sure the road before the bridge is connected to the
 				// already build tunnel. (the part after the tunnel is handled in the next part).
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
+				if (!BuildRoadPiece(roadList[a].tile, roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 		} 
@@ -491,14 +495,14 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				if (length < 0)
 					length = -length;		
 				
-				if (!BuildRoadPiece(roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost))
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost))
 					return false;
 
 			} else {
 
 				// If the bridge is already build, make sure the road before the bridge is connected to the
 				// already build bridge. (the part after the bridge is handled in the next part).			
-				if (!BuildRoadPiece(roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
+				if (!BuildRoadPiece(roadList[a].tile, roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 		}
@@ -510,25 +514,46 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 			// Build road before the tunnel or bridge.
 			if (buildFromIndex != a + 1)
-				if (!BuildRoadPiece(roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
+				if (!BuildRoadPiece(roadList[buildFromIndex + 1].tile, roadList[buildFromIndex].tile, roadList[a + 1].tile + roadList[a + 1].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			
 			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
 			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
-			if (a > 0 && roadList[a - 1].type == Tile.ROAD)
-				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, Tile.ROAD, null, estimateCost))
+			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {
+				if (roadList[a].tile == roadList[a - 1].tile)
+					assert(false);
+				Log.logWarning(roadList[a].tile + " " + roadList[a - 1].tile);
+				AISign.BuildSign(roadList[a].tile, "PREV TUNNEL");
+				AISign.BuildSign(roadList[a - 1].tile, "FROM TUNNEL");
+				AISign.BuildSign(roadList[a - 1].tile + roadList[a - 1].direction, "TO TUNNEL");
+				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, roadList[a - 1].tile + roadList[a - 1].direction, Tile.ROAD, null, estimateCost))
 					return false;
+			}
 
 			// Update the status before moving on.
-			buildFromIndex = a;
+			buildFromIndex = a - 1;
 			currentDirection = roadList[a].direction;
 		}
 	}
 	
 	// Build the last part (if any).
-	if (buildFromIndex > 0)
+	if (buildFromIndex > 0) {
+		
+		AISign.BuildSign(roadList[buildFromIndex + 1].tile, "PREV TUNNEL");
+		AISign.BuildSign(roadList[buildFromIndex].tile, "FROM TUNNEL");
+		AISign.BuildSign(roadList[0].tile, "TO TUNNEL");
+		
 		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
+	} else {
+		
+		AISign.BuildSign(roadList[buildFromIndex + 1].tile, "PREV TUNNEL");
+		AISign.BuildSign(roadList[buildFromIndex].tile, "FROM TUNNEL");
+		AISign.BuildSign(roadList[0].tile, "TO TUNNEL");
+		
+		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile - roadList[buildFromIndex + 1].direction : extraRailTile), roadList[buildFromIndex + 1].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
+			return false;
+	}
 
 	// Now build the signals.
 	for (local a = 5; a < roadList.len(); a += 5) {

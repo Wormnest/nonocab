@@ -3,8 +3,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	costForRail 	= 20;		// Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 50;		// Cost for building a new road.
 	costForTurn 	= 60;		// Additional cost if the road makes a turn.
-	costForBridge 	= 65;		// Cost for building a bridge.
-	costForTunnel 	= 65;		// Cost for building a tunnel.
+	costForBridge 	= 10;//65;		// Cost for building a bridge.
+	costForTunnel 	= 10;//65;		// Cost for building a tunnel.
 	costForSlope 	= 85;		// Additional cost if the road heads up or down a slope.
 	costTillEnd     = 50;           // The cost for each tile till the end.
 
@@ -312,10 +312,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-//	{
-//		local abc = AIExecMode();
-//		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-//	}
+	{
+		local abc = AIExecMode();
+		AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	}
 
 	local tileArray = [];
 	local offsets;
@@ -375,9 +375,8 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 		local isBridgeOrTunnelEntrance = false;
 
-/*
 		// Check if we can exploit excising bridges and tunnels.
-		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL)) {
+		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL) && (offset == 1 || offset == -1 || offset == AIMap.GetMapSizeX() || offset == -AIMap.GetMapSizeX())) {
 			local type = Tile.NONE;
 			local otherEnd;
 			if (AIBridge.IsBridgeTile(nextTile)) {
@@ -402,7 +401,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				    -length <  mapSizeX && length < 0 && offset == -1) {	// East
 
 					if (length > mapSizeX || length < -mapSizeX)
-						length /= mapSizeX;
+						length /= mapSizeX; 
 				    
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
@@ -410,15 +409,19 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.tile = otherEnd;
 					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
+					if (offset == 1 || offset == -1)
+						annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
+					else if (offset == AIMap.GetMapSizeX() || offset == -AIMap.GetMapSizeX())
+						annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
+					else
+						assert(false);
 					tileArray.push(annotatedTile);
 					isBridgeOrTunnelEntrance = true;
 				}
 			}
 		}
 
-*/
-
-		onlyRails = true;
+		//onlyRails = false;
 		/** 
 		 * If neither a bridge or tunnel has been found to exploit, we try to:
 		 * 1) Build a bridge or tunnel ourselves.
@@ -427,13 +430,13 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		if (!isBridgeOrTunnelEntrance) {
 
 			// Dissable bridges for now...
-			/*if (!onlyRails) {
+			if (!onlyRails) {
 				local tmp;
 				if (tmp = GetBridge(nextTile, offset))
 					tileArray.push(tmp);
 				if (tmp = GetTunnel(nextTile, currentTile))
 					tileArray.push(tmp);
-			}*/
+			}
 
 			if (!isInClosedList) {
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
@@ -721,73 +724,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				}
 				
 				assert (railTrackDirection != -1);
-				/*		
-				else if ((offset == mapSizeX + 1 || offset == -mapSizeX - 1) && (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW) || !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE)))
-					continue;
-				
-				}*/
-				
-				// If the rail isn't going along the X and Y axis, we need to do things a little
-				// different.
-			
-/*
-				RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west). 1
-				RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east). 2
-				RAILTRACK_NW_NE 	Track in the upper corner of the tile (north). 4
-				RAILTRACK_SW_SE 	Track in the lower corner of the tile (south). 8
-				RAILTRACK_NW_SW 	Track in the left corner of the tile (west). 16
-				RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 32
-*/
-
-				
-				
-/*
-				// Rail going north / south.
-				if (currentAnnotatedTile.direction == 1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == -1 - AIMap.GetMapSizeX()) {
-					// Rail can be going west and east from here.
-					
-					if (offset == 1 || offset == -AIMap.GetMapSizeX()) {
-						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SW))
-							continue;
-					} else if (offset == -1 || offset == AIMap.GetMapSizeX()) {
-						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SE))
-							continue;
-					} else {
-						assert (currentAnnotatedTile.direction == offset);
-						Log.logWarning("Direction: " + offset + " v.s. " + currentAnnotatedTile.direction);
-						assert(false);
-					}
-				}
-				
-				// Rail going east / west.
-				else if (currentAnnotatedTile.direction == -1 + AIMap.GetMapSizeX() || currentAnnotatedTile.direction == 1 - AIMap.GetMapSizeX()) {
-					// Rail can be going north and south from here.
-					if (offset == -AIMap.GetMapSizeX() || offset == -1) {
-						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_NE))
-							continue;
-					} else if (offset == AIMap.GetMapSizeX() || offset == 1) {
-						if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_SW_SE))
-							continue;
-					} else
-						assert(false);
-				} 
-
-				// If the rail is going in another direction, we can simply build the piece of rail.
-				else {
-					if (!AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
-						continue;
-				}
-*/
-				
-//				 if ((currentAnnotatedTile.direction == 1 || currentAnnotatedTile.direction == -1) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NE_SW))
-//					continue;
-//				else if ((currentAnnotatedTile.direction == mapSizeX || currentAnnotatedTile.direction == -mapSizeX) && !AIRail.BuildRailTrack(nextTile, AIRail.RAILTRACK_NW_SE))
-//				 	continue;
-
-				//else if (currentAnnotatedTile.parentTile != currentAnnotatedTile)
-				//	continue;
-				//else if (offset != 1 && offset != -1 && offset != mapSizeX && offset != -mapSizeX)
-				//	continue;
 
 				//if (AITile.IsBuildable(nextTile))
 				{
@@ -840,15 +776,22 @@ function RailPathFinderHelper::ProcessClosedTile(tile, direction) {
 
 function RailPathFinderHelper::GetBridge(startNode, direction) {
 
-	if (Tile.GetSlope(startNode, direction) != 2) return null;
+	Log.logWarning("Check for bridge!");
+
+	if (Tile.GetSlope(startNode, direction) != 2) {
+		Log.logWarning("	Wrong slope!");
+		return null;
+	}
 
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
-		if (!AIMap.DistanceFromEdge(target))
+		if (!AIMap.DistanceFromEdge(target)) {
+			Log.logWarning("	Too close to the edge!");
 			return null;
+		}
 
-		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target) && AIRail.BuildRail(target, target, target + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
+		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {// && AIRail.BuildRail(target, target, target + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
@@ -856,9 +799,18 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.tile = target;
 			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
+			
+			if (direction == 1 || direction == -1)
+				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
+			else if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX())
+				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
+			else
+				assert(false);
+			Log.logWarning("	Bridge added!");
 			return annotatedTile;
 		}
 	}
+	Log.logWarning("	No bridge found...");
 	return null;
 }
 	
@@ -887,7 +839,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode) && AIRail.BuildRail(other_tunnel_end, other_tunnel_end, other_tunnel_end + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
+	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {// && AIRail.BuildRail(other_tunnel_end, other_tunnel_end, other_tunnel_end + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
@@ -895,6 +847,14 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = forceForward;
+		
+		if (direction == 1 || direction == -1)
+			annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
+		else if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX())
+			annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
+		else
+			assert(false);
+		
 		return annotatedTile;
 	}
 	return null;
