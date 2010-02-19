@@ -312,10 +312,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	//}
 
 	local tileArray = [];
 	local offsets;
@@ -326,7 +326,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
 	local mapSizeX = AIMap.GetMapSizeX();
-	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward //&&
+	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward && !currentAnnotatedTile.forceForward //&&
 		// Only consider diagonal tracks if the slope is flat.
 		//AITile.GetSlope(currentAnnotatedTile.tile) == AITile.SLOPE_FLAT
 	) {
@@ -429,8 +429,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			// Dissable bridges for now...
-			if (!onlyRails) {
+			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && (offset == 1 || offset == -1 || offset == AIMap.GetMapSizeX() || offset == -AIMap.GetMapSizeX())) {
 				local tmp;
 				if (tmp = GetBridge(nextTile, offset))
 					tileArray.push(tmp);
@@ -776,10 +775,10 @@ function RailPathFinderHelper::ProcessClosedTile(tile, direction) {
 
 function RailPathFinderHelper::GetBridge(startNode, direction) {
 
-	Log.logWarning("Check for bridge!");
+	//Log.logWarning("Check for bridge!");
 
 	if (Tile.GetSlope(startNode, direction) != 2) {
-		Log.logWarning("	Wrong slope!");
+		//Log.logWarning("	Wrong slope!");
 		return null;
 	}
 
@@ -787,7 +786,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 		local bridge_list = AIBridgeList_Length(i);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target)) {
-			Log.logWarning("	Too close to the edge!");
+			//Log.logWarning("	Too close to the edge!");
 			return null;
 		}
 
@@ -806,11 +805,12 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
 			else
 				assert(false);
-			Log.logWarning("	Bridge added!");
+			annotatedTile.forceForward = true;
+			//Log.logWarning("	Bridge added!");
 			return annotatedTile;
 		}
 	}
-	Log.logWarning("	No bridge found...");
+	//Log.logWarning("	No bridge found...");
 	return null;
 }
 	
@@ -846,7 +846,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.tile = other_tunnel_end;
 		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
-		annotatedTile.forceForward = forceForward;
+		annotatedTile.forceForward = true;
 		
 		if (direction == 1 || direction == -1)
 			annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;

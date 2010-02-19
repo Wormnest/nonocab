@@ -216,6 +216,10 @@ function VehiclesAdvisor::GetReports() {
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
 					continue;
+			
+			// TEMP: Don't build more trains just yet, because we're only dealing with one-way stations now.
+			if (connection.vehicleTypes == AIVehicle.VT_RAIL)
+				continue;
 
 			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
 		}

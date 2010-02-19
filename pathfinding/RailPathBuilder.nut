@@ -367,9 +367,9 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
  */
 function RailPathBuilder::BuildPath(roadList, estimateCost)
 {
-	//for(local a = 0; a < roadList.len(); a++) {
-	//	AISign.BuildSign(roadList[a].tile, "X");
-	//}
+	for(local a = 0; a < roadList.len(); a++) {
+		AISign.BuildSign(roadList[a].tile, "X");
+	}
 	
 	Log.logDebug("Build path (rail)");
 	if(roadList == null || roadList.len() < 3)
@@ -513,8 +513,9 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 		if (a > -1 && roadList[a].type != Tile.ROAD) {
 
 			// Build road before the tunnel or bridge.
-			if (buildFromIndex != a + 1)
-				if (!BuildRoadPiece(roadList[buildFromIndex + 1].tile, roadList[buildFromIndex].tile, roadList[a + 1].tile + roadList[a + 1].direction, Tile.ROAD, null, estimateCost))
+			// Don't do this if the type before wasn't a road!
+			if (buildFromIndex != a + 1 && roadList[buildFromIndex].type == Tile.ROAD)
+				if (!BuildRoadPiece(roadList[buildFromIndex].tile - roadList[a + 1].direction, roadList[buildFromIndex].tile, roadList[a + 1].tile + roadList[a + 1].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			
 			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
@@ -522,38 +523,25 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {
 				if (roadList[a].tile == roadList[a - 1].tile)
 					assert(false);
-				Log.logWarning(roadList[a].tile + " " + roadList[a - 1].tile);
-				AISign.BuildSign(roadList[a].tile, "PREV TUNNEL");
-				AISign.BuildSign(roadList[a - 1].tile, "FROM TUNNEL");
-				AISign.BuildSign(roadList[a - 1].tile + roadList[a - 1].direction, "TO TUNNEL");
+//				Log.logWarning(roadList[a].tile + " " + roadList[a - 1].tile);
 				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, roadList[a - 1].tile + roadList[a - 1].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 
 			// Update the status before moving on.
+			assert (roadList[a].tile != roadList[a - 1].tile);
 			buildFromIndex = a - 1;
-			currentDirection = roadList[a].direction;
+			currentDirection = roadList[a - 1].direction;
+			extraRailTile = roadList[a - 1].tile - roadList[a - 1].direction;
+			AISign.BuildSign(extraRailTile, "Extra rail tile: ");
+			AISign.BuildSign(roadList[a - 1].tile, "Build from index: ");
 		}
 	}
 	
 	// Build the last part (if any).
-	if (buildFromIndex > 0) {
-		
-		AISign.BuildSign(roadList[buildFromIndex + 1].tile, "PREV TUNNEL");
-		AISign.BuildSign(roadList[buildFromIndex].tile, "FROM TUNNEL");
-		AISign.BuildSign(roadList[0].tile, "TO TUNNEL");
-		
+	if (buildFromIndex > 0)
 		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
-	} else {
-		
-		AISign.BuildSign(roadList[buildFromIndex + 1].tile, "PREV TUNNEL");
-		AISign.BuildSign(roadList[buildFromIndex].tile, "FROM TUNNEL");
-		AISign.BuildSign(roadList[0].tile, "TO TUNNEL");
-		
-		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile - roadList[buildFromIndex + 1].direction : extraRailTile), roadList[buildFromIndex + 1].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
-			return false;
-	}
 
 	// Now build the signals.
 	for (local a = 5; a < roadList.len(); a += 5) {

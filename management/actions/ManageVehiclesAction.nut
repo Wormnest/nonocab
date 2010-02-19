@@ -175,6 +175,10 @@ function ManageVehiclesAction::Execute()
 			else if (vehicleNumbers > 15)
 				vehicleNumbers = 15;
 		}
+		
+		// TEMP: because we only build 1-way railways (yet), don't allow more than 1 train per connection.
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL)
+			vehicleNumbers = 1;
 			
 		local vehiclePrice = AIEngine.GetPrice(engineID);
 		totalCosts = vehiclePrice;

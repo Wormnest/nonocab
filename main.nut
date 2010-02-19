@@ -82,7 +82,7 @@ function NoCAB::Start()
 	advisors = [
 		VehiclesAdvisor(world)
 	];
-	/*
+
 	if (GetSetting("Enable road vehicles")) {
 		Log.logInfo("Road vehicle advisor initiated!");
 		advisors.push(RoadConnectionAdvisor(world, connectionManager));
@@ -94,7 +94,7 @@ function NoCAB::Start()
 	if (GetSetting("Enable ships")) {
 		Log.logInfo("Ship advisor initiated!");
 		advisors.push(ShipAdvisor(world, connectionManager));
-	}*/
+	}
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
 		advisors.push(TrainConnectionAdvisor(world, connectionManager));
@@ -119,9 +119,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v1.26")) {
+	if(!AICompany.SetName(companyName + " - v2.0a3")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v1.26#" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0a3 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

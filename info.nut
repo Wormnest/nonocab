@@ -1,12 +1,12 @@
 class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Bram Ridder"; }
-      function GetName()      { return "NoCAB";	      }
-      function GetDescription()	{ return "Competitive AI which uses trucks, busses, aircrafts and ships. AI is currently being rewritten to add more advanced features and support for trains and trams; See the forum for more info."; }
-      function GetVersion()	{ return 336; }
-      function MinVersionToLoad() { return 2; }
-      function GetDate()	{ return "2009-12-17"; }
+      function GetName()      { return "NoCAB - Bleeding Edge Edition";	      }
+      function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
+      function GetVersion()	{ return 348; }
+      function MinVersionToLoad() { return 3; }
+      function GetDate()	{ return "2010-02-18"; }
       function CreateInstance()	{ return "NoCAB"; }
-      function GetShortName() { return "NCAB"; }
+      function GetShortName() { return "BCAB"; }
       function GetSettings() {
 		AddSetting( { name = "NiceCAB", description = "NoCAB will try to stay away from already served industries", easy_value = 1, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("NiceCAB", {_0 = "Disabled", _1 = "Enabled"});
@@ -19,6 +19,9 @@ class FNoCAB extends AIInfo {
 
 		AddSetting( { name = "Enable airplanes", description = "Enable airplanes", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
 		AddLabels("Enable airplanes", {_0 = "Disabled", _1 = "Enabled"});
+
+		AddSetting( { name = "Enable trains", description = "Enable trains", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddLabels("Enable trains", {_0 = "Disabled", _1 = "Enabled"});
       }
 }
 
