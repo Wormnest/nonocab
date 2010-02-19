@@ -514,7 +514,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 			// Build road before the tunnel or bridge.
 			// Don't do this if the type before wasn't a road!
-			if (buildFromIndex != a + 1 && roadList[buildFromIndex].type == Tile.ROAD)
+			if (roadList[buildFromIndex].type == Tile.ROAD)
 				if (!BuildRoadPiece(roadList[buildFromIndex].tile - roadList[a + 1].direction, roadList[buildFromIndex].tile, roadList[a + 1].tile + roadList[a + 1].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			
