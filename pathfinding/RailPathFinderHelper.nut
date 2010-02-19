@@ -130,6 +130,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 					stationBegin.type = Tile.ROAD;
 					stationBegin.parentTile = stationBegin;               // Small hack ;)
 					stationBegin.forceForward = true;
+					stationBegin.direction = offsets[j];
 	
 					// If we can, we store the tile in front of the station.
 					local stationBeginFront = AnnotatedTile();
@@ -151,6 +152,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 					stationEnd.type = Tile.ROAD;
 					stationEnd.parentTile = stationEnd;               // Small hack ;)
 					stationEnd.forceForward = true;
+					stationEnd.direction = -offsets[j];
 	
 					// If we can, we store the tile in front of the end of the station.
 					local stationEndFront = AnnotatedTile();
@@ -434,7 +436,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					tileArray.push(tmp);
 			}
 
-			if (!isInClosedList) {
+			if (!isInClosedList && !AIRail.IsRailTile(nextTile + offset)) {
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
@@ -781,7 +783,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 
 	//Log.logWarning("Check for bridge!");
 
-	if (Tile.GetSlope(startNode, direction) != 2) {
+	if (Tile.GetSlope(startNode, direction) != 2 && !AIRail.IsRailTile(startNode + direction)) {
 		//Log.logWarning("	Wrong slope!");
 		return null;
 	}
