@@ -326,10 +326,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
 	local mapSizeX = AIMap.GetMapSizeX();
-	if (currentAnnotatedTile.type == Tile.ROAD && !currentAnnotatedTile.parentTile.forceForward && !currentAnnotatedTile.forceForward //&&
-		// Only consider diagonal tracks if the slope is flat.
-		//AITile.GetSlope(currentAnnotatedTile.tile) == AITile.SLOPE_FLAT
-	) {
+	if (currentAnnotatedTile.type == Tile.ROAD && currentAnnotatedTile.parentTile.type == Tile.ROAD && !currentAnnotatedTile.forceForward) {
 		if (currentAnnotatedTile.direction == 1)
 			offsets = [1, 1 + mapSizeX, 1 - mapSizeX];
 		else if (currentAnnotatedTile.direction == -1)
@@ -733,7 +730,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.tile = nextTile;
 					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
 					annotatedTile.lastBuildRailTrack = railTrackDirection;
-	
+
 					// Check if the road is sloped.
 					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
 						annotatedTile.distanceFromStart = costForSlope;
@@ -741,6 +738,13 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					// Check if the road makes a turn.
 					if (currentAnnotatedTile.direction != offset)
 						annotatedTile.distanceFromStart += costForTurn;
+						
+					// Special case where we need an extra straight tile.
+					if (offset == 1 && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW || // West
+						offset == -1 && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE || // East
+						offset == AIMap.GetMapSizeX() && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE || // South
+						offset == -AIMap.GetMapSizeX() && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) // North
+						annotatedTile.forceForward = true;
 	
 					// Check if there is already a road here.
 					if (AIRail.IsRailTile(nextTile))
