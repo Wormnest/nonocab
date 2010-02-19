@@ -189,7 +189,7 @@ function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, l
 			local bestBridgeType = null;
 			for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
 				local bridge = bridgeTypes.Next();
-				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
+				if (bestBridgeType == null || (/*AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && */ AIBridge.GetMaxSpeed(bridge) >= AIBridge.GetMaxSpeed(bestBridgeType)))
 					bestBridgeType = bridge;
 			}		
 		

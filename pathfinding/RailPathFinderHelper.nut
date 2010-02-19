@@ -742,10 +742,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						annotatedTile.distanceFromStart += costForTurn;
 						
 					// Special case where we need an extra straight tile.
-					if (offset == 1 && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW || // West
-						offset == -1 && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE || // East
-						offset == AIMap.GetMapSizeX() && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE || // South
-						offset == -AIMap.GetMapSizeX() && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) // North
+					if ((offset == 1 || offset == -AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW || // West
+						(offset == -1 || offset == AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE || // East
+						(offset == 1 || offset == AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE || // South
+						(offset == -1 || offset == -AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) // North
 						annotatedTile.forceForward = true;
 	
 					// Check if there is already a road here.
