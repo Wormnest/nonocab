@@ -224,7 +224,7 @@ function ManageVehiclesAction::Execute()
 			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
 			// TODO: Make sure to make this also works for cloned vehicles.
 			for (local j = 0; j < 3; j++) {
-				local wagonVehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, wagonEngineID);
+				local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
 				Log.logError("Wagon engine ID : " + wagonEngineID + " " + AIEngine.GetName(wagonEngineID) + " " + AIEngine.IsValidEngine(wagonEngineID));
 				
 				if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
