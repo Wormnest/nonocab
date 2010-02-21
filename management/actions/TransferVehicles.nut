@@ -28,7 +28,7 @@ class TransferVehicles extends Action {
 			
 			local endList = AIList();
 			endList.AddItem(roadList[0].tile, roadList[0].tile);
-			local pathInfo = pathFinder.FindFastestRoad(startList, endList, false, false, null, 100);
+			local pathInfo = pathFinder.FindFastestRoad(startList, endList, false, false, null, 100, null);
 			
 			if (pathInfo == null) {
 				Log.logError("No path found to connect the two pieces!");

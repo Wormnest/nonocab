@@ -36,12 +36,19 @@ class RoadPathFinding {
 	 * @param checkEndPoints Check the end points before finding a road.
 	 * @param stationType The station type to build.
 	 * @param maxPathLength The maximum length of the path (stop afterwards!).
+	 * @param tilesToIgnore The set of tiles which the pathfinder should ignore.
 	 * @return A PathInfo instance which contains the found path (if any).
 	 */
-	function FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength);
+	function FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore);
 }
 
-function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength) {
+function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
+
+	{
+		local bla = AIExecMode();
+		foreach (index, sign in AISignList())
+			AISign.RemoveSign(sign);
+	}
 
 	local test = AITestMode();
 
@@ -78,6 +85,15 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	// We must also keep track of all tiles we've already processed, we use
 	// a table for that purpose.
 	local closedList = {};
+	if (tilesToIgnore) {
+		foreach (tile in tilesToIgnore) {
+			closedList[tile] <- tile;
+			//local abc = AIExecMode();
+			//AISign.BuildSign(tile, "IGNORE");
+		}
+		
+		assert(closedList.len() > 0);
+	}
 
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
@@ -113,7 +129,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			}
 		
 			resultList.push(resultTile);
-			return PathInfo(resultList, null, pathFinderHelper.vehicleType);
+			return PathInfo(resultList, null, null, pathFinderHelper.vehicleType);
 		} else if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;

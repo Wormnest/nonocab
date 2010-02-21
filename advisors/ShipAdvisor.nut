@@ -64,7 +64,7 @@ function ShipAdvisor::GetPathInfo(report) {
 		return null;
 	}
 		
-	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20);
+	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20, null);
 	
 	pathFinder.pathFinderHelper.startLocationIsBuildOnWater = false;
 	pathFinder.pathFinderHelper.endLocationIsBuildOnWater = false;

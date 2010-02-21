@@ -23,11 +23,11 @@ class NoCAB extends AIController {
 }
 
 function NoCAB::Save() { 
-	Log.logInfo("Saving game using version 3... (might take a while...)");
+	Log.logInfo("Saving game using version 4... (might take a while...)");
 	local saveTable = {};
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
-	saveTable["SaveVersion"] <- 3;
+	saveTable["SaveVersion"] <- 4;
 	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	return saveTable;
 }
@@ -35,9 +35,9 @@ function NoCAB::Save() {
 function NoCAB::Load(version, data) {
 	local test = data["starting_year"];
 	local saveVersion = data["SaveVersion"];
-	if (saveVersion != 3) {
+	if (saveVersion != 4) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
-		AILog.logWarning("Only save version 3 is supported, your version is: " + saveVersion);
+		AILog.logWarning("Only save version 4 is supported, your version is: " + saveVersion);
 		return;
 	}
 	loadData = data;

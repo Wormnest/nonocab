@@ -4,6 +4,7 @@
 class PathInfo {
 
 	roadList = null;          // List of all road tiles the road needs to follow.
+	roadListReturn = null;    // Like roadList but for the return journey (only for trains).
 	roadCost = null;          // The cost to create this road.
 	depot = null;             // The location of the depot.
 	depotOtherEnd = null;     // The location of the depot at the other end (if it any).
@@ -15,8 +16,9 @@ class PathInfo {
 	buildDate = null;         // The date this connection is build.
 	nrRoadStations = null;    // The number of road stations.
 
-	constructor(_roadList, _roadCost, _vehicleType) {
+	constructor(_roadList, _roadListReturn, _roadCost, _vehicleType) {
 		roadList = _roadList;
+		roadListReturn = _roadListReturn;
 		roadCost = _roadCost;
 		vehicleType = _vehicleType;
 		build = false;
@@ -31,6 +33,14 @@ class PathInfo {
 			at.tile = tile;
 			roadList.push(at);
 		}
+		
+		roadListReturn = [];
+		foreach (tile in data["roadListReturn"]) {
+			local at = AnnotatedTile();
+			at.tile = tile;
+			roadListReturn.push(at);
+		}
+		
 		roadCost = data["roadCost"];
 		vehicleType = data["vehicleType"];
 		depot = data["depot"];
@@ -47,6 +57,12 @@ class PathInfo {
 		foreach (at in roadList) {
 			saveData["roadList"].push(at.tile);
 		}
+		
+		saveData["roadListReturn"] <- [];
+		foreach (at in roadList) {
+			saveData["roadListReturn"].push(at.tile);
+		}
+		
 		saveData["roadCost"] <- roadCost;
 		saveData["vehicleType"] <- vehicleType;
 		saveData["depot"] <- depot;

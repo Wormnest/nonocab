@@ -367,9 +367,9 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
  */
 function RailPathBuilder::BuildPath(roadList, estimateCost)
 {
-	for(local a = 0; a < roadList.len(); a++) {
-		AISign.BuildSign(roadList[a].tile, "X");
-	}
+	//for(local a = 0; a < roadList.len(); a++) {
+	//	AISign.BuildSign(roadList[a].tile, "X");
+	//}
 	
 	Log.logDebug("Build path (rail)");
 	if(roadList == null || roadList.len() < 3)

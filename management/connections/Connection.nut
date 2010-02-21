@@ -60,7 +60,7 @@ class Connection {
 	}
 	
 	function LoadData(data) {
-		pathInfo = PathInfo(null, null, null);
+		pathInfo = PathInfo(null, null, null, null);
 		vehicleTypes = data["vehicleTypes"];
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		pathInfo.LoadData(data["pathInfo"]);
