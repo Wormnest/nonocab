@@ -272,7 +272,7 @@ function RailPathBuilder::CheckError(buildResult)
 
 			// Retry the same action 5 times...
 			for (local i = 0; i < 50; i++) {
-				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], buildResult[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRail.ERR_ROAD_WORKS_IN_PROGRESS)
+				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], buildResult[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY)
 					return true;
 				AIController.Sleep(1);
 			}
@@ -539,13 +539,32 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 	}
 	
 	// Build the last part (if any).
+	// TODO: Depends on where the rail has been build...
 	if (buildFromIndex > 0)
 		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
 
 	// Now build the signals.
-	for (local a = 5; a < roadList.len(); a += 5) {
-		AIRail.BuildSignal(roadList[a].tile, roadList[a - 1].tile, AIRail.SIGNALTYPE_NORMAL_TWOWAY);
+	for (local a = 1; a < roadList.len(); a += 3) {
+		local direction = roadList[a].direction;
+		local nextTile = 0;
+		if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX() || direction == 1 || direction == -1)
+			nextTile = roadList[a].tile + direction;
+			
+		// Going South.
+		else if (direction == AIMap.GetMapSizeX() + 1)
+			nextTile = roadList[a].tile + AIMap.GetMapSizeX();
+		// Going North.
+		else if (direction == -AIMap.GetMapSizeX() - 1)
+			nextTile = roadList[a].tile - 1;
+		// Going West.
+		else if (direction == -AIMap.GetMapSizeX() + 1)
+			nextTile = roadList[a].tile - AIMap.GetMapSizeX();
+		// Going East.
+		else if (direction == AIMap.GetMapSizeX() - 1)
+			nextTile = roadList[a].tile - 1;
+
+		AIRail.BuildSignal(roadList[a].tile, nextTile, AIRail.SIGNALTYPE_NORMAL);
 	}
 
 	return true;

@@ -47,7 +47,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	{
 		local bla = AIExecMode();
 		foreach (index, sign in AISignList())
-			AISign.RemoveSign(sign);
+			AISign.RemoveSign(index);
 	}
 
 	local test = AITestMode();
@@ -76,6 +76,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	}
 
 	// To guide the pathfinder we use the mean of all viable end positions.
+	local test = 0;
 	foreach (i, value in end) {
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
@@ -88,8 +89,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	if (tilesToIgnore) {
 		foreach (tile in tilesToIgnore) {
 			closedList[tile] <- tile;
-			//local abc = AIExecMode();
-			//AISign.BuildSign(tile, "IGNORE");
+			local abc = AIExecMode();
+			AISign.BuildSign(tile, "IGNORE");
 		}
 		
 		assert(closedList.len() > 0);
@@ -104,7 +105,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		Log.logDebug("Pathfinder: No start points for this road; Abort: original #start points: " + start.Count());
 		return null;
 	}
-
+	
 	// Now with the open and closed list we're ready to do some grinding!!!
 	local at;
 	while ((at = pq.Pop())) {
@@ -134,7 +135,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;
 		}
-		
+
 		// Get all possible tiles from this annotated tile and add them to the open list.
 		local neighbour = null;
 		foreach (neighbour in pathFinderHelper.GetNeighbours(at, false, closedList)) {

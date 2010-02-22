@@ -1,12 +1,12 @@
 class RailPathFinderHelper extends PathFinderHelper {
 
-	costForRail 	= 20;		// Cost for utilizing an existing road, bridge, or tunnel.
-	costForNewRail	= 50;		// Cost for building a new road.
-	costForTurn 	= 50;//60;		// Additional cost if the road makes a turn.
-	costForBridge 	= 10;//65;		// Cost for building a bridge.
-	costForTunnel 	= 10;//65;		// Cost for building a tunnel.
-	costForSlope 	= 85;		// Additional cost if the road heads up or down a slope.
-	costTillEnd     = 50;           // The cost for each tile till the end.
+	costForRail 	= 20;       // Cost for utilizing an existing road, bridge, or tunnel.
+	costForNewRail	= 50;       // Cost for building a new road.
+	costForTurn 	= 60;       // Additional cost if the road makes a turn.
+	costForBridge 	= 10;//65;  // Cost for building a bridge.
+	costForTunnel 	= 10;//65;  // Cost for building a tunnel.
+	costForSlope 	= 85;       // Additional cost if the road heads up or down a slope.
+	costTillEnd     = 50;       // The cost for each tile till the end.
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
@@ -331,10 +331,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	//{
-	//	local abc = AIExecMode();
-	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	//}
+	{
+		local abc = AIExecMode();
+		AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	}
 
 	local tileArray = [];
 	local offsets;
@@ -388,11 +388,15 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		// Check if we can actually build this piece of rail or if the slopes render this impossible.
 		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile))
 			continue;
+		
+		// Check if we're going 'straight'.
+		local goingStraight = (offset == 1 || offset == -1 || offset == mapSizeX || offset == -mapSizeX ? true : false);
+		
 
 		local isBridgeOrTunnelEntrance = false;
 
 		// Check if we can exploit excising bridges and tunnels.
-		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL) && (offset == 1 || offset == -1 || offset == AIMap.GetMapSizeX() || offset == -AIMap.GetMapSizeX())) {
+		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL) && goingStraight) {
 			local type = Tile.NONE;
 			local otherEnd;
 			if (AIBridge.IsBridgeTile(nextTile)) {
@@ -406,7 +410,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			if (type != Tile.NONE) {
 
 				local length = otherEnd - nextTile;
-				local mapSizeX = AIMap.GetMapSizeX();
 				
 				// Make sure we're heading in the same direction as the bridge or tunnel we try
 				// to connect to, else we end up with false road pieces which try to connect to the
@@ -445,7 +448,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
-			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && (offset == 1 || offset == -1 || offset == AIMap.GetMapSizeX() || offset == -AIMap.GetMapSizeX())) {
+			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && goingStraight) {
 				local tmp;
 				if (tmp = GetBridge(nextTile, offset))
 					tileArray.push(tmp);
@@ -453,7 +456,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					tileArray.push(tmp);
 			}
 
-			if (!isInClosedList && (!AIRail.IsRailTile(nextTile + offset) || AIRail.IsRailStationTile(nextTile + offset))) {
+			if (!isInClosedList && (!AIRail.IsRailTile(nextTile + offset) || AIRail.IsRailStationTile(nextTile + offset) || !goingStraight)) {
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
@@ -886,6 +889,8 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 
 function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 
+	// For now we assume a train always runs on top speed.
+
 	local lastDirection = roadList[0];
 	local currentSpeed = 0;
 	local carry = 0;
@@ -902,7 +907,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 		switch (roadList[i].type) {
 			case Tile.ROAD:
 				if(lastDirection != currentDirection) {		// Bend
-					tileLength = Tile.bendedRoadLength - carry;
+					tileLength = Tile.diagonalRoadLength - carry;
 					currentSpeed = maxSpeed / 2;
 				} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
 					tileLength = Tile.upDownHillRoadLength - carry;
@@ -942,19 +947,22 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 						}
 					}
 				} else {					// Straight
+				///
 					tileLength = Tile.straightRoadLength - carry;
-					
+///					
 					// Calculate the number of days needed to traverse the tile
 					while (tileLength > 0) {
 						tileLength -= currentSpeed;
 						days++;
 		
-						currentSpeed += 34;
+					currentSpeed += 34;
 						if (currentSpeed > maxSpeed) {
 							currentSpeed = maxSpeed;
 							break;
 						}
+
 					}
+///
 				}
 				break;
 				
@@ -963,6 +971,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 				local length = (tile - roadList[i + 1].tile) / currentDirection;
 				if (length < 0) length = -length;
 				tileLength = Tile.straightRoadLength * length - carry;
+///	
 				while (tileLength > 0) {
 					tileLength -= currentSpeed;
 					days++;
@@ -974,6 +983,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 					}
 				}
 				break;
+///
 		}
 			
 		if (tileLength > 0) {

@@ -175,10 +175,6 @@ function ManageVehiclesAction::Execute()
 			else if (vehicleNumbers > 15)
 				vehicleNumbers = 15;
 		}
-		
-		// TEMP: because we only build 1-way railways (yet), don't allow more than 1 train per connection.
-		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL)
-			vehicleNumbers = 1;
 			
 		local vehiclePrice = AIEngine.GetPrice(engineID);
 		totalCosts = vehiclePrice;
@@ -217,9 +213,9 @@ function ManageVehiclesAction::Execute()
 			}
 
 			// Refit if necessary.
-			//if (connection.cargoID != AIEngine.GetCargoType(engineID))
-			//	AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
-			//vehicleGroup.vehicleIDs.push(vehicleID);
+			if (connection.cargoID != AIEngine.GetCargoType(engineID))
+				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
+			vehicleGroup.vehicleIDs.push(vehicleID);
 
 			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
 			// TODO: Make sure to make this also works for cloned vehicles.

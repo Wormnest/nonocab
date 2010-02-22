@@ -154,11 +154,11 @@ class Report
 				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
 
 				if (!connection.pathInfo.build)
-					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad();
+					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 2;
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = 150 * distance;
+				initialCost = 150 * distance * 2;
 			}
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
@@ -169,6 +169,12 @@ class Report
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
+		
+		// In case of trains, we have 3 wagons.
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
+			transportedCargoPerVehiclePerMonth *= 3;
+		
+		
 		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
 		    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
@@ -203,6 +209,8 @@ class Report
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
+			initialCostPerVehicle = AIEngine.GetPrice(holdingEngineID) * 3;
 		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
 	}
 	

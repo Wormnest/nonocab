@@ -116,6 +116,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to sell 1 aircraft or ship: don't. We allow for a little slack in airlines :).
 		local isAir = AIEngine.GetVehicleType(report.transportEngineID) == AIVehicle.VT_AIR;
 		local isShip = AIEngine.GetVehicleType(report.transportEngineID) == AIVehicle.VT_WATER;
+		local isTrain = AIEngine.GetVehicleType(report.transportEngineID) == AIVehicle.VT_RAIL;
 	
 		// If we have multiple stations we want to take this into account. Each station
 		// is allowed to have 1 vehicle waiting in them. So we subtract the number of
@@ -129,7 +130,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
 			// cargo a vehicle can carry.
-			if (nrVehicles > 0 && AIEngine.GetCapacity(report.transportEngineID) * 1.5 > production && rating > 35)
+			if (nrVehicles > 0 && AIEngine.GetCapacity(report.holdingEngineID) * ( isTrain ? 4.5 : 1.5 ) > production && rating > 35)
 				continue;
 
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
@@ -216,10 +217,6 @@ function VehiclesAdvisor::GetReports() {
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
 					continue;
-			
-			// TEMP: Don't build more trains just yet, because we're only dealing with one-way stations now.
-			if (connection.vehicleTypes == AIVehicle.VT_RAIL)
-				continue;
 
 			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
 		}
