@@ -44,11 +44,11 @@ class RoadPathFinding {
 
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
 
-	{
-		local bla = AIExecMode();
-		foreach (index, sign in AISignList())
-			AISign.RemoveSign(index);
-	}
+//	{
+//		local bla = AIExecMode();
+//		foreach (index, sign in AISignList())
+//			AISign.RemoveSign(index);
+//	}
 
 	local test = AITestMode();
 
@@ -89,11 +89,11 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	if (tilesToIgnore) {
 		foreach (tile in tilesToIgnore) {
 			closedList[tile] <- tile;
-			local abc = AIExecMode();
-			AISign.BuildSign(tile, "IGNORE");
+//			local abc = AIExecMode();
+//			AISign.BuildSign(tile, "IGNORE");
 		}
 		
-		assert(closedList.len() > 0);
+//		assert(closedList.len() > 0);
 	}
 
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.

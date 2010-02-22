@@ -544,29 +544,6 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
 			return false;
 
-	// Now build the signals.
-	for (local a = 1; a < roadList.len(); a += 3) {
-		local direction = roadList[a].direction;
-		local nextTile = 0;
-		if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX() || direction == 1 || direction == -1)
-			nextTile = roadList[a].tile + direction;
-			
-		// Going South.
-		else if (direction == AIMap.GetMapSizeX() + 1)
-			nextTile = roadList[a].tile + AIMap.GetMapSizeX();
-		// Going North.
-		else if (direction == -AIMap.GetMapSizeX() - 1)
-			nextTile = roadList[a].tile - 1;
-		// Going West.
-		else if (direction == -AIMap.GetMapSizeX() + 1)
-			nextTile = roadList[a].tile - AIMap.GetMapSizeX();
-		// Going East.
-		else if (direction == AIMap.GetMapSizeX() - 1)
-			nextTile = roadList[a].tile - 1;
-
-		AIRail.BuildSignal(roadList[a].tile, nextTile, AIRail.SIGNALTYPE_NORMAL);
-	}
-
 	return true;
 }
 

@@ -170,16 +170,20 @@ function BuildRailAction::Execute() {
 		}
 	}
 	
-	
+	local switchSignals = false;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 	if (secondPath != null) {
 		local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-		pathBuilder.RealiseConnection(false);
-		
-		AIRail.BuildRailTrack(roadList[0].tile + roadList[0].direction * 3, (endOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
-		AIRail.BuildRailTrack(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 3, (startOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
-		
-	} else {
+		if (!pathBuilder.RealiseConnection(false)) {
+			Log.logWarning("Failed to build RoRo-station!");
+			secondPath = null;
+		} else {
+			AIRail.BuildRailTrack(roadList[0].tile + roadList[0].direction * 3, (endOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
+			AIRail.BuildRailTrack(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 3, (startOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
+		}
+	} 
+	
+	if (secondPath == null) {
 		// If we failed to do so, we will now connect the two front ends.
 		endNodes = AITileList();
 		endNodes.AddTile(roadList[0].tile - roadList[0].direction + endOrthogonalDirection);
@@ -212,15 +216,21 @@ function BuildRailAction::Execute() {
 
 		if (secondPath != null) {
 			local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-			pathBuilder.RealiseConnection(false);
-			
-			AIRail.BuildRailTrack(roadList[0].tile - roadList[0].direction + endOrthogonalDirection, (endOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
-			AIRail.BuildRailTrack(roadList[roadList.len() - 1].tile + roadList[roadList.len() - 1].direction + startOrthogonalDirection, (startOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
-		} else {
-			// TODO: Build bypass lane!
-			Log.logWarning(roadList[0].tile + " - " + endOrthogonalDirection);
-			quit();
-		}
+			if (!pathBuilder.RealiseConnection(false)) {
+				secondPath = null;
+				Log.logError("Failed to build a front-to-front station");
+			} else {
+				AIRail.BuildRailTrack(roadList[0].tile - roadList[0].direction + endOrthogonalDirection, (endOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
+				AIRail.BuildRailTrack(roadList[roadList.len() - 1].tile + roadList[roadList.len() - 1].direction + startOrthogonalDirection, (startOrthogonalDirection == 1 ? AIRail.RAILTRACK_NW_SE : AIRail.RAILTRACK_NE_SW));
+				switchSignals = true;
+			}
+		} 
+	}
+	
+	if (secondPath == null) {
+		// TODO: Build bypass lane!
+		Log.logWarning("Side track not implemented yet!");
+		return false;
 	}
 
 	// Check if we need to build a depot.	
@@ -243,6 +253,13 @@ function BuildRailAction::Execute() {
 			connection.pathInfo.depotOtherEnd = depot;
 		}
 	}
+	
+	// Build the signals.
+	BuildSignals(roadList, false);
+	
+	if (secondPath != null)
+		BuildSignals(secondPath.roadList, switchSignals);
+	
 	
 	// We must make sure that the original road list is restored because we join the new
 	// rail station with the existing one, but OpenTTD only recognices the original one!
@@ -300,7 +317,11 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 
 	// Look for a suitable spot and test if we can build there.
 	for (local i = startPoint; i > 1 && i < len; i += searchDirection) {
-			
+		
+		// Only allow a depot at a piece of the track that goes straight!
+		if (roadList[i].lastBuildRailTrack != AIRail.RAILTRACK_NE_SW && roadList[i].lastBuildRailTrack != AIRail.RAILTRACK_NW_SE)
+			continue;
+
 		foreach (direction in directions) {
 			if (direction == roadList[i].direction || direction == -roadList[i].direction || (roadList[i].direction != 1 && roadList[i].direction != -1 && roadList[i].direction != AIMap.GetMapSizeX() && roadList[i].direction != -AIMap.GetMapSizeX()))
 				continue;
@@ -390,4 +411,76 @@ RAILTRACK_NE_SE 	Track in the right corner of the tile (east).
 	}
 
 	return null;
+}
+
+function BuildRailAction::BuildSignals(roadList, reverse) {
+
+	local abc = AIExecMode();
+	local singleRail = array(256);
+	singleRail[1] = true;
+	singleRail[2] = true;
+	singleRail[4] = true;
+	singleRail[8] = true;
+	singleRail[16] = true;
+	singleRail[32] = true;
+	singleRail[64] = true;
+	singleRail[128] = true;
+	singleRail[255] = true;
+
+	// Now build the signals.
+	local tilesAfterCrossing = 4;
+	for (local a = 1; a < roadList.len() - 1; a++) {
+		
+		// Only build a signal every so many steps, or if we're facing a crossing.
+		// Because we are moving from the end station to the begin station, we need
+		// to check if the previous tile was a crossing.
+
+		local isTileBeforeCrossing = false;
+		// Check if the next tile is a crossing.
+		if (!singleRail[AIRail.GetRailTracks(roadList[a + 1].tile)]) {
+			tilesAfterCrossing = 0;
+			AISign.BuildSign(roadList[a + 1].tile, "CROSSING");
+			isTileBeforeCrossing = true;
+		}
+
+		if (++tilesAfterCrossing > 4 && a % 4 == 0 || isTileBeforeCrossing) {
+			
+			local direction = (reverse ? -roadList[a].direction : roadList[a].direction);
+			//local direction = roadList[a].direction;
+			local nextTile = 0;
+			if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX() || direction == 1 || direction == -1)
+				nextTile = roadList[a].tile + direction;
+				
+			// Going South.
+			else if (direction == AIMap.GetMapSizeX() + 1) {
+				if (roadList[a].lastBuildRailTrack == AIRail.RAILTRACK_NW_SW)
+					nextTile = roadList[a].tile + 1;
+				else
+					nextTile = roadList[a].tile + AIMap.GetMapSizeX();
+			}
+			// Going North.
+			else if (direction == -AIMap.GetMapSizeX() - 1) {
+				if (roadList[a].lastBuildRailTrack == AIRail.RAILTRACK_NW_SW)
+					nextTile = roadList[a].tile - AIMap.GetMapSizeX();
+				else
+					nextTile = roadList[a].tile - 1;
+			}
+			// Going West.
+			else if (direction == -AIMap.GetMapSizeX() + 1) {
+				if (roadList[a].lastBuildRailTrack == AIRail.RAILTRACK_NW_NE)
+					nextTile = roadList[a].tile - AIMap.GetMapSizeX();
+				else				
+					nextTile = roadList[a].tile + 1;
+			}
+			// Going East.
+			else if (direction == AIMap.GetMapSizeX() - 1) {
+				if (roadList[a].lastBuildRailTrack == AIRail.RAILTRACK_NW_NE)
+					nextTile = roadList[a].tile - 1;
+				else
+					nextTile = roadList[a].tile + AIMap.GetMapSizeX();
+			}
+	
+			AIRail.BuildSignal(roadList[a].tile, nextTile, AIRail.SIGNALTYPE_NORMAL);
+		}
+	}
 }

@@ -331,10 +331,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	//}
 
 	local tileArray = [];
 	local offsets;

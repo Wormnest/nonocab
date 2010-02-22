@@ -233,8 +233,11 @@ function ManageVehiclesAction::Execute()
 			
 			// Send the vehicles on their way.
 			if (connection.bilateralConnection && !directionToggle) {
+				if (vehicleType == AIVehicle.VT_RAIL)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
 				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
+				if (vehicleType != AIVehicle.VT_RAIL)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
 
 				// If it's a ship, give it additional orders!
 				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
@@ -249,8 +252,11 @@ function ManageVehiclesAction::Execute()
 
 				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
 			} else {
+				if (vehicleType == AIVehicle.VT_RAIL)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
-				AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
+				if (vehicleType != AIVehicle.VT_RAIL)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
 
 				// If it's a ship, give it additional orders!
 				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
