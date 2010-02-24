@@ -302,7 +302,7 @@ function RailPathBuilder::CheckError(buildResult)
 			//if (buildResult[1])
 			AISign.BuildSign(buildResult[1], "From");
 			AISign.BuildSign(buildResult[2], "To");
-			assert(false);
+			//assert(false);
 			/**
 			 * We handle these kind of errors elsewhere.
 			 */
@@ -375,115 +375,62 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 	if(roadList == null || roadList.len() < 3)
 		return false;
 
-	local buildFromIndex = roadList.len() - 2;
-	local currentDirection = roadList[roadList.len() - 3].direction;
-	local prevCurrentDirection = roadList[roadList.len() - 3].direction;
-	local extraRailTile = null;
+	local mapSizeX = AIMap.GetMapSizeX();
 
-	for(local a = roadList.len() - 3; -1 < a; a--) {
+	for(local a = roadList.len() - 1; 0 < a; a--) {
 
 		local buildToIndex = a;
 		local direction = roadList[a].direction;
 
 		if (roadList[a].type == Tile.ROAD) {
 
-			/**
-			 * Every time we make a call to the OpenTTD engine (i.e. build something) we hand over the
-			 * control to the next AI, therefor we try to envoke as less calls as posible by building
-			 * large segments of roads at the time instead of single tiles.
-			 */
-			if (direction != currentDirection) {
-	
-				// Check if we need to do some terraforming
-				// Not needed ATM, as we make sure we only consider roads which
-				// don't require terraforming
-				// Terraform(buildFrom, currentDirection);
-				//AISign.BuildSign(roadList[buildFromIndex + 1].tile, "From *");
-				//AISign.BuildSign(roadList[buildFromIndex].tile, "Tile *");
-				//AISign.BuildSign(roadList[a + 1].tile, "To *");
-				if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[a + 1].tile, Tile.ROAD, null, estimateCost))
-					return false;
-					
-				// If we just build a diagonal piece of rail and next we're moving in a direction which
-				// is not the the same as the previous direction (before going diagonal), we need to:
-				// 1) Add a little piece of rail.
-				// 2) Move the road list index one lower.
-				if (currentDirection != -1 && currentDirection != 1 && currentDirection != AIMap.GetMapSizeX() && currentDirection != -AIMap.GetMapSizeX()) {
 
-					if (prevCurrentDirection == direction) {
-						extraRailTile = roadList[a + 1].tile - direction;
-					} else {
-
-						a--;
-						
-						// Build the extra rail piece.
-						// TODO: Check if the railpiece was already build!
-						// Rail going south / north.
-						if (currentDirection == 1 + AIMap.GetMapSizeX() || currentDirection == -1 - AIMap.GetMapSizeX()) {
-							// Rail can be going west and east from here.
-							
-							if (direction == 1 || direction == -AIMap.GetMapSizeX()) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_SW) &&
-									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NW_SW)) {
-									local abc = AIExecMode();
-									Log.logWarning("Build here failed: " + (roadList[a + 1].tile - direction));
-									AISign.BuildSign(roadList[a + 1].tile - direction, "Build here failed: ");
-									assert(false);
-								}
-							} else if (direction == -1 || direction == AIMap.GetMapSizeX()) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NE_SE) &&
-									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NE_SE)) {
-									local abc = AIExecMode();
-									Log.logWarning("Build here failed: " + (roadList[a + 1].tile - direction));
-									AISign.BuildSign(roadList[a + 1].tile - direction, "Build here failed: ");
-									assert(false);
-								}
-							} else
-								assert(false);
-						}
-						
-						// Rail going east / west.
-						else if (currentDirection == -1 + AIMap.GetMapSizeX() || currentDirection == 1 - AIMap.GetMapSizeX()) {
-							// Rail can be going north and south from here.
-							if (direction == -AIMap.GetMapSizeX() || direction == -1) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_NW_NE) &&
-									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_NW_NE)) {
-									local abc = AIExecMode();
-									Log.logWarning("Build here failed: " + roadList[a + 1].tile);
-									AISign.BuildSign(roadList[a + 1].tile, "Build here failed: ");
-									assert(false);
-								}
-							} else if (direction == AIMap.GetMapSizeX() || direction == 1) {
-								if (!AIRail.BuildRailTrack(roadList[a + 1].tile - direction, AIRail.RAILTRACK_SW_SE) &&
-									!(AIRail.GetRailTracks(roadList[a + 1].tile - direction) & AIRail.RAILTRACK_SW_SE))
-									assert(false);
-							} else
-								assert(false);
-						} else {
-							Log.logWarning("Direction is: " + currentDirection);
-							assert(false);
-						}
-					}
-
-				} else {
-					extraRailTile = null;
+			
+			// If we go from a 'straight' rail to the direction of North, West, South, or East we need to build
+			// a different tile.
+			if (direction != roadList[a - 1].direction && (direction == 1 || direction == -1 || direction == mapSizeX || direction == -mapSizeX)) {
+				local trackToBuild;
+				if (roadList[a - 1].direction == 1 + AIMap.GetMapSizeX() || roadList[a - 1].direction == -1 - AIMap.GetMapSizeX()) {
+					// Rail can be going west and east from here.
+					if (direction == 1 || direction == -AIMap.GetMapSizeX())
+						trackToBuild = AIRail.RAILTRACK_NE_SE;
+					else if (direction == -1 || direction == AIMap.GetMapSizeX())
+						trackToBuild = AIRail.RAILTRACK_NW_SW;
+					else
+						assert(false);
 				}
-
-				prevCurrentDirection = currentDirection;
-				currentDirection = direction;
-				buildFromIndex = a + 1;
+				
+				// Rail going east / west.
+				else if (roadList[a - 1].direction == -1 + AIMap.GetMapSizeX() || roadList[a - 1].direction == 1 - AIMap.GetMapSizeX()) {
+					// Rail can be going north and south from here.
+					if (direction == -AIMap.GetMapSizeX() || direction == -1)
+						trackToBuild = AIRail.RAILTRACK_SW_SE;
+					else if (direction == AIMap.GetMapSizeX() || direction == 1)
+						trackToBuild =  AIRail.RAILTRACK_NW_NE;
+					else
+						assert(false);
+				} else {
+					Log.logWarning("Direction is: " + currentDirection);
+					assert(false);
+				}
+				
+				if (!AIRail.BuildRailTrack(roadList[a].tile, trackToBuild) &&
+					!(AIRail.GetRailTracks(roadList[a].tile) & trackToBuild)) {
+					local abc = AIExecMode();
+					Log.logWarning("Build here failed: " + (roadList[a].tile));
+					AISign.BuildSign(roadList[a].tile, "Build here failed: ");
+					return false;
+				}
+				continue;
 			}
+			else
+				AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
 		}
 
 		else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
 				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, estimateCost))
-					return false;
-			} else {
-				// If the tunnel is already build, make sure the road before the bridge is connected to the
-				// already build tunnel. (the part after the tunnel is handled in the next part).
-				if (!BuildRoadPiece(roadList[a].tile, roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
 					return false;
 			}
 		} 
@@ -498,51 +445,9 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost))
 					return false;
 
-			} else {
-
-				// If the bridge is already build, make sure the road before the bridge is connected to the
-				// already build bridge. (the part after the bridge is handled in the next part).			
-				if (!BuildRoadPiece(roadList[a].tile, roadList[a + 1].tile, roadList[a + 1].tile + roadList[a].direction, Tile.ROAD, null, estimateCost))
-					return false;
 			}
-		}
-		
-		// For both bridges and tunnels we need to build the piece of road prior and after
-		// the bridge and tunnels.
-		// TODO: The a > -1 check shouldn't be necessary.
-		if (a > -1 && roadList[a].type != Tile.ROAD) {
-
-			// Build road before the tunnel or bridge.
-			// Don't do this if the type before wasn't a road!
-			if (roadList[buildFromIndex].type == Tile.ROAD)
-				if (!BuildRoadPiece(roadList[buildFromIndex].tile - roadList[a + 1].direction, roadList[buildFromIndex].tile, roadList[a + 1].tile + roadList[a + 1].direction, Tile.ROAD, null, estimateCost))
-					return false;
-			
-			// Build the road after the tunnel or bridge, but only if the next tile is a road tile.
-			// if the tile is not a road we obstruct the next bridge the pathfinder wants to build.
-			if (a > 0 && roadList[a - 1].type == Tile.ROAD) {
-				if (roadList[a].tile == roadList[a - 1].tile)
-					assert(false);
-//				Log.logWarning(roadList[a].tile + " " + roadList[a - 1].tile);
-				if (!BuildRoadPiece(roadList[a].tile, roadList[a - 1].tile, roadList[a - 1].tile + roadList[a - 1].direction, Tile.ROAD, null, estimateCost))
-					return false;
-			}
-
-			// Update the status before moving on.
-			assert (roadList[a].tile != roadList[a - 1].tile);
-			buildFromIndex = a - 1;
-			currentDirection = roadList[a - 1].direction;
-			extraRailTile = roadList[a - 1].tile - roadList[a - 1].direction;
-			AISign.BuildSign(extraRailTile, "Extra rail tile: ");
-			AISign.BuildSign(roadList[a - 1].tile, "Build from index: ");
 		}
 	}
-	
-	// Build the last part (if any).
-	// TODO: Depends on where the rail has been build...
-	if (buildFromIndex > 0)
-		if (!BuildRoadPiece((extraRailTile == null ? roadList[buildFromIndex + 1].tile : extraRailTile), roadList[buildFromIndex].tile, roadList[0].tile, Tile.ROAD, null, estimateCost))
-			return false;
 
 	return true;
 }
