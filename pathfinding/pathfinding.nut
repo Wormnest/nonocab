@@ -44,11 +44,12 @@ class RoadPathFinding {
 
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
 
-//	{
-//		local bla = AIExecMode();
-//		foreach (index, sign in AISignList())
-//			AISign.RemoveSign(index);
-//	}
+	//if (checkStartPositions ) 
+	/*{
+		local bla = AIExecMode();
+		foreach (index, sign in AISignList())
+			AISign.RemoveSign(index);
+	}*/
 
 	local test = AITestMode();
 
@@ -108,6 +109,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	
 	// Now with the open and closed list we're ready to do some grinding!!!
 	local at;
+	local updateClosedList = pathFinderHelper.UpdateClosedList();
 	while ((at = pq.Pop())) {
 		if (at.length + AIMap.DistanceManhattan(at.tile, expectedEnd) > maxPathLength) {
 			Log.logDebug("Max length hit, aborting!");
@@ -115,7 +117,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		}
 			
 		// If this node has already been processed, skip it!
-		if(closedList.rawin(at.tile) && !pathFinderHelper.ProcessClosedTile(at.tile, at.direction))
+		if((!updateClosedList || closedList.rawin(at.tile)) && !pathFinderHelper.ProcessClosedTile(at.tile, at.direction))
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.
@@ -148,7 +150,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		}
 		
 		// Done! Don't forget to put at into the closed list
-		closedList[at.tile] <- at.tile;
+		if (updateClosedList)
+			closedList[at.tile] <- at.tile;
 	}
 
 	// Oh oh... No result found :(

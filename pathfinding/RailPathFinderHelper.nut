@@ -24,6 +24,13 @@ class RailPathFinderHelper extends PathFinderHelper {
 		
 		closed_list = {};
 	}
+	
+	function Reset() { 
+		closed_list = {};
+		emptyList = AIList();
+	}
+	
+	function UpdateClosedList() { return false; }
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or
@@ -94,9 +101,20 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 
 		local offsets = [1, -1, mapSizeX, -mapSizeX];
 		local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NW_SE, AIRail.RAILTRACK_NW_SE];
+		
 		foreach (i, value in startList) {
+			
+			local preferedDirection = 0;
+			if (AIRail.IsRailStationTile(i)) {
+				preferedDirection = AIRail.GetRailStationDirection(i);
+				//local abc = AIExecMode();
+				//AISign.BuildSign(i, "PREFERED DIRECTION!");
+			}
 
 			for (local j = 0; j < 4; j++) {
+				
+				if (preferedDirection != 0 && preferedDirection != rail_track_directions[j] || !BuildRailTrack(i + offsets[j], rail_track_directions[j]))
+					continue;
 
 				// Go in all possible directions.
 				// The tile at the beginning of the station.
@@ -118,7 +136,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 				stationBeginFront.forceForward = true;
-	
+
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			}
 		}
@@ -264,6 +282,11 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closedList) {
 
+/*	{
+		local abc = AIExecMode();
+		AISign.BuildSign(at.tile, "CHECK HERE!!!!");
+	}
+*/
 	if (at.type != Tile.ROAD)
 		return false;
 
@@ -334,10 +357,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	//}
 
 	local tileArray = [];
 	local offsets;
@@ -402,12 +425,18 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		local isInClosedList = false;
 
 		// Skip if this node is already processed.
-		if (closedList.rawin(nextTile))
+		if (closedList.rawin(nextTile) || closed_list.rawin(nextTile + "-" + offset)) {
+//			local ac = AIExecMode();
+//			AISign.BuildSign(nextTile, "CLOSED");
 			isInClosedList = true;
+		}
 
 		// Check if we can actually build this piece of rail or if the slopes render this impossible.
-		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile))
+		if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile)) {
+//			local ac = AIExecMode();
+//			AISign.BuildSign(nextTile, "Can't build");			
 			continue;
+		}
 		
 		// Check if we're going 'straight'.
 		local goingStraight = (offset == 1 || offset == -1 || offset == mapSizeX || offset == -mapSizeX ? true : false);

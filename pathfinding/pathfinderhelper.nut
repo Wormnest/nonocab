@@ -44,4 +44,12 @@ class PathFinderHelper {
 	 * @return True if the tile should be processed, false otherwise.
 	 */
 	function ProcessClosedTile(tile, direction) { return false; }
+	
+	/**
+	 * Some helpers might want to keep track of their own closed list instead of
+	 * relying on the default pathfinder. This is for example necessary if you
+	 * want to allow the pathfinder to visit tiles multiple times but from
+	 * different angles.
+	 */
+	function UpdateClosedList() { return true; }
 }
