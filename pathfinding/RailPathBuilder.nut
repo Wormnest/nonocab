@@ -377,55 +377,13 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 	local mapSizeX = AIMap.GetMapSizeX();
 
-	for(local a = roadList.len() - 1; 0 < a; a--) {
+	for(local a = roadList.len() - 1; -1 < a; a--) {
 
 		local buildToIndex = a;
 		local direction = roadList[a].direction;
 
-		if (roadList[a].type == Tile.ROAD) {
-
-
-			
-			// If we go from a 'straight' rail to the direction of North, West, South, or East we need to build
-			// a different tile.
-			if (direction != roadList[a - 1].direction && (direction == 1 || direction == -1 || direction == mapSizeX || direction == -mapSizeX)) {
-				local trackToBuild;
-				if (roadList[a - 1].direction == 1 + AIMap.GetMapSizeX() || roadList[a - 1].direction == -1 - AIMap.GetMapSizeX()) {
-					// Rail can be going west and east from here.
-					if (direction == 1 || direction == -AIMap.GetMapSizeX())
-						trackToBuild = AIRail.RAILTRACK_NE_SE;
-					else if (direction == -1 || direction == AIMap.GetMapSizeX())
-						trackToBuild = AIRail.RAILTRACK_NW_SW;
-					else
-						assert(false);
-				}
-				
-				// Rail going east / west.
-				else if (roadList[a - 1].direction == -1 + AIMap.GetMapSizeX() || roadList[a - 1].direction == 1 - AIMap.GetMapSizeX()) {
-					// Rail can be going north and south from here.
-					if (direction == -AIMap.GetMapSizeX() || direction == -1)
-						trackToBuild = AIRail.RAILTRACK_SW_SE;
-					else if (direction == AIMap.GetMapSizeX() || direction == 1)
-						trackToBuild =  AIRail.RAILTRACK_NW_NE;
-					else
-						assert(false);
-				} else {
-					Log.logWarning("Direction is: " + currentDirection);
-					assert(false);
-				}
-				
-				if (!AIRail.BuildRailTrack(roadList[a].tile, trackToBuild) &&
-					!(AIRail.GetRailTracks(roadList[a].tile) & trackToBuild)) {
-					local abc = AIExecMode();
-					Log.logWarning("Build here failed: " + (roadList[a].tile));
-					AISign.BuildSign(roadList[a].tile, "Build here failed: ");
-					return false;
-				}
-				continue;
-			}
-			else
-				AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
-		}
+		if (roadList[a].type == Tile.ROAD)
+			AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
 
 		else if (roadList[a].type == Tile.TUNNEL) {
 

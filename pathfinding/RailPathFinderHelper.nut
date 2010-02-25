@@ -2,7 +2,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 
 	costForRail 	= 20;       // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 50;       // Cost for building a new road.
-	costForTurn 	= 60;       // Additional cost if the road makes a turn.
+	costForTurn 	= 15;       // Additional cost if the road makes a turn.
 	costForBridge 	= 10;//65;  // Cost for building a bridge.
 	costForTunnel 	= 10;//65;  // Cost for building a tunnel.
 	costForSlope 	= 85;       // Additional cost if the road heads up or down a slope.
@@ -289,6 +289,21 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 */
 	if (at.type != Tile.ROAD)
 		return false;
+	
+	// If this tile has a rail station, check if there is something on it.
+	if (AICompany.IsMine(AITile.GetOwner(at.tile))) {
+		// If it is a rail road station, make sure the rail tile goes in the same direction.
+		if (AIRail.IsRailStationTile(at.tile)) {
+			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile))
+				return false;
+			return true;
+		}
+		else if (AIRail.GetRailTracks(at.tile) != AIRail.RAILTRACK_INVALID) {
+			if ((AIRail.GetRailTracks(at.tile) & at.lastBuildRailTrack) != at.lastBuildRailTrack)
+				return false;
+			return true;
+		}
+	}
 
 	local direction;
 	if (at.direction == -1 || at.direction == 1)
@@ -533,18 +548,18 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 						// If the previous rail track is going SE, build in the upper corner.
 						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_SW_SE))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_SW_SE;
-							nextTile -= mapSizeX;
-						}
-
-						// If the previous rail track is going NE, build in the lower corner.
-						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
 							if (!BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NW_NE))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NW_NE;
 							nextTile += 1;
+						}
+
+						// If the previous rail track is going NE, build in the lower corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
+							if (!BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+							nextTile -= mapSizeX;
 						}
 						
 						// If the previous rail track is going E, build according to the previous railtrack.
@@ -569,20 +584,18 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						
 						// If the previous rail track is going SW, build in the upper corner.
 						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
-								continue;
-							railTrackDirection = AIRail.RAILTRACK_SW_SE;
-							nextTile -= 1;
-
-						}
-						
-						// If the previous rail track is going NW, build in the lower corner.
-						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
 							if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_NE))
 								continue;
 							railTrackDirection = AIRail.RAILTRACK_NW_NE;
 							nextTile += mapSizeX;
-
+						}
+						
+						// If the previous rail track is going NW, build in the lower corner.
+						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
+							if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
+								continue;
+							railTrackDirection = AIRail.RAILTRACK_SW_SE;
+							nextTile -= 1;
 						}
 						
 						// If the previous rail track is going W, build according to the previous railtrack.
@@ -608,19 +621,19 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						
 						// If the previous rail track is going NE, build in the left corner.
 						if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
-							if (!BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NE_SE))
+							if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
 								continue;
-							railTrackDirection = AIRail.RAILTRACK_NE_SE;
-							nextTile += 1;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+							nextTile += mapSizeX;
 
 						}
 
 						// If the previous rail track is going NW, build in the right corner.
 						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
-							if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
+							if (!BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NE_SE))
 								continue;
-							railTrackDirection = AIRail.RAILTRACK_NW_SW;
-							nextTile += mapSizeX;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+							nextTile += 1;
 
 						}
 						
@@ -648,20 +661,20 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						// If the previous rail track is going SW, build in the right corner.
 						if(currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
 
-							if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
+							if (!BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_NE_SE))
 								continue;
-							railTrackDirection = AIRail.RAILTRACK_NW_SW;
-							nextTile -= 1;
+							railTrackDirection = AIRail.RAILTRACK_NE_SE;
+							nextTile -= mapSizeX;
 
 						}
 						
 						// If the previous rail track is going SE, build in the left corner.
 						else if (currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
 
-							if (!BuildRailTrack(nextTile - mapSizeX, AIRail.RAILTRACK_NE_SE))
+							if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
 								continue;
-							railTrackDirection = AIRail.RAILTRACK_NE_SE;
-							nextTile -= mapSizeX;
+							railTrackDirection = AIRail.RAILTRACK_NW_SW;
+							nextTile -= 1;
 
 						}
 						
@@ -683,6 +696,8 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 							Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
 							assert(false);
 						}
+					} else {
+						assert(false);
 					}
 				}
 				
@@ -704,23 +719,25 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						annotatedTile.distanceFromStart = costForSlope;
 				
 					// Special case where we need an extra straight tile.
-					if ((offset == 1 || offset == -AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW || // West
+					/*if ((offset == 1 || offset == -AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW || // West
 						(offset == -1 || offset == AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NE_SE || // East
 						(offset == 1 || offset == AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_SW_SE || // South
 						(offset == -1 || offset == -AIMap.GetMapSizeX()) && currentAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE) // North
-						annotatedTile.forceForward = true;
+						annotatedTile.forceForward = true;*/
 
 					if (currentAnnotatedTile.direction != offset)
 						annotatedTile.distanceFromStart += costForTurn;
 
+					local reuseRailTrack = AIRail.GetRailTracks(nextTile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+
 					if (!goingStraight) {
-						if (AIRail.IsRailTile(nextTile))
-							annotatedTile.distanceFromStart += costForRail / 3;
+						if (reuseRailTrack)
+							annotatedTile.distanceFromStart += costForRail / 2;
 						else
-							annotatedTile.distanceFromStart += costForNewRail / 3;
+							annotatedTile.distanceFromStart += costForNewRail / 2;
 					} else {
 						// Check if there is already a road here.
-						if (AIRail.IsRailTile(nextTile))
+						if (reuseRailTrack)
 							annotatedTile.distanceFromStart += costForRail;
 						else
 							annotatedTile.distanceFromStart += costForNewRail;
@@ -738,7 +755,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 function RailPathFinderHelper::BuildRailTrack(tile, railTrack) {
 	//local existingTrack = AIRail.GetRailTracks(tile);
-	if (AIRail.BuildRailTrack(tile, railTrack) || (AIRail.GetRailTracks(tile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(tile) & railTrack) == railTrack))
+	if (AIRail.BuildRailTrack(tile, railTrack) || (AICompany.IsMine(AITile.GetOwner(tile)) && AIRail.GetRailTracks(tile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(tile) & railTrack) == railTrack))
 		return true;
 	return false;
 }
