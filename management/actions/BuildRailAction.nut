@@ -225,14 +225,14 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				
 				if (direction == 1) {
 					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_NE_NW);
-					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
-				} else {
-					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(AIRail.RAILTRACK_NW_NE);
 					railsToBuild.push(roadList[i].tile);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
+				} else {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
 				}
 			} else if (direction == mapSizeX || direction == -mapSizeX) {
 				depotTile = roadList[i].tile + 2 * direction;
@@ -241,12 +241,12 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				
 				if (direction == mapSizeX) {
 					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_NE_NW);
+					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
 					railsToBuild.push(roadList[i].tile);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
 				} else {
 					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(AIRail.RAILTRACK_NW_NE);
 					railsToBuild.push(roadList[i].tile);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
 				}
@@ -274,7 +274,7 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 					railsToBuild.push(roadList[i].tile + 1);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile + 1 - mapSizeX);
-					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
 				} else if (direction == -1 + mapSizeX) {
 					depotTile = roadList[i].tile - 1 + 3 * mapSizeX;
 					railsToBuild.push(roadList[i].tile - 1 + 2 * mapSizeX);
@@ -286,11 +286,11 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 					railsToBuild.push(roadList[i].tile + mapSizeX);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile - 1 + mapSizeX);
-					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
 				} else if (direction == -1 - mapSizeX) {
-					depotTile = roadList[i].tile - 3 - mapSizeX;
-					railsToBuild.push(roadList[i].tile - mapSizeX - 2);
-					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+					depotTile = roadList[i].tile - 1 - 3 * mapSizeX;
+					railsToBuild.push(roadList[i].tile - 2 * mapSizeX - 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile - 1);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile - mapSizeX);
@@ -409,19 +409,74 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	}
 
 	// Now play to connect the other platforms.
-	ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder, stationType, false, true);
-	ConnectRailToStation(roadList, roadList[roadList.len() - 1].tile + startOrthogonalDirection, pathFinder, stationType, true, true);
-	ConnectRailToStation(secondPath.roadList, secondPath.roadList[0].tile + startOrthogonalDirection, pathFinder, stationType, false, true);
-	ConnectRailToStation(secondPath.roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile + endOrthogonalDirection, pathFinder, stationType, true, true);
+	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder, stationType, false, true);
+	if (toStartStationPath == null)
+		return false;
+	local toEndStationPath = ConnectRailToStation(roadList, roadList[roadList.len() - 1].tile + startOrthogonalDirection, pathFinder, stationType, true, true);
+	if (toEndStationPath == null)
+		return false;
+	local toStartStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[0].tile + startOrthogonalDirection, pathFinder, stationType, false, true);
+	if (toStartStationReturnPath == null)
+		return false;
+	local toEndStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile + endOrthogonalDirection, pathFinder, stationType, true, true);
+	if (toEndStationReturnPath == null)
+		return false;
+
+		
+	// Figure out the index where the extra rails meet.
+	local startIndex = -1;
+	local returnStartIndex = -1;
+	for (local i = 0; i < roadList.len(); i++) {
+		if (roadList[i].tile == toStartStationPath.roadList[0].tile) {
+			startIndex = i;
+			break;
+		}
+	}
+		
+	for (local i = 0; i < secondPath.roadList.len(); i++) {
+		if (secondPath.roadList[i].tile == toStartStationReturnPath.roadList[0].tile) {
+			returnStartIndex = i;
+			break;
+		}
+	}
+	
+	local endIndex = -1;
+	local returnEndIndex = -1;
+	for (local i = roadList.len() - 1; i > -1; i--) {
+		if (roadList[i].tile == toEndStationPath.roadList[0].tile) {
+			endIndex = i;
+			break;
+		}
+	}
+		
+	for (local i = secondPath.roadList.len() - 1; i > -1; i--) {
+		if (secondPath.roadList[i].tile == toEndStationReturnPath.roadList[0].tile) {
+			returnEndIndex = i;
+			break;
+		}
+	}
+
+	assert (startIndex != -1 && returnStartIndex != -1 && endIndex != -1 && returnEndIndex != -1);
+	
+	BuildSignal(toStartStationPath.roadList[toStartStationPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(toStartStationPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
+	BuildSignal(toEndStationPath.roadList[toEndStationPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
+	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(toStartStationReturnPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
+	BuildSignal(toEndStationReturnPath.roadList[toEndStationReturnPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(toEndStationReturnPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
 
 	// Build the signals.
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(roadList, false, startIndex, endIndex, 4, AIRail.SIGNALTYPE_NORMAL);
 
 	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	//BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(secondPath.roadList, false, returnStartIndex, returnEndIndex, 4, AIRail.SIGNALTYPE_NORMAL);
 	return true;
 }
 
@@ -469,19 +524,78 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 		return false;
 	
 	// Now play to connect the other platforms.
-	ConnectRailToStation(roadList, secondPath.roadList[0].tile, pathFinder, stationType, false, false);
-	ConnectRailToStation(secondPath.roadList, roadList[0].tile, pathFinder, stationType, false, false);
-	ConnectRailToStation(roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile, pathFinder, stationType, true, true);
-	ConnectRailToStation(secondPath.roadList, roadList[roadList.len() - 1].tile, pathFinder, stationType, true, true);
+	local toStartStationPath = ConnectRailToStation(roadList, secondPath.roadList[0].tile, pathFinder, stationType, false, false);
+	if (toStartStationPath == null)
+		return false;
+	local toStartStationReturnPath = ConnectRailToStation(secondPath.roadList, roadList[0].tile, pathFinder, stationType, false, false);
+	if (toStartStationReturnPath == null)
+		return false;
+	local toEndStationPath = ConnectRailToStation(roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile, pathFinder, stationType, true, true);
+	if (toEndStationPath == null)
+		return false;
+	local toEndStationReturnPath = ConnectRailToStation(secondPath.roadList, roadList[roadList.len() - 1].tile, pathFinder, stationType, true, true);
+	if (toEndStationReturnPath == null)
+		return false;
+		
+	// Figure out the index where the extra rails meet.
+	local startIndex = -1;
+	local returnStartIndex = -1;
+	for (local i = 0; i < roadList.len(); i++) {
+		if (roadList[i].tile == toStartStationPath.roadList[toStartStationPath.roadList.len() - 1].tile) {
+			startIndex = i;
+			break;
+		}
+	}
+	assert(startIndex != -1);
+		
+	for (local i = 0; i < secondPath.roadList.len(); i++) {
+		if (secondPath.roadList[i].tile == toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 1].tile) {
+			returnStartIndex = i;
+			break;
+		}
+	}
+	assert(returnStartIndex != -1);
+	
+	local endIndex = -1;
+	local returnEndIndex = -1;
+	for (local i = roadList.len() - 1; i > -1; i--) {
+		if (roadList[i].tile == toEndStationPath.roadList[0].tile) {
+			endIndex = i;
+			break;
+		}
+	}
+	assert(endIndex != -1);
+		
+	for (local i = secondPath.roadList.len() - 1; i > -1; i--) {
+		if (secondPath.roadList[i].tile == toEndStationReturnPath.roadList[0].tile) {
+			returnEndIndex = i;
+			break;
+		}
+	}
+	
+/*	{
+		local sdafs = AIExecMode();
+		AISign.BuildSign(roadList[startIndex].tile, "StartIndex");
+		AISign.BuildSign(secondPath.roadList[returnStartIndex].tile, "returnStartIndex");
+		AISign.BuildSign(roadList[endIndex].tile, "endIndex");
+		AISign.BuildSign(secondPath.roadList[returnEndIndex].tile, "returnEndIndex");
+	}
+*/
+	assert (startIndex != -1 && returnStartIndex != -1 && endIndex != -1 && returnEndIndex != -1);
+
+	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
+	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 1], true, AIRail.SIGNALTYPE_ENTRY);
 
 	// Build the signals.
-	BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_NORMAL);
+	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignals(roadList, false, startIndex, endIndex, 4, AIRail.SIGNALTYPE_NORMAL);
 	
-	BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_NORMAL);
+	//BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignals(secondPath.roadList, true, returnStartIndex, returnEndIndex, 4, AIRail.SIGNALTYPE_NORMAL);
 
 	return true;
 }
@@ -510,20 +624,22 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 		pathBuilder.RealiseConnection(false);
-		//BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_NORMAL);
-		BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_EXIT);
-		BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
+
+		//BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_EXIT);
+		//BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
 	} else {
 		Log.logError("Failed to connect a rail piece to the rail station.");
-		return false;
+		return null;
 	}
 	
-	return true;
+	return toPlatformPath;
 }
 
-function BuildRailAction::BuildSignals(roadList, reverse, index, spread, signalType) {
+function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
 
 	local abc = AIExecMode();
+	//AISign.BuildSign(roadList[startIndex].tile, "SIGNALS FROM HERE");
+	//AISign.BuildSign(roadList[endIndex].tile, "SIGNALS TILL HERE");
 	local singleRail = array(256);
 	singleRail[1] = true;
 	singleRail[2] = true;
@@ -537,7 +653,7 @@ function BuildRailAction::BuildSignals(roadList, reverse, index, spread, signalT
 
 	// Now build the signals.
 	local tilesAfterCrossing = spread;
-	for (local a = index; a < roadList.len() - 1; a++) {
+	for (local a = startIndex; a < endIndex; a++) {
 		
 		// Only build a signal every so many steps, or if we're facing a crossing.
 		// Because we are moving from the end station to the begin station, we need
@@ -551,7 +667,7 @@ function BuildRailAction::BuildSignals(roadList, reverse, index, spread, signalT
 			isTileBeforeCrossing = true;
 		}
 
-		if (++tilesAfterCrossing > spread && (a - index) % spread == 0 || isTileBeforeCrossing)
+		if (++tilesAfterCrossing > spread && (a - startIndex) % spread == 0 || isTileBeforeCrossing)
 			BuildSignal(roadList[a], reverse, signalType);
 	}
 }
