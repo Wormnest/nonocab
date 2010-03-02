@@ -99,19 +99,19 @@ function BuildRailAction::Execute() {
 	}
 
 	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
-	//if (!BuildRoRoStation(stationType, pathFinder)) {
+	if (!BuildRoRoStation(stationType, pathFinder)) {
 		Log.logWarning("Failed to build the RoRo station...");
 		if (!BuildTerminusStation(stationType, pathFinder)) {
 			Log.logWarning("Failed to build the Terminus station...");
 			return false;
 		}
-	//}
+	}
 	
 	Log.logError("Build depot!");
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
-		local depot = BuildDepot(roadList, len - 3, -1);
+		local depot = BuildDepot(roadList, len - 10, -1);
 
 		// Check if we could actualy build a depot:
 		if (depot == null) {
@@ -123,7 +123,7 @@ function BuildRailAction::Execute() {
 
 		if (connection.bilateralConnection) {
 
-			depot = BuildDepot(roadList, 3, 1);
+			depot = BuildDepot(roadList, 10, 1);
 			if (depot == null) {
 				Log.logError("Failed to build a depot :(");
 				return false;
@@ -179,102 +179,181 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 	local len = roadList.len();
 	local depotLocation = null;
 	local depotFront = null;
+	local mapSizeX = AIMap.GetMapSizeX();
+	local directions = [1, -1, mapSizeX, -mapSizeX, 1 + mapSizeX, -1 + mapSizeX, 1 - mapSizeX, -1 - mapSizeX];
 
 	// Look for a suitable spot and test if we can build there.
-	for (local i = startPoint; i > 1 && i < len; i += searchDirection) {
-		
-		// Only allow a depot at a piece of the track that goes straight!
-		if (roadList[i].lastBuildRailTrack != AIRail.RAILTRACK_NE_SW && roadList[i].lastBuildRailTrack != AIRail.RAILTRACK_NW_SE)
+	for (local i = startPoint; i > 1 && i < len - 1; i += searchDirection) {
+
+		// Make sure the road goes in the same direction for 3 tiles.
+		if (roadList[i].direction != roadList[i + 1].direction || roadList[i].direction != roadList[i - 1].direction)
 			continue;
-
+		
+		local directions;
+		// Determine which directions we can go to.
+		switch (roadList[i].lastBuildRailTrack) {
+			 case AIRail.RAILTRACK_NE_SW:
+			 	directions = [mapSizeX, -mapSizeX];
+			 	break;
+			 case AIRail.RAILTRACK_NW_SE:
+			 	directions = [1, -1];
+			 	break;
+			 case AIRail.RAILTRACK_NE_SE:
+			 	directions = [1 - mapSizeX];
+			 	break;
+			 case AIRail.RAILTRACK_NW_SE:
+			 	directions = [-1 + mapSizeX];
+			 	break;
+			 case AIRail.RAILTRACK_NW_NE:
+			 	directions = [-1 - mapSizeX];
+			 	break;
+			 case AIRail.RAILTRACK_SW_SE:
+			 	directions = [1 + mapSizeX];
+			 	break;
+		}
+		
 		foreach (direction in directions) {
-			if (direction == roadList[i].direction || direction == -roadList[i].direction || (roadList[i].direction != 1 && roadList[i].direction != -1 && roadList[i].direction != AIMap.GetMapSizeX() && roadList[i].direction != -AIMap.GetMapSizeX()))
-				continue;
-			if (Tile.IsBuildable(roadList[i].tile + direction, false) && AIRoad.CanBuildConnectedRoadPartsHere(roadList[i].tile, roadList[i].tile + direction, roadList[i + 1].tile)) {
+			
+			local railsToBuild = [];
+			local depotTile = null;
+			
+			// Check if we are going straight.
+			if (direction == 1 || direction == -1) {
+				depotTile = roadList[i].tile + 2 * direction;
+				railsToBuild.push(roadList[i].tile + direction);
+				railsToBuild.push(AIRail.RAILTRACK_NE_SW);
 				
-				// Switch to test mode so we don't build the depot, but just test its location.
-				{
-					local test = AITestMode();
-					if (AIRail.BuildRailDepot(roadList[i].tile + direction, roadList[i].tile)) {
-						
-						
-						if (direction == 1) {
-							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_SW_SE) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SW))
-									continue;
-						} else if (direction == -1) {
-							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_NE) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SE))
-									continue
-						} else if (direction == AIMap.GetMapSizeX()) {
-							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SE) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_SW_SE) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SE))
-									continue;
-						} else if (direction == -AIMap.GetMapSizeX()) {
-							if (!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NE_SW) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_NE) ||
-								!AIRail.BuildRailTrack(roadList[i].tile, AIRail.RAILTRACK_NW_SW))
-									continue;
-						}
-						
-						
-						// We can't build the depot instantly, because OpenTTD crashes if we
-						// switch to exec mode at this point (stupid bug...).
-						depotLocation = roadList[i].tile + direction;
-						depotFront = roadList[i].tile;
-					}
+				if (direction == 1) {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NE_NW);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+				} else {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
 				}
+			} else if (direction == mapSizeX || direction == -mapSizeX) {
+				depotTile = roadList[i].tile + 2 * direction;
+				railsToBuild.push(roadList[i].tile + direction);
+				railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 				
-				if (depotLocation) {
-					local abc = AIExecMode();
-					
-/*
-RAILTRACK_NE_SW 	Track along the x-axis (north-east to south-west).
-RAILTRACK_NW_SE 	Track along the y-axis (north-west to south-east).
-RAILTRACK_NW_NE 	Track in the upper corner of the tile (north).
-RAILTRACK_SW_SE 	Track in the lower corner of the tile (south).
-RAILTRACK_NW_SW 	Track in the left corner of the tile (west).
-RAILTRACK_NE_SE 	Track in the right corner of the tile (east). 
-*/
+				if (direction == mapSizeX) {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NE_NW);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
+				} else {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+				}
+			} else {
+				if (direction == 1 + mapSizeX) {
+					depotTile = roadList[i].tile + mapSizeX + 3;
+					railsToBuild.push(roadList[i].tile + mapSizeX + 2);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile + mapSizeX + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile + mapSizeX + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+					railsToBuild.push(roadList[i].tile + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
+					railsToBuild.push(roadList[i].tile + mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+				} else if (direction == 1 - mapSizeX) {
+					depotTile = roadList[i].tile - mapSizeX + 3;
+					railsToBuild.push(roadList[i].tile - mapSizeX + 2);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - mapSizeX + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
+					railsToBuild.push(roadList[i].tile + 1 - mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+				} else if (direction == -1 + mapSizeX) {
+					depotTile = roadList[i].tile - 1 + 3 * mapSizeX;
+					railsToBuild.push(roadList[i].tile - 1 + 2 * mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - 1);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - 1 + mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile + mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
+					railsToBuild.push(roadList[i].tile - 1 + mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_SE_SW);
+				} else if (direction == -1 - mapSizeX) {
+					depotTile = roadList[i].tile - 3 - mapSizeX;
+					railsToBuild.push(roadList[i].tile - mapSizeX - 2);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+					railsToBuild.push(roadList[i].tile - 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
+					railsToBuild.push(roadList[i].tile - mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - mapSizeX - 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
+					railsToBuild.push(roadList[i].tile - mapSizeX - 1);
+					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
 
-					// Build the rails leading to the depot.
-					if (direction == 1) {
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_SW_SE);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SW);
-					} else if (direction == -1) {
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_NE);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SE);
-					} else if (direction == AIMap.GetMapSizeX()) {
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SE);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_SW_SE);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SE);
-					} else if (direction == -AIMap.GetMapSizeX()) {
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NE_SW);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_NE);
-						AIRail.BuildRailTrack(depotFront, AIRail.RAILTRACK_NW_SW);
-					}
-					
-					// If we found the correct location switch to exec mode and build it.
-					// Note that we need to build the road first, else we are unable to do
-					// so again in the future.
-					if (!AIRail.BuildRailDepot(depotLocation, depotFront)) {
-						depotLocation = null;
-						depotFront = null;
-					} else
-						break;
 				}
 			}
+			
+			if (!AITile.IsBuildable(depotTile) || !AITile.IsBuildable(railsToBuild[0]))
+				continue;
+			
+			// First test to see if we can build everything.
+			{
+				local test = AITestMode();
+				if (!AIRail.BuildRailDepot(depotTile, railsToBuild[0]))
+					continue;
+				
+				local problemsWhileBuilding = false;
+				for (local i = 0; i < railsToBuild.len(); i += 2) {
+					if (!AIRail.BuildRailTrack(railsToBuild[i], railsToBuild[i + 1])) {
+						problemsWhileBuilding = true;
+						break;
+					}
+				}
+				
+				if (problemsWhileBuilding)
+					continue;
+			}
+			
+			// No do it for real! :)
+			if (!AIRail.BuildRailDepot(depotTile, railsToBuild[0]))
+				continue;
+			
+			local problemsWhileBuilding = false;
+			for (local i = 0; i < railsToBuild.len(); i += 2) {
+				if (!AIRail.BuildRailTrack(railsToBuild[i], railsToBuild[i + 1])) {
+					problemsWhileBuilding = true;
+					break;
+				}
+			}
+
+			if (problemsWhileBuilding)
+				continue;
+
+			if (!AIRail.BuildSignal(railsToBuild[0], depotTile, AIRail.SIGNALTYPE_NORMAL_TWOWAY)) {
+				AISign.BuildSign(railsToBuild[0], "NO SIGNAL!??!");
+				continue;
+			} 
+			
+			depotLocation = depotTile;
+			break;
 		}
+		
 		
 		if (depotLocation != null)
 			return depotLocation;
 	}
 
+	assert(false);
 	return null;
 }
 
@@ -336,13 +415,13 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	ConnectRailToStation(secondPath.roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile + endOrthogonalDirection, pathFinder, stationType, true, true);
 
 	// Build the signals.
-	BuildSignals(roadList, false, 1, 4);
-	BuildSignal(roadList[1], false);
-	BuildSignal(roadList[roadList.len() - 2], false);
-	
-	BuildSignals(secondPath.roadList, false, 1, 4);
-	BuildSignal(secondPath.roadList[1], false);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false);
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+
+	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
 	return true;
 }
 
@@ -396,13 +475,13 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	ConnectRailToStation(secondPath.roadList, roadList[roadList.len() - 1].tile, pathFinder, stationType, true, true);
 
 	// Build the signals.
-	BuildSignals(roadList, false, 1, 4);
-	BuildSignal(roadList[1], false);
-	BuildSignal(roadList[roadList.len() - 2], false);
+	BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_NORMAL);
 	
-	BuildSignals(secondPath.roadList, true, 1, 4);
-	BuildSignal(secondPath.roadList[1], true);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true);
+	BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_NORMAL);
 
 	return true;
 }
@@ -431,7 +510,9 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 		pathBuilder.RealiseConnection(false);
-		BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse);
+		//BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_NORMAL);
+		BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_EXIT);
+		BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
 	} else {
 		Log.logError("Failed to connect a rail piece to the rail station.");
 		return false;
@@ -440,7 +521,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	return true;
 }
 
-function BuildRailAction::BuildSignals(roadList, reverse, index, spread) {
+function BuildRailAction::BuildSignals(roadList, reverse, index, spread, signalType) {
 
 	local abc = AIExecMode();
 	local singleRail = array(256);
@@ -471,11 +552,11 @@ function BuildRailAction::BuildSignals(roadList, reverse, index, spread) {
 		}
 
 		if (++tilesAfterCrossing > spread && (a - index) % spread == 0 || isTileBeforeCrossing)
-			BuildSignal(roadList[a], reverse);
+			BuildSignal(roadList[a], reverse, signalType);
 	}
 }
 
-function BuildRailAction::BuildSignal(roadAnnotatedTile, reverse) {
+function BuildRailAction::BuildSignal(roadAnnotatedTile, reverse, signalType) {
 	local direction = (reverse ? -roadAnnotatedTile.direction : roadAnnotatedTile.direction);
 	//local direction = roadList[a].direction;
 	local nextTile = 0;
@@ -512,5 +593,5 @@ function BuildRailAction::BuildSignal(roadAnnotatedTile, reverse) {
 	}
 
 	if (AIRail.GetSignalType(roadAnnotatedTile.tile, nextTile) == AIRail.SIGNALTYPE_NONE)
-		AIRail.BuildSignal(roadAnnotatedTile.tile, nextTile, AIRail.SIGNALTYPE_NORMAL);	
+		AIRail.BuildSignal(roadAnnotatedTile.tile, nextTile, signalType);	
 }
