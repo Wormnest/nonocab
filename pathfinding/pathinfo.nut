@@ -5,6 +5,9 @@ class PathInfo {
 
 	roadList = null;          // List of all road tiles the road needs to follow.
 	roadListReturn = null;    // Like roadList but for the return journey (only for trains).
+	extraRoadBits = null;     // Any extra road bits this connection requires. These are mainly the tracks
+	                          // needed by trains to link to the other platforms at stations or to connect
+	                          // the roadList and roadListReturn.
 	roadCost = null;          // The cost to create this road.
 	depot = null;             // The location of the depot.
 	depotOtherEnd = null;     // The location of the depot at the other end (if it any).
@@ -19,6 +22,7 @@ class PathInfo {
 	constructor(_roadList, _roadListReturn, _roadCost, _vehicleType) {
 		roadList = _roadList;
 		roadListReturn = _roadListReturn;
+		extraRoadBits = [];
 		roadCost = _roadCost;
 		vehicleType = _vehicleType;
 		build = false;
@@ -41,6 +45,17 @@ class PathInfo {
 			roadListReturn.push(at);
 		}
 		
+		extraRoadBits = [];
+		foreach (roadBitList in data["extraRoadBits"]) {
+			local array = [];
+			foreach (tile in roadBitList) {
+				local at = AnnotatedTile();
+				at.tile = tile;
+				array.push(at.tile);
+			}
+			extraRoadBits.push(array);
+		}
+		
 		roadCost = data["roadCost"];
 		vehicleType = data["vehicleType"];
 		depot = data["depot"];
@@ -61,6 +76,15 @@ class PathInfo {
 		saveData["roadListReturn"] <- [];
 		foreach (at in roadList) {
 			saveData["roadListReturn"].push(at.tile);
+		}
+		
+		saveData["extraRoadBits"] <- [];
+		foreach (roadBitList in extraRoadBits) {
+			local array = [];
+			foreach (at in roadBitList) {
+				array.push(at.tile);
+			}
+			saveData["extraRoadBits"] <- array;
 		}
 		
 		saveData["roadCost"] <- roadCost;

@@ -123,7 +123,7 @@ function BuildRailAction::Execute() {
 
 		if (connection.bilateralConnection) {
 
-			depot = BuildDepot(roadList, 10, 1);
+			depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
 			if (depot == null) {
 				Log.logError("Failed to build a depot :(");
 				return false;
@@ -184,11 +184,10 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 
 	// Look for a suitable spot and test if we can build there.
 	for (local i = startPoint; i > 1 && i < len - 1; i += searchDirection) {
-
-		// Make sure the road goes in the same direction for 3 tiles.
 		if (roadList[i].direction != roadList[i + 1].direction || roadList[i].direction != roadList[i - 1].direction)
 			continue;
 		
+		//AISign.BuildSign(roadList[i].direction, "GIVE IT A TRY! :)");
 		local directions;
 		// Determine which directions we can go to.
 		switch (roadList[i].lastBuildRailTrack) {
@@ -315,8 +314,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 					continue;
 				
 				local problemsWhileBuilding = false;
-				for (local i = 0; i < railsToBuild.len(); i += 2) {
-					if (!AIRail.BuildRailTrack(railsToBuild[i], railsToBuild[i + 1])) {
+				for (local j = 0; j < railsToBuild.len(); j += 2) {
+					if (!AIRail.BuildRailTrack(railsToBuild[j], railsToBuild[j + 1])) {
 						problemsWhileBuilding = true;
 						break;
 					}
@@ -331,8 +330,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				continue;
 			
 			local problemsWhileBuilding = false;
-			for (local i = 0; i < railsToBuild.len(); i += 2) {
-				if (!AIRail.BuildRailTrack(railsToBuild[i], railsToBuild[i + 1])) {
+			for (local j = 0; j < railsToBuild.len(); j += 2) {
+				if (!AIRail.BuildRailTrack(railsToBuild[j], railsToBuild[j + 1])) {
 					problemsWhileBuilding = true;
 					break;
 				}
@@ -368,6 +367,7 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 }
 
 function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
+	//return false;
 	// Build the RoRo station.
 	local roadList = connection.pathInfo.roadList;
 	local endNodes = AITileList();
@@ -379,7 +379,6 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	//AISign.BuildSign(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 3, "BEGIN RETURN ROUTE");
 	
 	local tilesToIgnore = [];
-	local roadList = connection.pathInfo.roadList;
 	foreach (roadTile in roadList) {
 		tilesToIgnore.push(roadTile.tile);
 	}
@@ -410,12 +409,14 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 	if (secondPath == null)
 		return false;
-		
+	
 	local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 	if (!pathBuilder.RealiseConnection(false)) {
 		Log.logWarning("Failed to build RoRo-station!");
 		return false;
 	}
+	
+	connection.pathInfo.roadListReturn = secondPath.roadList;
 
 	// Now play to connect the other platforms.
 	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder, stationType, false, true);
@@ -480,12 +481,12 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignals(roadList, false, startIndex, endIndex, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(roadList, false, startIndex, endIndex, 6, AIRail.SIGNALTYPE_NORMAL);
 
 	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	//BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignals(secondPath.roadList, false, returnStartIndex, returnEndIndex, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(secondPath.roadList, false, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
 	return true;
 }
 
@@ -531,6 +532,7 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 	if (!pathBuilder.RealiseConnection(false))
 		return false;
+	connection.pathInfo.roadListReturn = secondPath.roadList;
 	
 	// Now play to connect the other platforms.
 	local toStartStationPath = ConnectRailToStation(roadList, secondPath.roadList[0].tile, pathFinder, stationType, false, false);
@@ -550,15 +552,16 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	local startIndex = -1;
 	local returnStartIndex = -1;
 	for (local i = 0; i < roadList.len(); i++) {
-		if (roadList[i].tile == toStartStationPath.roadList[toStartStationPath.roadList.len() - 1].tile) {
+		if (roadList[i].tile == toStartStationPath.roadList[0].tile) {
 			startIndex = i;
 			break;
 		}
 	}
+	
 	assert(startIndex != -1);
 		
 	for (local i = 0; i < secondPath.roadList.len(); i++) {
-		if (secondPath.roadList[i].tile == toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 1].tile) {
+		if (secondPath.roadList[i].tile == toStartStationReturnPath.roadList[0].tile) {
 			returnStartIndex = i;
 			break;
 		}
@@ -599,12 +602,12 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignals(roadList, false, startIndex, endIndex, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(roadList, false, startIndex, endIndex, 6, AIRail.SIGNALTYPE_NORMAL);
 	
 	//BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignals(secondPath.roadList, true, returnStartIndex, returnEndIndex, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(secondPath.roadList, true, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
 
 	return true;
 }
@@ -613,23 +616,25 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	
 	// Now play to connect the other platforms.
 	local beginNodes = AITileList();
-	for (local a = 3; a < 10; a++)
+	for (local a = 3; a < 20; a++)
+	//local a = 20;
 		beginNodes.AddTile(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile);
 	
 	local endNodes = AITileList();
 	endNodes.AddTile(stationPoint);
-	//AISign.BuildSign(roadList[0].tile + endOrthogonalDirection, "END NODE");
+	//AISign.BuildSign(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile, "BEGIN NODE");
+	///AISign.BuildSign(stationPoint, "END NODE");
 	pathFinder.pathFinderHelper.Reset();
 	pathFinder.pathFinderHelper.costForTurn = 0;
-	pathFinder.pathFinderHelper.costForRail = 30;
-	pathFinder.pathFinderHelper.costForNewRail = 100;
-	//pathFinder.pathFinderHelper.costTillEnd = 1;
+	pathFinder.pathFinderHelper.costForRail = 300;
+	pathFinder.pathFinderHelper.costForNewRail = 300;
+	pathFinder.pathFinderHelper.costTillEnd = 0;
 	
 	local toPlatformPath;
-	if (buildFromEnd)
+	//if (buildFromEnd)
 		toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
-	else
-		toPlatformPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	//else
+	//	toPlatformPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 		pathBuilder.RealiseConnection(false);
@@ -640,6 +645,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 		Log.logError("Failed to connect a rail piece to the rail station.");
 		return null;
 	}
+	connection.pathInfo.extraRoadBits.push(toPlatformPath.roadList);
 	
 	return toPlatformPath;
 }

@@ -109,6 +109,18 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				preferedDirection = AIRail.GetRailStationDirection(i);
 				//local abc = AIExecMode();
 				//AISign.BuildSign(i, "PREFERED DIRECTION!");
+			} else if (AIRail.GetRailTracks(i) != AIRail.RAILTRACK_INVALID) {
+				local railTracks = AIRail.GetRailTracks(i);
+				 if ((railTracks & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW)
+				 	preferedDirection = AIRail.RAILTRACK_NE_SW;
+				 if ((railTracks & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NW_SE) {
+				 	// If a rail type goes in both directions, let it rest because we don't know
+				 	// which option to choose.
+				 	if (preferedDirection != null)
+				 		preferedDirection = null;
+				 	else
+				 		preferedDirection = AIRail.RAILTRACK_NW_SE;
+				 }
 			}
 
 			for (local j = 0; j < 4; j++) {
@@ -521,6 +533,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			}
 
 			if (!isInClosedList) {// && (!AIRail.IsRailTile(nextTile + offset) || AIRail.IsRailStationTile(nextTile + offset) || !goingStraight)) {
+				
+				if (AIRail.IsRailStationTile(currentTile) && AIRail.IsRailStationTile(nextTile))
+					continue;
 				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
 				local railTrackDirection = -1;
 

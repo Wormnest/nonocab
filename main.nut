@@ -4,6 +4,8 @@ require("management/include.nut");
 require("advisors/include.nut");
 require("pathfinding/include.nut");
 
+local minimalSaveVersion = 5;
+
 class NoCAB extends AIController {
 	stop = false;
    	parlement = null;
@@ -23,11 +25,11 @@ class NoCAB extends AIController {
 }
 
 function NoCAB::Save() { 
-	Log.logInfo("Saving game using version 4... (might take a while...)");
+	Log.logInfo("Saving game using version " + minimalSaveVersion + "... (might take a while...)");
 	local saveTable = {};
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
-	saveTable["SaveVersion"] <- 4;
+	saveTable["SaveVersion"] <- minimalSaveVersion;
 	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	return saveTable;
 }
@@ -35,7 +37,7 @@ function NoCAB::Save() {
 function NoCAB::Load(version, data) {
 	local test = data["starting_year"];
 	local saveVersion = data["SaveVersion"];
-	if (saveVersion != 4) {
+	if (saveVersion != minimalSaveVersion) {
 		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
 		AILog.logWarning("Only save version 4 is supported, your version is: " + saveVersion);
 		return;
