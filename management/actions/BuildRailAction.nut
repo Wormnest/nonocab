@@ -198,10 +198,10 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			 case AIRail.RAILTRACK_NW_SE:
 			 	directions = [1, -1];
 			 	break;
-			 case AIRail.RAILTRACK_NE_SE:
+			 case AIRail.RAILTRACK_NW_SW:
 			 	directions = [1 - mapSizeX];
 			 	break;
-			 case AIRail.RAILTRACK_NW_SE:
+			 case AIRail.RAILTRACK_NE_SE:
 			 	directions = [-1 + mapSizeX];
 			 	break;
 			 case AIRail.RAILTRACK_NW_NE:
@@ -210,6 +210,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			 case AIRail.RAILTRACK_SW_SE:
 			 	directions = [1 + mapSizeX];
 			 	break;
+			 default:
+			 	assert(false);
 		}
 		
 		foreach (direction in directions) {
@@ -225,14 +227,14 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				
 				if (direction == 1) {
 					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_NW_NE);
-					railsToBuild.push(roadList[i].tile);
-					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
-				} else {
-					railsToBuild.push(roadList[i].tile);
 					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
 					railsToBuild.push(roadList[i].tile);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SW);
+				} else {
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NW_NE);
+					railsToBuild.push(roadList[i].tile);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SE);
 				}
 			} else if (direction == mapSizeX || direction == -mapSizeX) {
 				depotTile = roadList[i].tile + 2 * direction;
@@ -267,26 +269,26 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 					depotTile = roadList[i].tile - mapSizeX + 3;
 					railsToBuild.push(roadList[i].tile - mapSizeX + 2);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
-					railsToBuild.push(roadList[i].tile - mapSizeX);
-					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
 					railsToBuild.push(roadList[i].tile - mapSizeX + 1);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - mapSizeX);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
 					railsToBuild.push(roadList[i].tile + 1);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile + 1 - mapSizeX);
 					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
 				} else if (direction == -1 + mapSizeX) {
-					depotTile = roadList[i].tile - 1 + 3 * mapSizeX;
-					railsToBuild.push(roadList[i].tile - 1 + 2 * mapSizeX);
+					depotTile = roadList[i].tile + mapSizeX - 3;
+					railsToBuild.push(roadList[i].tile + mapSizeX - 2);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
-					railsToBuild.push(roadList[i].tile - 1);
-					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
-					railsToBuild.push(roadList[i].tile - 1 + mapSizeX);
+					railsToBuild.push(roadList[i].tile + mapSizeX - 1);
 					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
 					railsToBuild.push(roadList[i].tile + mapSizeX);
+					railsToBuild.push(AIRail.RAILTRACK_NE_SW);
+					railsToBuild.push(roadList[i].tile - 1);
 					railsToBuild.push(AIRail.RAILTRACK_NW_SE);
 					railsToBuild.push(roadList[i].tile - 1 + mapSizeX);
-					railsToBuild.push(AIRail.RAILTRACK_SW_SE);
+					railsToBuild.push(AIRail.RAILTRACK_NW_NE);
 				} else if (direction == -1 - mapSizeX) {
 					depotTile = roadList[i].tile - 1 - 3 * mapSizeX;
 					railsToBuild.push(roadList[i].tile - 2 * mapSizeX - 1);
@@ -344,6 +346,14 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				continue;
 			} 
 			
+			// Remove all signals on the tile between the entry and exit rails.
+			if (direction != 1 && direction != -1 && direction != mapSizeX && direction != -mapSizeX) {
+				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile + 1);
+				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile - 1);
+				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile + mapSizeX);
+				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile - mapSizeX);
+			}
+			
 			depotLocation = depotTile;
 			break;
 		}
@@ -358,7 +368,6 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 }
 
 function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
-
 	// Build the RoRo station.
 	local roadList = connection.pathInfo.roadList;
 	local endNodes = AITileList();
