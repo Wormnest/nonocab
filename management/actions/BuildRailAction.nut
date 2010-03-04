@@ -406,6 +406,11 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		}
 	}
 
+	// Build the signals.
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignals(roadList, false, 1, roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
+
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 	if (secondPath == null)
 		return false;
@@ -415,6 +420,11 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		Log.logWarning("Failed to build RoRo-station!");
 		return false;
 	}
+	
+	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignals(secondPath.roadList, false, 1, secondPath.roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
+	
 	
 	connection.pathInfo.roadListReturn = secondPath.roadList;
 
@@ -468,6 +478,13 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 
 	assert (startIndex != -1 && returnStartIndex != -1 && endIndex != -1 && returnEndIndex != -1);
 	
+	// Remove the intermediate signals.
+	RemoveSignals(roadList, false, 2, startIndex);
+	RemoveSignals(roadList, false, endIndex, roadList.len() - 2);
+	
+	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
+	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
+	
 	BuildSignal(toStartStationPath.roadList[toStartStationPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(toStartStationPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
 	BuildSignal(toEndStationPath.roadList[toEndStationPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
@@ -477,6 +494,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignal(toEndStationReturnPath.roadList[toEndStationReturnPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(toEndStationReturnPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
 
+/*
 	// Build the signals.
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
@@ -487,6 +505,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	//BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignals(secondPath.roadList, false, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
+*/
 	return true;
 }
 
@@ -690,39 +709,68 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 function BuildRailAction::BuildSignal(roadAnnotatedTile, reverse, signalType) {
 	local direction = (reverse ? -roadAnnotatedTile.direction : roadAnnotatedTile.direction);
 	//local direction = roadList[a].direction;
-	local nextTile = 0;
-	if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX() || direction == 1 || direction == -1)
-		nextTile = roadAnnotatedTile.tile + direction;
-		
-	// Going South.
-	else if (direction == AIMap.GetMapSizeX() + 1) {
-		if (roadAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW)
-			nextTile = roadAnnotatedTile.tile + 1;
-		else
-			nextTile = roadAnnotatedTile.tile + AIMap.GetMapSizeX();
-	}
-	// Going North.
-	else if (direction == -AIMap.GetMapSizeX() - 1) {
-		if (roadAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_SW)
-			nextTile = roadAnnotatedTile.tile - AIMap.GetMapSizeX();
-		else
-			nextTile = roadAnnotatedTile.tile - 1;
-	}
-	// Going West.
-	else if (direction == -AIMap.GetMapSizeX() + 1) {
-		if (roadAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE)
-			nextTile = roadAnnotatedTile.tile - AIMap.GetMapSizeX();
-		else				
-			nextTile = roadAnnotatedTile.tile + 1;
-	}
-	// Going East.
-	else if (direction == AIMap.GetMapSizeX() - 1) {
-		if (roadAnnotatedTile.lastBuildRailTrack == AIRail.RAILTRACK_NW_NE)
-			nextTile = roadAnnotatedTile.tile - 1;
-		else
-			nextTile = roadAnnotatedTile.tile + AIMap.GetMapSizeX();
-	}
+	local nextTile = GetSignalFrontTile(roadAnnotatedTile.tile, roadAnnotatedTile.lastBuildRailTrack, direction);
+
 
 	if (AIRail.GetSignalType(roadAnnotatedTile.tile, nextTile) == AIRail.SIGNALTYPE_NONE)
 		AIRail.BuildSignal(roadAnnotatedTile.tile, nextTile, signalType);	
+}
+
+function BuildRailAction::RemoveSignals(roadList, reverse, startIndex, endIndex) {
+
+	local abc = AIExecMode();
+
+	// Now remove the signals.
+	for (local a = startIndex; a < endIndex; a++) {
+		
+		// Only build a signal every so many steps, or if we're facing a crossing.
+		// Because we are moving from the end station to the begin station, we need
+		// to check if the previous tile was a crossing.
+		RemoveSignal(roadList[a], reverse);
+	}
+}
+
+function BuildRailAction::RemoveSignal(roadAnnotatedTile, reverse) {
+	local direction = (reverse ? -roadAnnotatedTile.direction : roadAnnotatedTile.direction);
+	//local direction = roadList[a].direction;
+	local nextTile = GetSignalFrontTile(roadAnnotatedTile.tile, roadAnnotatedTile.lastBuildRailTrack, direction);
+
+	AISign.BuildSign(roadAnnotatedTile.tile, "RS");
+	AIRail.RemoveSignal(roadAnnotatedTile.tile, nextTile);	
+}
+
+function BuildRailAction::GetSignalFrontTile(tile, railTrack, direction) {
+	local nextTile = null;
+	if (direction == AIMap.GetMapSizeX() || direction == -AIMap.GetMapSizeX() || direction == 1 || direction == -1)
+		nextTile = tile + direction;
+		
+	// Going South.
+	else if (direction == AIMap.GetMapSizeX() + 1) {
+		if (railTrack == AIRail.RAILTRACK_NW_SW)
+			nextTile = tile + 1;
+		else
+			nextTile = tile + AIMap.GetMapSizeX();
+	}
+	// Going North.
+	else if (direction == -AIMap.GetMapSizeX() - 1) {
+		if (railTrack == AIRail.RAILTRACK_NW_SW)
+			nextTile = tile - AIMap.GetMapSizeX();
+		else
+			nextTile = tile - 1;
+	}
+	// Going West.
+	else if (direction == -AIMap.GetMapSizeX() + 1) {
+		if (railTrack == AIRail.RAILTRACK_NW_NE)
+			nextTile = tile - AIMap.GetMapSizeX();
+		else				
+			nextTile = tile + 1;
+	}
+	// Going East.
+	else if (direction == AIMap.GetMapSizeX() - 1) {
+		if (railTrack == AIRail.RAILTRACK_NW_NE)
+			nextTile = tile - 1;
+		else
+			nextTile = tile + AIMap.GetMapSizeX();
+	}
+	return nextTile;
 }
