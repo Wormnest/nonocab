@@ -485,6 +485,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
 	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
 	
+	// TODO: Handle when these signals can't be build.
 	BuildSignal(toStartStationPath.roadList[toStartStationPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(toStartStationPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
 	BuildSignal(toEndStationPath.roadList[toEndStationPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
@@ -542,7 +543,13 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 			tilesToIgnore.push(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i - startOrthogonalDirection * j + startOrthogonalDirection);
 		}
 	}
-
+	
+		// Build the signals.
+	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignals(roadList, false, 1, roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
+	
 	local secondPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 
 	if (secondPath == null)
@@ -552,6 +559,11 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	if (!pathBuilder.RealiseConnection(false))
 		return false;
 	connection.pathInfo.roadListReturn = secondPath.roadList;
+
+	//BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
+	BuildSignals(secondPath.roadList, true, 1, secondPath.roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
 	
 	// Now play to connect the other platforms.
 	local toStartStationPath = ConnectRailToStation(roadList, secondPath.roadList[0].tile, pathFinder, stationType, false, false);
@@ -604,6 +616,13 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 		}
 	}
 	
+	// Remove the intermediate signals.
+	RemoveSignals(roadList, false, 2, startIndex);
+	RemoveSignals(roadList, false, endIndex, roadList.len() - 2);
+	
+	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
+	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
+	
 /*	{
 		local sdafs = AIExecMode();
 		AISign.BuildSign(roadList[startIndex].tile, "StartIndex");
@@ -617,6 +636,7 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
 	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 1], true, AIRail.SIGNALTYPE_ENTRY);
 
+/*
 	// Build the signals.
 	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
@@ -627,7 +647,7 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
 	BuildSignals(secondPath.roadList, true, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
-
+*/
 	return true;
 }
 
@@ -737,7 +757,7 @@ function BuildRailAction::RemoveSignal(roadAnnotatedTile, reverse) {
 	//local direction = roadList[a].direction;
 	local nextTile = GetSignalFrontTile(roadAnnotatedTile.tile, roadAnnotatedTile.lastBuildRailTrack, direction);
 
-	AISign.BuildSign(roadAnnotatedTile.tile, "RS");
+	//	AISign.BuildSign(roadAnnotatedTile.tile, "RS");
 	AIRail.RemoveSignal(roadAnnotatedTile.tile, nextTile);	
 }
 

@@ -811,16 +811,16 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 
-	{
-		local abc = AIExecMode();
-		AISign.BuildSign(tile, "CS " + direction);
-	}
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(tile, "CS " + direction);
+	//}
 
 	if (AIRail.IsRailStationTile(tile)) {
-		{
-			local abc = AIExecMode();
-			AISign.BuildSign(tile, "OK!");
-		}
+	//	{
+	//		local abc = AIExecMode();
+	//		AISign.BuildSign(tile, "OK!");
+	//	}
 		return true;
 	}
 
@@ -845,10 +845,10 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 	}
 	
 	if (AIRail.GetSignalType(tile, backSignalTile) != AIRail.SIGNALTYPE_NONE) {
-		{
-			local abc = AIExecMode();
-			AISign.BuildSign(tile, "NO!!!");
-		}
+		//{
+		//	local abc = AIExecMode();
+		//	AISign.BuildSign(tile, "NO!!!");
+		//}
 		return false;
 	}
 
@@ -856,17 +856,17 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 	local signalRightDirection = AIRail.GetSignalType(tile, frontSignalTile);
 	if (signalRightDirection == AIRail.SIGNALTYPE_EXIT ||
 		signalRightDirection == AIRail.SIGNALTYPE_ENTRY) {
-		{
-		local abc = AIExecMode();
-		AISign.BuildSign(tile, "NO!!!");
-		}
+		//{
+		//	local abc = AIExecMode();
+		//	AISign.BuildSign(tile, "NO!!!");
+		//}
 		return false;
 	}
 	else if (signalRightDirection != AIRail.SIGNALTYPE_NONE) {
-		{
-			local abc = AIExecMode();
-			AISign.BuildSign(tile, "OK!");
-		}
+		//{
+		//	local abc = AIExecMode();
+		//	AISign.BuildSign(tile, "OK!");
+		//}
 		return true;
 	}
 	
@@ -894,12 +894,13 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 		} 
 	}
 
-		{
-			local abc = AIExecMode();
-			AISign.BuildSign(tile, "WTF!");
-		}
+		//{
+		//	local abc = AIExecMode();
+		//	AISign.BuildSign(tile, "WTF!");
+		//}
 
-	assert(false);
+	//assert(false);
+	return false;
 }
 
 function RailPathFinderHelper::BuildRailTrack(tile, railTrack) {
