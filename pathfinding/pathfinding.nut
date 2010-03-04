@@ -170,7 +170,7 @@ class AnnotatedTile {
 	direction = 0;          // The direction the road travels to this point.
 	type = null;            // What type of infrastructure is this?
 	length = 0;	            // The length of the path.
-	bridgeOrTunnelAlreadyBuild = false;	// Is the bridge or tunnel already build?
+	alreadyBuild = false;	// Is this piece already build?
 	forceForward = false;   // Force the sucessor to go forward.
 	lastBuildRailTrack = -1; // The last build rail track, needed to determine the next piece. 
 }

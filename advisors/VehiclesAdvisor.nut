@@ -30,6 +30,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 		local nrVehiclesInStation = 0;
 		local hasVehicles = false;
 		local isAir = false;
+		local isRail = false;
 
 		// Check if there are any vehicles waiting on this tile and if so, sell them!
 		foreach (vehicleGroup in connection.vehiclesOperating) {
@@ -38,9 +39,13 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 
 				if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_AIR)
 					isAir = true;
+					
+				if (!isRail && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_RAIL)
+					isRail = true;
 
 				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-					AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) &&
+					(AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) ||
+					isRail )&&
 					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 					(AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING ||
 					AIVehicle.GetState(vehicleID) == AIVehicle.VS_BROKEN) &&
@@ -53,6 +58,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 				}
 			}
 		}
+		Log.logError("Vehicles waiting: " + nrVehicles + " " + nrVehiclesInStation);
 
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
 }
@@ -136,12 +142,12 @@ function VehiclesAdvisor::Update(loopCounter) {
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
 			if (report.nrVehicles < 0) {
 				// We don't build an extra airport if more aircrafts are needed!
-				if (isAir)
+				if (isAir || isTrain)
 					continue;
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isAir || isShip || nrVehicles == 0) 
+			if (production < 200 || isAir || isShip || isTrain || nrVehicles == 0) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;

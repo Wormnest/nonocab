@@ -133,13 +133,77 @@ function BuildRailAction::Execute() {
 		}
 	}
 	
-	// We only specify a connection as build if both the depots and the rails are build.
+	// We only declare a connection built if both the depots and the rails are build.
 	connection.UpdateAfterBuild(AIVehicle.VT_RAIL, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
 	totalCosts = accounter.GetCosts();
 	return true;
+}
+
+function BuildRailAction::CleanupTile(at, considerRemovedTracks) {
+	if (at.alreadyBuild || AIRoad.IsRoadTile(at.tile))
+		return;
+
+	// Create an inverted bitmap off all the tracks which should already have been
+	// removed. By taking the inverted bitmap and applying an ADD operation only
+	// the remaining tracks on the tile will be checked. So if this connection built
+	// on a tile multiple times also these will be removed! :)
+	local additionalTracks = 0;
+	if (considerRemovedTracks.rawin(at.tile))
+		additionalTracks = considerRemovedTracks.rawget(at.tile);
+
+	local railTracks = AIRail.GetRailTracks(at.tile);
+	if (at.type != Tile.ROAD || IsSingleRailTrack(railTracks & (~additionalTracks)))
+		AITile.DemolishTile(at.tile);
+	else
+		considerRemovedTracks[at.tile] <- (additionalTracks | at.lastBuildRailTrack);
+}
+
+function BuildRailAction::CleanupAfterFailure() {
+	local test = AIExecMode();
+	// Remove all the stations and depots build, including all their tiles.
+	if (connection.pathInfo == null)
+		return;
+	
+	// During demolition we keep track of a list of all tiles which could not be removed
+	// because there are more than 1 rail tracks on a tile. We keep track of the rail tiles
+	// which should have been removed and when we revisit the same track we will not consider
+	// the track which should have been removed the previous time.
+	local considerRemovedTracks = {};
+	
+	if (connection.pathInfo.roadList) {
+		Log.logWarning("We have a roadlist!");
+		foreach (at in connection.pathInfo.roadList) {
+			CleanupTile(at, considerRemovedTracks);
+		}
+	}
+	
+	if (connection.pathInfo.roadListReturn) {
+		Log.logWarning("We have a roadListReturn!");
+		foreach (at in connection.pathInfo.roadListReturn) {
+			CleanupTile(at, considerRemovedTracks);
+		}
+	}
+	
+	if (connection.pathInfo.extraRoadBits) {
+		Log.logWarning("We have a extraRoadBits!");
+		foreach (extraArray in connection.pathInfo.extraRoadBits) {
+			foreach (at in extraArray) {
+				CleanupTile(at, considerRemovedTracks);
+			}
+		}
+	}
+	
+	if (connection.pathInfo.depot) {
+		Log.logWarning("We have a depot!");
+		AITile.DemolishTile(connection.pathInfo.depot);
+	}
+	if (connection.pathInfo.depotOtherEnd) {
+		Log.logWarning("We have a depotOtherEnd!");
+		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
+	}
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
@@ -330,11 +394,16 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 				continue;
 			
 			local problemsWhileBuilding = false;
+			local depotRails = [];
 			for (local j = 0; j < railsToBuild.len(); j += 2) {
 				if (!AIRail.BuildRailTrack(railsToBuild[j], railsToBuild[j + 1])) {
 					problemsWhileBuilding = true;
 					break;
 				}
+				
+				local at = AnnotatedTile();
+				at.tile = railsToBuild[j];
+				depotRails.push(at);
 			}
 
 			if (problemsWhileBuilding)
@@ -343,7 +412,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			if (!AIRail.BuildSignal(railsToBuild[0], depotTile, AIRail.SIGNALTYPE_NORMAL_TWOWAY)) {
 				AISign.BuildSign(railsToBuild[0], "NO SIGNAL!??!");
 				continue;
-			} 
+			}
+			connection.pathInfo.extraRoadBits.push(depotRails);
 			
 			// Remove all signals on the tile between the entry and exit rails.
 			if (direction != 1 && direction != -1 && direction != mapSizeX && direction != -mapSizeX) {
@@ -494,19 +564,6 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignal(toStartStationReturnPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
 	BuildSignal(toEndStationReturnPath.roadList[toEndStationReturnPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(toEndStationReturnPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
-
-/*
-	// Build the signals.
-	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignals(roadList, false, startIndex, endIndex, 6, AIRail.SIGNALTYPE_NORMAL);
-
-	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	//BuildSignals(secondPath.roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignals(secondPath.roadList, false, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
-*/
 	return true;
 }
 
@@ -623,31 +680,11 @@ function BuildRailAction::BuildTerminusStation(stationType, pathFinder) {
 	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
 	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
 	
-/*	{
-		local sdafs = AIExecMode();
-		AISign.BuildSign(roadList[startIndex].tile, "StartIndex");
-		AISign.BuildSign(secondPath.roadList[returnStartIndex].tile, "returnStartIndex");
-		AISign.BuildSign(roadList[endIndex].tile, "endIndex");
-		AISign.BuildSign(secondPath.roadList[returnEndIndex].tile, "returnEndIndex");
-	}
-*/
 	assert (startIndex != -1 && returnStartIndex != -1 && endIndex != -1 && returnEndIndex != -1);
 
 	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
 	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 1], true, AIRail.SIGNALTYPE_ENTRY);
 
-/*
-	// Build the signals.
-	//BuildSignals(roadList, false, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignals(roadList, false, startIndex, endIndex, 6, AIRail.SIGNALTYPE_NORMAL);
-	
-	//BuildSignals(secondPath.roadList, true, 1, 4, AIRail.SIGNALTYPE_NORMAL);
-	BuildSignal(secondPath.roadList[1], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT_TWOWAY);
-	BuildSignals(secondPath.roadList, true, returnStartIndex, returnEndIndex, 6, AIRail.SIGNALTYPE_NORMAL);
-*/
 	return true;
 }
 
@@ -691,21 +728,16 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	return toPlatformPath;
 }
 
+function BuildRailAction::IsSingleRailTrack(railTracks) {
+	//local railTracks = AIRail.GetRailTracks(tile);
+	return railTracks == 1 || railTracks == 2 || railTracks == 4 || railTracks == 8 || railTracks == 16 || railTracks == 32 || railTracks == 64 || railTracks == 128;
+}
+
 function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
 
 	local abc = AIExecMode();
 	//AISign.BuildSign(roadList[startIndex].tile, "SIGNALS FROM HERE");
 	//AISign.BuildSign(roadList[endIndex].tile, "SIGNALS TILL HERE");
-	local singleRail = array(256);
-	singleRail[1] = true;
-	singleRail[2] = true;
-	singleRail[4] = true;
-	singleRail[8] = true;
-	singleRail[16] = true;
-	singleRail[32] = true;
-	singleRail[64] = true;
-	singleRail[128] = true;
-	singleRail[255] = true;
 
 	// Now build the signals.
 	local tilesAfterCrossing = spread;
@@ -717,7 +749,8 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 
 		local isTileBeforeCrossing = false;
 		// Check if the next tile is a crossing.
-		if (!singleRail[AIRail.GetRailTracks(roadList[a + 1].tile)]) {
+		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
+		if (!IsSingleRailTrack(railTracks) && railTracks != AIRail.RAILTRACK_INVALID) {
 			tilesAfterCrossing = 0;
 			AISign.BuildSign(roadList[a + 1].tile, "CROSSING");
 			isTileBeforeCrossing = true;

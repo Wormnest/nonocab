@@ -151,7 +151,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.type = Tile.ROAD;
 				stationBeginFront.direction = offsets[j];
 				stationBeginFront.tile = i + offsets[j];
-				stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
+				stationBeginFront.alreadyBuild = false;
 				stationBeginFront.distanceFromStart = costForRail;
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
@@ -215,7 +215,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.type = Tile.ROAD;
 				stationBeginFront.direction = offsets[j];
 				stationBeginFront.tile = i + stationLength * offsets[j];
-				stationBeginFront.bridgeOrTunnelAlreadyBuild = false;
+				stationBeginFront.alreadyBuild = false;
 				stationBeginFront.distanceFromStart = costForRail;
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
@@ -237,7 +237,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.type = Tile.ROAD;
 				stationEndFront.direction = -offsets[j];
 				stationEndFront.tile = i - offsets[j];
-				stationEndFront.bridgeOrTunnelAlreadyBuild = false;
+				stationEndFront.alreadyBuild = false;
 				stationEndFront.distanceFromStart = costForRail;
 				stationEndFront.parentTile = stationEnd;
 				stationEndFront.length = 1;
@@ -447,7 +447,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 	annotatedTile.type = Tile.ROAD;
 	annotatedTile.direction = offset;
 	annotatedTile.lastBuildRailTrack = -1;
-	annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+	annotatedTile.alreadyBuild = false;
 	annotatedTile.distanceFromStart = 0;
 	
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -711,7 +711,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
-					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
+					annotatedTile.alreadyBuild = true;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
 					if (offset == 1 || offset == -1)
 						annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
@@ -783,22 +783,19 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				local reuseRailTrack = AIRail.GetRailTracks(nextTile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
-				//if (reuseRailTrack && !CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset))
-				if (reuseRailTrack && !CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
+				if (reuseRailTrack) {
+					if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
 						continue;
+					annotatedTile.alreadyBuild = true;
 
-				if (!goingStraight) {
-					if (reuseRailTrack)
+					if (!goingStraight)
 						annotatedTile.distanceFromStart += costForRail / 2;
 					else
-						annotatedTile.distanceFromStart += costForNewRail / 2;
-				} else {
-					// Check if there is already a road here.
-					if (reuseRailTrack)
 						annotatedTile.distanceFromStart += costForRail;
-					else
-						annotatedTile.distanceFromStart += costForNewRail;
-				}
+				} else if (!goingStraight)
+					annotatedTile.distanceFromStart += costForNewRail / 2;
+				else
+					annotatedTile.distanceFromStart += costForNewRail;
 
 				tileArray.push(annotatedTile);
 				closed_list[currentAnnotatedTile.tile + "-" + offset] <- true;
@@ -940,7 +937,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.type = Tile.BRIDGE;
 			annotatedTile.direction = direction;
 			annotatedTile.tile = target;
-			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+			annotatedTile.alreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
 			
 			if (direction == 1 || direction == -1)
@@ -988,7 +985,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
 		annotatedTile.tile = other_tunnel_end;
-		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+		annotatedTile.alreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = true;
 		

@@ -280,7 +280,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
-					annotatedTile.bridgeOrTunnelAlreadyBuild = true;
+					annotatedTile.alreadyBuild = true;
 					annotatedTile.distanceFromStart = costForRoad * (length < 0 ? -length : length);
 					tileArray.push(annotatedTile);
 					isBridgeOrTunnelEntrance = true;
@@ -317,7 +317,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.type = Tile.ROAD;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = nextTile;
-					annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+					annotatedTile.alreadyBuild = false;
 	
 					// Check if the road is sloped.
 					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
@@ -378,7 +378,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.type = Tile.BRIDGE;
 			annotatedTile.direction = direction;
 			annotatedTile.tile = target;
-			annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+			annotatedTile.alreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
 			return annotatedTile;
 		}
@@ -416,7 +416,7 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
 		annotatedTile.tile = other_tunnel_end;
-		annotatedTile.bridgeOrTunnelAlreadyBuild = false;
+		annotatedTile.alreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = forceForward;
 		return annotatedTile;

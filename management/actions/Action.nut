@@ -16,6 +16,12 @@ class Action
 	 * @return True if the action was successful, false otherwise.
 	 */
 	function Execute();
+	
+	/**
+	 * Function called after Execute() returns false, this allows the action
+	 * to cleanup after its failure.
+	 */
+	function CleanupAfterFailure() {}
 
 	/**
 	 * Get the cost of the action AFTER executing it.

@@ -28,6 +28,8 @@ class PathInfo {
 		build = false;
 		travelTimesCache = {};
 		nrRoadStations = 0;
+		depot = null;
+		depotOtherEnd = null;
 	}
 	
 	function LoadData(data) {

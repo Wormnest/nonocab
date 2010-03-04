@@ -154,11 +154,11 @@ class Report
 				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
 
 				if (!connection.pathInfo.build)
-					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 2.5;
+					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 3;
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = 150 * distance * 2.5;
+				initialCost = 150 * distance * 3;
 			}
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
