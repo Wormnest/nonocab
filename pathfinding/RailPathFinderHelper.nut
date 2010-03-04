@@ -14,6 +14,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	vehicleType = AIVehicle.VT_RAIL;
 	closed_list = null;
 	
+	reverseSearch = null;       // Are we pathfinding from the end point to the begin point?
+	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
@@ -21,6 +23,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		dummyAnnotatedTile = AnnotatedTile();
 		dummyAnnotatedTile.type = Tile.ROAD;
 		dummyAnnotatedTile.parentTile = dummyAnnotatedTile;
+		reverseSearch = false;
 		
 		closed_list = {};
 	}
@@ -780,7 +783,8 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				local reuseRailTrack = AIRail.GetRailTracks(nextTile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
-				if (reuseRailTrack && !CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset))
+				//if (reuseRailTrack && !CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset))
+				if (reuseRailTrack && !CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
 						continue;
 
 				if (!goingStraight) {
@@ -806,19 +810,65 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 }
 
 function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
-	return true;
+
+	{
+		local abc = AIExecMode();
+		AISign.BuildSign(tile, "CS " + direction);
+	}
+
+	if (AIRail.IsRailStationTile(tile)) {
+		{
+			local abc = AIExecMode();
+			AISign.BuildSign(tile, "OK!");
+		}
+		return true;
+	}
+
 	// Check if there is a signal on this piece of tile.
-	local frontSignalSignal = BuildRailAction.GetSignalFrontTile(tile, railTrack, direction);
-	if (AIRail.GetSignalType(tile, -frontSignalSignal) != AIRail.SIGNALTYPE_NONE)
+	local frontSignalTile = BuildRailAction.GetSignalFrontTile(tile, railTrack, direction);
+	local mapSizeX = AIMap.GetMapSizeX();
+	local otherDirection = -direction;
+	if (direction == 1 + mapSizeX)
+		otherDirection = -1 - mapSizeX;
+	else if (direction == 1 - mapSizeX)
+		otherDirection = -1 + mapSizeX;
+	else if (direction == -1 + mapSizeX)
+		otherDirection = 1 - mapSizeX;
+	else if (direction == -1 - mapSizeX)
+		otherDirection = 1 + mapSizeX;
+	local backSignalTile = BuildRailAction.GetSignalFrontTile(tile, railTrack, otherDirection);
+	
+	if (reverseSearch) {
+		local tmp = frontSignalTile;
+		frontSignalTile = backSignalTile;
+		backSignalTile = tmp;
+	}
+	
+	if (AIRail.GetSignalType(tile, backSignalTile) != AIRail.SIGNALTYPE_NONE) {
+		{
+			local abc = AIExecMode();
+			AISign.BuildSign(tile, "NO!!!");
+		}
 		return false;
+	}
 
 	// If this is something else than the 'normal' type we won't allow it!
-	local signalRightDirection = AIRail.GetSignalType(tile, frontSignalSignal);
+	local signalRightDirection = AIRail.GetSignalType(tile, frontSignalTile);
 	if (signalRightDirection == AIRail.SIGNALTYPE_EXIT ||
-		signalRightDirection == AIRail.SIGNALTYPE_EXIT_TWOWAY)
+		signalRightDirection == AIRail.SIGNALTYPE_ENTRY) {
+		{
+		local abc = AIExecMode();
+		AISign.BuildSign(tile, "NO!!!");
+		}
 		return false;
-	else if (signalRightDirection != AIRail.SIGNALTYPE_NONE)
+	}
+	else if (signalRightDirection != AIRail.SIGNALTYPE_NONE) {
+		{
+			local abc = AIExecMode();
+			AISign.BuildSign(tile, "OK!");
+		}
 		return true;
+	}
 	
 	// If non of these are true, search for the next rail!
 	//local nextTile = tile + direction;
@@ -826,8 +876,15 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 	local nextOffsets = GetOffsets(direction, railTrack);
 	
 	// Check for all possible rails which can be linked to from here.
+	// TODO Bridges and tunnels fuck this up.
 	foreach (offset in nextOffsets) {
-		local annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
+		local annotatedTile = null;
+		if (AIBridge.IsBridgeTile(tile + offset))
+			annotatedTile = GetNextAnnotatedTile(offset, AIBridge.GetOtherBridgeEnd(tile + offset) + offset, railTrack);
+		else if (AITunnel.IsTunnelTile(tile + offset))
+			annotatedTile = GetNextAnnotatedTile(offset, AITunnel.GetOtherTunnelEnd(tile + offset) + offset, railTrack);
+		else
+			annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
 		if (annotatedTile == null)
 			continue;
 
@@ -836,7 +893,12 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 			return CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset);
 		} 
 	}
-	
+
+		{
+			local abc = AIExecMode();
+			AISign.BuildSign(tile, "WTF!");
+		}
+
 	assert(false);
 }
 

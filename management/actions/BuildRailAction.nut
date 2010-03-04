@@ -644,6 +644,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	//AISign.BuildSign(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile, "BEGIN NODE");
 	///AISign.BuildSign(stationPoint, "END NODE");
 	pathFinder.pathFinderHelper.Reset();
+	pathFinder.pathFinderHelper.reverseSearch = !reverse;
 	pathFinder.pathFinderHelper.costForTurn = 0;
 	pathFinder.pathFinderHelper.costForRail = 300;
 	pathFinder.pathFinderHelper.costForNewRail = 300;
@@ -652,6 +653,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	local toPlatformPath;
 	//if (buildFromEnd)
 		toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	pathFinder.pathFinderHelper.reverseSearch = false;
 	//else
 	//	toPlatformPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	if (toPlatformPath != null) {
