@@ -194,8 +194,14 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		for (local j = 0; j < 2; j++) {
 			
 			// Check if we can actually build a train station here (big enough for exit & entry rail.
-//			if (!AIRail.BuildRailStation(i - offsets[j], rail_track_directions[j], 2, stationLength + 3, AIStation.STATION_JOIN_ADJACENT))
 			if (!AIRail.BuildRailStation(i - offsets[j] * 3, rail_track_directions[j], 2, stationLength + 7, AIStation.STATION_JOIN_ADJACENT))
+				continue;
+			
+			if (offsets == 1 &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 1))
+				continue;
+			else if (offsets == mapSizeX &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 1, stationLength + 7))
 				continue;
 
 			// Only add the tile furthest away from the industry to the open list.
@@ -348,45 +354,53 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
 	//if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : 0), direction, 2, 6, AIStation.STATION_JOIN_ADJACENT) || at.parentTile.type != Tile.ROAD)) {
-	if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 9 * at.direction : -4 * at.direction), direction, 2, 10, AIStation.STATION_JOIN_ADJACENT) || at.parentTile.type != Tile.ROAD)) {
+	if (checkEndPositions) {
 
-		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
-		// endpoints that aren't valid anymore.
-		end.RemoveValue(at.tile);
-/*
-		// Check the remaining nodes too!
-		local listToRemove = AITileList();
-
-		foreach (i, value in end) {
-
-			dummyAnnotatedTile.tile = i;
+		local stationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 6 * at.direction : -3 * at.direction); 
+		if (!AIRail.BuildRailStation(stationTile, direction, 2, 10, AIStation.STATION_JOIN_ADJACENT) ||
+			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(stationTile, 10, 1) ||
+			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(stationTile, 1, 10) ||
+			at.parentTile.type != Tile.ROAD)
+		{
 	
-			// We preprocess all end nodes to see if a road station can be build on them.
-			local neighbours = GetNeighbours(dummyAnnotatedTile, true, closedList);
-
-			// We only consider roads which don't go down hill because we can't build road stations
-			// on them!
-			local foundSuitableNeighbour = false;
-			foreach (neighbour in neighbours) {
-				if (Tile.GetSlope(i, neighbour.direction) != 2) {
-					foundSuitableNeighbour = true;
-					break;
+			// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
+			// endpoints that aren't valid anymore.
+			end.RemoveValue(at.tile);
+	/*
+			// Check the remaining nodes too!
+			local listToRemove = AITileList();
+	
+			foreach (i, value in end) {
+	
+				dummyAnnotatedTile.tile = i;
+		
+				// We preprocess all end nodes to see if a road station can be build on them.
+				local neighbours = GetNeighbours(dummyAnnotatedTile, true, closedList);
+	
+				// We only consider roads which don't go down hill because we can't build road stations
+				// on them!
+				local foundSuitableNeighbour = false;
+				foreach (neighbour in neighbours) {
+					if (Tile.GetSlope(i, neighbour.direction) != 2) {
+						foundSuitableNeighbour = true;
+						break;
+					}
 				}
+	
+				if (!foundSuitableNeighbour)
+					listToRemove.AddTile(i);
+	
 			}
-
-			if (!foundSuitableNeighbour)
-				listToRemove.AddTile(i);
-
+	
+			end.RemoveList(listToRemove);
+	*/
+	
+			if (end.IsEmpty()) {
+				Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
+				return null;
+			}
+			return false;
 		}
-
-		end.RemoveList(listToRemove);
-*/
-
-		if (end.IsEmpty()) {
-			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
-			return null;
-		}
-		return false;
 	}
 
 	return true;
@@ -626,6 +640,39 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 	return annotatedTile;
 }
 
+function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
+
+	// If either of these is no rail track than it's pretty obvious :).
+	if (railTrack1 == AIRail.RAILTRACK_INVALID ||
+  		railTracks2 == AIRail.RAILTRACK_INVALID)
+  		return false;
+	
+	// If the rail tracks go in the same direction, they don't cross.
+	else if ((railTracks2 & railTrack1) == railTrack1)
+		return false;
+
+	// If one of them goes 'straight' it will always cross.
+	else if (railTrack1 == AIRail.RAILTRACK_NE_SW ||
+		railTrack1 == AIRail.RAILTRACK_NW_SE ||
+		(railTracks2 & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW ||
+		(railTracks2 &AIRail.RAILTRACK_NW_SE) == AIRail.RAILTRACK_NW_SE)
+		return true;
+
+	// All the options left cross if the other rail track is not on the
+	// complete opposite side.
+	else if (railTrack1 == AIRail.RAILTRACK_NW_NE)
+		return (railTracks2 & ~AIRail.RAILTRACK_SW_SE) == 0;
+	else if (railTrack1 == AIRail.RAILTRACK_SW_SE)
+		return (railTracks2 & ~AIRail.RAILTRACK_NW_NE) == 0;
+	else if (railTrack1 == AIRail.RAILTRACK_NW_SW)
+		return (railTracks2 & ~AIRail.RAILTRACK_NE_SE) == 0;
+	else if (railTrack1 == AIRail.RAILTRACK_NE_SE)
+		return (railTracks2 & ~AIRail.RAILTRACK_NW_SW) == 0;
+		
+	// All options should be expired.
+	assert (false);
+}
+
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
@@ -665,14 +712,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 //			AISign.BuildSign(nextTile, "CLOSED");
 			isInClosedList = true;
 		}
-		
-		// Check if we can actually build this piece of rail or if the slopes render this impossible.
-		// NOTE: Not needed for rails :)
-		//if (!AIRoad.CanBuildConnectedRoadPartsHere(currentTile, currentAnnotatedTile.parentTile.tile, nextTile)) {
-//			local ac = AIExecMode();
-//			AISign.BuildSign(nextTile, "Can't build");			
-		//	continue;
-		//}
 		
 		// Check if we're going 'straight'.
 		local goingStraight = (offset == 1 || offset == -1 || offset == mapSizeX || offset == -mapSizeX ? true : false);
@@ -781,6 +820,11 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.distanceFromStart += costForTurn;
 
 				local reuseRailTrack = AIRail.GetRailTracks(nextTile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+
+				// If this rail tile crosses, the previous cannot cross!
+				if (DoRailsCross(railTrackDirection, AIRail.GetRailTracks(nextTile)) &&
+					DoRailsCross(currentAnnotatedTile.lastBuildRailTrack, AIRail.GetRailTracks(currentTile)))
+					continue;
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
 				if (reuseRailTrack) {
