@@ -177,6 +177,8 @@ function ManageVehiclesAction::Execute()
 		}
 			
 		local vehiclePrice = AIEngine.GetPrice(engineID);
+		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL)
+			vehiclePrice += 3 * AIEngine.GetPrice(wagonEngineID);
 		totalCosts = vehiclePrice;
 
 		local vehicleCloneID = -1;
@@ -219,16 +221,18 @@ function ManageVehiclesAction::Execute()
 
 			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
 			// TODO: Make sure to make this also works for cloned vehicles.
-			for (local j = 0; j < 3; j++) {
-				local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
-				Log.logError("Wagon engine ID : " + wagonEngineID + " " + AIEngine.GetName(wagonEngineID) + " " + AIEngine.IsValidEngine(wagonEngineID));
+			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
+				for (local j = 0; j < 3; j++) {
+					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
+					Log.logError("Wagon engine ID : " + wagonEngineID + " " + AIEngine.GetName(wagonEngineID) + " " + AIEngine.IsValidEngine(wagonEngineID));
 				
-				if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
-					Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
-					continue;
+					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
+						Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
+						continue;
+					}
+				
+					AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
 				}
-				
-				AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
 			}
 			
 			// Send the vehicles on their way.

@@ -123,7 +123,8 @@ function BuildRailAction::Execute() {
 
 		if (connection.bilateralConnection) {
 
-			depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
+			//depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
+			depot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadList.len() - 10, -1);
 			if (depot == null) {
 				Log.logError("Failed to build a depot :(");
 				return false;
@@ -229,7 +230,6 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 
 	if (!AIRail.IsRailStationTile(railStationTile) && 
 		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
-		AISign.BuildSign(railStationTile, "Couldn't build STATION " + (direction == AIRail.RAILTRACK_NE_SW ? "NE_SW" : "NW_SE"));
 		return false;
 	} else if (!isConnectionBuild) {
 		connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
@@ -464,8 +464,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 || roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
 	
 	// Start station.
-	for (local j = 1; j < 4; j++) {
-		for (local i = -3; i < 6; i++) {
+	for (local j = 1; j < 3; j++) {
+		for (local i = -1; i < 4; i++) {
 			// End station.
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j);
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j);
@@ -692,7 +692,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	
 	// Now play to connect the other platforms.
 	local beginNodes = AITileList();
-	for (local a = 3; a < 20; a++)
+	for (local a = 2; a < 20; a++)
 	//local a = 20;
 		beginNodes.AddTile(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile);
 	
@@ -720,6 +720,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 		//BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_EXIT);
 		//BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
 	} else {
+		AISign.BuildSign(stationPoint, "TO HERE!");
 		Log.logError("Failed to connect a rail piece to the rail station.");
 		return null;
 	}

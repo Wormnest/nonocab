@@ -4,8 +4,6 @@ require("management/include.nut");
 require("advisors/include.nut");
 require("pathfinding/include.nut");
 
-local minimalSaveVersion = 5;
-
 class NoCAB extends AIController {
 	stop = false;
    	parlement = null;
@@ -17,6 +15,7 @@ class NoCAB extends AIController {
    	connectionManager = null;
    	pathFixer = null;
    	subsidyManager = null;
+	minimalSaveVersion = 5;
 	
    	constructor() {
    		stop = false;
@@ -121,9 +120,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0a6")) {
+	if(!AICompany.SetName(companyName + " - v2.0a7")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0a6 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0a7 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

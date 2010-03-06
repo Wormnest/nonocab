@@ -156,7 +156,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
-				stationBeginFront.forceForward = true;
+//				stationBeginFront.forceForward = true;
 
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			}
@@ -226,7 +226,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
-				stationBeginFront.forceForward = true;
+//				stationBeginFront.forceForward = true;
 					
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			} else {
@@ -248,7 +248,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.parentTile = stationEnd;
 				stationEndFront.length = 1;
 				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
-				stationEndFront.forceForward = true;
+//				stationEndFront.forceForward = true;
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}
