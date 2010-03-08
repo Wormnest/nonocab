@@ -21,6 +21,7 @@ class Report
 	brutoCostPerMonthPerVehicle = 0;   // The bruto cost per month per vehicle.
 	initialCostPerVehicle = 0;         // The initial cost per vehicle which is only paid once!
 	nrVehicles = 0;                    // The total number of vehicles.
+	nrWagonsPerVehicle = 0;            // The number of wagons per vehicle we'll build.
 	transportEngineID = 0;             // The engine ID to transport the cargo.
 	holdingEngineID = 0;               // The engine ID to hold the cargo to be transported.
 	utilityForMoneyNrVehicles = 0;     // After a call to 'UtilityForMoney', the number of
@@ -174,8 +175,9 @@ class Report
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
 		
 		// In case of trains, we have 3 wagons.
+		nrWagonsPerVehicle = 5;
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
-			transportedCargoPerVehiclePerMonth *= 3;
+			transportedCargoPerVehiclePerMonth *= nrWagonsPerVehicle;
 		
 		
 		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
@@ -213,7 +215,7 @@ class Report
 		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
-			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * 3;
+			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * nrWagonsPerVehicle;
 			// Check if the current rail type of this connection is such that the new
 			// train cannot run on it.
 			if (connection != null && connection.pathInfo.build) {

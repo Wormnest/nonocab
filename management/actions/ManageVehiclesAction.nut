@@ -31,9 +31,9 @@ function ManageVehiclesAction::SellVehicles(engineID, number, connection)
  * @param number The number of vehicles to build.
  * @param connection The connection where the vehicles are to operate on.
  */
-function ManageVehiclesAction::BuyVehicles(engineID, number, wagonEngineID, connection)
+function ManageVehiclesAction::BuyVehicles(engineID, number, wagonEngineID, numberWagons, connection)
 {
-	vehiclesToBuy.push([engineID, number, wagonEngineID, connection]);
+	vehiclesToBuy.push([engineID, number, wagonEngineID, numberWagons, connection]);
 }
 
 function ManageVehiclesAction::Execute()
@@ -108,7 +108,8 @@ function ManageVehiclesAction::Execute()
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
 		local wagonEngineID = engineInfo[2];
-		local connection = engineInfo[3];
+		local numberWagons = engineInfo[3];
+		local connection = engineInfo[4];
 
 		local vehicleID = null;
 		local vehicleGroup = null;
@@ -178,7 +179,7 @@ function ManageVehiclesAction::Execute()
 			
 		local vehiclePrice = AIEngine.GetPrice(engineID);
 		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL)
-			vehiclePrice += 3 * AIEngine.GetPrice(wagonEngineID);
+			vehiclePrice += numberWagons * AIEngine.GetPrice(wagonEngineID);
 		totalCosts = vehiclePrice;
 
 		local vehicleCloneID = -1;
@@ -222,7 +223,7 @@ function ManageVehiclesAction::Execute()
 			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
 			// TODO: Make sure to make this also works for cloned vehicles.
 			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
-				for (local j = 0; j < 3; j++) {
+				for (local j = 0; j < numberWagons; j++) {
 					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
 				
 					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {

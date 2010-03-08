@@ -138,7 +138,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
 			// cargo a vehicle can carry.
-			if (nrVehicles > 0 && AIEngine.GetCapacity(report.holdingEngineID) * ( isTrain ? 4.5 : 1.5 ) > production && rating > 35)
+			if (nrVehicles > 0 && AIEngine.GetCapacity(report.holdingEngineID) * ( isTrain ? 6 : 1.5 ) > production && rating > 35)
 				continue;
 
 			// If we have a line of vehicles waiting we also want to buy another station to spread the load.
@@ -227,7 +227,7 @@ function VehiclesAdvisor::GetReports() {
 				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
 					continue;
 
-			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, connection);
+			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, report.nrWagonsPerVehicle, connection);
 		}
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);

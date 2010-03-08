@@ -421,12 +421,6 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 			}
 			return false;
 		}
-
-		{
-			local abc = AIExecMode();
-			AISign.BuildSign(aroundStationTile, "AT");
-			AISign.BuildSign(stationTile, "ST");
-		}
 	}
 
 	return true;
