@@ -66,6 +66,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 	local sortedReports = BinaryHeap();
 	local orderby = 0;
 	local moneyToSpend = Finance.GetMaxMoneyToSpend();
+	Log.logDebug("Select reports: " + reportlist.len());
 
 	// Sort all the reports based on their utility.
 	foreach (report in reportlist) {

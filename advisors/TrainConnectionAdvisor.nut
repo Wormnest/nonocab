@@ -8,7 +8,14 @@ class TrainConnectionAdvisor extends ConnectionAdvisor {
 	constructor(world, connectionManager) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
 		local pathFindingHelper = RailPathFinderHelper();
-		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRail + 10;
+ 		pathFindingHelper.costForRail = 10;
+ 		pathFindingHelper.costForNewRail = 10;
+ 		pathFindingHelper.costForTurn = 10;
+ 		pathFindingHelper.costForBridge = 10;
+ 		pathFindingHelper.costForTunnel = 10;
+ 		pathFindingHelper.costForSlope 	= 10;
+ 		pathFindingHelper.costTillEnd = 100;
+//		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRail + 10;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}
 }
@@ -26,7 +33,7 @@ function TrainConnectionAdvisor::GetPathInfo(report) {
 	local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 
-	local pathInfo = pathFinder.FindFastestRoad(report.fromConnectionNode.GetAllProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAllAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20, null);
+	local pathInfo = pathFinder.FindFastestRoad(report.fromConnectionNode.GetAllProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAllAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.5 + 50, null);
 	if (pathInfo == null)
 		Log.logDebug("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
 	Log.logDebug("Path found!");

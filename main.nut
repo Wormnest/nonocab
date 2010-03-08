@@ -48,7 +48,7 @@ function NoCAB::Start()
 {
 	// Initialize the AI.
 	local l = AIRailTypeList();
-	foreach (rt in l) {
+	foreach (rt, index in l) {
 		if (AIRail.IsRailTypeAvailable(rt)) {
 			AIRail.SetCurrentRailType(rt);
 			Log.logDebug("Set Rail type!!!");

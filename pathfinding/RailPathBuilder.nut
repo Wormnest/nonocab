@@ -96,7 +96,7 @@ class PathFixer extends Thread {
 			local test = AIExecMode();
 			
 			for (local i = 0; i < 5; i++) {
-				if (RailPathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
+				if (RailPathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], piece[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
 					toRemoveIndexes.push(index);
 					break;
 				}
@@ -116,16 +116,6 @@ class PathFixer extends Thread {
 function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
-/*
-	local l = AIRailTypeList();
-	foreach (rt in l) {
-		if (AIRail.IsRailTypeAvailable(rt)) {
-			AIRail.SetCurrentRailType(rt);
-			Log.logDebug("Set Rail type!!!");
-			break;
-		}
-	}
-	*/
 	switch (tileType) {
 		
 		case Tile.ROAD:

@@ -58,8 +58,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 				}
 			}
 		}
-		Log.logError("Vehicles waiting: " + nrVehicles + " " + nrVehiclesInStation);
-
+		Log.logDebug("Vehicles waiting: " + nrVehicles + " " + nrVehiclesInStation);
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
 }
 
@@ -76,10 +75,13 @@ function VehiclesAdvisor::Update(loopCounter) {
 			assert(false);
 		}
 
+		Log.logDebug("Check connection: " + connection);
+
 		// Make sure we don't update a connection to often!
 		local currentDate = AIDate.GetCurrentDate();
-		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 15)
+		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 15) {
 			continue;
+		}
 		
 		connection.lastChecked = currentDate;
 		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
@@ -175,7 +177,6 @@ function VehiclesAdvisor::Update(loopCounter) {
  * the amount of money available to us, which in turn yields the largest income.
  */
 function VehiclesAdvisor::GetReports() {
-	
 	local reportsToReturn = [];
 	local report;
 	
@@ -185,8 +186,10 @@ function VehiclesAdvisor::GetReports() {
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		
 		// If the connection was termintated in the mean time, drop the report.
-		if (!connection.pathInfo.build)
+		if (!connection.pathInfo.build) {
+			Log.logWarning("Connection isn't build!");
 			continue;
+		}
 		
 		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
 		local actionList = [];
@@ -228,6 +231,9 @@ function VehiclesAdvisor::GetReports() {
 		}
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);
+
+ 		if (report.upgradeToRailType != null)
+ 			actionList.push(RailPathUpgradeAction(connection, report.upgradeToRailType));
 
 		actionList.push(vehicleAction);
 

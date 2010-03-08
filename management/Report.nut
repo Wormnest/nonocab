@@ -35,6 +35,8 @@ class Report
 	
 	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
 	
+	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
+	
 	oldReport = null;
 
 	/**
@@ -54,6 +56,7 @@ class Report
 		fromConnectionNode = travelFromNode;
 		this.cargoID = cargoID;
 		isInvalid = false;
+		upgradeToRailType = null;
 		
 		// Check if the engine is valid.
 		if (!AIEngine.IsValidEngine(transportEngineID) || !AIEngine.IsValidEngine(holdingEngineID) ||
@@ -209,8 +212,34 @@ class Report
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
-			initialCostPerVehicle = AIEngine.GetPrice(holdingEngineID) * 3;
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
+			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * 3;
+			// Check if the current rail type of this connection is such that the new
+			// train cannot run on it.
+			if (connection != null && connection.pathInfo.build) {
+				//local railTypeOfTrain = AIEngine.GetRailType(transportEngineID);
+				local railTypeOfConnection = AIRail.GetRailType(connection.pathInfo.depot);
+				local foundRailTrack = -1;
+				local l = AIRailTypeList();
+				foreach (railTypeOfTrain, index in l) {
+					if (AIRail.IsRailTypeAvailable(railTypeOfTrain) && 
+						AIEngine.CanRunOnRail(transportEngineID, railTypeOfTrain) &&
+						AIEngine.HasPowerOnRail(transportEngineID, railTypeOfTrain) &&
+						railTypeOfTrain > foundRailTrack &&
+						(!AIRail.TrainCanRunOnRail(railTypeOfTrain, railTypeOfConnection) ||
+						!AIRail.TrainHasPowerOnRail(railTypeOfTrain, railTypeOfConnection))) {
+						foundRailTrack = railTypeOfTrain;
+					}
+				}
+				
+				// Make sure we do not DOWNgrade the existing connection.
+				if (foundRailTrack > railTypeOfConnection) {
+					initialCost += RailPathUpgradeAction.GetCostForUpgrade(connection, foundRailTrack);
+					upgradeToRailType = foundRailTrack;
+				}
+				// Else, just build more trains :)
+			}
+		}
 		runningTimeBeforeReplacement = World.MONTHS_BEFORE_AUTORENEW;
 	}
 	

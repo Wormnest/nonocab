@@ -15,6 +15,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	closed_list = null;
 	
 	reverseSearch = null;       // Are we pathfinding from the end point to the begin point?
+	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
 	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
@@ -145,6 +146,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBegin.parentTile = stationBegin;               // Small hack ;)
 				stationBegin.forceForward = true;
 				stationBegin.direction = offsets[j];
+				stationBegin.forceForward = startAndEndDoubleStraight;
 			
 				// If we can, we store the tile in front of the station.
 				local stationBeginFront = AnnotatedTile();
@@ -157,6 +159,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 //				stationBeginFront.forceForward = true;
+				stationBeginFront.forceForward = startAndEndDoubleStraight;
 
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			}
@@ -226,6 +229,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
+				stationBeginFront.forceForward = startAndEndDoubleStraight;
 //				stationBeginFront.forceForward = true;
 					
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
@@ -248,6 +252,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.parentTile = stationEnd;
 				stationEndFront.length = 1;
 				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
+				stationEndFront.forceForward = startAndEndDoubleStraight;
 //				stationEndFront.forceForward = true;
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
@@ -322,7 +327,8 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	if (AICompany.IsMine(AITile.GetOwner(at.tile))) {
 		// If it is a rail road station, make sure the rail tile goes in the same direction.
 		if (AIRail.IsRailStationTile(at.tile)) {
-			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile))
+			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile) &&
+			   (!startAndEndDoubleStraight || at.parentTile.lastBuildRailTrack != at.lastBuildRailTrack))
 				return false;
 			return true;
 		}

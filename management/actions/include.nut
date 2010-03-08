@@ -7,3 +7,4 @@ require("ManageVehiclesAction.nut");
 require("Terraform.nut");
 require("DemolishAction.nut");
 require("TransferVehicles.nut");
+require("UpgradeRailAction.nut");

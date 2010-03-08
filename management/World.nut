@@ -546,8 +546,28 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 
 	local vehicleType = AIEngine.GetVehicleType(engineID);
 
-	if (vehicleType == AIVehicle.VT_RAIL && !AIEngine.CanRunOnRail(engineID, AIRail.GetCurrentRailType()))
-		return false;
+	if (vehicleType == AIVehicle.VT_RAIL) {
+		// Check if this train can run on a newer rail type.
+		if (AIRail.GetCurrentRailType() < AIEngine.GetRailType(engineID)) {
+			AIRail.SetCurrentRailType(AIEngine.GetRailType(engineID));
+
+			// Also update the wagons we can use. These are not updated automatically!
+			local newWagons = AIEngineList(AIVehicle.VT_RAIL);
+			newWagons.Valuate(AIEngine.IsWagon);
+			newWagons.KeepValue(1);
+			newWagons.Valuate(AIEngine.CanRunOnRail, AIRail.GetCurrentRailType());
+			newWagons.KeepValue(1);
+			newWagons.Valuate(AIEngine.HasPowerOnRail, AIRail.GetCurrentRailType());
+			newWagons.KeepValue(1);
+
+			foreach (wagon, value in newWagons)
+				ProcessNewEngineAvailableEvent(wagon);
+		}
+
+		if (!AIEngine.CanRunOnRail(engineID, AIRail.GetCurrentRailType()) ||
+		    !AIEngine.HasPowerOnRail(engineID, AIRail.GetCurrentRailType()))
+			return false;
+	}
 
 	// We skip trams for now.
 	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
@@ -565,7 +585,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 			if (vehicleType == AIVehicle.VT_RAIL) {
 				if (AIEngine.IsWagon(engineID)) {
 					// We only judge a weagon on its merrit to transport cargo.
-					if (AIEngine.GetCapacity(cargoHoldingEngineIds[vehicleType][cargo]) < AIEngine.GetCapacity(engineID)) {
+					if (AIEngine.GetCapacity(cargoHoldingEngineIds[vehicleType][cargo]) < AIEngine.GetCapacity(engineID) ||
+					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoHoldingEngineIds[vehicleType][cargo])) {
 						cargoHoldingEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to carry: " + AICargo.GetCargoLabel(cargo));
 						engineReplaced = true;
@@ -573,7 +594,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 				} else {
 					// We only judge a locomotive on its merrit to transport weagons (don't care about the
 					// accidental bit of cargo it can move around).
-					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID)) {
+					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) ||
+					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo])) {
 						cargoTransportEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport: " + AICargo.GetCargoLabel(cargo));
 						engineReplaced = true;

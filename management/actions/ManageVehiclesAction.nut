@@ -224,7 +224,6 @@ function ManageVehiclesAction::Execute()
 			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
 				for (local j = 0; j < 3; j++) {
 					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
-					Log.logError("Wagon engine ID : " + wagonEngineID + " " + AIEngine.GetName(wagonEngineID) + " " + AIEngine.IsValidEngine(wagonEngineID));
 				
 					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
 						Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
