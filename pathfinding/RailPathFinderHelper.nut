@@ -16,6 +16,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	
 	reverseSearch = null;       // Are we pathfinding from the end point to the begin point?
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
+
+	updateClosedList = false;
 	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
@@ -27,6 +29,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 		reverseSearch = false;
 		
 		closed_list = {};
+		updateClosedList = true;
+		startAndEndDoubleStraight = false;
 	}
 	
 	function Reset() { 
@@ -34,7 +38,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		emptyList = AIList();
 	}
 	
-	function UpdateClosedList() { return false; }
+	function UpdateClosedList() { return updateClosedList; }
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or

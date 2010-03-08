@@ -271,7 +271,7 @@ function ManageVehiclesAction::Execute()
 						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
 
 				if (vehicleType == AIVehicle.VT_RAIL && connection.bilateralConnection)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
 
 				if (connection.bilateralConnection)
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);

@@ -41,7 +41,7 @@ function BuildRailAction::Execute() {
 	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
-	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5 + 50, null);
+	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 30, null);
 	
 	if (connection.pathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
@@ -125,7 +125,7 @@ function BuildRailAction::Execute() {
 		if (connection.bilateralConnection) {
 
 			//depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
-			depot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadList.len() - 10, -1);
+			depot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
 			if (depot == null) {
 				Log.logError("Failed to build a depot :(");
 				return false;
@@ -258,7 +258,6 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 		if (roadList[i].direction != roadList[i + 1].direction || roadList[i].direction != roadList[i - 1].direction)
 			continue;
 		
-		//AISign.BuildSign(roadList[i].direction, "GIVE IT A TRY! :)");
 		local directions;
 		// Determine which directions we can go to.
 		switch (roadList[i].lastBuildRailTrack) {
