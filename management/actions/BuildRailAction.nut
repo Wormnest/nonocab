@@ -763,11 +763,15 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 		// Because we are moving from the end station to the begin station, we need
 		// to check if the previous tile was a crossing.
 
+		// Don't build signals on tunnels or bridges.
+		if (roadList[a + 1].type != Tile.ROAD)
+			continue;
+
 		local isTileBeforeCrossing = false;
 		// Check if the next tile is a crossing.
 		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
 //		if (!IsSingleRailTrack(railTracks) && railTracks != AIRail.RAILTRACK_INVALID) {
-		if (RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, railTracks)) {
+		if (RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
 			tilesAfterCrossing = 0;
 			AISign.BuildSign(roadList[a + 1].tile, "CROSSING");
 			isTileBeforeCrossing = true;

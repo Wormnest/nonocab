@@ -663,8 +663,8 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 
 	// If either of these is no rail track than it's pretty obvious :).
-	if (railTrack1 == AIRail.RAILTRACK_INVALID ||
-  		railTracks2 == AIRail.RAILTRACK_INVALID)
+	if (railTrack1 == AIRail.RAILTRACK_INVALID || railTrack1 == 0 ||
+  		railTracks2 == AIRail.RAILTRACK_INVALID || railTracks2 == 0)
   		return false;
 	
 	// If the rail tracks go in the same direction, they don't cross.
