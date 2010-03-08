@@ -41,7 +41,7 @@ function BuildRailAction::Execute() {
 	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
-	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.5 + 50, null);
 	
 	if (connection.pathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
@@ -102,10 +102,10 @@ function BuildRailAction::Execute() {
 	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
 	if (!BuildRoRoStation(stationType, pathFinder)) {
 		Log.logWarning("Failed to build the RoRo station...");
-		if (!BuildTerminusStation(stationType, pathFinder)) {
-			Log.logWarning("Failed to build the Terminus station...");
+//		if (!BuildTerminusStation(stationType, pathFinder)) {
+//			Log.logWarning("Failed to build the Terminus station...");
 			return false;
-		}
+//		}
 	}
 	
 	Log.logError("Build depot!");
@@ -472,7 +472,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	
 	// Start station.
 	for (local j = 1; j < 3; j++) {
-		for (local i = -1; i < 4; i++) {
+		for (local i = -2; i < 5; i++) {
 			// End station.
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j);
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j);
@@ -720,6 +720,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	pathFinder.pathFinderHelper.costForRail = 300;
 	pathFinder.pathFinderHelper.costForNewRail = 300;
 	pathFinder.pathFinderHelper.costTillEnd = 0;
+	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
 	
 	local toPlatformPath;
 	//if (buildFromEnd)

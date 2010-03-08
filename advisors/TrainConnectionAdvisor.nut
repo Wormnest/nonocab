@@ -14,7 +14,7 @@ class TrainConnectionAdvisor extends ConnectionAdvisor {
  		pathFindingHelper.costForBridge = 10;
  		pathFindingHelper.costForTunnel = 10;
  		pathFindingHelper.costForSlope 	= 10;
- 		pathFindingHelper.costTillEnd = 100;
+ 		pathFindingHelper.costTillEnd = 20;
 //		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRail + 10;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}

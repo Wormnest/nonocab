@@ -197,14 +197,15 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		for (local j = 0; j < 2; j++) {
 			
 			// Check if we can actually build a train station here (big enough for exit & entry rail.
-			if (!AIRail.BuildRailStation(i - offsets[j] * 3, rail_track_directions[j], 2, stationLength + 7, AIStation.STATION_JOIN_ADJACENT))
+//			if (!AIRail.BuildRailStation(i - offsets[j] * 3, rail_track_directions[j], 2, stationLength + 7, AIStation.STATION_JOIN_ADJACENT))
+			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_JOIN_ADJACENT))
 				continue;
 			
-			if (offsets == 1 &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 1))
+			if (offsets[j] == 1 &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 2))
 				continue;
-			else if (offsets == mapSizeX &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 1, stationLength + 7))
+			else if (offsets[j] == mapSizeX &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 2, stationLength + 7))
 				continue;
 
 			// Only add the tile furthest away from the industry to the open list.
@@ -300,6 +301,13 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_JOIN_ADJACENT))
 				continue;
 
+			if (offsets[j] == 1 &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 2))
+				continue;
+			else if (offsets[j] == mapSizeX &&
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 2, stationLength + 7))
+				continue;
+
 			// Only add the point furthest away from the industry / town we try to connect.
 			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
 				newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
@@ -322,13 +330,17 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 */
 	if (at.type != Tile.ROAD)
 		return false;
+
+	// Check if the 'go straight' precondition has been satisfied.
+	if (startAndEndDoubleStraight && (at.parentTile.lastBuildRailTrack != at.lastBuildRailTrack || at.parentTile.parentTile.lastBuildRailTrack != at.lastBuildRailTrack))
+		return false;
 	
 	// If this tile has a rail station, check if there is something on it.
 	if (AICompany.IsMine(AITile.GetOwner(at.tile))) {
 		// If it is a rail road station, make sure the rail tile goes in the same direction.
 		if (AIRail.IsRailStationTile(at.tile)) {
-			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile) &&
-			   (!startAndEndDoubleStraight || at.parentTile.lastBuildRailTrack != at.lastBuildRailTrack))
+			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile) || at.parentTile.lastBuildRailTrack != at.lastBuildRailTrack ||
+			   (startAndEndDoubleStraight && at.parentTile.parentTile.lastBuildRailTrack != at.lastBuildRailTrack))
 				return false;
 			return true;
 		}
@@ -362,10 +374,12 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	//if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : 0), direction, 2, 6, AIStation.STATION_JOIN_ADJACENT) || at.parentTile.type != Tile.ROAD)) {
 	if (checkEndPositions) {
 
-		local stationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 6 * at.direction : -3 * at.direction); 
-		if (!AIRail.BuildRailStation(stationTile, direction, 2, 10, AIStation.STATION_JOIN_ADJACENT) ||
-			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(stationTile, 10, 1) ||
-			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(stationTile, 1, 10) ||
+		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 6 * at.direction : -3 * at.direction); 
+		local stationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 2 * at.direction : 0); 
+//		if (!AIRail.BuildRailStation(stationTile, direction, 2, 10, AIStation.STATION_JOIN_ADJACENT) ||
+		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_JOIN_ADJACENT) ||
+			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 10, 2) ||
+			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 10) ||
 			at.parentTile.type != Tile.ROAD)
 		{
 	
@@ -406,6 +420,12 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 				return null;
 			}
 			return false;
+		}
+
+		{
+			local abc = AIExecMode();
+			AISign.BuildSign(aroundStationTile, "AT");
+			AISign.BuildSign(stationTile, "ST");
 		}
 	}
 
@@ -682,11 +702,11 @@ function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-	//{
-	//	local abc = AIExecMode();
-	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	//}
-
+/*	{
+		local abc = AIExecMode();
+		AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	}
+*/
 	local tileArray = [];
 	local offsets;
 	
