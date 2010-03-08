@@ -804,7 +804,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					tileArray.push(tmp);
 			}
 
-			if (!isInClosedList) {// && (!AIRail.IsRailTile(nextTile + offset) || AIRail.IsRailStationTile(nextTile + offset) || !goingStraight)) {
+			if (!isInClosedList) {
 				
 				if (AIRail.IsRailStationTile(currentTile) && AIRail.IsRailStationTile(nextTile))
 					continue;
@@ -835,6 +835,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						(railTrackDirection == AIRail.RAILTRACK_NW_NE || railTrackDirection == AIRail.RAILTRACK_SW_SE))
 						continue;
 				}
+
+				// If the next tile is a road tile, only allow bridges over or bridges beneath it!
+				if (AIRoad.IsRoadTile(nextTile))
+					continue;
 
 				// Check if the road is sloped.
 				if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))

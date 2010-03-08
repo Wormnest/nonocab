@@ -488,7 +488,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignals(roadList, false, 1, roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
 
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
-	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
+	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 40, tilesToIgnore);
 	if (secondPath == null)
 		return false;
 	
