@@ -42,8 +42,6 @@ class TownConnectionNode extends ConnectionNode
 	
 	function GetProduction(cargoID) {
 		local productionLastMonth = AITown.GetLastMonthProduction(id, cargoID);
-		if (productionLastMonth == 0)
-			return AITown.GetMaxProduction(id, cargoID) * 3 / 4;// / 2;
 		return productionLastMonth;
 	}
 }
