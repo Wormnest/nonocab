@@ -990,7 +990,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 
 	//Log.logWarning("Check for bridge!");
 
-	if (Tile.GetSlope(startNode, direction) != 2 && !AIRail.IsRailTile(startNode + direction)) {
+	if (Tile.GetSlope(startNode, direction) != 2 && !AIRail.IsRailTile(startNode + direction) && !AIRoad.IsRoadTile(startNode + direction)) {
 		//Log.logWarning("	Wrong slope!");
 		return null;
 	}
@@ -1003,7 +1003,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			return null;
 		}
 
-		if ((Tile.GetSlope(target, direction) == 1 || AIRail.IsRailTile(startNode + direction)) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {// && AIRail.BuildRail(target, target, target + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
+		if ((Tile.GetSlope(target, direction) == 1 || AIRail.IsRailTile(startNode + direction) || AIRoad.IsRoadTile(startNode + direction)) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
