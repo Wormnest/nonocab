@@ -41,6 +41,7 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, c
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.direction = offset;
 		annotatedTile.tile = nextTile;
+		annotatedTile.length = currentAnnotatedTile.length + 1;
 
 		// Check if the path is diagonal of not.
 		if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
@@ -106,7 +107,7 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 			
 		foreach (neighbour in neighbours) {
 			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd))
-				newList.AddItem(neighbour.tile, neighbour.tile);
+				newList.SetValue(neighbour.tile, neighbour.tile);
 		}
 	}
 	return newList;

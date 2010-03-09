@@ -45,12 +45,11 @@ class RoadPathFinding {
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
 
 	//if (checkStartPositions ) 
-/*	{
+	/*{
 		local bla = AIExecMode();
 		foreach (index, sign in AISignList())
 			AISign.RemoveSign(index);
-	}
-*/
+	}*/
 
 	local test = AITestMode();
 
@@ -144,7 +143,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		foreach (neighbour in pathFinderHelper.GetNeighbours(at, false, closedList)) {
 			neighbour.distanceFromStart += at.distanceFromStart;
 			neighbour.parentTile = at;
-			neighbour.length = at.length + 1;
+			assert (neighbour.length != at.length);
+			assert (neighbour.length != 0);
+			assert (neighbour.length > at.length);
 			
 			// Add this neighbour node to the queue.
 			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);

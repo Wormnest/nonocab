@@ -154,7 +154,7 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				if (Tile.GetSlope(i, neighbour.direction) == 2)
 					continue;
 					
-				newEndLocations.AddItem(i, i);
+				newEndLocations.SetValue(i, i);
 			}
 		}
 	}
@@ -276,12 +276,16 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					if (length > mapSizeX || length < -mapSizeX)
 						length /= mapSizeX;
 				    
+				    if (length < 0)
+				    	length = -length;
+				    
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
 					annotatedTile.alreadyBuild = true;
-					annotatedTile.distanceFromStart = costForRoad * (length < 0 ? -length : length);
+					annotatedTile.distanceFromStart = costForRoad * length;
+					annotatedTile.length = currentAnnotatedTile.length + length;
 					tileArray.push(annotatedTile);
 					isBridgeOrTunnelEntrance = true;
 				}
@@ -297,10 +301,10 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 
 			if (!onlyRoads) {
 				local tmp;
-				if (tmp = GetBridge(nextTile, offset))
+				if ((tmp = GetBridge(nextTile, offset)) != null || (tmp = GetTunnel(nextTile, currentTile)) != null) {
+					tmp.length += currentAnnotatedTile.length;
 					tileArray.push(tmp);
-				if (tmp = GetTunnel(nextTile, currentTile))
-					tileArray.push(tmp);
+				}
 			}
 
 			if (!isInClosedList) {
@@ -318,6 +322,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.direction = offset;
 					annotatedTile.tile = nextTile;
 					annotatedTile.alreadyBuild = false;
+					annotatedTile.length = currentAnnotatedTile.length + 1;
 	
 					// Check if the road is sloped.
 					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
@@ -380,6 +385,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.tile = target;
 			annotatedTile.alreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
+			annotatedTile.length = i;
 			return annotatedTile;
 		}
 	}
@@ -419,6 +425,7 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.alreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = forceForward;
+		annotatedTile.length = tunnel_length; 
 		return annotatedTile;
 	}
 	return null;

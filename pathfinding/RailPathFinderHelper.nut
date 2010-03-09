@@ -6,7 +6,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	costForBridge 	= 65;//65;  // Cost for building a bridge.
 	costForTunnel 	= 65;//65;  // Cost for building a tunnel.
 	costForSlope 	= 85;       // Additional cost if the road heads up or down a slope.
-	costTillEnd     = 50;       // The cost for each tile till the end.
+	costTillEnd     = 65;       // The cost for each tile till the end.
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
@@ -18,6 +18,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
 
 	updateClosedList = false;
+
+	expectedEnd = null;
 	
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
@@ -31,6 +33,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		closed_list = {};
 		updateClosedList = true;
 		startAndEndDoubleStraight = false;
+		expectedEnd = -1;
 	}
 	
 	function Reset() { 
@@ -106,6 +109,7 @@ class RailPathFinderHelper extends PathFinderHelper {
  * other options later.
  */
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
+	this.expectedEnd = expectedEnd;
 	
 	//if (startList.Count() == 0)
 	//	return;
@@ -162,7 +166,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.parentTile = stationBegin;
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
-//				stationBeginFront.forceForward = true;
 				stationBeginFront.forceForward = startAndEndDoubleStraight;
 
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
@@ -201,7 +204,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		for (local j = 0; j < 2; j++) {
 			
 			// Check if we can actually build a train station here (big enough for exit & entry rail.
-//			if (!AIRail.BuildRailStation(i - offsets[j] * 3, rail_track_directions[j], 2, stationLength + 7, AIStation.STATION_JOIN_ADJACENT))
 			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_JOIN_ADJACENT))
 				continue;
 			
@@ -235,7 +237,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 				stationBeginFront.forceForward = startAndEndDoubleStraight;
-//				stationBeginFront.forceForward = true;
 					
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			} else {
@@ -258,7 +259,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.length = 1;
 				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
 				stationEndFront.forceForward = startAndEndDoubleStraight;
-//				stationEndFront.forceForward = true;
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}
@@ -268,8 +268,11 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 
 function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
-	if (!checkEndPositions)
+	if (!checkEndPositions) {
+		foreach (i, value in endList)
+			assert (endList.GetValue(i) == i);
 		return endList;
+	}
 
 	local newEndLocations = AIList();
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -278,6 +281,8 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 	local x = 0;
 	local y = 0;
 	foreach (i, value in endList) {
+		Log.logDebug(endList.GetValue(i) + " == " + i + "? (" + value + ")");
+		assert (endList.GetValue(i) == i);
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
 	}
@@ -314,9 +319,9 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 			// Only add the point furthest away from the industry / town we try to connect.
 			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
-				newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
+				newEndLocations.SetValue(i + stationLength * offsets[j], i + stationLength * offsets[j]);
 			else
-				newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
+				newEndLocations.SetValue(i - offsets[j], i - offsets[j]);
 		}
 	}
 
@@ -380,7 +385,6 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 
 		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 6 * at.direction : -3 * at.direction); 
 		local stationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 2 * at.direction : 0); 
-//		if (!AIRail.BuildRailStation(stationTile, direction, 2, 10, AIStation.STATION_JOIN_ADJACENT) ||
 		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_JOIN_ADJACENT) ||
 			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 10, 2) ||
 			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 10) ||
@@ -389,7 +393,11 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	
 			// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 			// endpoints that aren't valid anymore.
+			assert(end.HasItem(at.tile));
+			assert(end.GetValue(at.tile) == at.tile);
 			end.RemoveValue(at.tile);
+			assert(!end.HasItem(at.tile));
+			Log.logDebug("Remove value. Values remaining: " + end.Count());
 	/*
 			// Check the remaining nodes too!
 			local listToRemove = AITileList();
@@ -703,10 +711,12 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 /*	{
 		local abc = AIExecMode();
 		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}
-*/
+	}*/
+
 	local tileArray = [];
 	local offsets;
+
+	local currentTile = currentAnnotatedTile.tile;
 	
 	/**
 	 * If the tile we want to build from is a bridge or tunnel, the only acceptable way 
@@ -725,7 +735,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		if (offset == -currentAnnotatedTile.direction)
 			continue;
 		
-		local currentTile = currentAnnotatedTile.tile;
 		local nextTile = currentTile + offset;
 
 		local isInClosedList = false;
@@ -770,11 +779,15 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					if (length > mapSizeX || length < -mapSizeX)
 						length /= mapSizeX; 
 				    
+				    if (length < 0)
+				    	length = -length;
+				    
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
 					annotatedTile.alreadyBuild = true;
+					annotatedTile.length = currentAnnotatedTile.length + length;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
 					if (offset == 1 || offset == -1)
 						annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
@@ -798,10 +811,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && goingStraight) {
 				local tmp;
-				if (tmp = GetBridge(nextTile, offset))
+				if ((tmp = GetBridge(nextTile, offset)) != null || (tmp = GetTunnel(nextTile, currentTile)) != null) {
+					tmp.length += currentAnnotatedTile.length;
 					tileArray.push(tmp);
-				if (tmp = GetTunnel(nextTile, currentTile))
-					tileArray.push(tmp);
+				}
 			}
 
 			if (!isInClosedList) {
@@ -868,12 +881,24 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.distanceFromStart += costForNewRail / 2;
 				else
 					annotatedTile.distanceFromStart += costForNewRail;
+				
+				if (goingStraight)
+					annotatedTile.length = currentAnnotatedTile.length + 1;
+				else
+					annotatedTile.length = currentAnnotatedTile.length + 0.5;
 
 				tileArray.push(annotatedTile);
-				closed_list[currentAnnotatedTile.tile + "-" + offset] <- true;
+
+				// Only use the direction sensitive closed list if we are either very close to the
+				// start or very close to the end point.
+				if (currentAnnotatedTile.length < 15 || AIMap.DistanceManhattan(currentTile, expectedEnd) < 15)
+					closed_list[currentTile + "-" + offset] <- true;
 			}
 		}
 	}
+
+	if (currentAnnotatedTile.length >= 15 && AIMap.DistanceManhattan(currentTile, expectedEnd) >= 15)
+		closedList[currentTile] <- true;
 
 	return tileArray;
 }
@@ -1011,6 +1036,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.tile = target;
 			annotatedTile.alreadyBuild = false;
 			annotatedTile.distanceFromStart = costForBridge * i;
+			annotatedTile.length = i;
 			
 			if (direction == 1 || direction == -1)
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
@@ -1052,7 +1078,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {// && AIRail.BuildRail(other_tunnel_end, other_tunnel_end, other_tunnel_end + direction) && AIRail.BuildRail(startNode, startNode, startNode - direction)) {
+	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
@@ -1060,6 +1086,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		annotatedTile.alreadyBuild = false;
 		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
 		annotatedTile.forceForward = true;
+		annotatedTile.length = tunnel_length;
 		
 		if (direction == 1 || direction == -1)
 			annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;
