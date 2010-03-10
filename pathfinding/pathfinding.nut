@@ -49,11 +49,11 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local lastCheckingTime = 0;
 
 	//if (checkStartPositions ) 
-	/*{
-		local bla = AIExecMode();
-		foreach (index, sign in AISignList())
-			AISign.RemoveSign(index);
-	}*/
+	//{
+	//	local bla = AIExecMode();
+	//	foreach (index, sign in AISignList())
+	//		AISign.RemoveSign(index);
+	//}
 
 	local test = AITestMode();
 

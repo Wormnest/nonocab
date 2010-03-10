@@ -41,7 +41,7 @@ function BuildRailAction::Execute() {
 	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
-	pathFinderHelper.costForTurn = 20;
+	//pathFinderHelper.costForTurn = 20;
 	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (connection.pathInfo == null) {
@@ -53,6 +53,7 @@ function BuildRailAction::Execute() {
 
 	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
+	local tilesToIgnore = null;
 	
 	// Check if we can build the rail stations.
 	if (buildRailStations) {
@@ -68,8 +69,28 @@ function BuildRailAction::Execute() {
 		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, true, false) ||
 			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, false, false, true)) {
 			Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
+			AITile.DemolishTile(roadList[0].tile);
+			AITile.DemolishTile(roadList[len - 1].tile);
 			connection.forceReplan = true;				
 			return false;
+		}
+		
+		// After building the stations make sure the rail approach the station in the right way.
+		local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ? AIMap.GetMapSizeX() : 1;
+		local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 || roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
+		
+		tilesToIgnore = [];
+		// Start station.
+		for (local j = 1; j < 3; j++) {
+			for (local i = -2; i < 5; i++) {
+				// End station.
+				tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j);
+				tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j);
+				
+				// Begin station.
+				tilesToIgnore.push(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i + startOrthogonalDirection * j);
+				tilesToIgnore.push(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i - startOrthogonalDirection * j);
+			}
 		}
 		
 		connection.pathInfo.nrRoadStations++;
@@ -79,7 +100,7 @@ function BuildRailAction::Execute() {
 	beginNodes.AddTile(roadList[len - 1].tile);
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
-	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 	if (connection.pathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
 		AITile.DemolishTile(roadList[0].tile);
@@ -95,10 +116,7 @@ function BuildRailAction::Execute() {
 	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
-		if (isConnectionBuild)
-			connection.pathInfo.roadList = originalRailList;
-		else
-			connection.forceReplan = true;
+		connection.forceReplan = true;
 		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
@@ -128,7 +146,7 @@ function BuildRailAction::Execute() {
 
 		connection.pathInfo.depot = depot;
 
-		if (connection.bilateralConnection) {
+		//if (connection.bilateralConnection) {
 
 			//depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
 			depot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
@@ -138,7 +156,7 @@ function BuildRailAction::Execute() {
 			}
 
 			connection.pathInfo.depotOtherEnd = depot;
-		}
+		//}
 	}
 	
 	// We only declare a connection built if both the depots and the rails are build.

@@ -8,14 +8,14 @@ class TrainConnectionAdvisor extends ConnectionAdvisor {
 	constructor(world, connectionManager) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
 		local pathFindingHelper = RailPathFinderHelper();
- 		pathFindingHelper.costForRail = 10;
+/* 		pathFindingHelper.costForRail = 10;
  		pathFindingHelper.costForNewRail = 10;
  		pathFindingHelper.costForTurn = 10;
  		pathFindingHelper.costForBridge = 10;
  		pathFindingHelper.costForTunnel = 10;
  		pathFindingHelper.costForSlope 	= 10;
  		pathFindingHelper.costTillEnd = 20;
-//		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRail + 10;
+//		pathFindingHelper.costTillEnd = pathFindingHelper.costForNewRail + 10;*/
 		pathFindingHelper.updateClosedList = false;
 		pathFinder = RoadPathFinding(pathFindingHelper);
 	}

@@ -20,9 +20,9 @@
  		local subsumList = [];
 		while ((report = reportList.Pop()) != null) {
 			
-			// Check if we can afford it.
+			// Check if we can afford it, but always include update reports.
 			local cost;
-			if (max >= (cost = report.GetCost(max)) && report.UtilityForMoney(max) > 0) {
+			if (max >= (cost = report.GetCost(max)) && report.UtilityForMoney(max) > 0 || report.connection.pathInfo.build) {
 				subsumList.push(report);
 				
 				if (cost > 0)

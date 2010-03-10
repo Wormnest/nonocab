@@ -58,61 +58,6 @@ class RailPathBuilder {
 	function CheckError(buildResult);
 }
 
-/**
- * Singleton class which tries to repair paths which couldn't be completed in a
- * previous point in time due to a temporal problem.
- */
-class PathFixer extends Thread {
-
-	buildPiecesToFix = null;
-	
-	constructor() {
-		buildPiecesToFix = [];
-	}
-	
-	function SaveData(saveData) {
-		saveData["buildPiecesToFix"] <- buildPiecesToFix;
-	}
-	
-	function LoadData(data) {
-		buildPiecesToFix = data["buildPiecesToFix"];
-	}
-	
-	/**
-	 * Add an additional piece of road which couldn't be build due to 
-	 * temporal issues.
-	 * @param toFix An array containing all information for a new road piece.
-	 */
-	function AddBuildPieceToFix(toFix) {
-		buildPiecesToFix.push(toFix);
-	}
-
-	function Update(loopCounter) {
-		
-		// Keep track which indexes we want to remove.
-		local toRemoveIndexes = [];
-		
-		foreach (index, piece in buildPiecesToFix) {
-			local test = AIExecMode();
-			
-			for (local i = 0; i < 5; i++) {
-				if (RailPathBuilder.BuildRoadPiece(piece[0], piece[1], piece[2], piece[3], piece[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
-					toRemoveIndexes.push(index);
-					break;
-				}
-				
-				for (local j = 0; j < 100; j++);
-			}
-		}
-		
-		// Reverse the list so we don't remove the wrong items!
-		toRemoveIndexes.reverse();
-		foreach (index in toRemoveIndexes)
-			buildPiecesToFix.remove(index);
-	}
-}
-
-
 function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
@@ -260,7 +205,7 @@ function RailPathBuilder::CheckError(buildResult)
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
 
-			// Retry the same action 5 times...
+			// Retry the same action 50 times...
 			for (local i = 0; i < 50; i++) {
 				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], buildResult[4], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY)
 					return true;
@@ -273,8 +218,8 @@ function RailPathBuilder::CheckError(buildResult)
 			if (buildResult[0] == roadList[0].tile || buildResult[0] == roadList[roadList.len() - 1].tile ||
 			buildResult[1] == roadList[0].tile || buildResult[1] == roadList[roadList.len() - 1].tile)
 				return false;
-			pathFixer.AddBuildPieceToFix(buildResult);
-			return true;
+			//pathFixer.AddBuildPieceToFix(buildResult);
+			return false;
 			
 		// Serious onces:
 		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:
@@ -369,13 +314,17 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 	for(local a = roadList.len() - 1; -1 < a; a--) {
 
-		local buildToIndex = a;
-		local direction = roadList[a].direction;
-
-		if (roadList[a].type == Tile.ROAD)
-			AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
-
-		else if (roadList[a].type == Tile.TUNNEL) {
+		if (roadList[a].type == Tile.ROAD) {
+			//AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
+			local tile = roadList[a].tile;
+			local railTrack = roadList[a].lastBuildRailTrack;
+			if (!AIRail.BuildRailTrack(tile, railTrack) && 
+				(!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0))
+				return false;
+			
+			//if (!BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack))
+			//	return false;
+		} else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
 				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, estimateCost))
@@ -406,13 +355,55 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
  */
 function RailPathBuilder::GetCostForRoad()
 {
-	Log.logDebug("Get cost for road");
-	local test = AITestMode();			// Switch to test mode...
-	local additionalCosts = 0;
-	local accounting = AIAccounting();	// Start counting costs
-	BuildPath(roadList, true);
-//	AIRail.BuildRoadStation(roadList[0].tile, roadList[1].tile, AIRail.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
-//	AIRail.BuildRoadStation(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, AIRail.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT);
+	Log.logDebug("Get cost for rail");
 	
-	return accounting.GetCosts();
+	if(roadList == null || roadList.len() < 3)
+		return 0;
+
+	local mapSizeX = AIMap.GetMapSizeX();
+	local currentRailType = AIRail.GetCurrentRailType();
+	local costs = 0;
+	local accounting = AIAccounting();
+	local test = AITestMode();
+
+	for(local a = roadList.len() - 1; -1 < a; a--) {
+
+		if (roadList[a].type == Tile.ROAD) {
+			local tile = roadList[a].tile;
+			local railTrack = roadList[a].lastBuildRailTrack;
+			if (!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0)
+				costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK);
+		}
+		 else if (roadList[a].type == Tile.TUNNEL) {
+
+			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, true)) {
+					local length = (roadList[a].tile - roadList[a + 1].tile) / roadList[a].direction;
+					if (length < 0)
+						length = -length;
+					
+					costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * length * 2;
+				}
+			}
+		} 
+
+		else if (roadList[a].type == Tile.BRIDGE) {
+			if (!AIBridge.IsBridgeTile(roadList[a + 1].tile + roadList[a].direction)) {
+			
+				local length = (roadList[a].tile - roadList[a + 1].tile) / roadList[a].direction;
+				if (length < 0)
+					length = -length;		
+				
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, true))
+					costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * length * 2;
+			}
+		}
+	}
+	
+	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_SIGNAL) * roadList.len() / 6;
+	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_DEPOT);
+	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2;
+	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * 10;
+
+	return costs + accounting.GetCosts();
 }

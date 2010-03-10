@@ -1,12 +1,12 @@
 class RailPathFinderHelper extends PathFinderHelper {
 
-	costForRail 	= 20;       // Cost for utilizing an existing road, bridge, or tunnel.
-	costForNewRail	= 50;       // Cost for building a new road.
-	costForTurn 	= 15;       // Additional cost if the road makes a turn.
-	costForBridge 	= 65;//65;  // Cost for building a bridge.
-	costForTunnel 	= 65;//65;  // Cost for building a tunnel.
-	costForSlope 	= 85;       // Additional cost if the road heads up or down a slope.
-	costTillEnd     = 65;       // The cost for each tile till the end.
+	costForRail 	= 100;       // Cost for utilizing an existing road, bridge, or tunnel.
+	costForNewRail	= 1000;       // Cost for building a new road.
+	costForTurn 	= 100;       // Additional cost if the road makes a turn.
+	costForBridge 	= 1000;//65;  // Cost for building a bridge.
+	costForTunnel 	= 1000;//65;  // Cost for building a tunnel.
+	costForSlope 	= 150;       // Additional cost if the road heads up or down a slope.
+	costTillEnd     = 1200;       // The cost for each tile till the end.
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
@@ -670,10 +670,10 @@ function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, closedList) {
 
 	assert(currentAnnotatedTile.lastBuildRailTrack != -1);
-/*	{
-		local abc = AIExecMode();
-		AISign.BuildSign(currentAnnotatedTile.tile, "X");
-	}*/
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
+	//}
 
 	local tileArray = [];
 	local offsets;
