@@ -41,6 +41,7 @@ function BuildRailAction::Execute() {
 	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
+	pathFinderHelper.costForTurn = 20;
 	connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (connection.pathInfo == null) {
@@ -49,6 +50,9 @@ function BuildRailAction::Execute() {
 		connection.forceReplan = true;
 		return false;
 	}
+
+	local roadList = connection.pathInfo.roadList;
+	local len = roadList.len();
 	
 	// Check if we can build the rail stations.
 	if (buildRailStations) {
@@ -59,11 +63,7 @@ function BuildRailAction::Execute() {
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
 			return false;	
-	}
 
-	local roadList = connection.pathInfo.roadList;
-	local len = roadList.len();
-	if (buildRailStations) {
 		local abc = AIExecMode();
 		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, true, false) ||
 			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, false, false, true)) {

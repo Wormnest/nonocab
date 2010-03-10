@@ -44,6 +44,10 @@ class RoadPathFinding {
 
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
 
+	// Safety trigger, if we take longer than 3 months to plan for a path, abort!
+	local startingDay = AIDate.GetCurrentDate();
+	local lastCheckingTime = 0;
+
 	//if (checkStartPositions ) 
 	/*{
 		local bla = AIExecMode();
@@ -154,6 +158,15 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		// Done! Don't forget to put at into the closed list
 		if (updateClosedList)
 			closedList[at.tile] <- at.tile;
+		
+		// Check every 100 iterations if we have run out of time.
+		if (++lastCheckingTime == 100) {
+			if (AIDate.GetCurrentDate() - startingDay > 60) {
+				Log.logDebug("Time expired, move on!");
+				return null;
+			}
+			lastCheckingTime = 0;
+		}
 	}
 
 	// Oh oh... No result found :(

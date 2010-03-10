@@ -149,9 +149,9 @@ function VehiclesAdvisor::Update(loopCounter) {
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isAir || isShip || nrVehicles == 0) 
+			if (production < 200 || isTrain || isAir || isShip || nrVehicles == 0) 
 				report.nrVehicles = 1;
-			else if (production < 300 || isTrain)
+			else if (production < 300)
 				report.nrVehicles = 2;
 			else if (production < 400)
 				report.nrVehicles = 3;
