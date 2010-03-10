@@ -59,7 +59,37 @@ function BuildRailAction::Execute() {
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
 			return false;	
-	}	
+	}
+
+	local roadList = connection.pathInfo.roadList;
+	local len = roadList.len();
+	if (buildRailStations) {
+		local abc = AIExecMode();
+		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, true, false) ||
+			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, false, false, true)) {
+			Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
+			connection.forceReplan = true;				
+			return false;
+		}
+		
+		connection.pathInfo.nrRoadStations++;
+	}
+	
+	local beginNodes = AITileList();
+	beginNodes.AddTile(roadList[len - 1].tile);
+	local endNodes = AITileList();
+	endNodes.AddTile(roadList[0].tile);
+	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	if (connection.pathInfo == null) {
+		Log.logWarning("Couldn't find a connection to build the rail road!");
+		AITile.DemolishTile(roadList[0].tile);
+		AITile.DemolishTile(roadList[len - 1].tile);
+		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
+		connection.forceReplan = true;
+		return false;
+	}
+	roadList = connection.pathInfo.roadList;
+	len = roadList.len();
 
 	// Build the actual rails.
 	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
@@ -73,31 +103,7 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 		
-	local roadList = connection.pathInfo.roadList;
-	local len = roadList.len();
 
-	if (buildRailStations) {
-		local abc = AIExecMode();
-		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, true, false) ||
-			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, false, false, true)) {
-			Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
-			connection.forceReplan = true;				
-			return false;
-		}
-		
-		connection.pathInfo.nrRoadStations++;
-
-		// In the case of a bilateral connection we want to make sure that
-		// we don't hinder ourselves; Place the stations not to near each
-		// other.
-		if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
-
-			// TODO: Fix this :)
-			//local stationType = roadVehicleType == AIRail.ROADVEHTYPE_TRUCK ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP;
-			//connection.travelFromNode.AddExcludeTiles(connection.cargoID, roadList[len - 1].tile, AIStation.GetCoverageRadius(stationType));
-			//connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
-		}
-	}
 
 	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
 	if (!BuildRoRoStation(stationType, pathFinder)) {
@@ -725,7 +731,6 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	if (maxLength > 20)
 		maxLength = 20;
 	for (local a = 2; a < maxLength; a++)
-	//local a = 20;
 		beginNodes.AddTile(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile);
 	
 	local endNodes = AITileList();
@@ -741,11 +746,9 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
 	
 	local toPlatformPath;
-	//if (buildFromEnd)
-		toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, 30, null);
+	toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, 30, null);
 	pathFinder.pathFinderHelper.reverseSearch = false;
-	//else
-	//	toPlatformPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 		pathBuilder.RealiseConnection(false);
