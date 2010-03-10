@@ -268,11 +268,8 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 
 function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
-	if (!checkEndPositions) {
-		foreach (i, value in endList)
-			assert (endList.GetValue(i) == i);
+	if (!checkEndPositions)
 		return endList;
-	}
 
 	local newEndLocations = AIList();
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -281,8 +278,6 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 	local x = 0;
 	local y = 0;
 	foreach (i, value in endList) {
-		Log.logDebug(endList.GetValue(i) + " == " + i + "? (" + value + ")");
-		assert (endList.GetValue(i) == i);
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
 	}
@@ -311,17 +306,19 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				continue;
 
 			if (offsets[j] == 1 &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 2))
+				!AITile.IsBuildableRectangle(i - offsets[j] * 5, stationLength + 7, 2))
 				continue;
 			else if (offsets[j] == mapSizeX &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 2, stationLength + 7))
+				!AITile.IsBuildableRectangle(i - 1 - offsets[j] * 3, 2, stationLength + 7))
 				continue;
 
 			// Only add the point furthest away from the industry / town we try to connect.
 			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
-				newEndLocations.SetValue(i + stationLength * offsets[j], i + stationLength * offsets[j]);
+			//	newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
+				newEndLocations.AddItem(i + (stationLength - 1) * offsets[j], i + (stationLength - 1) * offsets[j]);
 			else
-				newEndLocations.SetValue(i - offsets[j], i - offsets[j]);
+				//newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
+				newEndLocations.AddItem(i, i);
 		}
 	}
 
@@ -332,11 +329,7 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closedList) {
 
-/*	{
-		local abc = AIExecMode();
-		AISign.BuildSign(at.tile, "CHECK HERE!!!!");
-	}
-*/
+
 	if (at.type != Tile.ROAD)
 		return false;
 
@@ -383,56 +376,25 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	//if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : 0), direction, 2, 6, AIStation.STATION_JOIN_ADJACENT) || at.parentTile.type != Tile.ROAD)) {
 	if (checkEndPositions) {
 
-		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 6 * at.direction : -3 * at.direction); 
-		local stationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 2 * at.direction : 0); 
+		local mapSizeX = AIMap.GetMapSizeX();
+		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : -3 * at.direction); 
+		local stationTile = at.tile + (at.direction == -1 || at.direction == -mapSizeX ? 2 * at.direction : 0); 
+
 		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_JOIN_ADJACENT) ||
 			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 10, 2) ||
 			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 10) ||
 			at.parentTile.type != Tile.ROAD)
 		{
-	
-			// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
-			// endpoints that aren't valid anymore.
-			assert(end.HasItem(at.tile));
-			assert(end.GetValue(at.tile) == at.tile);
-			end.RemoveValue(at.tile);
-			assert(!end.HasItem(at.tile));
-			Log.logDebug("Remove value. Values remaining: " + end.Count());
-	/*
-			// Check the remaining nodes too!
-			local listToRemove = AITileList();
-	
-			foreach (i, value in end) {
-	
-				dummyAnnotatedTile.tile = i;
-		
-				// We preprocess all end nodes to see if a road station can be build on them.
-				local neighbours = GetNeighbours(dummyAnnotatedTile, true, closedList);
-	
-				// We only consider roads which don't go down hill because we can't build road stations
-				// on them!
-				local foundSuitableNeighbour = false;
-				foreach (neighbour in neighbours) {
-					if (Tile.GetSlope(i, neighbour.direction) != 2) {
-						foundSuitableNeighbour = true;
-						break;
-					}
-				}
-	
-				if (!foundSuitableNeighbour)
-					listToRemove.AddTile(i);
-	
-			}
-	
-			end.RemoveList(listToRemove);
-	*/
-	
-			if (end.IsEmpty()) {
-				Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
-				return null;
-			}
 			return false;
-		}
+		}/* else {
+			local asdf = AIExecMode();
+			if (direction == AIRail.RAILTRACK_NW_SE)
+				AISign.BuildSign(stationTile, "ST - NW");
+			else
+				AISign.BuildSign(stationTile, "ST - NE");
+			AISign.BuildSign(aroundStationTile, "AST");
+			AISign.BuildSign(at.tile, "CHECK HERE!!!! " + at.direction);
+		}*/
 	}
 
 	return true;

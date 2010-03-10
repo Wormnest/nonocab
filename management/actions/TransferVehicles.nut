@@ -24,10 +24,10 @@ class TransferVehicles extends Action {
 			
 			local startList = AIList();
 			local roadList = oldConnection.pathInfo.roadList;
-			startList.AddItem(roadList[roadList.len() - 1].tile, roadList[roadList.len() - 1].tile);
+			startList.AddItem(roadList[roadList.len() - 1].tile);
 			
 			local endList = AIList();
-			endList.AddItem(roadList[0].tile, roadList[0].tile);
+			endList.AddItem(roadList[0].tile);
 			local pathInfo = pathFinder.FindFastestRoad(startList, endList, false, false, null, 100, null);
 			
 			if (pathInfo == null) {

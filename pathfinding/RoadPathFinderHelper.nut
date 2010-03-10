@@ -154,7 +154,7 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				if (Tile.GetSlope(i, neighbour.direction) == 2)
 					continue;
 					
-				newEndLocations.SetValue(i, i);
+				newEndLocations.AddItem(i, i);
 			}
 		}
 	}
@@ -176,7 +176,7 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.
-		end.RemoveValue(at.tile);
+		end.RemoveTile(at.tile);
 
 		// Check the remaining nodes too!
 		local listToRemove = AITileList();

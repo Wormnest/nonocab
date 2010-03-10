@@ -107,7 +107,7 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 			
 		foreach (neighbour in neighbours) {
 			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd))
-				newList.SetValue(neighbour.tile, neighbour.tile);
+				newList.AddItem(neighbour.tile, neighbour.tile);
 		}
 	}
 	return newList;
@@ -181,7 +181,7 @@ function WaterPathFinderHelper::CheckGoalState(at, end, checkEndPositions, close
 		at.tile = at.tile - at.direction;
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.
-		end.RemoveValue(at.tile);
+		end.RemoveTile(at.tile);
 
 		if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
