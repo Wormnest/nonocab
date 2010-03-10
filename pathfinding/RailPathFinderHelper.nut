@@ -271,7 +271,7 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 	if (!checkEndPositions)
 		return endList;
 
-	local newEndLocations = AIList();
+	local newEndLocations = AITileList();
 	local mapSizeX = AIMap.GetMapSizeX();
 
 	// Determine middle point.
@@ -315,10 +315,10 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 			// Only add the point furthest away from the industry / town we try to connect.
 			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
 			//	newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
-				newEndLocations.AddItem(i + (stationLength - 1) * offsets[j], i + (stationLength - 1) * offsets[j]);
+				newEndLocations.AddTile(i + (stationLength - 1) * offsets[j]);
 			else
 				//newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
-				newEndLocations.AddItem(i, i);
+				newEndLocations.AddTile(i);
 		}
 	}
 

@@ -85,7 +85,7 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 	tileList.Valuate(AITile.IsCoastTile);
 	tileList.KeepValue(1);
 
-	local newList = AIList();
+	local newList = AITileList();
 
 	foreach (i, value in tileList) {
 	
@@ -107,7 +107,7 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 			
 		foreach (neighbour in neighbours) {
 			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd))
-				newList.AddItem(neighbour.tile, neighbour.tile);
+				newList.AddTile(neighbour.tile);
 		}
 	}
 	return newList;

@@ -136,7 +136,7 @@ function RoadPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 
 function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
-	local newEndLocations = AIList();
+	local newEndLocations = AITileList();
 	
 	foreach (i, value in endList) {
 		if (checkEndPositions) {
@@ -154,7 +154,7 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				if (Tile.GetSlope(i, neighbour.direction) == 2)
 					continue;
 					
-				newEndLocations.AddItem(i, i);
+				newEndLocations.AddTile(i);
 			}
 		}
 	}
