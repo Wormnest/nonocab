@@ -177,10 +177,10 @@ class Connection {
 		
 		if (destroyFrom) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
-				local startTileList = AIList();
+				local startTileList = AITileList();
 				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
 				
-				startTileList.AddItem(startStation, startStation);
+				startTileList.AddTile(startStation);
 				DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
 			}
 			AITile.DemolishTile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
@@ -188,10 +188,10 @@ class Connection {
 		
 		if (destroyTo) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
-				local endTileList = AIList();
+				local endTileList = AITileList();
 				local endStation = pathInfo.roadList[0].tile;
 				
-				endTileList.AddItem(endStation, endStation);
+				endTileList.AddTile(endStation);
 				DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
 			}
 			AITile.DemolishTile(pathInfo.roadList[0].tile);
@@ -232,13 +232,13 @@ class Connection {
 		if (tileList.Count() == 0)
 			return;
  
- 		local newTileList = AIList();
+ 		local newTileList = AITileList();
  		local tile = tileList.Begin();
  		while (true) {
  			local currentStationID = AIStation.GetStationID(tile);
 			foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
 				if (excludeList.HasItem(surroundingTile)) continue;
-				excludeList.AddItem(surroundingTile, surroundingTile);
+				excludeList.AddTile(surroundingTile);
 	
 				local stationID = AIStation.GetStationID(surroundingTile);
 	
@@ -250,7 +250,7 @@ class Connection {
 					AITile.DemolishTile(surroundingTile);
 					
 					if (!newTileList.HasItem(surroundingTile))
-						newTileList.AddItem(surroundingTile, surroundingTile);
+						newTileList.AddTile(surroundingTile);
 				}			
 			}
 			
@@ -273,15 +273,15 @@ class Connection {
 		if (!pathInfo.build)
 			return AIList();
 	
-		local tileList = AIList();	
-		local excludeList = AIList();	
+		local tileList = AITileList();	
+		local excludeList = AITileList();	
 		local tile = null;
 		if (atStart) {
 			tile = pathInfo.roadList[0].tile;
 		} else {
 			tile = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
 		}
-		excludeList.AddItem(tile, tile);
+		excludeList.AddTile(tile);
 		GetSurroundingTiles(tile, tileList, excludeList);
 		
 		return tileList;
@@ -296,7 +296,7 @@ class Connection {
 			local stationID = AIStation.GetStationID(surroundingTile);
 
 			if (AIStation.IsValidStation(stationID)) {
-				excludeList.AddItem(surroundingTile, surroundingTile);
+				excludeList.AddTile(surroundingTile);
 
 				// Only explore this possibility if the station has the same name!
 				if (AIStation.GetName(stationID) != AIStation.GetName(currentStationID))
@@ -307,7 +307,7 @@ class Connection {
 			}
 
 			if (!tileList.HasItem(surroundingTile))
-				tileList.AddItem(surroundingTile, surroundingTile);
+				tileList.AddTile(surroundingTile);
 		}
 	}
 	
