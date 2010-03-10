@@ -9,9 +9,10 @@ class Terraform {
 	 * @param startTyle The top left tile to start from.
 	 * @param width The width of the rectangle.
 	 * @param height The height of the rectangle.
+	 * @param preferedHeight The prefered height, if -1 we try to detect it ourselves.
 	 * @return True if completed, false otherwise.
 	 */
-	function Terraform(startTile, width, height);
+	function Terraform(startTile, width, height, preferedHeight);
 	
 	/**
 	 * Get the number of tiles that will be changed due to terraforming.
@@ -44,8 +45,10 @@ class Terraform {
 	function CalculatePreferedHeight(startTile, width, height);
 }
 
-function Terraform::Terraform(startTile, width, height) {
-	local preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
+function Terraform::Terraform(startTile, width, height, preferedHeight) {
+	
+	if (preferedHeight == -1)
+		preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
 	if (preferedHeight == 0)
 		preferedHeight = 1;
 	else if (preferedHeight == -1)

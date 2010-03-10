@@ -29,8 +29,10 @@ function TrainConnectionAdvisor::GetBuildAction(connection) {
  * Calculate the path to realise a connection between the nodes in the report.
  */
 function TrainConnectionAdvisor::GetPathInfo(report) {
-//	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
-//		return null;
+
+	// Don't do towns! Takes to long for the pathfinder sometimes...	
+	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
+		return null;
 	local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 

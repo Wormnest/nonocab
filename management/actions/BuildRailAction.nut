@@ -213,25 +213,35 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	AISign.BuildSign(railStationTile, "Original location");
 	
 	local direction;
+	local terraFormFrom;
+	local width;
+	local height;
 	if (railStationTile - frontRailStationTile < AIMap.GetMapSizeX() &&
 	    railStationTile - frontRailStationTile > -AIMap.GetMapSizeX()) {
 		direction = AIRail.RAILTRACK_NE_SW;
 		
 		if (railStationTile - frontRailStationTile == -1)
 			railStationTile -= 2;
+		terraFormFrom = railStationTile - 3;
+		width = 10;
+		height = 2;
 		
 	} else {
 		direction = AIRail.RAILTRACK_NW_SE;
 		
 		if (railStationTile - frontRailStationTile == -AIMap.GetMapSizeX())
 			railStationTile -= 2 * AIMap.GetMapSizeX();
+			
+		terraFormFrom = railStationTile - 3 * AIMap.GetMapSizeX();
+		width = 2;
+		height = 10;
 	}
 
 	AISign.BuildSign(railStationTile, "Final location");
 
-	if (!AIRail.IsRailStationTile(railStationTile) && 
+	if (!AIRail.IsRailStationTile(railStationTile) &&
 		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
-		return false;
+			return false;
 	} else if (!isConnectionBuild) {
 		if (isStartStation) {
 			connection.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
@@ -241,7 +251,16 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 			Log.logDebug("Set end station");
 		}
 	}
-		
+	
+	local preferedHeight = -1;
+	
+	if (direction == AIRail.RAILTRACK_NW_SE)
+		preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 2, 3);
+	else
+		preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
+	Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
+		 
+	
 	return true;
 }
 
@@ -485,7 +504,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	// Build the signals.
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignals(roadList, false, 1, roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(roadList, false, 10, roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
 
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 40, tilesToIgnore);
@@ -500,7 +519,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	
 	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignals(secondPath.roadList, false, 1, secondPath.roadList.len() - 2, 6, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignals(secondPath.roadList, false, 10, secondPath.roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
 	
 	
 	connection.pathInfo.roadListReturn = secondPath.roadList;
@@ -723,7 +742,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	
 	local toPlatformPath;
 	//if (buildFromEnd)
-		toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+		toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, 30, null);
 	pathFinder.pathFinderHelper.reverseSearch = false;
 	//else
 	//	toPlatformPath = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
