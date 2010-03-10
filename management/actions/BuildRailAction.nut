@@ -212,6 +212,18 @@ function BuildRailAction::CleanupAfterFailure() {
 		Log.logDebug("We have a depotOtherEnd!");
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
+	
+	if (connection.travelFromNodeStationID) {
+		local stationTiles = AITileList_StationType(connection.travelFromNodeStationID, AIStation.STATION_TRAIN);
+		foreach (tile, value in stationTiles)
+			AITile.DemolishTile(tile);
+	}
+	
+	if (connection.travelToNodeStationID) {
+		local stationTiles = AITileList_StationType(connection.travelToNodeStationID, AIStation.STATION_TRAIN);
+		foreach (tile, value in stationTiles)
+			AITile.DemolishTile(tile);
+	}
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
@@ -265,8 +277,6 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	else
 		preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
 	Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
-		 
-	
 	return true;
 }
 
@@ -440,10 +450,10 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			if (problemsWhileBuilding)
 				continue;
 
-			if (!AIRail.BuildSignal(railsToBuild[0], depotTile, AIRail.SIGNALTYPE_NORMAL_TWOWAY)) {
-				AISign.BuildSign(railsToBuild[0], "NO SIGNAL!??!");
-				continue;
-			}
+			//if (!AIRail.BuildSignal(railsToBuild[0], depotTile, AIRail.SIGNALTYPE_NORMAL_TWOWAY)) {
+			//	AISign.BuildSign(railsToBuild[0], "NO SIGNAL!??!");
+			//	continue;
+			//}
 			connection.pathInfo.extraRoadBits.push(depotRails);
 			
 			// Remove all signals on the tile between the entry and exit rails.
