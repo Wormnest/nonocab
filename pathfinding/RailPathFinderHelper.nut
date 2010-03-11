@@ -830,6 +830,14 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
 				if (reuseRailTrack) {
+					
+					// Make sure the train can ride on this!
+					local currentRailType = AIRail.GetCurrentRailType();
+					local tileRailType = AIRail.GetRailType(nextTile);
+					if (!AIRail.TrainCanRunOnRail(currentRailType, tileRailType) ||
+					    !AIRail.TrainHasPowerOnRail(currentRailType, tileRailType))
+						continue;
+					
 					if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
 						continue;
 					annotatedTile.alreadyBuild = true;
