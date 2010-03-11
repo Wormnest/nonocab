@@ -33,29 +33,27 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 		local isRail = false;
 
 		// Check if there are any vehicles waiting on this tile and if so, sell them!
-		foreach (vehicleGroup in connection.vehiclesOperating) {
-			foreach (vehicleID in vehicleGroup.vehicleIDs) {
-				hasVehicles = true;
+		foreach (vehicleID, value in AIVehicleList_Group(connection.vehicleGroupID)) {
+			hasVehicles = true;
 
-				if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_AIR)
-					isAir = true;
+			if (!isAir && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_AIR)
+				isAir = true;
 					
-				if (!isRail && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_RAIL)
-					isRail = true;
+			if (!isRail && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_RAIL)
+				isRail = true;
 
-				if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-					(AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) ||
-					isRail )&&
-					(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
-					(AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING ||
-					AIVehicle.GetState(vehicleID) == AIVehicle.VS_BROKEN) &&
-					AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
+			if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
+				(AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) ||
+				isRail )&&
+				(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
+				(AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING ||
+				AIVehicle.GetState(vehicleID) == AIVehicle.VS_BROKEN) &&
+				AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
 
-					nrVehicles--;
+				nrVehicles--;
 					
-					if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
-						nrVehiclesInStation++;
-				}
+				if (AITile.IsStationTile(AIVehicle.GetLocation(vehicleID)))
+					nrVehiclesInStation++;
 			}
 		}
 		Log.logDebug("Vehicles waiting: " + nrVehicles + " " + nrVehiclesInStation);

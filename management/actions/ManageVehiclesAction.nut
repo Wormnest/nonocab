@@ -52,18 +52,12 @@ function ManageVehiclesAction::Execute()
 		// First of all we need to find suitable candidates to remove.
 		local vehicleList = AIList();
 		local vehicleArray = null;
-		
-		foreach (vehicleGroup in connection.vehiclesOperating) {
-		
-			if (vehicleGroup.vehicleIDs.len() > 0 && AIVehicle.GetVehicleType(vehicleGroup.vehicleIDs[0]) == AIEngine.GetVehicleType(engineID)) {
-				foreach (vehicleID in vehicleGroup.vehicleIDs)
-					vehicleList.AddItem(vehicleID, vehicleID);
-				vehicleArray = vehicleGroup.vehicleIDs;
-				break;
-			}
-		}
+
+		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, true);
+		vehicleList.Valuate(AIVehicle.GetEngineType);
+		vehicleList.KeepValue(engineID);
 		if (!connection.bilateralConnection) {
 			vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
 			vehicleList.RemoveAboveValue(0);
@@ -85,13 +79,6 @@ function ManageVehiclesAction::Execute()
 			}
 			else
 				++vehiclesDeleted;
-			
-			foreach (id, value in vehicleArray) {
-				if (value == vehicleID) {
-					vehicleArray.remove(id);
-					break;
-				}
-			} 
 
 			if (vehiclesDeleted == vehicleNumbers/* && AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR*/) {
 				// Update the creation date of the connection so vehicles don't get
@@ -121,39 +108,29 @@ function ManageVehiclesAction::Execute()
 		
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + AIEngine.GetName(wagonEngineID) + ".");
 
-		// Search if there are already have a vehicle group with this engine ID.
-		foreach (vGroup in connection.vehiclesOperating) {
-			if (vGroup.engineID == engineID) {
-				vehicleGroup = vGroup;
-				break;
-			}
-		}	
+		// Search if there are already have a vehicle group for this connection.
+		if (!AIGroup.IsValidGroup(connection.vehicleGroupID)) {
+			connection.vehicleGroupID = AIGroup.CreateGroup(AIEngine.GetVehicleType(engineID));
+			AIGroup.SetName(connection.vehicleGroupID, connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
+		}
 		
-		// If there isn't a vehicles group we create one.
-		if (vehicleGroup == null) {
-			vehicleGroup = VehicleGroup();
-			vehicleGroup.connection = connection;
-			
+		// Check if the travel times are already know for this engine type, if not: update them!
+		if (!connection.timeToTravelTo.rawin(engineID)) {			
 			if (vehicleType == AIVehicle.VT_ROAD) {
-				vehicleGroup.timeToTravelTo = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				vehicleGroup.timeToTravelFrom = RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+				connection.timeToTravelTo[engineID] <- RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				connection.timeToTravelFrom[engineID] <- RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			} else if (vehicleType == AIVehicle.VT_AIR){ 
 				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
-				vehicleGroup.timeToTravelTo = (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
-				vehicleGroup.timeToTravelFrom = vehicleGroup.timeToTravelTo;
+				connection.timeToTravelTo[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
+				connection.timeToTravelFrom[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
 			} else if (vehicleType == AIVehicle.VT_WATER) {
-				vehicleGroup.timeToTravelTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				vehicleGroup.timeToTravelFrom = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+				connection.timeToTravelTo[engineID] <- WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				connection.timeToTravelFrom[engineID] <- WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			} else if (vehicleType == AIVehicle.VT_RAIL) {
-				vehicleGroup.timeToTravelTo = RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				vehicleGroup.timeToTravelFrom = RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+				connection.timeToTravelTo[engineID] <- RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+				connection.timeToTravelFrom[engineID] <- RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
 			} else
 				assert (false);
-			vehicleGroup.incomePerRun = AICargo.GetCargoIncome(connection.cargoID, 
-				AIMap.DistanceManhattan(connection.pathInfo.roadList[0].tile, connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), 
-				vehicleGroup.timeToTravelTo) * AIEngine.GetCapacity(engineID);	
-			vehicleGroup.engineID = engineID;
-			connection.vehiclesOperating.push(vehicleGroup);
 		}
 		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
@@ -218,7 +195,8 @@ function ManageVehiclesAction::Execute()
 			// Refit if necessary.
 			if (connection.cargoID != AIEngine.GetCargoType(engineID))
 				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
-			vehicleGroup.vehicleIDs.push(vehicleID);
+			//vehicleGroup.vehicleIDs.push(vehicleID);
+			AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 
 			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
 			// TODO: Make sure to make this also works for cloned vehicles.

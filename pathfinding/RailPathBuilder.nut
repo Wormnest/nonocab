@@ -233,10 +233,10 @@ function RailPathBuilder::CheckError(buildResult)
 		case AIRail.ERR_CROSSING_ON_ONEWAY_ROAD:		
 		case AIRail.ERR_UNSUITABLE_TRACK:		
 
-			AISign.BuildSign(buildResult[0], "Prev");
+//			AISign.BuildSign(buildResult[0], "Prev");
 			//if (buildResult[1])
-			AISign.BuildSign(buildResult[1], "From");
-			AISign.BuildSign(buildResult[2], "To");
+//			AISign.BuildSign(buildResult[1], "From");
+//			AISign.BuildSign(buildResult[2], "To");
 			//assert(false);
 			/**
 			 * We handle these kind of errors elsewhere.

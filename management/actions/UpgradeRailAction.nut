@@ -37,22 +37,17 @@ function RailPathUpgradeAction::Upgrade(connection, newRailType) {
 
 	// First order of business is to send every vehicle back to the depots
 	// so they don't get in the way while we upgrade the tracks!
-	foreach (vehicleGroup in connection.vehiclesOperating) {
-		foreach (vehicleId in vehicleGroup.vehicleIDs) {
+	foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
 			AIVehicle.SendVehicleToDepot(vehicleId);
-		}
-	}
 	
 	// Next, wait till all vehicles are in their respective depots.
 	local vehicleNotInDepot = true;
 	while (vehicleNotInDepot) {
 		vehicleNotInDepot = false;
-		foreach (vehicleGroup in connection.vehiclesOperating) {
-			foreach (vehicleId in vehicleGroup.vehicleIDs) {
-				if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
-					vehicleNotInDepot = true;
-					break;
-				}
+		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
+			if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
+				vehicleNotInDepot = true;
+				break;
 			}
 			
 			if (vehicleNotInDepot)
@@ -61,14 +56,9 @@ function RailPathUpgradeAction::Upgrade(connection, newRailType) {
 	}
 	
 	// Jeej! All trains are in the depots. SELL THEM!!!!
-	foreach (vehicleGroup in connection.vehiclesOperating) {
-		foreach (vehicleId in vehicleGroup.vehicleIDs) {
+	foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
 			AIVehicle.SellVehicle(vehicleId);
-		}
-	}
 
-	connection.vehiclesOperating = [];
-	
 	// Sell and rebuild the depots.
 	local originalFrontBitDepot = AIRail.GetRailDepotFrontTile(connection.pathInfo.depot);
 	AITile.DemolishTile(connection.pathInfo.depot);

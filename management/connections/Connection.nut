@@ -21,7 +21,9 @@ class Connection {
 	cargoID = null;	                // The type of cargo carried from one node to another.
 	travelFromNode = null;          // The node the cargo is carried from.
 	travelToNode = null;            // The node the cargo is carried to.
-	vehiclesOperating = null;       // List of VehicleGroup instances to keep track of all vehicles on this connection.
+	vehicleGroupID = null;            // The AIGroup of all vehicles serving this connection.
+	timeToTravelFrom = null;        // List containing the travel times for various enigneIDs.
+	timeToTravelTo = null;        // List containing the travel times for various enigneIDs.
 	pathInfo = null;                // PathInfo class which contains all information about the path.
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
 	travelFromNodeStationID = null; // The station ID which is build at the producing side.
@@ -41,6 +43,9 @@ class Connection {
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
 		refittedForArticulatedVehicles = false;
 		
+		timeToTravelFrom = {};
+		timeToTravelTo = {};
+		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 			if (travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 				connectionType = INDUSTRY_TO_INDUSTRY;
@@ -56,7 +61,7 @@ class Connection {
 				connectionType = TOWN_TO_TOWN;
 			}
 		}
-		vehiclesOperating = [];
+		vehicleGroupID = -1;
 	}
 	
 	function LoadData(data) {
@@ -64,13 +69,7 @@ class Connection {
 		vehicleTypes = data["vehicleTypes"];
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		pathInfo.LoadData(data["pathInfo"]);
-		vehiclesOperating = [];
-		
-		foreach (vo in data["vehiclesOperating"]) {
-			local vehicleGroup = VehicleGroup();
-			vehicleGroup.LoadData(vo);
-			vehiclesOperating.push(vehicleGroup);
-		}
+		vehicleGroupID = data["vehicleGroupID"];
 		
 		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
 	}
@@ -83,11 +82,7 @@ class Connection {
 		saveData["vehicleTypes"] <- vehicleTypes;
 		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
 		saveData["pathInfo"] <- pathInfo.SaveData();
-		saveData["vehiclesOperating"] <- [];
-		
-		foreach (vo in vehiclesOperating) {
-			saveData["vehiclesOperating"].push(vo.SaveData());
-		}
+		saveData["vehicleGroupID"] <- vehicleGroupID;
 		return saveData;
 	}
 	
@@ -107,9 +102,14 @@ class Connection {
 		local cargoAlreadyTransported = 0;
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
-					
-				foreach (vehicleGroup in connection.vehiclesOperating) {
-					cargoAlreadyTransported += vehicleGroup.vehicleIDs.len() * (World.DAYS_PER_MONTH / (vehicleGroup.timeToTravelTo + vehicleGroup.timeToTravelFrom)) * AIEngine.GetCapacity(vehicleGroup.engineID);
+				
+				if (AIGroup.IsValidGroup(vehicleGroupID)) {
+					local vehicles = AIVehicleList_Group(vehicleGroupID);
+					foreach (vehicle, value in vehicles) {
+						local engineID = AIVehicle.GetEngineType(vehicle);
+						local travelTime = timeToTravelTo.rawget(engineID) + timeToTravelFrom.rawget(engineID);
+						cargoAlreadyTransported += (World.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
+					}
 				}
 			}
 		}
@@ -149,12 +149,10 @@ class Connection {
 	 * Get the number of vehicles operating.
 	 */
 	function GetNumberOfVehicles() {
-		local nrVehicles = 0;
-		
-		foreach (group in vehiclesOperating)
-			nrVehicles += group.vehicleIDs.len();
-			
-		return nrVehicles;
+
+		if (!AIGroup.IsValidGroup(vehicleGroupID))
+			return 0;
+		return AIVehicleList_Group(vehicleGroupID).Count();
 	}
 	
 	/**
@@ -165,8 +163,8 @@ class Connection {
 			assert(false);
 		
 		// Sell all vehicles.
-		foreach (group in vehiclesOperating) {
-			foreach (vehicleID in group.vehicleIDs) {	
+		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
+			foreach (vehicleID, value in AIVehicleList_Group(vehicleGroupID)) {	
 				if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
 					AIVehicle.ReverseVehicle(vehicleID);
 					AIController.Sleep(5);
