@@ -6,6 +6,7 @@ class RailPathBuilder {
 	maxSpeed = null;
 	pathFixer = null;
 	roadList = null;
+	lastBuildIndex = null;
 	
 	/**
 	 * @param connection The connection to be realised.
@@ -16,6 +17,7 @@ class RailPathBuilder {
 		this.roadList = roadList;
 		this.maxSpeed = maxSpeed;
 		this.pathFixer = pathFixer;
+		lastBuildIndex = -1;
 	}
 
 	/**
@@ -113,8 +115,8 @@ function RailPathBuilder::BuildRoadPiece(prevTile, fromTile, toTile, tileType, l
 			break;
 			
 		case Tile.TUNNEL:
-			if (!AITile.IsBuildable(fromTile))
-				AITile.DemolishTile(fromTile);
+			//if (!AITile.IsBuildable(fromTile))
+			//	AITile.DemolishTile(fromTile);
 			buildSucceded = AITunnel.BuildTunnel(AIVehicle.VT_RAIL, fromTile);
 			break;
 			
@@ -269,6 +271,7 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
 {
 	// Check if we have enough money...
 	local estimatedCost = GetCostForRoad();
+	lastBuildIndex = -1;
 	if (estimatedCost > Finance.GetMaxMoneyToSpend()) {
 		Log.logWarning("Not enough money, aborting construction!");
 		return false;
@@ -281,10 +284,10 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
 		local result = BuildPath(roadList, false);
 //		local costs = account.GetCosts();
 //		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
-		if (result && !CheckPath(roadList)) {
-			Log.logWarning("Path build but with errors!!!");
-			return false;
-		}
+		//if (result && !CheckPath(roadList)) {
+		//	Log.logWarning("Path build but with errors!!!");
+		//	return false;
+		//}
 
 		return result;
 	}
@@ -319,16 +322,20 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 			local tile = roadList[a].tile;
 			local railTrack = roadList[a].lastBuildRailTrack;
 			if (!AIRail.BuildRailTrack(tile, railTrack) && 
-				(!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0))
+				(!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0)) {
+				lastBuildIndex = a + 1;
 				return false;
+			}
 			
 			//if (!BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack))
 			//	return false;
 		} else if (roadList[a].type == Tile.TUNNEL) {
 
 			if (!AITunnel.IsTunnelTile(roadList[a + 1].tile + roadList[a].direction)) {
-				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, estimateCost))
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.TUNNEL, null, estimateCost)) {
+					lastBuildIndex = a + 1;
 					return false;
+				}
 			}
 		} 
 
@@ -339,8 +346,10 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				if (length < 0)
 					length = -length;		
 				
-				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost))
+				if (!BuildRoadPiece(null, roadList[a + 1].tile + roadList[a].direction, roadList[a].tile, Tile.BRIDGE, length, estimateCost)) {
+					lastBuildIndex = a + 1;
 					return false;
+				}
 
 			}
 		}

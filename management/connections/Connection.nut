@@ -42,6 +42,8 @@ class Connection {
 		forceReplan = false;
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
 		refittedForArticulatedVehicles = false;
+		travelFromNodeStationID = null;
+		travelToNodeStationID = null;
 		
 		timeToTravelFrom = {};
 		timeToTravelTo = {};
@@ -173,7 +175,7 @@ class Connection {
 			}
 		}
 		
-		if (destroyFrom) {
+/*		if (destroyFrom) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
 				local startTileList = AITileList();
 				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
@@ -214,7 +216,7 @@ class Connection {
 				break;
 			}
 		}
-		
+		*/
 		
 		
 		connectionManager.ConnectionDemolished(this);
