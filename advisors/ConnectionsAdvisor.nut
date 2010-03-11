@@ -137,7 +137,7 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 		
 	// Remove the start point of the new connection from our lists.
 	for (local i = 0; i < updateList.len(); i++) {
-		if (connection.travelToNode == updateList[i]) {
+		if (connection.travelFromNode == updateList[i]) {
 			updateList.remove(i);
 			break;
 		}
