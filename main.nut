@@ -15,7 +15,7 @@ class NoCAB extends AIController {
    	connectionManager = null;
    	pathFixer = null;
    	subsidyManager = null;
-	minimalSaveVersion = 5;
+	minimalSaveVersion = 6;
 	
    	constructor() {
    		stop = false;
@@ -120,9 +120,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0a9")) {
+	if(!AICompany.SetName(companyName + " - v2.0a10")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0a9 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0a10 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

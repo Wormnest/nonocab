@@ -204,7 +204,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		for (local j = 0; j < 2; j++) {
 			
 			// Check if we can actually build a train station here (big enough for exit & entry rail.
-			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_JOIN_ADJACENT))
+			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
 				continue;
 			
 			if (offsets[j] == 1 &&
@@ -302,7 +302,7 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		for (local j = 0; j < 2; j++) {
 
 			// Check if we can actually build a train station here.
-			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_JOIN_ADJACENT))
+			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
 				continue;
 
 			if (offsets[j] == 1 &&
@@ -373,14 +373,13 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	//if (checkEndPositions && (!AIRail.BuildRailStation(at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : 0), direction, 2, 6, AIStation.STATION_JOIN_ADJACENT) || at.parentTile.type != Tile.ROAD)) {
 	if (checkEndPositions) {
 
 		local mapSizeX = AIMap.GetMapSizeX();
 		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : -3 * at.direction); 
 		local stationTile = at.tile + (at.direction == -1 || at.direction == -mapSizeX ? 2 * at.direction : 0); 
 
-		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_JOIN_ADJACENT) ||
+		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_NEW) ||
 			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 10, 2) ||
 			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 10) ||
 			at.parentTile.type != Tile.ROAD)

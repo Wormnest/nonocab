@@ -66,7 +66,7 @@ function BuildRailAction::Execute() {
 			return false;	
 
 		local abc = AIExecMode();
-		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, true, false) ||
+		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, false, false) ||
 			!BuildRailStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, false, false, true)) {
 			Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
 			AITile.DemolishTile(roadList[0].tile);
