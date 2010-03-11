@@ -298,19 +298,14 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		height = 10;
 	}
 
-	AISign.BuildSign(railStationTile, "Final location");
-
 	if (!AIRail.IsRailStationTile(railStationTile) &&
 		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
 			return false;
 	} else if (!isConnectionBuild) {
-		if (isStartStation) {
+		if (isStartStation)
 			connection.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
-			Log.logDebug("Set start station");
-		} else {
+		else
 			connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
-			Log.logDebug("Set end station");
-		}
 	}
 	
 	local preferedHeight = -1;
@@ -728,16 +723,14 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 		// to check if the previous tile was a crossing.
 
 		// Don't build signals on tunnels or bridges.
-		if (roadList[a + 1].type != Tile.ROAD)
+		if (roadList[a].type != Tile.ROAD)
 			continue;
 
 		local isTileBeforeCrossing = false;
-		// Check if the next tile is a crossing.
+		// Check if the next tile is a crossing or if the previous tile was a bridge / tunnel.
 		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
-//		if (!IsSingleRailTrack(railTracks) && railTracks != AIRail.RAILTRACK_INVALID) {
-		if (RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
+		if (roadList[a - 1].type != Tile.ROAD || roadList[a].type != Tile.ROAD || RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
 			tilesAfterCrossing = 0;
-			AISign.BuildSign(roadList[a + 1].tile, "CROSSING");
 			isTileBeforeCrossing = true;
 		}
 

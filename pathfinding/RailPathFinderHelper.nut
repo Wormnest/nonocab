@@ -654,13 +654,13 @@ function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 	// All the options left cross if the other rail track is not on the
 	// complete opposite side.
 	else if (railTrack1 == AIRail.RAILTRACK_NW_NE)
-		return (railTracks2 & ~AIRail.RAILTRACK_SW_SE) == 0;
+		return (railTracks2 & ~AIRail.RAILTRACK_SW_SE) != 0;
 	else if (railTrack1 == AIRail.RAILTRACK_SW_SE)
-		return (railTracks2 & ~AIRail.RAILTRACK_NW_NE) == 0;
+		return (railTracks2 & ~AIRail.RAILTRACK_NW_NE) != 0;
 	else if (railTrack1 == AIRail.RAILTRACK_NW_SW)
-		return (railTracks2 & ~AIRail.RAILTRACK_NE_SE) == 0;
+		return (railTracks2 & ~AIRail.RAILTRACK_NE_SE) != 0;
 	else if (railTrack1 == AIRail.RAILTRACK_NE_SE)
-		return (railTracks2 & ~AIRail.RAILTRACK_NW_SW) == 0;
+		return (railTracks2 & ~AIRail.RAILTRACK_NW_SW) != 0;
 		
 	// All options should be expired.
 	assert (false);
