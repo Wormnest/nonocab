@@ -202,7 +202,7 @@ function ManageVehiclesAction::Execute()
 			// TODO: Make sure to make this also works for cloned vehicles.
 			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
 				for (local j = 0; j < numberWagons; j++) {
-					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.pathInfo.depotOtherEnd ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
+					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.bilateralConnection ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
 				
 					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
 						Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
