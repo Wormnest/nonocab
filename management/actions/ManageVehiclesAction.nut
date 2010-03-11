@@ -170,7 +170,7 @@ function ManageVehiclesAction::Execute()
 					
 			local vehicleID;
 
-			if (!directionToggle && connection.pathInfo.depotOtherEnd) {
+			if (!directionToggle && connection.bilateralConnection) {
 				if (vehicleCloneIDReverse != -1) {
 					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, false);
 					directionToggle = !directionToggle;
