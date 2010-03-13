@@ -254,7 +254,7 @@ function ManageVehiclesAction::Execute()
 				if (connection.bilateralConnection)
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				else
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD);
+					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD | AIOrder.AIOF_NO_LOAD);
 					
 				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
 					for (local i = 1; i < roadList.len() - 1; i++)

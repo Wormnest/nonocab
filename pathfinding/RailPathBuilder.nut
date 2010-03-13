@@ -408,10 +408,12 @@ function RailPathBuilder::GetCostForRoad()
 			}
 		}
 	}
+
+	BuildRailAction.BuildRailStation(null, roadList[0].tile, roadList[1].tile, true, false, false);
+	BuildRailAction.BuildRailStation(null, roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, true, false, true);
 	
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_SIGNAL) * roadList.len() / 6;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_DEPOT);
-	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * 10;
 
 	return costs + accounting.GetCosts();
