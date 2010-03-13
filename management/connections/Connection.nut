@@ -72,6 +72,8 @@ class Connection {
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		pathInfo.LoadData(data["pathInfo"]);
 		vehicleGroupID = data["vehicleGroupID"];
+		timeToTravelTo = data["timeToTravelTo"];
+		timeToTravelFrom = data["timeToTravelFrom"];
 		
 		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
 	}
@@ -85,6 +87,8 @@ class Connection {
 		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
 		saveData["pathInfo"] <- pathInfo.SaveData();
 		saveData["vehicleGroupID"] <- vehicleGroupID;
+		saveData["timeToTravelTo"] <- timeToTravelTo;
+		saveData["timeToTravelFrom"] <- timeToTravelFrom;
 		return saveData;
 	}
 	

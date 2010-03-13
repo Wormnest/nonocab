@@ -198,10 +198,12 @@ function ManageVehiclesAction::Execute()
 			//vehicleGroup.vehicleIDs.push(vehicleID);
 			AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 
-			// In the case of a train, also build the wagons (as a start we'll build 3 by default ;)).
+			// In the case of a train, also build the wagons, make sure that we cut on the wagons
+			// if the train is bigger than 1 tile.
 			// TODO: Make sure to make this also works for cloned vehicles.
 			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
-				for (local j = 0; j < numberWagons; j++) {
+				local nrWagons = numberWagons - (AIVehicle.GetLength(vehicleID) / 8) + 1;
+				for (local j = 0; j < nrWagons; j++) {
 					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.bilateralConnection ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
 				
 					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {

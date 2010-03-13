@@ -28,6 +28,7 @@ function NoCAB::Save() {
 	local saveTable = {};
 	pathFixer.SaveData(saveTable);
 	world.SaveData(saveTable);
+	connectionManager.SaveData(saveTable);
 	saveTable["SaveVersion"] <- minimalSaveVersion;
 	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	return saveTable;
@@ -67,17 +68,19 @@ function NoCAB::Start()
 
 	if (loadData) {
 		Log.logInfo("Loading game saved using version " + loadData["SaveVersion"] + "... (might take a while...)");
-		Log.logInfo("(1/4) Build industry tree");
+		Log.logInfo("(1/5) Build industry tree");
 	}
 
 	world.BuildIndustryTree();
 
 	if (loadData) {
-		Log.logInfo("(2/4) Load path fixer data");
+		Log.logInfo("(2/5) Load path fixer data");
 		pathFixer.LoadData(loadData);
-		Log.logInfo("(3/4) Load active connections");
+		Log.logInfo("(3/5) Load active connections");
 		activeConnections = world.LoadData(loadData, connectionManager);
-		Log.logInfo("(4/4) Load successfull!");
+		Log.logInfo("4/5 Load connections to stationIds");
+		connectionManager.LoadData(loadData);
+		Log.logInfo("(5/5) Load successfull!");
 	}
 	
 	advisors = [

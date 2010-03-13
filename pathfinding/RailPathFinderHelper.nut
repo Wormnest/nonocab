@@ -2,10 +2,10 @@ class RailPathFinderHelper extends PathFinderHelper {
 
 	costForRail 	= 100;       // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 1000;       // Cost for building a new road.
-	costForTurn 	= 100;       // Additional cost if the road makes a turn.
+	costForTurn 	= 300;       // Additional cost if the road makes a turn.
 	costForBridge 	= 1000;//65;  // Cost for building a bridge.
 	costForTunnel 	= 1000;//65;  // Cost for building a tunnel.
-	costForSlope 	= 150;       // Additional cost if the road heads up or down a slope.
+	costForSlope 	= 300;       // Additional cost if the road heads up or down a slope.
 	costTillEnd     = 1200;       // The cost for each tile till the end.
 
 	standardOffsets = null;
@@ -821,12 +821,28 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				if (currentAnnotatedTile.direction != offset)
 					annotatedTile.distanceFromStart += costForTurn;
 
-				local reuseRailTrack = AIRail.GetRailTracks(nextTile) != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+				local existingRailTracks = AIRail.GetRailTracks(nextTile);
+				local reuseRailTrack = false;
+				//local reuseRailTrack = existingRailTracks != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+				if (existingRailTracks != AIRail.RAILTRACK_INVALID) {
+					local doRailCross = DoRailsCross(railTrackDirection, existingRailTracks);
 
-				// If this rail tile crosses, the previous cannot cross!
-				if (DoRailsCross(railTrackDirection, AIRail.GetRailTracks(nextTile)) &&
-					DoRailsCross(currentAnnotatedTile.lastBuildRailTrack, AIRail.GetRailTracks(currentTile)))
-					continue;
+					// If this rail tile crosses, the previous cannot cross. I.e. we MUST make use of 
+					// a piece of rail if we decide to cross.
+					if (doRailCross && 
+					    DoRailsCross(currentAnnotatedTile.lastBuildRailTrack, AIRail.GetRailTracks(currentTile)))
+						continue;
+
+					reuseRailTrack = (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+					
+					// If we do now cross nor reuse a rail we cannot allow this rail to be build. Because when
+					// we upgrade the rails we upgrade per tile and we cannot have 2 non crossing rails on the
+					// same tile as we do not have the means to detect this. Failing to do this will result in
+					// trains being stuck after upgrading to an incompetable rail type.
+					if (!reuseRailTrack && !doRailCross)
+						continue;
+				}
+
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
 				if (reuseRailTrack) {
@@ -840,6 +856,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					
 					if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
 						continue;
+					
 					annotatedTile.alreadyBuild = true;
 
 					if (!goingStraight)
@@ -870,6 +887,82 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		closedList[currentTile] <- true;
 
 	return tileArray;
+}
+
+function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stationsToIgnore) {
+
+	//{
+	//	local abc = AIExecMode();
+	//	AISign.BuildSign(tile, "CS " + direction);
+	//}
+	
+	// Work with an open / closed list. We're doing a breath first search.
+	local openList = [];
+	local closedList = {};
+	
+	openList.push([tile, railTrack, direction]);
+	
+	while (openList.len() > 0) {
+		
+		local entry = openList[0];
+		openList.remove(0);
+		
+		local tile = entry[0];
+		local railTrack = entry[1];
+		local direction = entry[2];
+		
+		if (closedList.rawin(tile))
+			continue;
+		closedList[tile] <- true;
+	
+
+		if (AIRail.IsRailStationTile(tile)) {
+			local stationID = AIStation.GetStationID(tile);
+			for (local i = 0; i < stationsToIgnore.len(); i++) {
+				if (stationID == stationsToIgnore[i]) {
+					stationID = -1;
+					break;
+				}
+			}
+			
+			if (stationID == -1)
+				continue;
+			assert(AIStation.IsValidStation(stationID));	
+			//return AIStation.GetStationID(tile);
+			return tile;
+		}
+
+		// If non of these are true, search for the next rail!
+		//local nextTile = tile + direction;
+		local nextRailTracks = AIRail.GetRailTracks(tile + direction);
+		local nextOffsets = RailPathFinderHelper.GetOffsets(direction, railTrack);
+		
+		// Check for all possible rails which can be linked to from here.
+		// We do a depth first search to find the connecting station.
+		foreach (offset in nextOffsets) {
+			local annotatedTile = null;
+			if (AIBridge.IsBridgeTile(tile + offset))
+				annotatedTile = GetNextAnnotatedTile(offset, AIBridge.GetOtherBridgeEnd(tile + offset) + offset, railTrack);
+			else if (AITunnel.IsTunnelTile(tile + offset))
+				annotatedTile = GetNextAnnotatedTile(offset, AITunnel.GetOtherTunnelEnd(tile + offset) + offset, railTrack);
+			else
+				annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
+			if (annotatedTile == null)
+				continue;
+	
+			// Check if this rail exists.
+			if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack) {
+				
+				openList.push([annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset]);
+				
+				//local foundStation = CheckStation(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset);
+				
+				//if (AIStation.IsValidStation(foundStation))
+				//	return foundStation;
+			} 
+		}
+	}
+	return -1;
 }
 
 function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
@@ -932,7 +1025,7 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 		//}
 		return true;
 	}
-	
+
 	// If non of these are true, search for the next rail!
 	//local nextTile = tile + direction;
 	local nextRailTracks = AIRail.GetRailTracks(tile + direction);

@@ -3,11 +3,12 @@
  */
 class BuildRailAction extends Action
 {
-	connection = null;		// Connection object of the rails to build.
-	buildDepot = false;		// Should we create a depot?
-	buildRailStations = false;	// Should we build rail stations?
-	directions = null;		// A list with all directions.
-	world = null;			// The world.
+	connection = null;          // Connection object of the rails to build.
+	buildDepot = false;         // Should we create a depot?
+	buildRailStations = false;  // Should we build rail stations?
+	directions = null;          // A list with all directions.
+	world = null;               // The world.
+	stationsConnectedTo = null; // The stations we've shared a connection with.
 	
 	/**
 	 * @param pathList A PathInfo object, the rails to be build.
@@ -20,6 +21,7 @@ class BuildRailAction extends Action
 		this.buildDepot = buildDepot;
 		this.buildRailStations = buildRailStations;
 		this.world = world;
+		stationsConnectedTo = [];
 		Action.constructor();
 	}
 }
@@ -142,8 +144,8 @@ function BuildRailAction::Execute() {
 		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
-		
-
+	
+	stationsConnectedTo = pathBuilder.stationIDsConnectedTo;
 
 	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
 	if (!BuildRoRoStation(stationType, pathFinder)) {
@@ -155,7 +157,7 @@ function BuildRailAction::Execute() {
 //		}
 	}
 	
-	Log.logError("Build depot!");
+	Log.logDebug("Build depot!");
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
@@ -170,18 +172,14 @@ function BuildRailAction::Execute() {
 
 		connection.pathInfo.depot = depot;
 
-		//if (connection.bilateralConnection) {
+		local otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
+		if (otherDepot == null) {
+			Log.logError("Failed to build a depot :(");
+			connection.forceReplan = true;
+			return false;
+		}
 
-			//depot = BuildDepot(connection.pathInfo.roadListReturn, 10, 1);
-			depot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
-			if (depot == null) {
-				Log.logError("Failed to build a depot :(");
-				connection.forceReplan = true;
-				return false;
-			}
-
-			connection.pathInfo.depotOtherEnd = depot;
-		//}
+		connection.pathInfo.depotOtherEnd = otherDepot;
 	}
 	
 	// We only declare a connection built if both the depots and the rails are build.
@@ -190,6 +188,19 @@ function BuildRailAction::Execute() {
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
 	totalCosts = accounter.GetCosts();
+	
+	// Now that everything is build, make sure the connections we share a rail with are linked.
+	local connectionManager = connection.connectionManager;
+	foreach (station in stationsConnectedTo) {
+		local connectionConnectedTo = connectionManager.GetConnection(station);
+		if (connectionConnectedTo == null) {
+			Log.logWarning("WTF!!!" + connection.travelFromNode.GetName() + " connected to " + connectionConnectedTo.travelFromNode.GetName());
+			assert(false);
+		}
+		connectionManager.MakeInterconnected(connection, connectionConnectedTo);
+		//
+	}
+	
 	return true;
 }
 
@@ -570,6 +581,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		return false;
 	
 	local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	pathBuilder.stationIDsConnectedTo = stationsConnectedTo;
 	if (!pathBuilder.RealiseConnection(false)) {
 
 		if (pathBuilder.lastBuildIndex != -1) {
@@ -579,6 +591,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		Log.logWarning("Failed to build RoRo-station!");		
 		return false;
 	}
+	stationsConnectedTo.extend(pathBuilder.stationIDsConnectedTo);
 	
 	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);

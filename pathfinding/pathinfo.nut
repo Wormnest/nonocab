@@ -53,7 +53,7 @@ class PathInfo {
 			foreach (tile in roadBitList) {
 				local at = AnnotatedTile();
 				at.tile = tile;
-				array.push(at.tile);
+				array.push(at);
 			}
 			extraRoadBits.push(array);
 		}
@@ -76,7 +76,7 @@ class PathInfo {
 		}
 		
 		saveData["roadListReturn"] <- [];
-		foreach (at in roadList) {
+		foreach (at in roadListReturn) {
 			saveData["roadListReturn"].push(at.tile);
 		}
 		
@@ -86,7 +86,7 @@ class PathInfo {
 			foreach (at in roadBitList) {
 				array.push(at.tile);
 			}
-			saveData["extraRoadBits"] <- array;
+			saveData["extraRoadBits"].push(array);
 		}
 		
 		saveData["roadCost"] <- roadCost;
