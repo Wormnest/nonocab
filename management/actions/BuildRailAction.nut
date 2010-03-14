@@ -63,6 +63,10 @@ function BuildRailAction::Execute() {
 	
 	// Check if we can build the rail stations.
 	if (buildRailStations) {
+		
+		assert(!AIRail.IsRailStationTile(roadList[0].tile));
+		assert(!AIRail.IsRailStationTile(roadList[roadList.len() -1].tile));
+		
 		// Check if we have enough permission to build here.
 		//if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[0].tile), AICompany.COMPANY_SELF) < -200) {
@@ -198,7 +202,6 @@ function BuildRailAction::Execute() {
 			assert(false);
 		}
 		connectionManager.MakeInterconnected(connection, connectionConnectedTo);
-		//
 	}
 	
 	return true;
@@ -228,6 +231,7 @@ function BuildRailAction::CleanupAfterFailure() {
 	// Remove all the stations and depots build, including all their tiles.
 	if (connection.pathInfo == null)
 		return;
+	assert (!connection.pathInfo.build);
 	
 	// During demolition we keep track of a list of all tiles which could not be removed
 	// because there are more than 1 rail tracks on a tile. We keep track of the rail tiles
@@ -240,6 +244,10 @@ function BuildRailAction::CleanupAfterFailure() {
 		foreach (at in connection.pathInfo.roadList) {
 			CleanupTile(at, considerRemovedTracks);
 		}
+		
+		// Destroy the stations.
+		AITile.DemolishTile(connection.pathInfo.roadList[0].tile);
+		AITile.DemolishTile(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile);
 	}
 	
 	if (connection.pathInfo.roadListReturn) {
@@ -267,7 +275,7 @@ function BuildRailAction::CleanupAfterFailure() {
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
 	
-	if (connection.travelFromNodeStationID) {
+	/*if (connection.travelFromNodeStationID) {
 		local stationTiles = AITileList_StationType(connection.travelFromNodeStationID, AIStation.STATION_TRAIN);
 		foreach (tile, value in stationTiles)
 			AITile.DemolishTile(tile);
@@ -277,12 +285,10 @@ function BuildRailAction::CleanupAfterFailure() {
 		local stationTiles = AITileList_StationType(connection.travelToNodeStationID, AIStation.STATION_TRAIN);
 		foreach (tile, value in stationTiles)
 			AITile.DemolishTile(tile);
-	}
+	}*/
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
-	
-	AISign.BuildSign(railStationTile, "Original location");
 	
 	local direction;
 	local terraFormFrom;
@@ -699,7 +705,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 		if (!pathBuilder.RealiseConnection(false)) {
-			AISign.BuildSign(stationPoint, "TO HERE!");
+			//AISign.BuildSign(stationPoint, "TO HERE!");
 			Log.logError("Failed to connect a rail piece to the rail station.");
 			return null;
 		}
@@ -707,7 +713,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 		//BuildSignal(toPlatformPath.roadList[toPlatformPath.roadList.len() - 2], !reverse, AIRail.SIGNALTYPE_EXIT);
 		//BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
 	} else {
-		AISign.BuildSign(stationPoint, "TO HERE!");
+		//AISign.BuildSign(stationPoint, "TO HERE!");
 		Log.logError("Failed to connect a rail piece to the rail station.");
 		return null;
 	}

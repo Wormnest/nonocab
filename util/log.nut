@@ -1,6 +1,6 @@
 class Log { 
 
-	logLevel = 1;
+	logLevel = 0;
 }
 
 /** If logLevel is ok log debug. */

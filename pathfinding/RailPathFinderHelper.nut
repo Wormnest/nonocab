@@ -204,7 +204,8 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 		for (local j = 0; j < 2; j++) {
 			
 			// Check if we can actually build a train station here (big enough for exit & entry rail.
-			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
+			if (AIRail.IsRailStationTile(i) ||
+				!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
 				continue;
 			
 			if (offsets[j] == 1 &&
@@ -302,7 +303,8 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		for (local j = 0; j < 2; j++) {
 
 			// Check if we can actually build a train station here.
-			if (!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
+			if (AIRail.IsRailStationTile(i) ||
+				!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
 				continue;
 
 			if (offsets[j] == 1 &&

@@ -36,9 +36,9 @@ function RailPathUpgradeAction::Upgrade(connection, newRailType) {
 	// Get all the connections which must be upgraded with this connection.
 	local allConnectionsToUpgrade = connection.connectionManager.GetInterconnectedConnections(connection);
 	if (allConnectionsToUpgrade == null)
-		allConnectionsToUpgrade = [];
+		allConnectionsToUpgrade = [connection];
 	
-	allConnectionsToUpgrade.push(connection);
+	//allConnectionsToUpgrade.push(connection);
 	
 	UpgradeAll(allConnectionsToUpgrade, newRailType);
 }
@@ -51,14 +51,7 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	// so they don't get in the way while we upgrade the tracks!
 	local vehicleIsNotInDepot = true;
 
-	// First send all vehicles to their depots.
-	foreach (connection in connections) {
-		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
-			while (!AIVehicle.SendVehicleToDepot(vehicleId));
-		}
-	}
-
-	// Next, wait till all vehicles are in their respective depots.
+	// Send and wait till all vehicles are in their respective depots.
 	while (vehicleIsNotInDepot) {
 		vehicleIsNotInDepot = false;
 		foreach (connection in connections) {
@@ -66,6 +59,10 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
 				if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
 					vehicleIsNotInDepot = true;
+					
+					// Check if the vehicles is actually going to the depot!
+					if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+						AIVehicle.SendVehicleToDepot(vehicleId);
 				}
 			}
 		}
@@ -75,7 +72,9 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		// Jeej! All trains are in the depots. SELL THEM!!!!
 		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
 				AIVehicle.SellVehicle(vehicleId);
+	}
 	
+	foreach (connection in connections) {
 		// Convert the depots.
 		AIRail.ConvertRailType(connection.pathInfo.depot, connection.pathInfo.depot, newRailType);
 		if (connection.pathInfo.depotOtherEnd)
@@ -85,14 +84,16 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		if (connection.pathInfo.roadList) {
 			Log.logWarning("We have a roadlist!");
 			foreach (at in connection.pathInfo.roadList) {
-				AIRail.ConvertRailType(at.tile, at.tile, newRailType);
+				while (AIRail.GetRailType(at.tile) != newRailType)
+					AIRail.ConvertRailType(at.tile, at.tile, newRailType);
 			}
 		}
 		
 		if (connection.pathInfo.roadListReturn) {
 			Log.logWarning("We have a roadListReturn!");
 			foreach (at in connection.pathInfo.roadListReturn) {
-				AIRail.ConvertRailType(at.tile, at.tile, newRailType);
+				while (AIRail.GetRailType(at.tile) != newRailType)
+					AIRail.ConvertRailType(at.tile, at.tile, newRailType);
 			}
 		}
 		
@@ -100,7 +101,8 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			Log.logWarning("We have a extraRoadBits!");
 			foreach (extraArray in connection.pathInfo.extraRoadBits) {
 				foreach (at in extraArray) {
-					AIRail.ConvertRailType(at.tile, at.tile, newRailType);
+					while (AIRail.GetRailType(at.tile) != newRailType)
+						AIRail.ConvertRailType(at.tile, at.tile, newRailType);
 				}
 			}
 		}

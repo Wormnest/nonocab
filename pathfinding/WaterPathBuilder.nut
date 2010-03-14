@@ -77,7 +77,7 @@ function WaterPathBuilder::CheckError(buildLocation)
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		case AIError.ERR_NOT_ENOUGH_CASH:		
-			AISign.BuildSign(buildLocation, "BOUY!");
+			//AISign.BuildSign(buildLocation, "BOUY!");
 			Log.logDebug("Couldn't build a bouy: " + AIError.GetLastErrorString());
 			return true;
 			
@@ -207,7 +207,7 @@ function WaterPathBuilder::BuildPath(roadList) {
 			
 			// Check if we need to build an additional buoy.
 			if (!AIMarine.IsBuoyTile(currentTile) && !AIMarine.BuildBuoy(currentTile) && !WaterPathBuilder.CheckError(currentTile)) {
-				AISign.BuildSign(currentTile, "ERROR");
+				//AISign.BuildSign(currentTile, "ERROR");
 				return false;
 			} else
 				buoyBuildTimeout = 5;

@@ -18,8 +18,8 @@ class DemolishAction extends Action {
 function DemolishAction::Execute() {
 	Log.logWarning("Demolish bla");
 	local test = AIExecMode();
-	AISign.BuildSign(connection.travelFromNode.GetLocation(), "Demolish!");
-	AISign.BuildSign(connection.travelToNode.GetLocation(), "Demolish!");	
+	//AISign.BuildSign(connection.travelFromNode.GetLocation(), "Demolish!");
+	//AISign.BuildSign(connection.travelToNode.GetLocation(), "Demolish!");	
 	connection.Demolish(destroyFrom, destroyTo, destroyDepots);
 	CallActionHandlers();
 	return true;

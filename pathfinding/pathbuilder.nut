@@ -262,9 +262,9 @@ function PathBuilder::CheckError(buildResult)
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		case AIError.ERR_NOT_ENOUGH_CASH:		
 
-			AISign.BuildSign(buildResult[0], "From");
-			if (buildResult[1])
-				AISign.BuildSign(buildResult[1], "To");
+			//AISign.BuildSign(buildResult[0], "From");
+			//if (buildResult[1])
+			//	AISign.BuildSign(buildResult[1], "To");
 			/**
 			 * We handle these kind of errors elsewhere.
 			 */

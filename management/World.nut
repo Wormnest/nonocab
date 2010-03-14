@@ -222,20 +222,36 @@ function World::Update()
 				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentCargoID];
 				
 				if (AIEngine.IsValidEngine(replacementEngineID)) {
-					// Create a new vehicle.
-					local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
-					if (AIVehicle.IsValidVehicle(newVehicleID)) {
-						
-						// Let is share orders with the vehicle.
-						AIOrder.ShareOrders(newVehicleID, vehicleID);
-						AIVehicle.StartStopVehicle(newVehicleID);
-					} else {
-						// If we failed, simply try again next time.
-						continue;
+					
+					local doReplace = true;
+					// Don't replace an airplane if the airfield is very small.
+					if (vehicleType == AIVehicle.VT_AIR) {
+						if (AIEngine.GetPlaneType(AIVehicle.GetEngineType(vehicleID)) !=
+							AIEngine.GetPlaneType(replacementEngineID))
+							doReplace = false;
+					}
+					
+					// Don't replace trains, ever!
+					// TODO: Be smarter about this.
+					else if (vehicleType == AIVehicle.VT_RAIL) {
+						doReplace = false;
+					}
+					
+					if (doReplace) {
+						// Create a new vehicle.
+						local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
+						if (AIVehicle.IsValidVehicle(newVehicleID)) {
+							
+							// Let is share orders with the vehicle.
+							AIOrder.ShareOrders(newVehicleID, vehicleID);
+							AIVehicle.StartStopVehicle(newVehicleID);
+						} else {
+							// If we failed, simply try again next time.
+							continue;
+						}
 					}
 				}
 			}
-			
 			
 			AIVehicle.SellVehicle(vehicleID);
 		}

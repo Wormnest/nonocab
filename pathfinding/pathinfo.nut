@@ -71,22 +71,28 @@ class PathInfo {
 	function SaveData() {
 		local saveData = {};
 		saveData["roadList"] <- [];
-		foreach (at in roadList) {
-			saveData["roadList"].push(at.tile);
+		if (roadList) {
+			foreach (at in roadList) {
+				saveData["roadList"].push(at.tile);
+			}
 		}
 		
 		saveData["roadListReturn"] <- [];
-		foreach (at in roadListReturn) {
-			saveData["roadListReturn"].push(at.tile);
+		if (roadListReturn) {
+			foreach (at in roadListReturn) {
+				saveData["roadListReturn"].push(at.tile);
+			}
 		}
 		
 		saveData["extraRoadBits"] <- [];
-		foreach (roadBitList in extraRoadBits) {
-			local array = [];
-			foreach (at in roadBitList) {
-				array.push(at.tile);
+		if (extraRoadBits) {
+			foreach (roadBitList in extraRoadBits) {
+				local array = [];
+				foreach (at in roadBitList) {
+					array.push(at.tile);
+				}
+				saveData["extraRoadBits"].push(array);
 			}
-			saveData["extraRoadBits"].push(array);
 		}
 		
 		saveData["roadCost"] <- roadCost;
