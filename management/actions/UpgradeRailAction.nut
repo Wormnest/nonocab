@@ -73,7 +73,7 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	foreach (connection in connections) {
 		// Jeej! All trains are in the depots. SELL THEM!!!!
 		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
-				AIVehicle.SellVehicle(vehicleId);
+			AIVehicle.SellVehicle(vehicleId);
 	}
 	
 	foreach (connection in connections) {
@@ -147,7 +147,7 @@ function RailPathUpgradeAction::UpgradeBridge(bridgeTile, newRailType) {
 	local ex = AIExecMode();
 	if (bestBridgeType != null) {
 		AITile.DemolishTile(bridgeTile);
-		AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, bridgeTile, bridgeOtherEnd);
+		while (!AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, bridgeTile, bridgeOtherEnd));
 	} else {
 		AIRail.ConvertRailType(at.tile, at.tile, newRailType);
 	}

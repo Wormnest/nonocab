@@ -125,8 +125,6 @@ function BuildRailAction::Execute() {
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
 	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
-	roadList = connection.pathInfo.roadList;
-	len = roadList.len();
 
 	if (connection.pathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
@@ -139,6 +137,8 @@ function BuildRailAction::Execute() {
 		connection.forceReplan = true;
 		return false;
 	}
+	roadList = connection.pathInfo.roadList;
+	len = roadList.len();
 
 	// Build the actual rails.
 	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
