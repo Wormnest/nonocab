@@ -128,6 +128,7 @@ function BuildRailAction::Execute() {
 	if (connection.pathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
 		if (buildRailStations) {
+			local ex = AIExecMode();
 			AITile.DemolishTile(roadList[0].tile);
 			AITile.DemolishTile(roadList[len - 1].tile);
 		}
