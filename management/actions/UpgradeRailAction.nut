@@ -46,6 +46,8 @@ function RailPathUpgradeAction::Upgrade(connection, newRailType) {
 function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 
 	Log.logWarning("Upgrade " + connections.len() + " connections!");
+	local currentRailType = AIRail.GetCurrentRailType();
+	AIRail.SetCurrentRailType(newRailType);
 
 	// First order of business is to send every vehicle back to the depots
 	// so they don't get in the way while we upgrade the tracks!
@@ -83,28 +85,21 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		// Convert the rail types.
 		if (connection.pathInfo.roadList) {
 			Log.logWarning("We have a roadlist!");
-			foreach (at in connection.pathInfo.roadList) {
-				while (AIRail.GetRailType(at.tile) != newRailType)
-					AIRail.ConvertRailType(at.tile, at.tile, newRailType);
-			}
+			foreach (at in connection.pathInfo.roadList)
+				UpgradeTile(at.tile, newRailType);
 		}
 		
 		if (connection.pathInfo.roadListReturn) {
 			Log.logWarning("We have a roadListReturn!");
-			foreach (at in connection.pathInfo.roadListReturn) {
-				while (AIRail.GetRailType(at.tile) != newRailType)
-					AIRail.ConvertRailType(at.tile, at.tile, newRailType);
-			}
+			foreach (at in connection.pathInfo.roadListReturn)
+				UpgradeTile(at.tile, newRailType);
 		}
 		
 		if (connection.pathInfo.extraRoadBits) {
 			Log.logWarning("We have a extraRoadBits!");
-			foreach (extraArray in connection.pathInfo.extraRoadBits) {
-				foreach (at in extraArray) {
-					while (AIRail.GetRailType(at.tile) != newRailType)
-						AIRail.ConvertRailType(at.tile, at.tile, newRailType);
-				}
-			}
+			foreach (extraArray in connection.pathInfo.extraRoadBits)
+				foreach (at in extraArray)
+					UpgradeTile(at.tile, newRailType);
 		}
 	
 		// Convert the stations too!
@@ -116,5 +111,44 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			AIRail.ConvertRailType(tile, tile, newRailType);
 		foreach (tile, value in endStationTiles)
 			AIRail.ConvertRailType(tile, tile, newRailType);
+	}
+	
+	AIRail.SetCurrentRailType(currentRailType);
+}
+
+function RailPathUpgradeAction::UpgradeTile(tile, newRailType) {
+	if (AIBridge.IsBridgeTile(tile))
+		UpgradeBridge(tile, newRailType);
+	else
+		while (AIRail.GetRailType(tile) != newRailType)
+			AIRail.ConvertRailType(tile, tile, newRailType);
+}
+
+function RailPathUpgradeAction::UpgradeBridge(bridgeTile, newRailType) {
+	local bridgeOtherEnd = AIBridge.GetOtherBridgeEnd(bridgeTile);
+	local mapSizeX = AIMap.GetMapSizeX();
+	local length = bridgeTile - bridgeOtherEnd;
+
+	
+	if (length < -mapSizeX || length > mapSizeX)
+		length /= mapSizeX;
+	
+	if (length < 0)
+		length = -length;		
+	
+	local bridgeTypes = AIBridgeList_Length(length);
+	local bestBridgeType = null;
+	for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
+		local bridge = bridgeTypes.Next();
+		if (bestBridgeType == null || AIBridge.GetMaxSpeed(bridge) >= AIBridge.GetMaxSpeed(bestBridgeType))
+			bestBridgeType = bridge;
+	}
+	
+	local ex = AIExecMode();
+	if (bestBridgeType != null) {
+		AITile.DemolishTile(bridgeTile);
+		AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, bridgeTile, bridgeOtherEnd);
+	} else {
+		AIRail.ConvertRailType(at.tile, at.tile, newRailType);
 	}
 }
