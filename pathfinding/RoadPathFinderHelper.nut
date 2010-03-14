@@ -307,7 +307,8 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 				}
 			}
 
-			if (!isInClosedList) {
+			// Don't allow crossings with rail!
+			if (!isInClosedList && !AIRail.IsRailTile(nextTile)) {
 			
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
@@ -369,7 +370,8 @@ function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
 
 function RoadPathFinderHelper::GetBridge(startNode, direction) {
 
-	if (Tile.GetSlope(startNode, direction) != 2) return null;
+	local isRailTile = AIRail.IsRailTile(startNode + direction);
+	if (Tile.GetSlope(startNode, direction) != 2 && !isRailTile) return null;
 
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i);
@@ -377,7 +379,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
 
-		if (Tile.GetSlope(target, direction) == 1 && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
+		if ((Tile.GetSlope(target, direction) == 1 || isRailTile) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
