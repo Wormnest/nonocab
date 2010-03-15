@@ -748,7 +748,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
-					annotatedTile.tile = otherEnd + offset;
+					annotatedTile.tile = otherEnd;
 					annotatedTile.alreadyBuild = true;
 					annotatedTile.length = currentAnnotatedTile.length + length;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
@@ -1085,7 +1085,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 	}
 
 	for (local i = 1; i < 30; i++) {
-		local bridge_list = AIBridgeList_Length(i);
+		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target)) {
 			//Log.logWarning("	Too close to the edge!");

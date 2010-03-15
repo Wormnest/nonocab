@@ -357,7 +357,7 @@ function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
 		return true;
 
 	for (local i = 1; i < 30; i++) {
-		local bridge_list = AIBridgeList_Length(i);
+		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = tile + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
 			return false;
@@ -374,7 +374,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 	if (Tile.GetSlope(startNode, direction) != 2 && !isRailTile) return null;
 
 	for (local i = 1; i < 30; i++) {
-		local bridge_list = AIBridgeList_Length(i);
+		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
