@@ -748,7 +748,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
 					annotatedTile.direction = offset;
-					annotatedTile.tile = otherEnd;
+					annotatedTile.tile = otherEnd + offset;
 					annotatedTile.alreadyBuild = true;
 					annotatedTile.length = currentAnnotatedTile.length + length;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
