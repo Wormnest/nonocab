@@ -9,6 +9,8 @@ class BuildRailAction extends Action
 	directions = null;          // A list with all directions.
 	world = null;               // The world.
 	stationsConnectedTo = null; // The stations we've shared a connection with.
+	railStationFromTile = -1;   // The location of the rail station at the source location.
+	railStationToTile = -1;     // The location of the rail station at the dropoff location.
 	
 	/**
 	 * @param pathList A PathInfo object, the rails to be build.
@@ -22,6 +24,8 @@ class BuildRailAction extends Action
 		this.buildRailStations = buildRailStations;
 		this.world = world;
 		stationsConnectedTo = [];
+		railStationFromTile = -1;
+		railStationToTile = -1;
 		Action.constructor();
 	}
 }
@@ -98,6 +102,10 @@ function BuildRailAction::Execute() {
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);			
 			return false;
 		}
+		
+		// Safe the locations of the rail stations so we can demolish them later.
+		railStationFromTile = roadList[len - 1].tile;
+		railStationToTile = roadList[0].tile;
 		
 		// After building the stations make sure the rail approach the station in the right way.
 		local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ? AIMap.GetMapSizeX() : 1;
@@ -241,15 +249,17 @@ function BuildRailAction::CleanupAfterFailure() {
 	// the track which should have been removed the previous time.
 	local considerRemovedTracks = {};
 	
+	// Destroy the stations.
+	if (railStationFromTile != -1)
+		AITile.DemolishTile(railStationFromTile);
+	if (railStationToTile != -1)
+		AITile.DemolishTile(railStationToTile);
+
 	if (connection.pathInfo.roadList) {
 		Log.logDebug("We have a roadlist!");
 		foreach (at in connection.pathInfo.roadList) {
 			CleanupTile(at, considerRemovedTracks);
 		}
-		
-		// Destroy the stations.
-		AITile.DemolishTile(connection.pathInfo.roadList[0].tile);
-		AITile.DemolishTile(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile);
 	}
 	
 	if (connection.pathInfo.roadListReturn) {
@@ -276,18 +286,6 @@ function BuildRailAction::CleanupAfterFailure() {
 		Log.logDebug("We have a depotOtherEnd!");
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
-	
-	/*if (connection.travelFromNodeStationID) {
-		local stationTiles = AITileList_StationType(connection.travelFromNodeStationID, AIStation.STATION_TRAIN);
-		foreach (tile, value in stationTiles)
-			AITile.DemolishTile(tile);
-	}
-	
-	if (connection.travelToNodeStationID) {
-		local stationTiles = AITileList_StationType(connection.travelToNodeStationID, AIStation.STATION_TRAIN);
-		foreach (tile, value in stationTiles)
-			AITile.DemolishTile(tile);
-	}*/
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
