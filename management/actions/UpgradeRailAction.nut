@@ -149,6 +149,6 @@ function RailPathUpgradeAction::UpgradeBridge(bridgeTile, newRailType) {
 		AITile.DemolishTile(bridgeTile);
 		while (!AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, bridgeTile, bridgeOtherEnd));
 	} else {
-		AIRail.ConvertRailType(at.tile, at.tile, newRailType);
+		AIRail.ConvertRailType(bridgeTile, bridgeTile, newRailType);
 	}
 }
