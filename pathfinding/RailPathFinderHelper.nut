@@ -916,7 +916,6 @@ function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stations
 		if (closedList.rawin(tile))
 			continue;
 		closedList[tile] <- true;
-	
 
 		if (AIRail.IsRailStationTile(tile)) {
 			local stationID = AIStation.GetStationID(tile);
@@ -936,7 +935,7 @@ function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stations
 
 		// If non of these are true, search for the next rail!
 		//local nextTile = tile + direction;
-		local nextRailTracks = AIRail.GetRailTracks(tile + direction);
+		local nextRailTracks = AIRail.GetRailTracks(tile);// + direction);
 		local nextOffsets = RailPathFinderHelper.GetOffsets(direction, railTrack);
 		
 		// Check for all possible rails which can be linked to from here.

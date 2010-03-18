@@ -143,7 +143,33 @@ function NoCAB::Start()
 	
 
 	// Do what we have to do.
+	//local thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
 	while(true) {
+		
+		/*if (thisYear != AIDate.GetYear(AIDate.GetCurrentDate())) {
+			thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
+			AILog.Info(thisYear + "; Value " + AICompany.GetCompanyValue(AICompany.COMPANY_SELF) + "; Money: " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
+			local trucks = AIVehicleList();
+			trucks.Valuate(AIVehicle.GetVehicleType);
+			trucks.KeepValue(AIVehicle.VT_ROAD);
+			AILog.Info("Trucks: " + trucks.Count());
+			
+			local trains = AIVehicleList();
+			trains.Valuate(AIVehicle.GetVehicleType);
+			trains.KeepValue(AIVehicle.VT_RAIL);
+			AILog.Info("Trains: " + trains.Count());
+			
+			local ships = AIVehicleList();
+			ships.Valuate(AIVehicle.GetVehicleType);
+			ships.KeepValue(AIVehicle.VT_WATER);
+			AILog.Info("Ships: " + ships.Count());
+			
+			local planes = AIVehicleList();
+			planes.Valuate(AIVehicle.GetVehicleType);
+			planes.KeepValue(AIVehicle.VT_AIR);
+			AILog.Info("Planes: " + planes.Count());
+		}*/
+		
 		GameSettings.UpdateGameSettings();
 		planner.ScheduleAndExecute();
 		// Get all reports from our advisors.

@@ -150,7 +150,7 @@ function BuildRailAction::Execute() {
 
 	// Build the actual rails.
 	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-
+	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
 		connection.forceReplan = true;
 		if (pathBuilder.lastBuildIndex != -1)
@@ -587,7 +587,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		return false;
 	
 	local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-	pathBuilder.stationIDsConnectedTo = stationsConnectedTo;
+	//pathBuilder.stationIDsConnectedTo = stationsConnectedTo;
+	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(false)) {
 
 		if (pathBuilder.lastBuildIndex != -1) {
@@ -704,6 +705,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 
 	if (toPlatformPath != null) {
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+		pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 		if (!pathBuilder.RealiseConnection(false)) {
 			//AISign.BuildSign(stationPoint, "TO HERE!");
 			Log.logError("Failed to connect a rail piece to the rail station.");
