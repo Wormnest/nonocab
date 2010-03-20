@@ -511,7 +511,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				nextTile -= mapSizeX;
 
 			} else {
-				Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+				Log.logWarning("Last build rail track: " + currentBuildRailTrack);
 				assert(false);
 			}
 		} else if (offset == -mapSizeX + 1) {
@@ -548,7 +548,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				nextTile -= 1;
 
 				} else {
-					Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+					Log.logWarning("Last build rail track: " + currentBuildRailTrack);
 					assert(false);
 				}
 			} else if (offset == -mapSizeX - 1) {
@@ -587,7 +587,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				nextTile += 1;
 
 			} else {
-				Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+				Log.logWarning("Last build rail track: " + currentBuildRailTrack);
 				assert(false);
 			}
 		} else if (offset == mapSizeX + 1) {
@@ -622,7 +622,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SE;
 				nextTile -= mapSizeX;
 			} else {
-				Log.logWarning("Last build rail track: " + currentAnnotatedTile.lastBuildRailTrack);
+				Log.logWarning("Last build rail track: " + currentBuildRailTrack);
 				assert(false);
 			}
 		} else {
@@ -843,8 +843,16 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					// trains being stuck after upgrading to an incompetable rail type.
 					if (!reuseRailTrack && !doRailCross)
 						continue;
-				}
 
+					// If we do reuse increment the counter.
+					if (reuseRailTrack)
+						annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces + 1;
+
+					// If we cross, make sure we have reused at least 6 rail tracks so we can assure
+					// we don't get any trouble with the crossings.
+					if (doRailCross && currentAnnotatedTile.reusedPieces < 6 && currentAnnotatedTile.reusedPieces > 0)
+						continue;
+				}
 
 				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
 				if (reuseRailTrack) {
@@ -874,6 +882,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.length = currentAnnotatedTile.length + 1;
 				else
 					annotatedTile.length = currentAnnotatedTile.length + 0.5;
+					
+				if (!reuseRailTrack)
+					annotatedTile.reusedPieces = 0;
 
 				tileArray.push(annotatedTile);
 

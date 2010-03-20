@@ -187,5 +187,6 @@ class AnnotatedTile {
 	length = 0;	            // The length of the path.
 	alreadyBuild = false;	// Is this piece already build?
 	forceForward = false;   // Force the sucessor to go forward.
-	lastBuildRailTrack = -1; // The last build rail track, needed to determine the next piece. 
+	lastBuildRailTrack = -1; // The last build rail track, needed to determine the next piece.
+	reusedPieces = 0;        // The number of consecutive road / rail pieces which have been reused.
 }
