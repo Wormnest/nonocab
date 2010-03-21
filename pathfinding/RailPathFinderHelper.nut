@@ -902,7 +902,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	return tileArray;
 }
 
-function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stationsToIgnore) {
+function RailPathFinderHelper::CheckStation(curTile, curRailTrack, curDirection, stationsToIgnore) {
 
 	//{
 	//	local abc = AIExecMode();
@@ -912,8 +912,9 @@ function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stations
 	// Work with an open / closed list. We're doing a breath first search.
 	local openList = [];
 	local closedList = {};
+	local mapSizeX = AIMap.GetMapSizeX();
 	
-	openList.push([tile, railTrack, direction]);
+	openList.push([curTile, curRailTrack, curDirection]);
 	
 	while (openList.len() > 0) {
 		
@@ -946,21 +947,27 @@ function RailPathFinderHelper::CheckStation(tile, railTrack, direction, stations
 
 		// If non of these are true, search for the next rail!
 		//local nextTile = tile + direction;
-		local nextRailTracks = AIRail.GetRailTracks(tile);// + direction);
 		local nextOffsets = RailPathFinderHelper.GetOffsets(direction, railTrack);
 		
 		// Check for all possible rails which can be linked to from here.
 		// We do a depth first search to find the connecting station.
 		foreach (offset in nextOffsets) {
 			local annotatedTile = null;
-			if (AIBridge.IsBridgeTile(tile + offset))
-				annotatedTile = GetNextAnnotatedTile(offset, AIBridge.GetOtherBridgeEnd(tile + offset) + offset, railTrack);
-			else if (AITunnel.IsTunnelTile(tile + offset))
-				annotatedTile = GetNextAnnotatedTile(offset, AITunnel.GetOtherTunnelEnd(tile + offset) + offset, railTrack);
-			else
-				annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
+			
+			// Skip over bridges and tunnels.
+			while (AIBridge.IsBridgeTile(tile + offset) || AITunnel.IsTunnelTile(tile + offset)) {
+				if (AIBridge.IsBridgeTile(tile + offset)) {
+					tile = AIBridge.GetOtherBridgeEnd(tile + offset);
+				} else if (AITunnel.IsTunnelTile(tile + offset)){
+					tile = AITunnel.GetOtherTunnelEnd(tile + offset);
+				}
+			}
+			annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
+			
 			if (annotatedTile == null)
 				continue;
+
+			assert (!AIBridge.IsBridgeTile(annotatedTile.tile) && !AITunnel.IsTunnelTile(annotatedTile.tile));
 	
 			// Check if this rail exists.
 			if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack) {
