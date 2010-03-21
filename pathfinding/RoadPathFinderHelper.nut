@@ -159,8 +159,10 @@ function RoadPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		}
 	}
 
-	if (checkEndPositions)
-		endList = newEndLocations;
+	if (checkEndPositions) {
+		endList.Clear();
+		endList.AddList(newEndLocations);
+	}
 }
 
 

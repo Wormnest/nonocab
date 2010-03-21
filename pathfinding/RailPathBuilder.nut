@@ -141,10 +141,10 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 							stationIDsConnectedTo.push(foundStationID);
 							
 						local sadf = AIExecMode();
-						AISign.BuildSign(roadList[a].tile, AIStation.GetStationID(roadList[0].tile)+ " - R" + foundStationID);
+						//AISign.BuildSign(roadList[a].tile, AIStation.GetStationID(roadList[0].tile)+ " - R" + foundStationID);
 					} else {
 						local sadf = AIExecMode();
-						AISign.BuildSign(roadList[a].tile, "?");
+						//AISign.BuildSign(roadList[a].tile, "?");
 					}
 				}
 			}

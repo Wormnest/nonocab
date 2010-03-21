@@ -238,6 +238,8 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.length = 1;
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 				stationBeginFront.forceForward = startAndEndDoubleStraight;
+				
+				assert(!AIRail.IsRailTile(stationBeginFront.tile));
 					
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			} else {
@@ -260,6 +262,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.length = 1;
 				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
 				stationEndFront.forceForward = startAndEndDoubleStraight;
+				assert(!AIRail.IsRailTile(stationEndFront.tile));
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}
@@ -270,7 +273,7 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
 	if (!checkEndPositions)
-		return endList;
+		return;
 
 	local newEndLocations = AITileList();
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -282,8 +285,10 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		x += AIMap.GetTileX(i);
 		y += AIMap.GetTileY(i);
 	}
-	if (x == 0 || y == 0)
+	if (x == 0 || y == 0) {
+		endList.Clear();
 		return;
+	}
 	x = x / endList.Count();
 	y = y / endList.Count();
 	local middleTile = x + AIMap.GetMapSizeX() * y;
@@ -308,24 +313,27 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 				continue;
 
 			if (offsets[j] == 1 &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 5, stationLength + 7, 2))
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 2))
 				continue;
 			else if (offsets[j] == mapSizeX &&
-				!AITile.IsBuildableRectangle(i - 1 - offsets[j] * 3, 2, stationLength + 7))
+				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 2, stationLength + 7))
 				continue;
 
+			local a = AIExecMode();
+
 			// Only add the point furthest away from the industry / town we try to connect.
-			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile))
+			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile)) {
 			//	newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
 				newEndLocations.AddTile(i + (stationLength - 1) * offsets[j]);
-			else
+			} else {
 				//newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
 				newEndLocations.AddTile(i);
+			}
 		}
 	}
 
-	if (checkEndPositions)
-		endList = newEndLocations;
+	endList.Clear();
+	endList.AddList(newEndLocations);
 }
 
 
@@ -1044,7 +1052,7 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 		//}
 		return true;
 	}
-
+/*
 	// If non of these are true, search for the next rail!
 	//local nextTile = tile + direction;
 	local nextRailTracks = AIRail.GetRailTracks(tile + direction);
@@ -1062,6 +1070,37 @@ function RailPathFinderHelper::CheckSignals(tile, railTrack, direction) {
 			annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
 		if (annotatedTile == null)
 			continue;
+
+		// Check if this rail exists.
+		if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack) {
+			return CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset);
+		} 
+	}
+*/
+
+	// If non of these are true, search for the next rail!
+	//local nextTile = tile + direction;
+	local nextOffsets = RailPathFinderHelper.GetOffsets(direction, railTrack);
+	
+	// Check for all possible rails which can be linked to from here.
+	// We do a depth first search to find the connecting station.
+	foreach (offset in nextOffsets) {
+		local annotatedTile = null;
+		
+		// Skip over bridges and tunnels.
+		while (AIBridge.IsBridgeTile(tile + offset) || AITunnel.IsTunnelTile(tile + offset)) {
+			if (AIBridge.IsBridgeTile(tile + offset)) {
+				tile = AIBridge.GetOtherBridgeEnd(tile + offset);
+			} else if (AITunnel.IsTunnelTile(tile + offset)){
+				tile = AITunnel.GetOtherTunnelEnd(tile + offset);
+			}
+		}
+		annotatedTile = GetNextAnnotatedTile(offset, tile + offset, railTrack);
+		
+		if (annotatedTile == null)
+			continue;
+
+		assert (!AIBridge.IsBridgeTile(annotatedTile.tile) && !AITunnel.IsTunnelTile(annotatedTile.tile));
 
 		// Check if this rail exists.
 		if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack) {

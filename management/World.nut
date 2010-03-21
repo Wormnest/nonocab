@@ -593,6 +593,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 
 	foreach (cargo, value in cargo_list) {
 		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
+		local newEngineID = -1;
 		
 		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo) || (!AIEngine.IsWagon(engineID) && AIEngine.CanPullCargo(engineID, cargo)))) {
 			
@@ -605,6 +606,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoHoldingEngineIds[vehicleType][cargo])) {
 						cargoHoldingEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to carry: " + AICargo.GetCargoLabel(cargo));
+						newEngineID = engineID;
 						engineReplaced = true;
 					}						
 				} else {
@@ -614,14 +616,38 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo])) {
 						cargoTransportEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport: " + AICargo.GetCargoLabel(cargo));
+						newEngineID = engineID;
 						engineReplaced = true;
 					}
 				}
 			} else if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) {
 				cargoTransportEngineIds[vehicleType][cargo] = engineID;
 				cargoHoldingEngineIds[vehicleType][cargo] = engineID;
+				newEngineID = engineID;
 				Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport and carry: " + AICargo.GetCargoLabel(cargo));
 				engineReplaced = true;
+			}
+			
+			// If we have replaced an engine, we want to upgrade all groups with an old engine to the new one.
+			if (newEngineID != -1) {
+				// Only set autoreplace if the types of vehicles are compatible.
+				local vehicleTypesAreCompatible = true;
+				
+				// Don't replace little air planes with bigger ones!
+				if (vehicleType == AIVehicle.VT_AIR &&
+					AIEngine.GetPlaneType(oldEngineID) != AIEngine.GetPlaneType(newEngineID))
+					vehicleTypesAreCompatible = false;
+				
+				// Don't replace trains if the new one cannot run on the olds rails.
+				if (vehicleType == AIVehicle.VT_RAIL) {
+					local railType = AIEngine.GetRailType(oldEngineID);
+					if (!AIEngine.HasPowerOnRail(newEngineID, railType) ||
+						!AIEngine.CanRunOnRail(newEngineID, railType))
+						vehicleTypesAreCompatible = false;
+				}
+				
+				//if (vehicleTypesAreCompatible)
+				//	AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
 			}
 		}
 	}

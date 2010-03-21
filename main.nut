@@ -57,6 +57,10 @@ function NoCAB::Start()
 		}
 	}
 	
+	AICompany.SetAutoRenewStatus(false);
+	AICompany.SetAutoRenewMonths(-1200);
+	AICompany.SetAutoRenewMoney(1000000);
+	
 	parlement = Parlement();
 	world = World(GetSetting("NiceCAB"));
 	GameSettings.InitGameSettings();
@@ -180,11 +184,15 @@ function NoCAB::Start()
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
 		world.Update();	
+		
+		AICompany.SetAutoRenewMoney(5000000);
 		parlement.SelectReports(reports);
 		
 		while (!parlement.ExecuteReports()) {
 			parlement.SelectReports(reports);
 		}
+		
+		AICompany.SetAutoRenewMoney(1000000);
 	}
 }
 
