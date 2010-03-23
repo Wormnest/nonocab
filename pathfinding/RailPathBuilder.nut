@@ -168,8 +168,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				
 				local bridgeTypes = AIBridgeList_Length(length);
 				local bestBridgeType = null;
-				for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
-					local bridge = bridgeTypes.Next();
+				for (local bridge = bridgeTypes.Begin(); bridgeTypes.HasNext(); bridge = bridgeTypes.Next()) {
 					assert (AIBridge.IsValidBridge(bridge));
 					if (bestBridgeType == null || AIBridge.GetMaxSpeed(bridge) >= AIBridge.GetMaxSpeed(bestBridgeType))
 						bestBridgeType = bridge;

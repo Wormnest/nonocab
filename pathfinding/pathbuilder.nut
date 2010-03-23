@@ -157,8 +157,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 			// Find the cheapest and fastest bridge.
 			local bridgeTypes = AIBridgeList_Length(length);
 			local bestBridgeType = null;
-			for (bridgeTypes.Begin(); bridgeTypes.HasNext(); ) {
-				local bridge = bridgeTypes.Next();
+			for (local bridge = bridgeTypes.Begin(); bridgeTypes.HasNext(); bridge = bridgeTypes.Next()) {
 				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
 					bestBridgeType = bridge;
 			}		
