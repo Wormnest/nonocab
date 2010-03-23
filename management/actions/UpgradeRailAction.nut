@@ -48,40 +48,52 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	Log.logWarning("Upgrade " + connections.len() + " connections!");
 	local currentRailType = AIRail.GetCurrentRailType();
 	AIRail.SetCurrentRailType(newRailType);
+	
+	// Check if we need to send the trains back to their depots or if we can update
+	// the rails in place.
+	local canUpdateInPlace = true;
+	foreach (connection in connections) {
+		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
+			local engineId = AIVehicle.GetEngineType(vehicleId);
+			if (!AIEngine.CanRunOnRail(engineId, newRailType) ||
+			    !AIEngine.HasPowerOnRail(engineId, newRailType)) {
+			    	canUpdateInPlace = false;
+			    	break;
+			}
+		}
+	}
+
 
 	// First order of business is to send every vehicle back to the depots
 	// so they don't get in the way while we upgrade the tracks!
-	local vehicleIsNotInDepot = true;
-
-	// Send and wait till all vehicles are in their respective depots.
-	while (vehicleIsNotInDepot) {
-		vehicleIsNotInDepot = false;
-		foreach (connection in connections) {
+	if (!canUpdateInPlace) {
+		local vehicleIsNotInDepot = true;
 	
-			foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
-				if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
-					vehicleIsNotInDepot = true;
-					
-					// Check if the vehicles is actually going to the depot!
-					if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
-						AIVehicle.SendVehicleToDepot(vehicleId);
+		// Send and wait till all vehicles are in their respective depots.
+		while (vehicleIsNotInDepot) {
+			vehicleIsNotInDepot = false;
+			foreach (connection in connections) {
+		
+				foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
+					if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
+						vehicleIsNotInDepot = true;
+						
+						// Check if the vehicles is actually going to the depot!
+						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+							AIVehicle.SendVehicleToDepot(vehicleId);
+					}
 				}
 			}
+		}
+		
+		foreach (connection in connections) {
+			// Jeej! All trains are in the depots. SELL THEM!!!!
+			foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
+				AIVehicle.SellVehicle(vehicleId);
 		}
 	}
 	
 	foreach (connection in connections) {
-		// Jeej! All trains are in the depots. SELL THEM!!!!
-		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
-			AIVehicle.SellVehicle(vehicleId);
-	}
-	
-	foreach (connection in connections) {
-		// Convert the depots.
-		AIRail.ConvertRailType(connection.pathInfo.depot, connection.pathInfo.depot, newRailType);
-		if (connection.pathInfo.depotOtherEnd)
-			AIRail.ConvertRailType(connection.pathInfo.depotOtherEnd, connection.pathInfo.depotOtherEnd, newRailType);
-		
 		// Convert the rail types.
 		if (connection.pathInfo.roadList) {
 			Log.logWarning("We have a roadlist!");
@@ -111,6 +123,11 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			AIRail.ConvertRailType(tile, tile, newRailType);
 		foreach (tile, value in endStationTiles)
 			AIRail.ConvertRailType(tile, tile, newRailType);
+			
+		// Convert the depots.
+		AIRail.ConvertRailType(connection.pathInfo.depot, connection.pathInfo.depot, newRailType);
+		if (connection.pathInfo.depotOtherEnd)
+			AIRail.ConvertRailType(connection.pathInfo.depotOtherEnd, connection.pathInfo.depotOtherEnd, newRailType);
 	}
 	
 	AIRail.SetCurrentRailType(currentRailType);
@@ -146,7 +163,7 @@ function RailPathUpgradeAction::UpgradeBridge(bridgeTile, newRailType) {
 	
 	local ex = AIExecMode();
 	if (bestBridgeType != null) {
-		AITile.DemolishTile(bridgeTile);
+		while (!AITile.DemolishTile(bridgeTile));
 		while (!AIBridge.BuildBridge(AIVehicle.VT_RAIL, bestBridgeType, bridgeTile, bridgeOtherEnd));
 	} else {
 		AIRail.ConvertRailType(bridgeTile, bridgeTile, newRailType);

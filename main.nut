@@ -57,9 +57,11 @@ function NoCAB::Start()
 		}
 	}
 	
-	AICompany.SetAutoRenewStatus(false);
+	AICompany.SetAutoRenewStatus(true);
 	AICompany.SetAutoRenewMonths(-1200);
 	AICompany.SetAutoRenewMoney(1000000);
+	
+	AIGroup.EnableWagonRemoval(true);
 	
 	parlement = Parlement();
 	world = World(GetSetting("NiceCAB"));
@@ -127,9 +129,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0a15")) {
+	if(!AICompany.SetName(companyName + " - v2.0a16")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0a15 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0a16 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

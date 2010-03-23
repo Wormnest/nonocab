@@ -114,25 +114,6 @@ function ManageVehiclesAction::Execute()
 			AIGroup.SetName(connection.vehicleGroupID, connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 		}
 		
-		// Check if the travel times are already know for this engine type, if not: update them!
-		if (!connection.timeToTravelTo.rawin(engineID)) {			
-			if (vehicleType == AIVehicle.VT_ROAD) {
-				connection.timeToTravelTo[engineID] <- RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				connection.timeToTravelFrom[engineID] <- RoadPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			} else if (vehicleType == AIVehicle.VT_AIR){ 
-				local manhattanDistance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
-				connection.timeToTravelTo[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
-				connection.timeToTravelFrom[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
-			} else if (vehicleType == AIVehicle.VT_WATER) {
-				connection.timeToTravelTo[engineID] <- WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				connection.timeToTravelFrom[engineID] <- WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			} else if (vehicleType == AIVehicle.VT_RAIL) {
-				connection.timeToTravelTo[engineID] <- RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-				connection.timeToTravelFrom[engineID] <- RailPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-			} else
-				assert (false);
-		}
-		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
 		local directionToggle = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) 

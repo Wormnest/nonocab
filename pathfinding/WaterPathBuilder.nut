@@ -129,9 +129,7 @@ function WaterPathBuilder::BuildPath(roadList) {
 		// constraint.
 		if (--buoyBuildTimeout > 0)
 			continue;
-		else if(buoyBuildTimeout == 0)
-			currentDirection = roadList[a].direction;
-				
+
 		local direction = roadList[a].direction;
 		local currentTile = roadList[a + 1].tile;
 		
@@ -143,6 +141,7 @@ function WaterPathBuilder::BuildPath(roadList) {
 		 */
 		if (direction != currentDirection || buoyBuildTimeout == -25) {
 	
+			currentDirection = roadList[a].direction;
 			// Check if there is no buoy close to this tile.
 			local list = Tile.GetRectangle(currentTile, 5, 5);
 			list.Valuate(AIMarine.IsBuoyTile);

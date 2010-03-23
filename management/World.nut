@@ -646,8 +646,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 						vehicleTypesAreCompatible = false;
 				}
 				
-				//if (vehicleTypesAreCompatible)
-				//	AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
+				if (vehicleTypesAreCompatible)
+					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
 			}
 		}
 	}

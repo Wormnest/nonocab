@@ -113,6 +113,8 @@ class Connection {
 					local vehicles = AIVehicleList_Group(vehicleGroupID);
 					foreach (vehicle, value in vehicles) {
 						local engineID = AIVehicle.GetEngineType(vehicle);
+						if (!timeToTravelTo.rawin(engineID))
+							UpdateTravelTimes(engineID);
 						local travelTime = timeToTravelTo.rawget(engineID) + timeToTravelFrom.rawget(engineID);
 						cargoAlreadyTransported += (World.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
 					}
@@ -121,6 +123,26 @@ class Connection {
 		}
 		
 		return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
+	}
+	
+	function UpdateTravelTimes(engineID) {	
+		local vehicleType = vehicleTypes;
+		// Check if the travel times are already know for this engine type, if not: update them!
+		if (vehicleType == AIVehicle.VT_ROAD) {
+			timeToTravelTo[engineID] <- RoadPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+			timeToTravelFrom[engineID] <- RoadPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+		} else if (vehicleType == AIVehicle.VT_AIR){ 
+			local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+			timeToTravelTo[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
+			timeToTravelFrom[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
+		} else if (vehicleType == AIVehicle.VT_WATER) {
+			timeToTravelTo[engineID] <- WaterPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+			timeToTravelFrom[engineID] <- WaterPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+		} else if (vehicleType == AIVehicle.VT_RAIL) {
+			timeToTravelTo[engineID] <- RailPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
+			timeToTravelFrom[engineID] <- RailPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
+		} else
+			assert (false);
 	}
 	
 	/**
