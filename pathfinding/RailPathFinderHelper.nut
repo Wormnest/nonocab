@@ -766,6 +766,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 						annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
 					else
 						assert(false);
+					annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + length;
 					tileArray.push(annotatedTile);
 					isBridgeOrTunnelEntrance = true;
 				}
@@ -783,6 +784,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && goingStraight) {
 				local tmp;
 				if ((tmp = GetBridge(nextTile, offset)) != null || (tmp = GetTunnel(nextTile, currentTile)) != null) {
+					tmp.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + tmp.length;
 					tmp.length += currentAnnotatedTile.length;
 					tileArray.push(tmp);
 				}
@@ -828,8 +830,17 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
 					annotatedTile.distanceFromStart = costForSlope;
 
-				if (currentAnnotatedTile.direction != offset)
+				if (currentAnnotatedTile.direction != offset) {
 					annotatedTile.distanceFromStart += costForTurn;
+					
+					if (currentAnnotatedTile.tilesInSameDirection < 5)
+						annotatedTile.distanceFromStart += costForTurn * 3;
+					annotatedTile.tilesInSameDirection = 0;
+				} else if (goingStraight) {
+					annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 1;
+				} else {
+					annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 0.5;
+				}
 
 				local existingRailTracks = AIRail.GetRailTracks(nextTile);
 				local reuseRailTrack = false;
@@ -1214,7 +1225,6 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 			annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
 		else
 			assert(false);
-		
 		return annotatedTile;
 	}
 	return null;

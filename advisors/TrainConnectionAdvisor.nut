@@ -25,7 +25,7 @@ function TrainConnectionAdvisor::GetPathInfo(report) {
 	// Don't do towns! Takes to long for the pathfinder sometimes...	
 	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
 		return null;
-	local stationType = (!AICargo.HasCargoClass(report.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
+	local stationType = AIStation.STATION_TRAIN; 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 
 	local pathInfo = pathFinder.FindFastestRoad(report.fromConnectionNode.GetAllProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAllAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20, null);
