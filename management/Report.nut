@@ -139,19 +139,8 @@ class Report
 				travelTimeFrom = travelTimeTo;
 			}
 
-			if (connection == null || !connection.pathInfo.build) {
-
-				local useCache = connection == null || !connection.forceReplan;
-				local costForFrom = BuildShipYardAction.GetShipYardCost(travelFromNode, cargoID, false, useCache);
-				local costForTo = BuildShipYardAction.GetShipYardCost(travelToNode, cargoID, true, useCache);
-
-				if (costForFrom == -1 || costForTo == -1) {
-					isInvalid = true;
-					return;
-				}	
-				
-				initialCost += costForFrom + costForTo;
-			}
+			if (connection == null || !connection.pathInfo.build)
+				initialCost += BuildShipYardAction.GetCosts();
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);

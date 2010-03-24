@@ -4,8 +4,6 @@
 class BuildShipYardAction extends Action {
 	connection = null;			// Connection object of the road to build.
 	world = null;				// The world.
-	static shipYardCosts = {};		// Table which holds the costs per shipYard type and the date when they were calculated.
-						// Tuple: [calculation_date, cost].
 	
 	constructor(connection, world) {
 		this.connection = connection;
@@ -164,71 +162,8 @@ function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 }
 
 /**
- * Find a good location to build an airfield and return it.
- * @param shipYardType The type of shipYard which needs to be build.
- * @param node The connection node where the shipYard needs to be build.
- * @param cargoID The cargo that needs to be transported.
- * @param acceptingSide If true this side is considered as begin the accepting side of the connection.
- * @param getFirst If true ignores the exclude list and gets the first suitable spot to build an airfield.
- * @return The tile where the shipYard can be build.
+ * Get the costs of building a ship connection
  */
-function BuildShipYardAction::FindSuitableShipYardSpot(node, cargoID, acceptingSide) {
-    local shipYardRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
-	local tile = node.GetLocation();
-	local excludeList;
-	if (node.nodeType == ConnectionNode.TOWN_NODE) {
-		excludeList = clone node.excludeList;
-		node.excludeList = {};
-	}
-
-	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, shipYardRadius, 1, 1) : node.GetAllProducingTiles(cargoID, shipYardRadius, 1, 1));
-	if (node.nodeType == ConnectionNode.TOWN_NODE)
-		node.excludeList = excludeList;
-
-    /* Couldn't find a suitable place for this town, skip to the next */
-    if (list.Count() == 0) return;
-	local good_tile = 0;
-    /* Walk all the tiles and see if we can build the shipYard at all */
-    {
-        local test = AITestMode();
-
-        for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
-            if (!AIMarine.BuildDock(tile, AIStation.STATION_NEW)) continue;
-	        good_tile = tile;
-			break;
-	    }
-	}
-	if (good_tile == 0)
-		return -1;
-	return good_tile;
-}
-
-/**
- * Return the cost to build an shipYard at the given node. Once the cost for one type
- * of shipYard is calculated it is cached for little less then a year after which it
- * is reevaluated.
- * @param node The connection node where the shipYard needs to be build.
- * @param cargoID The cargo the connection should transport.
- * @param acceptingSide If true it means that the node will be evaluated as the accepting side.
- * @param useCache If true the result will be retrieved from cache, no check is made to see
- * if the shipYard can actually be build!
- * @return The total cost of building the shipYard.
- */
-function BuildShipYardAction::GetShipYardCost(node, cargoID, acceptingSide, useCache) {
-	local accounter = AIAccounting();
-	local shipYardType = AIStation.STATION_DOCK;
-
-	if (useCache && BuildShipYardAction.shipYardCosts.rawin("" + shipYardType)) {
-		
-		local shipYardCostTuple = BuildShipYardAction.shipYardCosts.rawget("" + shipYardType);
-		if (Date.GetDaysBetween(AIDate.GetCurrentDate(), shipYardCostTuple[0]) < 300)
-			return shipYardCostTuple[1];
-	}
-
-	if (BuildShipYardAction.FindSuitableShipYardSpot(node, cargoID, acceptingSide) < 0)
-		return -1;
-
-	if (useCache)
-		BuildShipYardAction.shipYardCosts["" + shipYardType] <- [AIDate.GetCurrentDate(), accounter.GetCosts()];
-	return accounter.GetCosts();
+function BuildShipYardAction::GetCosts() {
+	return 2 * AIMarine.GetBuildCost(AIMarine.BT_DOCK) + AIMarine.GetBuildCost(AIMarine.BT_DEPOT) + 10 * AIMarine.GetBuildCost(AIMarine.BT_BUOY);
 }
