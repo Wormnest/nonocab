@@ -125,8 +125,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 			local preferedDirection = 0;
 			if (AIRail.IsRailStationTile(i)) {
 				preferedDirection = AIRail.GetRailStationDirection(i);
-				//local abc = AIExecMode();
-				//AISign.BuildSign(i, "PREFERED DIRECTION!");
 			} else if (AIRail.GetRailTracks(i) != AIRail.RAILTRACK_INVALID) {
 				local railTracks = AIRail.GetRailTracks(i);
 				 if ((railTracks & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW)
@@ -695,19 +693,14 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		
 		local nextTile = currentTile + offset;
 
-		local isInClosedList = false;
-
 		// Skip if this node is already processed.
-		if (closedList.rawin(nextTile) || closed_list.rawin(nextTile + "-" + offset)) {
-//			local ac = AIExecMode();
-//			AISign.BuildSign(nextTile, "CLOSED");
-			isInClosedList = true;
-		}
-		
+		if (closedList.rawin(nextTile) || 
+			((currentAnnotatedTile.length < 10 || 
+		        AIMap.DistanceManhattan(currentTile, expectedEnd) < 10)) && closed_list.rawin(nextTile + "-" + offset))
+			continue;
+
 		// Check if we're going 'straight'.
 		local goingStraight = (offset == 1 || offset == -1 || offset == mapSizeX || offset == -mapSizeX ? true : false);
-		
-
 		local isBridgeOrTunnelEntrance = false;
 
 		// Check if we can exploit excising bridges and tunnels.
@@ -745,6 +738,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 					annotatedTile.direction = offset;
 					annotatedTile.tile = otherEnd;
 					annotatedTile.alreadyBuild = true;
+					annotatedTile.forceForward = true;
 					annotatedTile.length = currentAnnotatedTile.length + length;
 					annotatedTile.distanceFromStart = costForRail * (length < 0 ? -length : length);
 					if (offset == 1 || offset == -1)
@@ -777,7 +771,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				}
 			}
 
-			if (!isInClosedList) {
+			//if (!isInClosedList) {
 				
 				if (AIRail.IsRailStationTile(currentTile) && AIRail.IsRailStationTile(nextTile))
 					continue;
@@ -896,13 +890,13 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				// Only use the direction sensitive closed list if we are either very close to the
 				// start or very close to the end point.
-				if (currentAnnotatedTile.length < 15 || AIMap.DistanceManhattan(currentTile, expectedEnd) < 15)
+				if (currentAnnotatedTile.length < 10 || AIMap.DistanceManhattan(currentTile, expectedEnd) < 10)
 					closed_list[currentTile + "-" + offset] <- true;
-			}
+//			}
 		}
 	}
 
-	if (currentAnnotatedTile.length >= 15 && AIMap.DistanceManhattan(currentTile, expectedEnd) >= 15)
+	if (currentAnnotatedTile.length >= 10 && AIMap.DistanceManhattan(currentTile, expectedEnd) >= 10)
 		closedList[currentTile] <- true;
 
 	return tileArray;
@@ -973,18 +967,9 @@ function RailPathFinderHelper::CheckStation(curTile, curRailTrack, curDirection,
 			if (annotatedTile == null)
 				continue;
 
-			assert (!AIBridge.IsBridgeTile(annotatedTile.tile) && !AITunnel.IsTunnelTile(annotatedTile.tile));
-	
 			// Check if this rail exists.
-			if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack) {
-				
+			if ((AIRail.GetRailTracks(annotatedTile.tile) & annotatedTile.lastBuildRailTrack) == annotatedTile.lastBuildRailTrack)
 				openList.push([annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset]);
-				
-				//local foundStation = CheckStation(annotatedTile.tile, annotatedTile.lastBuildRailTrack, offset);
-				
-				//if (AIStation.IsValidStation(foundStation))
-				//	return foundStation;
-			} 
 		}
 	}
 	return -1;
