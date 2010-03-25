@@ -1,6 +1,7 @@
 class WaterPathFinderHelper extends PathFinderHelper {
 
 	standardOffsets = null;
+	straightOffsets = null;
 //	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
 	costTillEnd     = Tile.straightRoadLength;           // The cost for each tile till the end.
 	startLocationIsBuildOnWater = false;
@@ -11,6 +12,7 @@ class WaterPathFinderHelper extends PathFinderHelper {
 	constructor() {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0),
 				   AIMap.GetTileIndex(1, 1), AIMap.GetTileIndex(1, -1), AIMap.GetTileIndex(-1, -1), AIMap.GetTileIndex(-1, 1)];
+		straightOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 		emptyList = AIList();
 	}
 
@@ -25,10 +27,10 @@ class WaterPathFinderHelper extends PathFinderHelper {
 	function GetNeighbours(currentAnnotatedTile, onlyRoads, closedList);
 }
 
-function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, closedList) {
+function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyStraight, closedList) {
 
 	local tileArray = [];
-	local offsets = standardOffsets;
+	local offsets = (onlyStraight ? straightOffsets : standardOffsets);
 
 	foreach (offset in offsets) {
 		
@@ -100,11 +102,6 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 		// We preprocess all start nodes to see if a road station can be build on them.
 		local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 
-		// Check if the start location has at least 3 neighbours, so we know
-		// there is enough water around it for ships to navigate.
-		if (neighbours.len() < 3)
-			continue;
-			
 		foreach (neighbour in neighbours) {
 			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd))
 				newList.AddTile(neighbour.tile);
@@ -142,19 +139,19 @@ function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStar
 	} else {
 	
 		ProcessNeighbours(startList, function(annotatedTile, neighbour, heap, expectedEnd) {
-				local offset = annotatedTile.tile - neighbour.tile;
+			local offset = annotatedTile.tile - neighbour.tile;
 	
-				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-					neighbour.distanceFromStart = Tile.straightRoadLength;
-				else
-					neighbour.distanceFromStart = Tile.diagonalRoadLength;
+			if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
+				neighbour.distanceFromStart = Tile.straightRoadLength;
+			else
+				neighbour.distanceFromStart = Tile.diagonalRoadLength;
 	
-				neighbour.parentTile = annotatedTile;
-				neighbour.length = 1;
-					
-				heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
-				return false;
-			}, heap, expectedEnd);
+			neighbour.parentTile = annotatedTile;
+			neighbour.length = 1;
+				
+			heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
+			return false;
+		}, heap, expectedEnd);
 	}
 }
 
@@ -162,9 +159,9 @@ function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) 
 
 	if (!endLocationIsBuildOnWater) {
 		local newEndList = ProcessNeighbours(endList, function(annotatedTile, neighbour, heap, expectedEnd) {
-				return true;
-			}, null, null);
-	
+			return true;
+		}, null, null);
+
 		endList.Clear();
 		endList.AddList(newEndList);
 	}
