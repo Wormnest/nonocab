@@ -239,8 +239,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationBeginFront.lastBuildRailTrack = rail_track_directions[j];
 				stationBeginFront.forceForward = startAndEndDoubleStraight;
 				
-				assert(!AIRail.IsRailTile(stationBeginFront.tile));
-					
 				heap.Insert(stationBeginFront, AIMap.DistanceManhattan(stationBeginFront.tile, expectedEnd) * costTillEnd);
 			} else {
 				// The tile at the end of the station.
@@ -262,7 +260,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 				stationEndFront.length = 1;
 				stationEndFront.lastBuildRailTrack = rail_track_directions[j];
 				stationEndFront.forceForward = startAndEndDoubleStraight;
-				assert(!AIRail.IsRailTile(stationEndFront.tile));
 				
 				heap.Insert(stationEndFront, AIMap.DistanceManhattan(stationEndFront.tile, expectedEnd) * costTillEnd);
 			}

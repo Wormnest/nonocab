@@ -91,15 +91,9 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	// We must also keep track of all tiles we've already processed, we use
 	// a table for that purpose.
 	local closedList = {};
-	if (tilesToIgnore) {
-		foreach (tile in tilesToIgnore) {
+	if (tilesToIgnore)
+		foreach (tile in tilesToIgnore)
 			closedList[tile] <- tile;
-//			local abc = AIExecMode();
-//			AISign.BuildSign(tile, "IGNORE");
-		}
-		
-//		assert(closedList.len() > 0);
-	}
 
 	// Start by constructing a fibonacci heap and by adding all start nodes to it.
 	pq = FibonacciHeap();
@@ -147,9 +141,6 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		foreach (neighbour in pathFinderHelper.GetNeighbours(at, false, closedList)) {
 			neighbour.distanceFromStart += at.distanceFromStart;
 			neighbour.parentTile = at;
-			assert (neighbour.length != at.length);
-			assert (neighbour.length != 0);
-			assert (neighbour.length > at.length);
 			
 			// Add this neighbour node to the queue.
 			pq.Insert(neighbour, neighbour.distanceFromStart + AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);

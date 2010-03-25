@@ -36,7 +36,6 @@ function ConnectionManager::GetConnection(stationID) {
 }
 
 function ConnectionManager::GetInterconnectedConnections(connection) {
-	assert(GetConnection(connection.travelFromNodeStationID) != null);
 	if (interConnectedStations.rawin(connection.travelFromNodeStationID)) {
 		local stationIDs = interConnectedStations.rawget(connection.travelFromNodeStationID);
 		local connections = [];
@@ -78,43 +77,6 @@ function ConnectionManager::MakeInterconnected(connection1, connection2) {
 	foreach (connectionStationID in connectedStations1) {
 		interConnectedStations[connectionStationID] <- connectedStations1;
 	}
-	
-	//connectedStations2.clear();
-	//connectedStations2.extend(connectedStations1);
-	
-	// Add the new connections.
-	//connectedStations1.push(connection2.travelFromNodeStationID);
-	//connectedStations2.push(connection1.travelFromNodeStationID);
-	
-	//Log.logWarning(connectedStations1.len() + " " + connectedStations2.len());
-	
-	// TODO: Remove afterwards.
-	// Test if they're really added.
-	local test1 = interConnectedStations.rawget(connection1.travelFromNodeStationID);
-	local test2 = interConnectedStations.rawget(connection2.travelFromNodeStationID);
-	
-	Log.logWarning(test1.len() + " " + test2.len());
-	
-	local found1 = false;
-	foreach (connection in test1) {
-		if (connection == connection2.travelFromNodeStationID) {
-			found1 = true;
-			break;
-		}
-	}
-	assert(found1);
-	
-	local found2 = false;
-	foreach (connection in test2) {
-		if (connection == connection1.travelFromNodeStationID) {
-			found2 = true;
-			break;
-		}
-	}
-	assert(found2);
-	
-	assert(test1.len() == connectedStations1.len());
-	assert(test2.len() == connectedStations1.len());
 }
 
 function ConnectionManager::AddConnectionListener(listener) {
@@ -141,11 +103,6 @@ function ConnectionManager::ConnectionRealised(connection) {
 }
 
 function ConnectionManager::ConnectionDemolished(connection) {
-//	assert(AIStation.IsValidStation(connection.travelFromNodeStationID));
-//	stationIDToConnection.rawdelete(connection.travelFromNodeStationID);
-	
-//	assert(AIStation.IsValidStation(connection.travelToNodeStationID));
-//	stationIDToConnection[connection.travelToNodeStationID] <- null;
 	foreach (listener in connectionListeners)
 		listener.ConnectionDemolished(connection);
 }
