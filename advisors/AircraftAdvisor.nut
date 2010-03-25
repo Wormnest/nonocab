@@ -20,70 +20,14 @@ function AircraftAdvisor::GetPathInfo(report) {
 		return null;
 	
 	// Check if the airport is actually constructable!
-	local isTowntoTown = report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE;
-//	if (BuildAirfieldAction.GetAirportCost(report.fromConnectionNode, report.cargoID, isTowntoTown ? true : false) == -1 ||
-//		BuildAirfieldAction.GetAirportCost(report.toConnectionNode, report.cargoID, true) == -1)
-//		return null;
+	local bestAirfield = BuildAirfieldAction.GetLargestAirport(false);
+	if (bestAirfield == null)
+		return null;
+
+	local townToTown = report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE;
+	if (!BuildAirfieldAction.FindSuitableAirportSpot(bestAirfield, report.fromConnectionNode, report.cargoID, false, true, townToTown) == -1 ||
+		!BuildAirfieldAction.FindSuitableAirportSpot(bestAirfield, report.toConnectionNode, report.cargoID, true, true, townToTown) == -1)
+		return null;
 			
 	return PathInfo(null, null, 0, AIVehicle.VT_AIR);
 }
-
-/**
- * We implement our own update industry connection function, becaus we only consider town <-> town
- * connections for airplanes. Other connections will be explored if this function is commented out,
- * but so far I've never seen an aircraft which carries other cargo other then passengers and mail.
- * Trains will be far better at this job :).
-
-function AircraftAdvisor::UpdateIndustryConnections(industry_tree) {
-
-	foreach (from in world.townConnectionNodes) {
-		foreach (to in from.connectionNodeList) {
-			
-			// See if we need to add or remove some vehicles.
-			// Take a guess at the travel time and profit for each cargo type.
-			foreach (cargoID in from.cargoIdsProducing) {
-
-				if (!AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS))
-					continue;
-
-				// Check if we even have an engine to transport this cargo.
-				local engineID = world.cargoTransportEngineIds[vehicleType][cargoID];
-				if (engineID == -1)
-					continue;
-
-				// Check if this connection already exists.
-				local connection = from.GetConnection(to, cargoID);
-
-				// Make sure we only check the accepting side for possible connections if
-				// and only if it has a connection to it.
-				if (connection != null && connection.pathInfo.build)
-					continue;
-
-				// Check if this connection isn't in the ignore table.
-				if (ignoreTable.rawin(from.GetUID(cargoID) + "_" + to.GetUID(cargoID)))
-					continue;
-
-				if (connection == null) {
-
-					local skip = false;
-
-					// Make sure the producing side isn't already served, we don't want more then
-					// 1 connection on 1 production facility per cargo type.
-					local otherConnections = from.GetConnections(cargoID);
-					foreach (otherConnection in otherConnections) {
-						if (otherConnection.pathInfo.build && otherConnection != connection) {
-							skip = true;
-							break;
-						}
-					}
-				
-					if (skip)
-						continue;
-				}
-				local report = Report(world, from, to, cargoID, engineID, 0);
-				if (report.Utility() > 0)
-					connectionReports.Insert(report, -report.Utility());
-			}
-		}
-	}
-} */

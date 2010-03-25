@@ -133,18 +133,8 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 							}
 						}
 						
-						for (local i = 0; i < stationsToIgnore.len(); i++)
-							if (foundStationID == stationsToIgnore[i])
-								assert(false);
-						
 						if (!alreadyAdded)
 							stationIDsConnectedTo.push(foundStationID);
-							
-						local sadf = AIExecMode();
-						//AISign.BuildSign(roadList[a].tile, AIStation.GetStationID(roadList[0].tile)+ " - R" + foundStationID);
-					} else {
-						local sadf = AIExecMode();
-						//AISign.BuildSign(roadList[a].tile, "?");
 					}
 				}
 			}
@@ -201,7 +191,6 @@ function RailPathBuilder::GetCostForRoad()
 	if(roadList == null || roadList.len() < 3)
 		return 0;
 
-	local mapSizeX = AIMap.GetMapSizeX();
 	local currentRailType = AIRail.GetCurrentRailType();
 	local costs = 0;
 	local accounting = AIAccounting();
@@ -209,9 +198,7 @@ function RailPathBuilder::GetCostForRoad()
 
 	BuildPath(roadList, true);
 
-	BuildRailAction.BuildRailStation(null, roadList[0].tile, roadList[1].tile, true, false, false);
-	BuildRailAction.BuildRailStation(null, roadList[roadList.len() - 1].tile, roadList[roadList.len() - 2].tile, true, false, true);
-	
+	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2 * 3 * 2;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_SIGNAL) * roadList.len() / 6;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_DEPOT);
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * 10;

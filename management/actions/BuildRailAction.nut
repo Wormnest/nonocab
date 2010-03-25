@@ -47,7 +47,7 @@ function BuildRailAction::Execute() {
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
 		
-	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
+	local stationType = AIStation.STATION_TRAIN;
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
 	//pathFinderHelper.costForTurn = 20;
@@ -68,11 +68,7 @@ function BuildRailAction::Execute() {
 	// Check if we can build the rail stations.
 	if (buildRailStations) {
 		
-		assert(!AIRail.IsRailStationTile(roadList[0].tile));
-		assert(!AIRail.IsRailStationTile(roadList[roadList.len() -1].tile));
-		
 		// Check if we have enough permission to build here.
-		//if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[0].tile), AICompany.COMPANY_SELF) < -200) {
 			connection.forceReplan = true;
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
@@ -80,7 +76,6 @@ function BuildRailAction::Execute() {
 		}
 			
 		// Check if we have enough permission to build here.
-		//if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200) {
 			connection.forceReplan = true;
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
@@ -656,8 +651,6 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		}
 	}
 
-	assert (startIndex != -1 && returnStartIndex != -1 && endIndex != -1 && returnEndIndex != -1);
-	
 	// Remove the intermediate signals.
 	RemoveSignals(roadList, false, 2, startIndex);
 	RemoveSignals(roadList, false, endIndex, roadList.len() - 2);
