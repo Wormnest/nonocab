@@ -53,7 +53,7 @@ function NoCAB::Start()
 		if (AIRail.IsRailTypeAvailable(rt)) {
 			AIRail.SetCurrentRailType(rt);
 			Log.logDebug("Set Rail type!!!");
-			break;
+//			break;
 		}
 	}
 	
@@ -107,7 +107,7 @@ function NoCAB::Start()
 	}
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
-		advisors.push(TrainConnectionAdvisor(world, connectionManager));
+		advisors.push(TrainConnectionAdvisor(world, connectionManager, GetSetting("Allow trains town to town")));
 	}
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	

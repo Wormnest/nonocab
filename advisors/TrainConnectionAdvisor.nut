@@ -4,9 +4,11 @@
 class TrainConnectionAdvisor extends ConnectionAdvisor {
 	
 	pathFinder = null;
+	allowTownToTownConnections = null;
 
-	constructor(world, connectionManager) {
+	constructor(world, connectionManager, allowTownToTown) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
+		allowTownToTownConnections = allowTownToTown;
 		local pathFindingHelper = RailPathFinderHelper();
 		pathFindingHelper.updateClosedList = false;
 		pathFinder = RoadPathFinding(pathFindingHelper);
@@ -23,7 +25,7 @@ function TrainConnectionAdvisor::GetBuildAction(connection) {
 function TrainConnectionAdvisor::GetPathInfo(report) {
 
 	// Don't do towns! Takes to long for the pathfinder sometimes...	
-	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE)
+	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && !allowTownToTownConnections)
 		return null;
 	local stationType = AIStation.STATION_TRAIN; 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
