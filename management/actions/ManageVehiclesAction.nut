@@ -191,6 +191,9 @@ function ManageVehiclesAction::Execute()
 						Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
 						continue;
 					}
+
+					if (connection.cargoID != AIEngine.GetCargoType(wagonVehicleID))
+						AIVehicle.RefitVehicle(wagonVehicleID, connection.cargoID);
 				
 					AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
 				}
