@@ -56,7 +56,7 @@ function NoCAB::Start()
 //			break;
 		}
 	}
-	
+
 	AICompany.SetAutoRenewStatus(true);
 	AICompany.SetAutoRenewMonths(-1200);
 	AICompany.SetAutoRenewMoney(1000000);
