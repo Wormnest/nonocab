@@ -222,8 +222,15 @@ function VehiclesAdvisor::GetReports() {
 			if (connection.vehicleTypes == AIVehicle.VT_AIR && 
 				AIEngine.GetPlaneType(report.transportEngineID) == AIAirport.PT_BIG_PLANE &&
 				(AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
-				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER))
+				AIAirport.GetAirportType(connection.pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER)) {
+					
+					// Check if there are still aircrafts serving this connection. If it is a small airfield
+					// and we are not allowed to build new aircraft, we may as wel demolish it.
+					if (AIVehicleList_Group(connection.vehicleGroupID).Count() == 0)
+						connection.Demolish(true, true, true);
+					
 					continue;
+				}
 
 			vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, report.nrWagonsPerVehicle, connection);
 		}

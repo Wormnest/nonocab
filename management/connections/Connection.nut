@@ -191,19 +191,35 @@ class Connection {
 	function Demolish(destroyFrom, destroyTo, destroyDepots) {
 		if (!pathInfo.build)
 			assert(false);
+			
+		Log.logWarning("Demolishing connection from " + travelFromNode.GetName() + " to " + travelToNode.GetName());
 		
 		// Sell all vehicles.
-		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
-			foreach (vehicleID, value in AIVehicleList_Group(vehicleGroupID)) {	
-				if (!AIVehicle.SendVehicleToDepot(vehicleID)) {
-					AIVehicle.ReverseVehicle(vehicleID);
-					AIController.Sleep(5);
-					AIVehicle.SendVehicleToDepot(vehicleID);
-		    	}
+		if (AIGroup.IsValidGroup(vehicleGroupID)) {
+			
+			local vehicleIsNotInDepot = true;
+		
+			// Send and wait till all vehicles are in their respective depots.
+			while (vehicleIsNotInDepot) {
+				vehicleIsNotInDepot = false;
+			
+				foreach (vehicleId, value in AIVehicleList_Group(vehicleGroupID)) {
+					if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
+						vehicleIsNotInDepot = true;
+						
+						// Check if the vehicles is actually going to the depot!
+						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+							AIVehicle.SendVehicleToDepot(vehicleId);
+					}
+				}
 			}
+			
+			// ...and sell them!
+			foreach (vehicleId, value in AIVehicleList_Group(vehicleGroupID))
+				AIVehicle.SellVehicle(vehicleId);
 		}
 		
-/*		if (destroyFrom) {
+		if (destroyFrom) {
 			if (vehicleTypes == AIVehicle.VT_ROAD) {
 				local startTileList = AITileList();
 				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
@@ -227,7 +243,7 @@ class Connection {
 		
 		if (destroyDepots) {
 			AITile.DemolishTile(pathInfo.depot);
-			if (bilateralConnection)
+			if (pathInfo.depotOtherEnd)
 				AITile.DemolishTile(pathInfo.depotOtherEnd);
 		}
 		
@@ -244,10 +260,10 @@ class Connection {
 				break;
 			}
 		}
-		*/
-		
-		
+
 		connectionManager.ConnectionDemolished(this);
+		
+		pathInfo.build = false;
 	}
 	
 	/**
