@@ -35,12 +35,14 @@ class World {
 	max_distance_between_nodes = null;		// The maximum distance between industries.
 	pathFixer = null;
 	niceCABEnabled = null;
+	newGRFCompatibility = null;
 	
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor(niceCAB) {
+	constructor(niceCAB, newGRFComp) {
 		niceCABEnabled = niceCAB;
+		newGRFCompatibility = newGRFComp;
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -366,6 +368,7 @@ function World::InsertIndustry(industryID) {
 	//	assert(false);
 
 	local hasBilateral = false;
+	local isPrimaryIndustry = false;
 
 	// We want to preprocess all industries which can be build near water.
 	local isNearWater = industryNode.isNearWater;
@@ -381,6 +384,9 @@ function World::InsertIndustry(industryID) {
 		local isBilateral =  acceptsCargo && producesCargo;
 		if (isBilateral)
 			hasBilateral = true;
+		if (newGRFCompatibility && !isPrimaryIndustry)
+			isPrimaryIndustry = AIIndustry.GetLastMonthProduction(industryID, cargo) > 0 &&
+				AIIndustry.GetLastMonthTransported(industryID, cargo) == 0;
 
 		if (producesCargo) {
 			
@@ -440,7 +446,8 @@ function World::InsertIndustry(industryID) {
 	}
 
 	// If the industry doesn't accept anything we add it to the root list.
-	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral)
+	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral ||
+		(isPrimaryIndustry && newGRFCompatibility))
 		industry_tree.push(industryNode);
 }
 
@@ -453,7 +460,8 @@ function World::RemoveIndustry(industryID) {
 	
 	if (!industry_table.rawin(industryID)) {
 		Log.logWarning("Industry removed which wasn't in our tree!");
-		assert(false);
+		//assert(false);
+		return null;
 	}
 	
 	local industryNode = industry_table.rawget(industryID);

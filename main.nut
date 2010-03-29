@@ -64,7 +64,7 @@ function NoCAB::Start()
 	AIGroup.EnableWagonRemoval(true);
 	
 	parlement = Parlement();
-	world = World(GetSetting("NiceCAB"));
+	world = World(GetSetting("NiceCAB"), GetSetting("NewGRF compatibility"));
 	GameSettings.InitGameSettings();
 	connectionManager = ConnectionManager();
 	pathFixer = PathFixer();
@@ -129,6 +129,8 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
+	if (GetSetting("NewGRF compatibility"))
+		companyName += " [NewGRF]";
 	if(!AICompany.SetName(companyName + " - v2.0a19")) {
 		local i = 2;
 		while(!AICompany.SetName(companyName + " - v2.0a19 - #" + i)) { i++; }

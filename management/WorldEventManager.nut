@@ -69,8 +69,10 @@ function WorldEventManager::ProcessEvents() {
 					local industryID = AIEventIndustryClose.Convert(e).GetIndustryID();
 					local industryNode = world.ProcessIndustryClosedEvent(industryID);
 					
-					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
-						listener.WE_IndustryClosed(industryNode);
+					// TODO: In some cases we fail to remove an industry...
+					if (industryNode != null)
+						foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
+							listener.WE_IndustryClosed(industryNode);
 					break;
 
 				// Subsidy:
