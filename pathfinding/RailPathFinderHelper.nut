@@ -19,6 +19,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
 
 	updateClosedList = false;
+	
+	goalAndDirectionTable = null;
 
 	expectedEnd = null;
 	
@@ -32,6 +34,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		reverseSearch = false;
 		
 		closed_list = {};
+		goalAndDirectionTable = {};
 		updateClosedList = true;
 		startAndEndDoubleStraight = false;
 		expectedEnd = -1;
@@ -41,6 +44,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		closed_list = {};
 		emptyList = AIList();
 		been_near_end = false;
+		goalAndDirectionTable = {};
 	}
 	
 	function UpdateClosedList() { return updateClosedList; }
@@ -193,7 +197,6 @@ function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStart
 	
 	
 	foreach (i, value in startList) {
-	
 		if (!Tile.IsBuildable(i, false) || 
 			AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
 			continue;
@@ -273,27 +276,11 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		return;
 
 	local newEndLocations = AITileList();
-	local mapSizeX = AIMap.GetMapSizeX();
-
-	// Determine middle point.
-	local x = 0;
-	local y = 0;
-	foreach (i, value in endList) {
-		x += AIMap.GetTileX(i);
-		y += AIMap.GetTileY(i);
-	}
-	if (x == 0 || y == 0) {
-		endList.Clear();
-		return;
-	}
-	x = x / endList.Count();
-	y = y / endList.Count();
-	local middleTile = x + AIMap.GetMapSizeX() * y;
-	
+	local mapSizeX = AIMap.GetMapSizeX();	
 	local stationLength = 3;
 
 	foreach (i, value in endList) {
-
+		
 		// Check if we can actually start here!
 		if (!Tile.IsBuildable(i, false) || 
 			AITown.GetRating(AITile.GetClosestTown(i), AICompany.COMPANY_SELF) <= -200)
@@ -303,27 +290,28 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		local rail_track_directions = [AIRail.RAILTRACK_NE_SW, AIRail.RAILTRACK_NW_SE];
 		
 		for (local j = 0; j < 2; j++) {
+			local stationSizeX, stationSizeY;
 
-			// Check if we can actually build a train station here.
-			if (AIRail.IsRailStationTile(i) ||
-				!AIRail.BuildRailStation(i, rail_track_directions[j], 2, stationLength, AIStation.STATION_NEW))
-				continue;
 
-			if (offsets[j] == 1 &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, stationLength + 7, 2))
-				continue;
-			else if (offsets[j] == mapSizeX &&
-				!AITile.IsBuildableRectangle(i - offsets[j] * 3, 2, stationLength + 7))
-				continue;
+			if (offsets[j] == 1) {
+				stationSizeX = stationLength + 6;
+				stationSizeY = 2;
+			} else if (offsets[j] == mapSizeX) {
+				stationSizeX = 2;
+				stationSizeY = stationLength + 6;
+			}
 
-			local a = AIExecMode();
-
-			// Only add the point furthest away from the industry / town we try to connect.
-			if (AIMap.DistanceManhattan(i + stationLength * offsets[j], middleTile) > AIMap.DistanceManhattan(i - offsets[j], middleTile)) {
-			//	newEndLocations.AddItem(i + stationLength * offsets[j], i + stationLength * offsets[j]);
-				newEndLocations.AddTile(i + (stationLength - 1) * offsets[j]);
-			} else {
-				//newEndLocations.AddItem(i - offsets[j], i - offsets[j]);
+			if (AITile.IsBuildableRectangle(i - offsets[j] * stationLength, stationSizeX, stationSizeY)) 
+			{
+				goalAndDirectionTable[i + "-" + offsets[j]] <- true;
+				goalAndDirectionTable[(i + offsets[j] * (stationLength - 1)) + "-" + (-offsets[j])] <- true;
+				newEndLocations.AddTile(i);
+			}
+			
+			if (AITile.IsBuildableRectangle(i - offsets[j] * stationLength * 2, stationSizeX, stationSizeY)) 
+			{
+				goalAndDirectionTable[i - offsets[j] * (stationLength - 1) + "-" + offsets[j]] <- true;
+				goalAndDirectionTable[i + "-" + (-offsets[j])] <- true;
 				newEndLocations.AddTile(i);
 			}
 		}
@@ -382,13 +370,16 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
 	if (checkEndPositions) {
 
+		if (!goalAndDirectionTable.rawin(at.tile + "-" + at.direction))
+			return false;
+
 		local mapSizeX = AIMap.GetMapSizeX();
 		local aroundStationTile = at.tile + (at.direction == -1 || at.direction == -AIMap.GetMapSizeX() ? 5 * at.direction : -3 * at.direction); 
 		local stationTile = at.tile + (at.direction == -1 || at.direction == -mapSizeX ? 2 * at.direction : 0); 
 
 		if (!AIRail.BuildRailStation(stationTile, direction, 2, 3, AIStation.STATION_NEW) ||
-			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 10, 2) ||
-			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 10) ||
+			direction == AIRail.RAILTRACK_NE_SW && !AITile.IsBuildableRectangle(aroundStationTile, 9, 2) ||
+			direction == AIRail.RAILTRACK_NW_SE && !AITile.IsBuildableRectangle(aroundStationTile, 2, 9) ||
 			at.parentTile.type != Tile.ROAD)
 			return false;
 	}
