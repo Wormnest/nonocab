@@ -225,7 +225,7 @@ class Connection {
 				local startStation = pathInfo.roadList[pathInfo.roadList.len() - 1].tile;
 				
 				startTileList.AddTile(startStation);
-				DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AIList());
+				DemolishStations(startTileList, AIStation.GetName(AIStation.GetStationID(startStation)), AITileList());
 			}
 			AITile.DemolishTile(pathInfo.roadList[pathInfo.roadList.len() - 1].tile);
 		}
@@ -236,7 +236,7 @@ class Connection {
 				local endStation = pathInfo.roadList[0].tile;
 				
 				endTileList.AddTile(endStation);
-				DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AIList());
+				DemolishStations(endTileList, AIStation.GetName(AIStation.GetStationID(endStation)), AITileList());
 			}
 			AITile.DemolishTile(pathInfo.roadList[0].tile);
 		}
