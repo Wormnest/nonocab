@@ -35,14 +35,12 @@ class World {
 	max_distance_between_nodes = null;		// The maximum distance between industries.
 	pathFixer = null;
 	niceCABEnabled = null;
-	newGRFCompatibility = null;
 	
 	/**
 	 * Initializes a repesentation of the 'world'.
 	 */
-	constructor(niceCAB, newGRFComp) {
+	constructor(niceCAB) {
 		niceCABEnabled = niceCAB;
-		newGRFCompatibility = newGRFComp;
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -384,9 +382,8 @@ function World::InsertIndustry(industryID) {
 		local isBilateral =  acceptsCargo && producesCargo;
 		if (isBilateral)
 			hasBilateral = true;
-		if (newGRFCompatibility && !isPrimaryIndustry)
-			isPrimaryIndustry = AIIndustry.GetLastMonthProduction(industryID, cargo) > 0 &&
-				AIIndustry.GetLastMonthTransported(industryID, cargo) == 0;
+		if (!isPrimaryIndustry)
+			isPrimaryIndustry = AIIndustryType.IsRawIndustry(AIIndustry.GetIndustryType(industryID));
 
 		if (producesCargo) {
 			
@@ -446,8 +443,7 @@ function World::InsertIndustry(industryID) {
 	}
 
 	// If the industry doesn't accept anything we add it to the root list.
-	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral ||
-		(isPrimaryIndustry && newGRFCompatibility))
+	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral || isPrimaryIndustry)
 		industry_tree.push(industryNode);
 }
 
