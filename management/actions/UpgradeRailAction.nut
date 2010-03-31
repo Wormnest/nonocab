@@ -73,6 +73,10 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		while (vehicleIsNotInDepot) {
 			vehicleIsNotInDepot = false;
 			foreach (connection in connections) {
+
+				// Save option as we do not remove connections from the interconnected list once they are removed.
+				if (!connection.pathInfo.build || connection.vehicleTypes != AIVehicle.VT_RAIL)
+					continue;
 		
 				foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
 					if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
@@ -87,6 +91,8 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		}
 		
 		foreach (connection in connections) {
+			if (!connection.pathInfo.build || connection.vehicleTypes != AIVehicle.VT_RAIL)
+				continue;
 			// Jeej! All trains are in the depots. SELL THEM!!!!
 			foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID))
 				AIVehicle.SellVehicle(vehicleId);
@@ -94,6 +100,9 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	}
 	
 	foreach (connection in connections) {
+		if (!connection.pathInfo.build || connection.vehicleTypes != AIVehicle.VT_RAIL)
+			continue;
+
 		// Convert the rail types.
 		if (connection.pathInfo.roadList) {
 			Log.logWarning("We have a roadlist!");

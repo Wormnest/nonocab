@@ -257,7 +257,7 @@ function World::Update()
 		}
 		
 		// Check if the vehicle is profitable.
-		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0)
+		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0)
 			AIVehicle.SendVehicleToDepot(vehicleID);
 	}
 }

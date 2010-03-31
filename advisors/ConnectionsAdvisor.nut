@@ -129,11 +129,6 @@ function ConnectionAdvisor::WE_EngineReplaced(engineID) {
  * that the 2nd product is ignored.
  */
 function ConnectionAdvisor::ConnectionRealised(connection) {
-	// Check if the accepting side actually produces something and
-	// if it isn't a town!
-	if (connection.travelToNode.nodeType != ConnectionNode.INDUSTRY_NODE ||
-		connection.travelToNode.cargoIdsProducing.len() == 0)
-		return;
 		
 	// Remove the start point of the new connection from our lists.
 	for (local i = 0; i < updateList.len(); i++) {
@@ -143,8 +138,13 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 		}
 	}
 	
-	// Now push the new served connection to the update list.
-	updateList.push(connection.travelToNode);
+	// Check if the accepting side actually produces something and
+	// if it isn't a town!
+	if (connection.travelToNode.nodeType != ConnectionNode.INDUSTRY_NODE ||
+		connection.travelToNode.cargoIdsProducing.len() == 0)
+		// Now push the new served connection to the update list.
+		updateList.push(connection.travelToNode);
+
 	needUpdate = true;
 }
 
