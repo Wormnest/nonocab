@@ -104,6 +104,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 	local mapSizeX = AIMap.GetMapSizeX();
 	local connectingStationIDs = [];
+	local stationsChecked = false;
 
 	for(local a = roadList.len() - 1; -1 < a; a--) {
 
@@ -136,7 +137,11 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 						if (!alreadyAdded)
 							stationIDsConnectedTo.push(foundStationID);
 					}
+
+					stationsChecked = true;
 				}
+			} else {
+				stationsChecked = false;
 			}
 
 		} else if (roadList[a].type == Tile.TUNNEL) {

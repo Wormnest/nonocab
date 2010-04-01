@@ -211,7 +211,11 @@ class Connection {
 							vehicleNotHeadingToDepot = true;
 						// Check if the vehicles is actually going to the depot!
 						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0) {
-							AIVehicle.SendVehicleToDepot(vehicleId);
+							if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
+								AIVehicle.ReverseVehicle(vehicleId);
+								AIController.Sleep(5);
+								AIVehicle.SendVehicleToDepot(vehicleId);
+							}
 							vehicleNotHeadingToDepot = true;
 						}
 					}

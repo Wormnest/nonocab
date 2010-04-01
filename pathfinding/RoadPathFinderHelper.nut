@@ -527,7 +527,7 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 				break;
 		}
 			
-		if (tileLength > 0) {
+		if (tileLength > 0 && currentSpeed > 0) {
 			local div = (tileLength / currentSpeed).tointeger();
 
 			carry = tileLength - (currentSpeed * div);
