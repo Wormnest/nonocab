@@ -1068,11 +1068,9 @@ function RailPathFinderHelper::ProcessClosedTile(tile, direction) {
 function RailPathFinderHelper::GetBridge(startNode, direction) {
 
 	//Log.logWarning("Check for bridge!");
-
-	if (Tile.GetSlope(startNode, direction) != 2 && !AIRail.IsRailTile(startNode + direction) && !AIRoad.IsRoadTile(startNode + direction)) {
-		//Log.logWarning("	Wrong slope!");
+	local bridgeRailOrRoad = AIRail.IsRailTile(startNode + direction) || AIRoad.IsRoadTile(startNode + direction);
+	if (Tile.GetSlope(startNode, direction) != 2 && !bridgeRailOrRoad)
 		return null;
-	}
 
 	for (local i = 1; i < 30; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
@@ -1080,7 +1078,11 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
 
-		if ((Tile.GetSlope(target, direction) == 1 || AIRail.IsRailTile(startNode + direction) || AIRoad.IsRoadTile(startNode + direction)) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {
+		if ((Tile.GetSlope(target, direction) == 1 || bridgeRailOrRoad) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {
+
+			// Only allow to build the bridge if the next tile is free as the first tile most go straight.
+			if (!AITile.IsBuildable(target + direction))
+				continue;
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
