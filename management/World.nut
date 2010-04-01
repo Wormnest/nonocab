@@ -566,6 +566,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 
 	local vehicleType = AIEngine.GetVehicleType(engineID);
 
+/*
+	// Don't need to check this because if the depot cannot build the new type of train, we're safe :).
 	if (vehicleType == AIVehicle.VT_RAIL) {
 		// Check if this train can run on a newer rail type.
 		if (AIRail.GetCurrentRailType() < AIEngine.GetRailType(engineID)) {
@@ -588,6 +590,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 		    !AIEngine.HasPowerOnRail(engineID, AIRail.GetCurrentRailType()))
 			return false;
 	}
+*/
 
 	// We skip trams for now.
 	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
