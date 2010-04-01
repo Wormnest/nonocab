@@ -57,8 +57,9 @@ function NoCAB::Start()
 		}
 	}
 
-	AICompany.SetAutoRenewStatus(true);
+/*	AICompany.SetAutoRenewStatus(true);
 	AICompany.SetAutoRenewMonths(-1200);
+*/
 	AICompany.SetAutoRenewMoney(1000000);
 	
 	AIGroup.EnableWagonRemoval(true);

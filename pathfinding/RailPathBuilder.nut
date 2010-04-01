@@ -135,10 +135,6 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 						
 						if (!alreadyAdded)
 							stationIDsConnectedTo.push(foundStationID);
-					} else if (roadList.len() > 15 && !AITile.IsStationTile(tile)) {
-						local sdf = AIExecMode();
-						AISign.BuildSign(tile, "NOT CONNECTED!!!");
-						assert(false);
 					}
 				}
 			}
