@@ -192,7 +192,6 @@ function WaterPathBuilder::BuildPath(roadList) {
 					// If we can find one of the buoys we call it a day =).
 					if (foundLocalBuoy) {
 						localBuoy = buoyTile;
-						roadList[a + 1].tile = localBuoy;
 						break;
 					}
 				}
