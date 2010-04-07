@@ -116,7 +116,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 				if (!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0) {
 					lastBuildIndex = a + 1;
 					return false;
-				} else if (a < roadList.len() - 2) {
+				} else if (!stationsChecked && a < roadList.len() - 2) {
 					local abc = AITestMode();
 					//Log.logWarning("Check station");
 					// Connected to an existing rail, check which station this is connected to!
@@ -136,9 +136,8 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 						
 						if (!alreadyAdded)
 							stationIDsConnectedTo.push(foundStationID);
+						stationsChecked = true;
 					}
-
-					stationsChecked = true;
 				}
 			} else {
 				stationsChecked = false;
