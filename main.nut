@@ -130,9 +130,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0.1")) {
+	if(!AICompany.SetName(companyName + " - v2.0.2")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0.1 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0.2 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
