@@ -209,6 +209,7 @@ function World::Update()
 			if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
 				local currentEngineID = AIVehicle.GetEngineType(vehicleID);
 				local vehicleType = AIVehicle.GetVehicleType(vehicleID);
+				local groupID = AIVehicle.GetGroupID(vehicleID);
 				
 				// Check the type of cargo the vehicle was carrying.
 				local mostCargo = 0;
@@ -244,6 +245,7 @@ function World::Update()
 							
 							// Let is share orders with the vehicle.
 							AIOrder.ShareOrders(newVehicleID, vehicleID);
+							AIGroup.MoveVehicle(groupID, newVehicleID);
 							AIVehicle.StartStopVehicle(newVehicleID);
 						} else {
 							// If we failed, simply try again next time.
