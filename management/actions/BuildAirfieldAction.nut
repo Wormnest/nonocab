@@ -102,18 +102,16 @@ function BuildAirfieldAction::Execute() {
 	local airportX = AIAirport.GetAirportWidth(airportType);
 	local airportY = AIAirport.GetAirportHeight(airportType);
 	if (!AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW) && 
-	!(Terraform.Terraform(fromTile, airportX, airportY, -1) && AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW))) {
+	!Terraform.Terraform(fromTile, airportX, airportY, -1)) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
-	    //AISign.BuildSign(fromTile, "T");
 		connection.forceReplan = true;
 	    return false;
 	}
 	if (!AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW) && 
-	!(Terraform.Terraform(toTile, airportX, airportY, -1) && AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW))) {
+	!Terraform.Terraform(toTile, airportX, airportY, -1)) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
-	    //AISign.BuildSign(toTile, "T");
 		connection.forceReplan = true;
 	    AIAirport.RemoveAirport(fromTile);
 	    return false;
@@ -127,7 +125,6 @@ function BuildAirfieldAction::Execute() {
 	!(Terraform.Terraform(fromTile, airportX, airportY, -1) && AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW))) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
-	    //AISign.BuildSign(fromTile, "T");
 		connection.forceReplan = true;
 	    return false;
 	}
@@ -135,7 +132,6 @@ function BuildAirfieldAction::Execute() {
 	!(Terraform.Terraform(toTile, airportX, airportY, -1) && AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW))) {
 	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
 	    AILog.Error(AIError.GetLastErrorString());
-	    //AISign.BuildSign(toTile, "T");
 		connection.forceReplan = true;
 	    AIAirport.RemoveAirport(fromTile);
 	    return false;

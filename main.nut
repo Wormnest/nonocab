@@ -16,30 +16,36 @@ class NoCAB extends AIController {
    	pathFixer = null;
    	subsidyManager = null;
 	minimalSaveVersion = 7;
+	initialized = null;
 	
    	constructor() {
    		stop = false;
 		loadData = null;
+		initialized = false;
 	}
 }
 
 function NoCAB::Save() { 
 	Log.logInfo("Saving game using version " + minimalSaveVersion + "... (might take a while...)");
 	local saveTable = {};
-	pathFixer.SaveData(saveTable);
-	world.SaveData(saveTable);
-	connectionManager.SaveData(saveTable);
-	saveTable["SaveVersion"] <- minimalSaveVersion;
-	Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
+	if (initialized) {
+		pathFixer.SaveData(saveTable);
+		world.SaveData(saveTable);
+		connectionManager.SaveData(saveTable);
+		saveTable["SaveVersion"] <- minimalSaveVersion;
+		Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
+	} else {
+		// If we didn't initialize the AI yet, make the savegame invalid.
+		saveTable["SaveVersion"] <- -1;
+	}
 	return saveTable;
 }
 
 function NoCAB::Load(version, data) {
-	local test = data["starting_year"];
 	local saveVersion = data["SaveVersion"];
 	if (saveVersion != minimalSaveVersion) {
-		AILog.logWarning("Saved version is incompatible with this version of NoCAB!");
-		AILog.logWarning("Only save version 4 is supported, your version is: " + saveVersion);
+		Log.logWarning("Saved version is incompatible with this version of NoCAB!");
+		Log.logWarning("Only save version " + minimalSaveVersion + " is supported, your version is: " + saveVersion);
 		return;
 	}
 	loadData = data;
@@ -123,6 +129,7 @@ function NoCAB::Start()
 	}
 	
 	// Required by the Framwork: start with sleep.
+	initialized = true;
 	this.Sleep(1);
 	
 	// Set president name.
