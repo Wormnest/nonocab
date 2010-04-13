@@ -34,7 +34,7 @@ function BuildShipYardAction::Execute() {
 		if (fromNode.nodeType == ConnectionNode.TOWN_NODE) {
 			producingTiles.Valuate(AITile.GetCargoAcceptance, connection.cargoID, 1, 1, stationRadius);
 			producingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
-			producingTiles.KeepTop(1);
+			producingTiles.KeepTop(5);
 		}
 	} else {
 		producingTiles.Valuate(AITile.IsWaterTile);
@@ -49,7 +49,7 @@ function BuildShipYardAction::Execute() {
 		if (toNode.nodeType == ConnectionNode.TOWN_NODE) {
 			acceptingTiles.Valuate(AITile.GetCargoAcceptance, connection.cargoID, 1, 1, stationRadius);
 			acceptingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
-			acceptingTiles.KeepTop(1);
+			acceptingTiles.KeepTop(5);
 		}
 	} else {
 		acceptingTiles.Valuate(AITile.IsWaterTile);

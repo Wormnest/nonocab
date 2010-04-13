@@ -216,12 +216,12 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
 				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) 
-					for (local i = roadList.len() - 2; i > 0; i--)
-					AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
-
 				if (vehicleType != AIVehicle.VT_RAIL)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
+
+				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) 
+					for (local i = roadList.len() - 2; i > 0; i--)
+						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
 			} else {
 				if (vehicleType == AIVehicle.VT_RAIL)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE);
@@ -241,13 +241,13 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_FULL_LOAD_ANY);
 				else
 					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.AIOF_UNLOAD | AIOrder.AIOF_NO_LOAD);
+
+				if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL)
+					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
 					
 				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
 					for (local i = 1; i < roadList.len() - 1; i++)
 						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE);
-
-				if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE);
 			}
 
 			// As a first order, let the vehicle do it's normal actions when not old enough.

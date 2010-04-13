@@ -259,8 +259,10 @@ function World::Update()
 		}
 		
 		// Check if the vehicle is profitable.
-		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0)
-			AIVehicle.SendVehicleToDepot(vehicleID);
+		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
+			if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+				AIVehicle.SendVehicleToDepot(vehicleID);
+		}
 	}
 }
 
