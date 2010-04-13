@@ -6,6 +6,8 @@ class GameSettings {
 	static vehicleGameSettingNames = ["vehicle.max_trains", "vehicle.max_roadveh", "vehicle.max_ships", "vehicle.max_aircraft"];	// List with the corresponding setting names.
 	static subsidy = array(1);
 	static subsidy_multipliers = [1.5, 2, 3, 4];
+	static plane_speed_modifier = array(1);
+	static plane_speed_modifiers = [1, 0.5, 0.33, 0.25];
 
 	function InitGameSettings();
 
@@ -67,6 +69,10 @@ function GameSettings::UpdateGameSettings() {
 			Log.logWarning("Setting " + gameSettingName + " couldn't be found, not sure if we can actually build this type of vehicles!");
 		}
 	}
+
+	if (AIGameSettings.IsValid("vehicle.plane_speed")) {
+		GameSettings.plane_speed_modifier[0] = AIGameSettings.GetValue("vehicle.plane_speed") - 1;
+	}
 }
 
 function GameSettings::GetSubsidyMultiplier() {
@@ -83,4 +89,8 @@ function GameSettings::IsBuildable(vehicleType) {
 	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len() || AIGameSettings.IsDisabledVehicleType(vehicleType))
 		return false;
 	return GameSettings.maxVehiclesLimit[vehicleType] > 0;
+}
+
+function GameSettings::GetPlaneSpeedModifier() {
+	return GameSettings.plane_speed_modifiers[GameSettings.plane_speed_modifier[0]];
 }

@@ -113,7 +113,7 @@ class Report
 			// Take the landing sequence in consideration.
 			local realDistance = diagonalTiles * Tile.diagonalRoadLength + (straightTiles + 40) * Tile.straightRoadLength;
 
-			travelTimeTo = realDistance / maxSpeed;
+			travelTimeTo = (realDistance / maxSpeed) * GameSettings.GetPlaneSpeedModifier();
 			travelTimeFrom = travelTimeTo;
 			if (connection == null || !connection.pathInfo.build) {
 
