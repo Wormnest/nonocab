@@ -91,7 +91,7 @@ function NoCAB::Start()
 		pathFixer.LoadData(loadData);
 		Log.logInfo("(3/5) Load active connections");
 		activeConnections = world.LoadData(loadData, connectionManager);
-		Log.logInfo("4/5 Load connections to stationIds");
+		Log.logInfo("(4/5) Load connections to stationIds");
 		connectionManager.LoadData(loadData);
 		Log.logInfo("(5/5) Load successfull!");
 	}
@@ -137,9 +137,9 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0.4")) {
+	if(!AICompany.SetName(companyName + " - v2.0.5")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0.4 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0.5 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
