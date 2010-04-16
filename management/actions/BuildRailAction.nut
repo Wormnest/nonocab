@@ -226,7 +226,7 @@ function BuildRailAction::CleanupTile(at, considerRemovedTracks) {
 
 	local railTracks = AIRail.GetRailTracks(at.tile);
 	if (at.type != Tile.ROAD || IsSingleRailTrack(railTracks & (~additionalTracks)))
-		AITile.DemolishTile(at.tile);
+		while (!AITile.DemolishTile(at.tile));
 	else
 		considerRemovedTracks[at.tile] <- (additionalTracks | at.lastBuildRailTrack);
 }
