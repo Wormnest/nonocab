@@ -113,7 +113,7 @@ class Connection {
 					local vehicles = AIVehicleList_Group(vehicleGroupID);
 					foreach (vehicle, value in vehicles) {
 						local engineID = AIVehicle.GetEngineType(vehicle);
-						if (!AIEngine.IsValidEngine(engineID))
+						if (!AIEngine.IsBuildable(engineID))
 							continue;
 						if (!timeToTravelTo.rawin(engineID))
 							UpdateTravelTimes(engineID);

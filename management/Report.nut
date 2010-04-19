@@ -60,7 +60,7 @@ class Report
 		upgradeToRailType = null;
 		
 		// Check if the engine is valid.
-		if (!AIEngine.IsValidEngine(transportEngineID) || !AIEngine.IsValidEngine(holdingEngineID) ||
+		if (!AIEngine.IsBuildable(transportEngineID) || !AIEngine.IsBuildable(holdingEngineID) ||
 			toConnectionNode.isInvalid || fromConnectionNode.isInvalid) {
 			isInvalid = true;
 			return;

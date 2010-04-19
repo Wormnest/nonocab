@@ -222,7 +222,7 @@ function World::Update()
 				// Check what the best engine at the moment is.
 				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentCargoID];
 				
-				if (AIEngine.IsValidEngine(replacementEngineID)) {
+				if (AIEngine.IsBuildable(replacementEngineID)) {
 					
 					local doReplace = true;
 					// Don't replace an airplane if the airfield is very small.
@@ -568,7 +568,7 @@ function World::InitCargoTransportEngineIds() {
  * @return true If the new engine replaced other onces, otherwise false.
  */
 function World::ProcessNewEngineAvailableEvent(engineID) {
-	if (!AIEngine.IsValidEngine(engineID))
+	if (!AIEngine.IsBuildable(engineID))
 		return false;
 
 	local vehicleType = AIEngine.GetVehicleType(engineID);
