@@ -202,13 +202,13 @@ function World::Update()
 	// Check if we have any vehicles to sell! :)
 	local vehicleList = AIVehicleList();
 	foreach (vehicleID, value in vehicleList) {
+		local vehicleType = AIVehicle.GetVehicleType(vehicleID);
 		if (AIVehicle.IsStoppedInDepot(vehicleID)) {
 			
 			// If the vehicle is very old, we assume it needs to be replaced
 			// by a new vehicle.
 			if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
 				local currentEngineID = AIVehicle.GetEngineType(vehicleID);
-				local vehicleType = AIVehicle.GetVehicleType(vehicleID);
 				local groupID = AIVehicle.GetGroupID(vehicleID);
 				
 				// Check the type of cargo the vehicle was carrying.
@@ -260,8 +260,11 @@ function World::Update()
 		
 		// Check if the vehicle is profitable.
 		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
-			if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+			if (vehicleType == AIVehicle.VT_WATER)
+				AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
+			else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
 				AIVehicle.SendVehicleToDepot(vehicleID);
+
 		}
 	}
 }
