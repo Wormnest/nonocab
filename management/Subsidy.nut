@@ -19,25 +19,17 @@ class SubsidyManager extends WorldEventListener {
 
 	function WE_SubsidyOffer(subsidyID) {
 
-//		if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_TOWN)
-//			town_subsidies[AISubsidy.GetSourceIndex(subsidyID)] <- subsidyID;
-		if (AISubsidy.SourceIsTown(subsidyID))
-			Subsidy.town_subsidies[AISubsidy.GetSource(subsidyID)] <- subsidyID;
-//		else if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_INDUSTRY)
-//			industry_subsidies[AISubsidy.GetSourceIndex(subsidyID)] <- subsidyID;
-		else
-			Subsidy.industry_subsidies[AISubsidy.GetSource(subsidyID)] <- subsidyID;
+		if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_TOWN)
+			Subsidy.town_subsidies[AISubsidy.GetSourceIndex(subsidyID)] <- subsidyID;
+		else if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_INDUSTRY)
+			Subsidy.industry_subsidies[AISubsidy.GetSourceIndex(subsidyID)] <- subsidyID;
 	}
 	
 	function WE_SubsidyExpired(subsidyID) {
-//		if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_TOWN)
-//			Subsidy.town_subsidies.rawdelete(AISubsidy.GetSourceIndex(subsidyID));
-		if (AISubsidy.SourceIsTown(subsidyID))
-			Subsidy.town_subsidies.rawdelete(AISubsidy.GetSource(subsidyID));	
-//		else if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_INDUSTRY)
-//			Subsidy.industry_subsidies.rawdelete(AISubsidy.GetSourceIndex(subsidyID));
-		else
-			Subsidy.industry_subsidies.rawdelete(AISubsidy.GetSource(subsidyID));
+		if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_TOWN)
+			Subsidy.town_subsidies.rawdelete(AISubsidy.GetSourceIndex(subsidyID));
+		else if (AISubsidy.GetSourceType(subsidyID) == AISubsidy.SPT_INDUSTRY)
+			Subsidy.industry_subsidies.rawdelete(AISubsidy.GetSourceIndex(subsidyID));
 	}
 	
 	function WE_SubsidyOfferExpired(subsidyID) {
@@ -81,13 +73,11 @@ class Subsidy {
 
 		// Check if the end point matches the endpoint of the connection.
 		if (toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
-			AISubsidy.DestinationIsTown(subsidyID))
-		//	AISubsidy.GetDestinationType(subsidyID) != AISubsidy.SPT_INDUSTRY)
+			AISubsidy.GetDestinationType(subsidyID) != AISubsidy.SPT_INDUSTRY)
 			return false;
 			
 		if (toConnectionNode.nodeType == ConnectionNode.TOWN_NODE &&
-			!AISubsidy.DestinationIsTown(subsidyID))
-		//	AISubsidy.GetDestinationType(subsidyID) != AISubsidy.SPT_TOWN)
+			AISubsidy.GetDestinationType(subsidyID) != AISubsidy.SPT_TOWN)
 			return false;
 
 		// Check if the cargo matches.
@@ -96,7 +86,7 @@ class Subsidy {
 
 		// Now check if the ids match.
 		//if (toConnectionNode.id != AISubsidy.GetDestinationIndex(subsidyID))
-		if (toConnectionNode.id != AISubsidy.GetDestination(subsidyID))
+		if (toConnectionNode.id != AISubsidy.GetDestinationIndex(subsidyID))
 			return false;
 
 		// Because we need to allow time before the subsidy is awarded (we first need to

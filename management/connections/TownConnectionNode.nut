@@ -72,7 +72,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	list.Valuate(AITile.IsBuildable);
 	list.KeepAboveValue(0);
 
-	local isTownToTown = AITown.GetMaxProduction(id, cargoID) > 0;
+	local isTownToTown = AITown.GetLastMonthProduction(id, cargoID) > 0;
 	if (isTownToTown)
 		isAcceptingCargo = true;
 

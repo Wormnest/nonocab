@@ -57,18 +57,19 @@ function Terraform::Terraform(startTile, width, height, preferedHeight) {
 	local mapSizeX = AIMap.GetMapSizeX();
 	local endTile = startTile + width + height * mapSizeX;
 	
-    for (local i =0; i < width; i++) {
+	for (local i =0; i < width; i++) {
 		for (local j = 0; j < height; j++) {
 			local tileToSearch = startTile + i + j * mapSizeX;
-			if (AITile.GetHeight(tileToSearch) == preferedHeight) {
+			if (AITile.GetMinHeight(tileToSearch) == preferedHeight &&
+			    AITile.GetMaxHeight(tileToSearch) == preferedHeight) {
 
 				if ((tileToSearch == startTile && 
-						(Terraform.IsFlat(tileToSearch, width, height) || 
-						 AITile.LevelTiles(tileToSearch, endTile))
-					) ||
+				    (Terraform.IsFlat(tileToSearch, width, height) || 
+				    AITile.LevelTiles(tileToSearch, endTile))
+				   ) ||
 				    (AITile.LevelTiles(tileToSearch, startTile) && 
-				   		(Terraform.IsFlat(startTile, width, height) || 
-				   		AITile.LevelTiles(startTile, endTile))
+				    (Terraform.IsFlat(startTile, width, height) || 
+				    AITile.LevelTiles(startTile, endTile))
 				   ))
 					return true;
 				return false;
@@ -82,12 +83,12 @@ function Terraform::Terraform(startTile, width, height, preferedHeight) {
 function Terraform::IsFlat(startTile, width, height)
 {
 	local mapSizeX = AIMap.GetMapSizeX();
-	local goalHeight = AITile.GetHeight(startTile);
+	local goalHeight = AITile.GetMinHeight(startTile);
 	
 	// Check if the terrain isn't already flat.
 	for (local i = 0; i < width; i++)
 		for (local j = 0; j < height; j++)
-			if (AITile.GetHeight(startTile + i + j * mapSizeX) != goalHeight ||
+			if (AITile.GetMinHeight(startTile + i + j * mapSizeX) != goalHeight ||
 				AITile.GetSlope(startTile + i + j * mapSizeX) != AITile.SLOPE_FLAT)
 				return false;
 	
@@ -108,7 +109,7 @@ function Terraform::GetAffectedTiles(startTile, width, height) {
 			local tile = startTile + x + AIMap.GetMapSizeX() * y;
 			
 			if (AITile.GetSlope(tile) == AITile.SLOPE_FLAT &&
-				AITile.GetHeight(tile) == preferedHeight)
+				AITile.GetMinHeight(tile) == preferedHeight)
 					continue;
 			affectedTiles++;
 		}
@@ -131,7 +132,7 @@ function Terraform::CheckTownRatings(startTile, width, height) {
 			local tile = startTile + x + AIMap.GetMapSizeX() * y;
 			
 			if (AITile.GetSlope(tile) == AITile.SLOPE_FLAT &&
-				AITile.GetHeight(tile) == preferedHeight)
+				AITile.GetMinHeight(tile) == preferedHeight)
 					continue;
 
 			if (!AITile.HasTreeOnTile(tile))
@@ -178,7 +179,7 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 		if (AITile.IsBuildable(tile) || AITile.IsWaterTile(tile))
 			continue;
 		
-		local slopeHeight = AITile.GetHeight(tile);
+		local slopeHeight = AITile.GetMinHeight(tile);
 		local slope = AITile.GetSlope(tile);
 		local neededHeight = 0;
 		if (slope & AITile.SLOPE_N || slope == AITile.SLOPE_FLAT)
@@ -201,7 +202,7 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 	for (local i = 0; i <= width; i++) {
 		for (local j = 0; j <= height; j++) {
 			local tileID = startTile + i + j * AIMap.GetMapSizeX();
-			totalHeight += AITile.GetHeight(tileID);
+			totalHeight += AITile.GetMinHeight(tileID);
 			
 			// Check slope, the slopes effect the actual height (h) as follows:
 			//             N

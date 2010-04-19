@@ -315,7 +315,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 				// Besides the tunnels and bridges, we also add the tiles
 				// adjacent to the 
 				if (AIRoad.BuildRoad(currentTile, nextTile) || AIRoad.AreRoadTilesConnected(currentTile, nextTile)
-				|| (AITile.GetHeight(currentTile) == AITile.GetHeight(nextTile) && 
+				|| (AITile.GetMinHeight(currentTile) == AITile.GetMinHeight(nextTile) && 
 				AITile.GetSlope(currentTile) + AITile.GetSlope(nextTile) == 0 &&
 				(AITile.IsBuildable(currentTile) || AIRoad.IsRoadTile(currentTile)) &&
 				(AITile.IsBuildable(nextTile) || AIRoad.IsRoadTile(nextTile)))) {
