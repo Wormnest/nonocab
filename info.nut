@@ -2,9 +2,9 @@ class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Bram Ridder"; }
       function GetName()      { return "NoCAB";	      }
       function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
-      function GetVersion()	{ return 454; }
+      function GetVersion()	{ return 457; }
       function MinVersionToLoad() { return 7; }
-      function GetDate()	{ return "2010-04-16"; }
+      function GetDate()	{ return "2010-04-19"; }
       function CreateInstance()	{ return "NoCAB"; }
       function GetShortName() { return "NCAB"; }
       function GetAPIVersion() { return "1.0"; }
@@ -26,6 +26,9 @@ class FNoCAB extends AIInfo {
 
 		AddSetting( { name = "Allow trains town to town", description = "Allow trains town to town", easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("Allow trains town to town", {_0 = "No", _1 = "Yes (Doesn't perform well!)"});
+
+		AddSetting( { name = "Build HQ", description = "Build HQ", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddLabels("Build HQ", {_0 = "No", _1 = "Yes"});
       }
 }
 

@@ -137,15 +137,17 @@ function NoCAB::Start()
 	
 	// Set company name.
 	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
-	if(!AICompany.SetName(companyName + " - v2.0.5")) {
+	if(!AICompany.SetName(companyName + " - v2.0.6")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.0.5 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.0.6 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	
 	// Build the HQ.
-	BuildHQ();
+	if (GetSetting("Build HQ"))
+		if (AICompany.GetCompanyHQ(AICompany.COMPANY_SELF) == AIMap.TILE_INVALID)
+			BuildHQ();
 	
 	
 	// Start the threads!
