@@ -140,11 +140,15 @@ function BuildShipYardAction::Execute() {
 function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 
 	local depotLoc = null;
+	local tilesAround = [1, AIMap.GetMapSizeX()];
+	local tilesAroundReversed = [-AIMap.GetMapSizeX(), -1];
 	for (local i = (fromTile ? roadList.len() - 3 : 3); i > 2; i += (fromTile ? -1 : 1)) {
 		
 		local pos = roadList[i].tile;
-		foreach (tile in Tile.GetTilesAround(pos, false)) {
-			if (AIMarine.BuildWaterDepot(pos, tile)) {
+//		foreach (tile in tilesAround) {
+		for (local j = 0; j < 2; j++) {
+			if (AITile.IsWaterTile(pos + tilesAround[j] * 3) && AITile.IsWaterTile(pos + tilesAround[j] * 2) && AITile.IsWaterTile(pos - tilesAround[j]) && AITile.IsWaterTile(pos - tilesAround[j] * 2) && 
+			!AIMarine.IsDockTile(pos + tilesAround[j] * 3) && !AIMarine.IsDockTile(pos + tilesAround[j] * 2) && !AIMarine.IsDockTile(pos - tilesAround[j]) && !AIMarine.IsDockTile(pos - tilesAround[j] * 2) && AIMarine.BuildWaterDepot(pos, pos + tilesAroundReversed[j])) {
 				depotLoc = pos;
 				break;
 			}

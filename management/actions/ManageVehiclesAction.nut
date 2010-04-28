@@ -155,18 +155,20 @@ function ManageVehiclesAction::Execute()
 				if (vehicleCloneIDReverse != -1) {
 					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, false);
 					directionToggle = !directionToggle;
-					vehicleGroup.vehicleIDs.push(vehicleID);
+					AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 					continue;
 				}
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depotOtherEnd, engineID);
+				vehicleCloneIDReverse = vehicleID;
 			} else {
 				if (vehicleCloneID != -1) {
 					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depot, vehicleCloneID, false);
 					directionToggle = !directionToggle;
-					vehicleGroup.vehicleIDs.push(vehicleID);
+					AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 					continue;
 				}
 				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
+				vehicleCloneID = vehicleID;
 			}
 			if (!AIVehicle.IsValidVehicle(vehicleID)) {
 				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + connection.pathInfo.depotOtherEnd + "!");
