@@ -44,6 +44,7 @@ class LocalAuthority
 function LocalAuthority::HandlePolitics()
 {
 
+	local exec = AIExecMode();
 	if (buildStatuesEnabled)
 		BuildStatues();
 
@@ -124,11 +125,12 @@ function LocalAuthority::ImproveRelations()
 	if (town_list.Count() > 0)
 	{
 		local town = town_list.Begin();
-		Log.logInfo("Improve relations with " + AITown.GetName(town));
 
 		// If the rating is below 0, start building trees.
 		if (AITown.GetRating(town, AICompany.COMPANY_SELF) > 0)
 			return;
+
+		Log.logInfo("Improve relations with " + AITown.GetName(town));
 
 		// Check how large the town is.
 		local maxXSpread = 20;
@@ -150,10 +152,13 @@ function LocalAuthority::ImproveRelations()
 		list.Valuate(AITile.IsBuildable);
 		list.KeepAboveValue(0);
 		
-		// Start building trees.
+		// Start building trees until we restored our reputation.
 		foreach (tile, index in list)
 		{
 			AITile.PlantTree(tile);
+			// If the rating is below 0, start building trees.
+			if (AITown.GetRating(town, AICompany.COMPANY_SELF) > 200)
+				return;
 		}
 	}
 }
