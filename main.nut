@@ -134,9 +134,18 @@ function NoCAB::Start()
 	
 	// Set president name.
 	AICompany.SetPresidentName("B.C. Ridder");
+
+	// Determine how much NoCAB is going to get into politics.
+	local politicHardness = GetSetting("Politics Setting");
+	local plantTrees = politicHardness > 0;
+	local buildStatues = politicHardness > 1;
+	local secureRights = politicHardness > 2;
+	local la = LocalAuthority(plantTrees, buildStatues, secureRights);
+
+	local politicSymbols = ["_", "-", "+", "*"];
 	
 	// Set company name.
-	local companyName = GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB";
+	local companyName = politicSymbols[politicHardness] + (GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB");
 	if(!AICompany.SetName(companyName + " - v2.0.8")) {
 		local i = 2;
 		while(!AICompany.SetName(companyName + " - v2.0.8 - #" + i)) { i++; }
@@ -156,6 +165,7 @@ function NoCAB::Start()
 	
 	foreach (advisor in advisors)
 		planner.AddThread(advisor);
+
 	
 
 	// Do what we have to do.
@@ -203,6 +213,8 @@ function NoCAB::Start()
 		while (!parlement.ExecuteReports()) {
 			parlement.SelectReports(reports);
 		}
+
+		la.HandlePolitics();
 		
 		AICompany.SetAutoRenewMoney(1000000);
 	}
