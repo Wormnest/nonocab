@@ -87,6 +87,7 @@ function LocalAuthority::BuildStatues()
 
 	foreach (town, index in town_list)
 	{
+		Log.logInfo("Build a statue in " + AITown.GetName(town));
 		if (AITown.PerformTownAction(town, AITown.TOWN_ACTION_BUILD_STATUE) && AICompany.GetBankBalance(AICompany.COMPANY_SELF) < minimumMoneyForStatue)
 			return;
 	}
@@ -103,7 +104,7 @@ function LocalAuthority::SecureTransportationsRights()
 
 	foreach (town, index in town_list)
 	{
-		AISign.BuildSign(AITown.GetLocation(town), "BUY RIGHTS");
+		Log.logInfo("Buy all the transportation rights in " + AITown.GetName(town));
 		if (AITown.PerformTownAction(town, AITown.TOWN_ACTION_BUY_RIGHTS) && AICompany.GetBankBalance(AICompany.COMPANY_SELF) < minimumMoneyForRights)
 			return;
 	}
@@ -123,7 +124,7 @@ function LocalAuthority::ImproveRelations()
 	if (town_list.Count() > 0)
 	{
 		local town = town_list.Begin();
-		AISign.BuildSign(AITown.GetLocation(town), "IMPROVE");
+		Log.logInfo("Improve relations with " + AITown.GetName(town));
 
 		// If the rating is below 0, start building trees.
 		if (AITown.GetRating(town, AICompany.COMPANY_SELF) > 0)
