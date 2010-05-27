@@ -140,8 +140,8 @@ function ConnectionAdvisor::ConnectionRealised(connection) {
 	
 	// Check if the accepting side actually produces something and
 	// if it isn't a town!
-	if (connection.travelToNode.nodeType != ConnectionNode.INDUSTRY_NODE ||
-		connection.travelToNode.cargoIdsProducing.len() == 0)
+	if (connection.travelToNode.nodeType != ConnectionNode.TOWN_NODE &&
+		connection.travelToNode.cargoIdsProducing.len() != 0)
 		// Now push the new served connection to the update list.
 		updateList.push(connection.travelToNode);
 

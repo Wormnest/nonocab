@@ -5,8 +5,8 @@
  */
 class LocalAuthority
 {
-	static minimumMoneyForStatue = 2000000;
-	static minimumMoneyForRights = 25000000;
+	static minimumMoneyForStatue = 1000000;
+	static minimumMoneyForRights = 15000000;
 	static minimumMoneyForImproving = 100000;
 
 	improveRelationsEnabled = null;     // Plant trees.
@@ -100,6 +100,8 @@ function LocalAuthority::SecureTransportationsRights()
 		return;
 
 	local town_list = AITownList();
+	town_list.Valuate(AITown.GetExclusiveRightsCompany);
+	town_list.KeepValue(AICompany.COMPANY_INVALID);
 	GetActiveTowns(town_list);
 	town_list.Sort(AIAbstractList.SORT_BY_VALUE, AIAbstractList.SORT_DESCENDING);
 

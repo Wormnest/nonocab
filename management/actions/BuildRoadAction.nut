@@ -144,11 +144,11 @@ function BuildRoadAction::Execute() {
 
 		if (connection.bilateralConnection) {
 
-			depot = BuildDepot(roadList, 3, 1);
-			if (depot == null)
+			local otherDepot = BuildDepot(roadList, 3, 1);
+			if (otherDepot == null)
 				return false;
 
-			connection.pathInfo.depotOtherEnd = depot;
+			connection.pathInfo.depotOtherEnd = otherDepot;
 		}
 	}
 	
