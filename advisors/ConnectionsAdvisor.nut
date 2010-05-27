@@ -84,7 +84,7 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 function ConnectionAdvisor::WE_IndustryOpened(industryNode) {
 	
 	// Only add this industry to the update list if it is in the root list.
-	if (industryNode.cargoIdsProducing.len() != 0 && industryNode.cargoIdsAccepting.len() == 0)
+	if (industryNode.cargoIdsAccepting.len() == 0 || AIIndustryType.IsRawIndustry(AIIndustry.GetIndustryType(industryNode.id)))
 		updateList.push(industryNode);
 	needUpdate = true;
 }

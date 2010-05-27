@@ -2,9 +2,9 @@ class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Bram Ridder"; }
       function GetName()      { return "NoCAB";	      }
       function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
-      function GetVersion()	{ return 465; }
+      function GetVersion()	{ return 466; }
       function MinVersionToLoad() { return 8; }
-      function GetDate()	{ return "2010-05-26"; }
+      function GetDate()	{ return "2010-05-27"; }
       function CreateInstance()	{ return "NoCAB"; }
       function GetShortName() { return "NCAB"; }
       function GetAPIVersion() { return "1.0"; }
@@ -30,7 +30,7 @@ class FNoCAB extends AIInfo {
 		AddSetting( { name = "Build HQ", description = "Build HQ", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
 		AddLabels("Build HQ", {_0 = "No", _1 = "Yes"});
 
-		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 3, flags = 0} );
+		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
 		AddLabels("Politics Setting", {_0 = "NoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues to see who's boss", _3 = "Machiavellian - No one transports but NoCAB!"});
       }
 }
