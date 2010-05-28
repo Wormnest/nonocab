@@ -19,14 +19,9 @@ function AircraftAdvisor::GetPathInfo(report) {
 	if (AICargo.HasCargoClass(report.cargoID, AICargo.CC_MAIL))
 		return null;
 	
-	// Check if the airport is actually constructable!
-	local bestAirfield = BuildAirfieldAction.GetLargestAirport(false);
-	if (bestAirfield == null)
-		return null;
-
 	local townToTown = report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE;
-	if (!BuildAirfieldAction.FindSuitableAirportSpot(bestAirfield, report.fromConnectionNode, report.cargoID, false, true, townToTown) == -1 ||
-		!BuildAirfieldAction.FindSuitableAirportSpot(bestAirfield, report.toConnectionNode, report.cargoID, true, true, townToTown) == -1)
+	if (!BuildAirfieldAction.FindSuitableAirportSpot(report.fromConnectionNode, report.cargoID, false, true, townToTown) ||
+		!BuildAirfieldAction.FindSuitableAirportSpot(report.toConnectionNode, report.cargoID, true, true, townToTown))
 		return null;
 			
 	return PathInfo(null, null, 0, AIVehicle.VT_AIR);

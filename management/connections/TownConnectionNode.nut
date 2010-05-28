@@ -64,11 +64,9 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	maxXSpread += 20;
 	maxYSpread += 20;
 
-	local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
+	local list = Tile.GetRectangle(tile - maxXSpread - maxYSpread * AIMap.GetMapSizeX(), maxXSpread * 2, maxYSpread * 2);
 	
 	// Purge all unnecessary entries from the list.
-	list.Valuate(AITile.IsWithinTownInfluence, id);
-	list.KeepAboveValue(0);
 	list.Valuate(AITile.IsBuildable);
 	list.KeepAboveValue(0);
 
@@ -76,8 +74,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	if (isTownToTown)
 		isAcceptingCargo = true;
 
-//	local minimalAcceptance = (isTownToTown ? 15 : 7);
-//	local minimalProduction = (isTownToTown ? 15 : 0);
+
 	local minimalAcceptance = (isTownToTown ? stationRadius * stationRadius / 1 : stationRadius * stationRadius / 2);
 	local minimalProduction = (isTownToTown ? stationRadius * stationRadius / 1 : 0);
 
@@ -90,7 +87,6 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 		list.Valuate(AITile.GetCargoProduction, cargoID, stationSizeX, stationSizeY, stationRadius);
 		list.KeepAboveValue(minimalProduction);
 	}
-
 	// If we're building town to town we want the best tile in that town available
 	// but also make sure we don't build to close to other road stations.
 	if (isTownToTown) {

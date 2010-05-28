@@ -12,7 +12,7 @@ class BuildAirfieldAction extends Action {
 	}
 }
 
-function BuildAirfieldAction::GetLargestAirport(checkMoney) {
+function BuildAirfieldAction::GetLargestAirport(checkMoney, location) {
 	// List all possible airports, big to small.
 	local airportList = [
 		AIAirport.AT_INTERCON,
@@ -30,26 +30,41 @@ function BuildAirfieldAction::GetLargestAirport(checkMoney) {
 	];*/
 	
 
-	// Try to build the biggest airport possible.
+	// Try to build the biggest airport possible, but don't try to build small ones if we can build big ones!
 	local airportType = null;
+	local bigAirportAvailable = false;
+
 	foreach (at in airportList) {
-		if (AIAirport.IsValidAirportType(at) && (checkMoney || Finance.GetMaxMoneyToSpend() > AIAirport.GetPrice(at) * 2)) {
-			airportType = at;
-			break;
+		local closestTown = AIAirport.GetNearestTown(location, at);
+		if (AIAirport.IsValidAirportType(at)) {
+			if (at != AIAirport.AT_SMALL && at != AIAirport.AT_COMMUTER)
+				bigAirportAvailable = true;
+
+			// Don't build small airports if larger ones are available!
+			if (bigAirportAvailable && (at == AIAirport.AT_SMALL || at == AIAirport.AT_COMMUTER))
+				return null;
+
+			if ((!checkMoney || Finance.GetMaxMoneyToSpend() > AIAirport.GetPrice(at) * 2) &&
+			    AITown.GetAllowedNoise(closestTown) >= AIAirport.GetNoiseLevelIncrease(location, at)
+			    ) {
+				airportType = at;
+				break;
+			}
 		}
 	}
 	
-	return airportType;	
+	return airportType;
 }
 
 
 function BuildAirfieldAction::Execute() {
 
-	local airportType = GetLargestAirport(true);
+/*	local airportType = GetLargestAirport(true);
 	if (airportType == null) {
 		Log.logWarning("Not enough money to build any airport!");
 		return false;
 	}
+*/
 
 /*
 	local heliportType = null;
@@ -65,8 +80,8 @@ function BuildAirfieldAction::Execute() {
 //	local useHelipadAtFromNode = false;
 //	local useHelipadAtToNode = false;
 	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
-	local fromTile = FindSuitableAirportSpot(airportType, connection.travelFromNode, connection.cargoID, false, false, townToTown);
-	if (fromTile < 0) {
+	local fromTileAndAirportType = FindSuitableAirportSpot(/*airportType, */connection.travelFromNode, connection.cargoID, false, false, townToTown);
+	if (fromTileAndAirportType == null) {
 /*
 		// If no tile was found, check if the industry has a helipad to land on.
 		if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
@@ -81,8 +96,8 @@ function BuildAirfieldAction::Execute() {
 			return false;
 //		}
 	}
-	local toTile = FindSuitableAirportSpot(airportType, connection.travelToNode, connection.cargoID, true, false, townToTown);
-	if (toTile < 0) {
+	local toTileAndAirportType = FindSuitableAirportSpot(/*airportType, */connection.travelToNode, connection.cargoID, true, false, townToTown);
+	if (toTileAndAirportType == null) {
 /*
 		if (connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
 			AIIndustry.HasHeliport(connection.travelToNode.id) &&
@@ -96,21 +111,29 @@ function BuildAirfieldAction::Execute() {
 			return false;
 //		}
 	}
+
+	local fromTile = fromTileAndAirportType[0];
+	local fromAirportType = fromTileAndAirportType[1];
+	local toTile = toTileAndAirportType[0];
+	local toAirportType = toTileAndAirportType[1];
 	
 	local a = AITestMode();
 	local cost = AIAccounting();
-	local airportX = AIAirport.GetAirportWidth(airportType);
-	local airportY = AIAirport.GetAirportHeight(airportType);
-	if (!AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW) && 
-	!Terraform.Terraform(fromTile, airportX, airportY, -1)) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
+	local fromAirportX = AIAirport.GetAirportWidth(fromAirportType);
+	local fromAirportY = AIAirport.GetAirportHeight(fromAirportType);
+	if (!AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW) && 
+	!Terraform.Terraform(fromTile, fromAirportX, fromAirportY, -1)) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "].");
 	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
 	    return false;
 	}
-	if (!AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW) && 
-	!Terraform.Terraform(toTile, airportX, airportY, -1)) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
+
+	local toAirportX = AIAirport.GetAirportWidth(fromAirportType);
+	local toAirportY = AIAirport.GetAirportHeight(fromAirportType);
+	if (!AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW) && 
+	!Terraform.Terraform(toTile, toAirportX, toAirportY, -1)) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + " [" + toAirportType + "].");
 	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
 	    AIAirport.RemoveAirport(fromTile);
@@ -121,16 +144,16 @@ function BuildAirfieldAction::Execute() {
 	
 	/* Build the airports for real */
 	local test = AIExecMode();
-	if (!AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW) && 
-	!(Terraform.Terraform(fromTile, airportX, airportY, -1) && AIAirport.BuildAirport(fromTile, airportType, AIStation.STATION_NEW))) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + ".");
+	if (!AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW) && 
+	!(Terraform.Terraform(fromTile, fromAirportX, fromAirportY, -1) && AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW))) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "].");
 	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
 	    return false;
 	}
-	if (!AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW) && 
-	!(Terraform.Terraform(toTile, airportX, airportY, -1) && AIAirport.BuildAirport(toTile, airportType, AIStation.STATION_NEW))) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + ".");
+	if (!AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW) && 
+	!(Terraform.Terraform(toTile, toAirportX, toAirportY, -1) && AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW))) {
+	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + " [" + toAirportType + "].");
 	    AILog.Error(AIError.GetLastErrorString());
 		connection.forceReplan = true;
 	    AIAirport.RemoveAirport(fromTile);
@@ -145,10 +168,11 @@ function BuildAirfieldAction::Execute() {
 	connection.pathInfo.depotOtherEnd = AIAirport.GetHangarOfAirport(toTile);
 	connection.pathInfo.roadList = [end, start];
 	
-	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, AIAirport.GetAirportCoverageRadius(airportType));
+	local maxAirportCoverage = (AIAirport.GetAirportCoverageRadius(fromAirportType) < AIAirport.GetAirportCoverageRadius(toAirportType) ? AIAirport.GetAirportCoverageRadius(toAirportType) : AIAirport.GetAirportCoverageRadius(fromAirportType));
+	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, maxAirportCoverage);
 
 	CallActionHandlers();
-	totalCosts = AIAirport.GetPrice(airportType) * 2;
+	totalCosts = AIAirport.GetPrice(toAirportType) + AIAirport.GetPrice(fromAirportType);
 	return true;
 }
 
@@ -164,10 +188,7 @@ function BuildAirfieldAction::Execute() {
  * stricter rules on placement of these airfields.
  * @return The tile where the airport can be build.
  */
-function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID, acceptingSide, getFirst, townToTown) {
-	local airportX = AIAirport.GetAirportWidth(airportType);
-	local airportY = AIAirport.GetAirportHeight(airportType);
-	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
+function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, cargoID, acceptingSide, getFirst, townToTown) {
 	local tile = node.GetLocation();
 	local excludeList;
 	
@@ -175,6 +196,15 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 		excludeList = clone node.excludeList;
 		node.excludeList = {};
 	}
+
+	local baseLineAirportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
+	// This means we can build no airport what so ever!
+	if (baseLineAirportType == null)
+		return null;
+
+	local airportX = AIAirport.GetAirportWidth(baseLineAirportType);
+	local airportY = AIAirport.GetAirportHeight(baseLineAirportType);
+	local airportRadius = AIAirport.GetAirportCoverageRadius(baseLineAirportType);
 
 	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
 	list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
@@ -197,37 +227,57 @@ function BuildAirfieldAction::FindSuitableAirportSpot(airportType, node, cargoID
 	}
     
 	/* Couldn't find a suitable place for this town, skip to the next */
-	if (list.Count() == 0) return -1;
+	if (list.Count() == 0) {
+		Log.logWarning("NO spots found :(");
+		 return null;
+	}
 	list.Sort(AIAbstractList.SORT_BY_VALUE, false);
     
 	local good_tile = -1;
+	local airport_type = -1;
 	/* Walk all the tiles and see if we can build the airport at all */
 	{
     	local test = AITestMode();
 		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+			local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
+			if (airportType == null)
+				continue;
         		local nearestTown = AIAirport.GetNearestTown(tile, airportType);
 			// Check if we can build an airport here, either directly or by terraforming.
 			if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) ||
-				AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200 ||
-				AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
+			    AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200)
+				continue
+
+// || AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;
+			airport_type = airportType;
 			break;
 		}
 
 		if (good_tile == -1) {
 			for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+				local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
+				if (airportType == null)
+					continue;
         			local nearestTown = AIAirport.GetNearestTown(tile, airportType);
+				airportX = AIAirport.GetAirportWidth(airportType);
+				airportY = AIAirport.GetAirportHeight(airportType);
 				// Check if we can build an airport here, either directly or by terraforming.
 				if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) &&
-					(getFirst || !Terraform.CheckTownRatings(tile, airportX, airportY) ||
-					!Terraform.Terraform(tile, airportX, airportY, -1) ||
-					AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType))) continue;
+				   (getFirst || !Terraform.CheckTownRatings(tile, airportX, airportY) ||
+				   !Terraform.Terraform(tile, airportX, airportY, -1)))
+					continue;
+
+// || AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType))) continue;
 				good_tile = tile;
+				airport_type = airportType;
 				break;
 			}
 		}
 	}
-	return good_tile;
+	if (good_tile == -1)
+		return null;
+	return [good_tile, airport_type];
 }
 
 /**
