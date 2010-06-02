@@ -69,7 +69,7 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 	Log.logDebug("Select reports: " + reportlist.len());
 
 	// Sort all the reports based on their utility.
-	foreach (report in reportlist) {
+	/*foreach (report in reportlist) {
 		
 		// Check if the report isn't in the ignore list.
 		local skip = false;
@@ -92,7 +92,8 @@ function Parlement::SelectReports(/*Report[]*/ reportlist) {
 	}
 
 	// Do the selection, by using a greedy subsum algorithm.
-	reports = SubSum.GetSubSum(sortedReports, Finance.GetMaxMoneyToSpend());
+	reports = SubSum.GetSubSum(sortedReports, Finance.GetMaxMoneyToSpend());*/
+	reports = SubSum.GetSubSum(reportlist);
 }
 
 function Parlement::ClearReports() {

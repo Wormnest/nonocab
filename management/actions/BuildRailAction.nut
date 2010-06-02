@@ -44,6 +44,7 @@ function BuildRailAction::Execute() {
 	}
 
 	local pathFinderHelper = RailPathFinderHelper();
+	pathFinderHelper.updateClosedList = false
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
 		

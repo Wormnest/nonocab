@@ -53,18 +53,43 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	local tile = GetLocation();
 
 	// Check how large the town is.
-	local maxXSpread = 20;
-	while (AITile.IsWithinTownInfluence(tile + maxXSpread, id) || AITile.IsWithinTownInfluence(tile - maxXSpread, id))
-		maxXSpread += 10;
+	local maxXSpread = 1;
+	local xBuildable = false;
+	local yBuildable = false;
 
-	local maxYSpread = 20;
-	while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), id) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), id))
-		maxYSpread += 10;
+	while (!xBuildable || !yBuildable) {
 
-	maxXSpread += 20;
-	maxYSpread += 20;
+		if (AITile.IsBuildableRectangle(tile + maxXSpread, stationSizeX, stationSizeY))
+			xBuildable = true;
 
-	local list = Tile.GetRectangle(tile - maxXSpread - maxYSpread * AIMap.GetMapSizeX(), maxXSpread * 2, maxYSpread * 2);
+		if (AITile.IsBuildableRectangle(tile - maxXSpread - stationSizeX, stationSizeX, stationSizeY)) {
+			yBuildable = true;
+		}
+
+		maxXSpread++;
+	}
+	maxXSpread += stationSizeX * 2;
+
+	// Do the same for the y value.
+	local maxYSpread = 1;
+	xBuildable = false;
+	yBuildable = false;
+
+	while (!xBuildable || !yBuildable) {
+
+		if (AITile.IsBuildableRectangle(tile - maxYSpread * AIMap.GetMapSizeX(), stationSizeX, stationSizeY))
+			xBuildable = true;
+
+		if (AITile.IsBuildableRectangle(tile - maxYSpread * AIMap.GetMapSizeX() - stationSizeY * AIMap.GetMapSizeX(), stationSizeX, stationSizeY)) {
+			yBuildable = true;
+		}
+
+		maxYSpread++;
+	}
+
+	maxYSpread += stationSizeY;
+
+	local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
 	
 	// Purge all unnecessary entries from the list.
 	list.Valuate(AITile.IsBuildable);
@@ -73,7 +98,6 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	local isTownToTown = AITown.GetLastMonthProduction(id, cargoID) > 0;
 	if (isTownToTown)
 		isAcceptingCargo = true;
-
 
 	local minimalAcceptance = (isTownToTown ? stationRadius * stationRadius / 1 : stationRadius * stationRadius / 2);
 	local minimalProduction = (isTownToTown ? stationRadius * stationRadius / 1 : 0);

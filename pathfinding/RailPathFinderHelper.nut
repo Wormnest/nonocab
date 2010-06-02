@@ -1,5 +1,6 @@
 class RailPathFinderHelper extends PathFinderHelper {
 
+	static NEAR_STATION_DISTANCE = 15;
 	costForRail 	= 100;       // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 1000;       // Cost for building a new road.
 	costForTurn 	= 300;       // Additional cost if the road makes a turn.
@@ -117,6 +118,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 	this.expectedEnd = expectedEnd;
 	
+	if (closed_list.len() != 0)
+		wdjfklsd();
 	//if (startList.Count() == 0)
 	//	return;
 
@@ -444,6 +447,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 	annotatedTile.lastBuildRailTrack = -1;
 	annotatedTile.alreadyBuild = false;
 	annotatedTile.distanceFromStart = 0;
+	annotatedTile.forceForward = false;
 	
 	local mapSizeX = AIMap.GetMapSizeX();
 
@@ -661,6 +665,12 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	//	local abc = AIExecMode();
 	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
 	//}
+		closed_list[currentAnnotatedTile.tile + "-" + currentAnnotatedTile.direction] <- true;
+
+
+//	if (currentAnnotatedTile.length >= NEAR_STATION_DISTANCE && AIMap.DistanceManhattan(currentAnnotatedTile.tile, expectedEnd) >= NEAR_STATION_DISTANCE)
+//		closedList[currentAnnotatedTile.tile] <- true;
+
 
 	local tileArray = [];
 	local offsets;
@@ -688,16 +698,14 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 		// Skip if this node is already processed.
 		local isInClosedList = false;
-		if (closedList.rawin(nextTile) || 
-			((currentAnnotatedTile.length < 10 || 
-		        AIMap.DistanceManhattan(currentTile, expectedEnd) < 10)) && closed_list.rawin(nextTile + "-" + offset))
+/*		if (((currentAnnotatedTile.length <= NEAR_STATION_DISTANCE || 
+		        AIMap.DistanceManhattan(currentTile, expectedEnd) <= NEAR_STATION_DISTANCE)) && closed_list.rawin(nextTile + "-" + offset))
 			isInClosedList = true;
-
-
+*/
 		local distanceToEnd = AIMap.DistanceManhattan(nextTile, expectedEnd);
-		if (distanceToEnd < 7)
+		if (distanceToEnd < NEAR_STATION_DISTANCE / 2)
 			been_near_end = true;
-		else if (been_near_end && distanceToEnd > 15)
+		else if (been_near_end && distanceToEnd > NEAR_STATION_DISTANCE)
 			continue;
 		
 
@@ -880,10 +888,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				else
 					annotatedTile.distanceFromStart += costForNewRail;
 				
-				if (goingStraight)
+				//if (goingStraight)
 					annotatedTile.length = currentAnnotatedTile.length + 1;
-				else
-					annotatedTile.length = currentAnnotatedTile.length + 0.5;
+				//else
+				//	annotatedTile.length = currentAnnotatedTile.length + 0.5;
 					
 				if (!reuseRailTrack)
 					annotatedTile.reusedPieces = 0;
@@ -892,15 +900,12 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				// Only use the direction sensitive closed list if we are either very close to the
 				// start or very close to the end point.
-				if (currentAnnotatedTile.length < 10 || AIMap.DistanceManhattan(currentTile, expectedEnd) < 10)
-					closed_list[currentTile + "-" + offset] <- true;
+				//if (currentAnnotatedTile.length < NEAR_STATION_DISTANCE || AIMap.DistanceManhattan(currentTile, expectedEnd) < NEAR_STATION_DISTANCE)
+				//	closed_list[currentTile + "-" + offset] <- true;
+					//closed_list[currentAnnotatedTile.tile + "-" + offset] <- true;
 			}
 		}
 	}
-
-	if (currentAnnotatedTile.length >= 10 && AIMap.DistanceManhattan(currentTile, expectedEnd) >= 10)
-		closedList[currentTile] <- true;
-
 	return tileArray;
 }
 
@@ -1174,7 +1179,7 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 			case Tile.ROAD:
 				if(lastDirection != currentDirection) {		// Bend
 					tileLength = Tile.diagonalRoadLength - carry;
-					currentSpeed = maxSpeed / 2;
+					currentSpeed = maxSpeed / 4;
 				} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
 					tileLength = Tile.upDownHillRoadLength - carry;
 					
