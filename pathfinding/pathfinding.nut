@@ -115,7 +115,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		}
 			
 		// If this node has already been processed, skip it!
-		if((!updateClosedList || closedList.rawin(at.tile)) && !pathFinderHelper.ProcessClosedTile(at.tile, at.direction))
+		//if((!updateClosedList || closedList.rawin(at.tile)) && !pathFinderHelper.ProcessClosedTile(at.tile, at.direction))
+		if(closedList.rawin(at.tile) || !pathFinderHelper.ProcessClosedTile(at.tile, at.direction))
 			continue;
 
 		// Check if this is the end already, if so we've found the shortest route.

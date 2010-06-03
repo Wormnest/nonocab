@@ -665,7 +665,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	//	local abc = AIExecMode();
 	//	AISign.BuildSign(currentAnnotatedTile.tile, "X");
 	//}
-		closed_list[currentAnnotatedTile.tile + "-" + currentAnnotatedTile.direction] <- true;
+	closed_list[currentAnnotatedTile.tile + "-" + currentAnnotatedTile.direction] <- true;
 
 
 //	if (currentAnnotatedTile.length >= NEAR_STATION_DISTANCE && AIMap.DistanceManhattan(currentAnnotatedTile.tile, expectedEnd) >= NEAR_STATION_DISTANCE)
