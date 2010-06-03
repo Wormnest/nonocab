@@ -406,7 +406,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	// actual pathfinding on that selection to find the best one(s).
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
 		
-		if (AIController.GetTick() - startTicks > 1500) {
+		if (AIController.GetTick() - startTicks > 750) {
 			Log.logDebug("Time's up! " + connectionNodeList.len());
 			break;
 		}
@@ -470,7 +470,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				// Check if the connection is actually profitable.
 				local report = Report(world, fromConnectionNode, toConnectionNode, cargoID, transportEngineID, holdingEngineID, 0);
 				
-				if (report.Utility() > 0 && !report.isInvalid) {
+				if (!report.isInvalid && report.Utility() > 0) {
 					
 					// For airlines we can very accurately estimate the travel times and
 					// income, so we can already prune connections here since we know

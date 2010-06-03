@@ -140,6 +140,27 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 					}
 				}
 			} else {
+				local existingRailTracks = AIRail.GetRailTracks(tile);
+				if (existingRailTracks != AIRail.RAILTRACK_INVALID) {
+
+					// Make sure we do not cross a railroad ortogonally, this would indicate that we cross a railroad which
+					// is not allowed by me! :) Usually this means that the rail is going into a loop onto itself which
+					// causes all kinds of problems, so when detected we pull back.
+					local loopFound = false;
+					if (railTrack == AIRail.RAILTRACK_NE_SW && (existingRailTracks & AIRail.RAILTRACK_NW_SE) != 0) loopFound = true;
+					else if (railTrack == AIRail.RAILTRACK_NW_SE && (existingRailTracks & AIRail.RAILTRACK_NE_SW) != 0) loopFound = true;
+
+					else if (railTrack == AIRail.RAILTRACK_NW_NE && (existingRailTracks & (AIRail.RAILTRACK_NE_SE | AIRail.RAILTRACK_NW_SW)) != 0) loopFound = true;
+					else if (railTrack == AIRail.RAILTRACK_SW_SE && (existingRailTracks & (AIRail.RAILTRACK_NE_SE | AIRail.RAILTRACK_NW_SW)) != 0) loopFound = true;
+
+					else if (railTrack == AIRail.RAILTRACK_NE_SE && (existingRailTracks & (AIRail.RAILTRACK_NW_NE | AIRail.RAILTRACK_SW_SE)) != 0) loopFound = true;
+					else if (railTrack == AIRail.RAILTRACK_NW_SW && (existingRailTracks & (AIRail.RAILTRACK_NW_NE | AIRail.RAILTRACK_SW_SE)) != 0) loopFound = true;
+
+					if (loopFound) {
+						Log.logWarning("Loop found while building rail road, falling back!");
+						return false;
+					}
+				}
 				stationsChecked = false;
 			}
 

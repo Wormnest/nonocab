@@ -37,6 +37,7 @@ class Report
 	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
 	
 	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
+	loadingTime = 0;                   // The time it takes to load a vehicle.
 	
 	oldReport = null;
 
@@ -58,6 +59,7 @@ class Report
 		this.cargoID = cargoID;
 		isInvalid = false;
 		upgradeToRailType = null;
+		loadingTime = 0;
 		
 		// Check if the engine is valid.
 		if (!AIEngine.IsBuildable(transportEngineID) || !AIEngine.IsBuildable(holdingEngineID) ||
@@ -86,6 +88,9 @@ class Report
 				travelTimeFrom = travelTimeTo;
 				initialCost = 150 * distance;
 			}
+
+//			loadingTime = 7;
+			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
 
 			// For air connections the distance travelled is different (shorter in general)
@@ -128,9 +133,8 @@ class Report
 					
 				initialCost = costForFrom + costForTo;
 			}
-			
-			travelTimeTo += 10;
-			travelTimeFrom += 10;
+
+			loadingTime = 20;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
 
 			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
@@ -144,6 +148,8 @@ class Report
 
 			if (connection == null || !connection.pathInfo.build)
 				initialCost += BuildShipYardAction.GetCosts();
+
+			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
@@ -158,12 +164,15 @@ class Report
 				travelTimeFrom = travelTimeTo;
 				initialCost = 150 * distance * 3;
 			}
+
+			loadingTime = 15;
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
 			isInvalid = true;
 			world.InitCargoTransportEngineIds();
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
+
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
@@ -191,11 +200,6 @@ class Report
 
 		brutoIncomePerMonth = 0;
 		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
-		/*
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
-			Log.logWarning("Cargo income per unit: " + AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()));
-			Log.logWarning("Cargo transported per month: " + transportedCargoPerVehiclePerMonth + " " + AIEngine.GetCapacity(holdingEngineID) + " " + travelTime);
-		}*/
 
 		// In case of a bilateral connection we take a persimistic take on the amount of 
 		// vehicles supported by this connection, but we do increase the income by adding
@@ -208,6 +212,18 @@ class Report
 				nrVehicles = nrVehiclesOtherDirection;
 
 			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
+		}
+
+		// Calculate the maximum number of vehicles this line supports.
+		if (loadingTime != 0) {
+			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
+			if (nrVehicles > maxVehicles) {
+				Log.logDebug("Dropped max nr. vehicles on line " + travelFromNode.GetName() + " " + travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles);
+				nrVehicles = maxVehicles;
+			
+				if (nrVehicles == 0)
+					nrVehicles = 1;
+			}
 		}
 
 		brutoCostPerMonth = 0;
@@ -261,14 +277,14 @@ class Report
 		// Check if the connection is subsidised.
 		if (Subsidy.IsSubsidised(fromConnectionNode, toConnectionNode, cargoID))
 			totalBrutoIncomePerMonth *= GameSettings.GetSubsidyMultiplier();
-		
+
 		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
 		local totalInitialCost = initialCost + nrVehicles * initialCostPerVehicle;
-//		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) * runningTimeBeforeReplacement - totalInitialCost;
 		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) - totalInitialCost / runningTimeBeforeReplacement;
 		
 		if (oldReport != null)
 			returnValue -= oldReport.Utility(); 
+
 		return returnValue;
 	}
 	

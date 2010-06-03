@@ -640,7 +640,7 @@ function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 	else if (railTrack1 == AIRail.RAILTRACK_NE_SW ||
 		railTrack1 == AIRail.RAILTRACK_NW_SE ||
 		(railTracks2 & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW ||
-		(railTracks2 &AIRail.RAILTRACK_NW_SE) == AIRail.RAILTRACK_NW_SE)
+		(railTracks2 & AIRail.RAILTRACK_NW_SE) == AIRail.RAILTRACK_NW_SE)
 		return true;
 
 	// All the options left cross if the other rail track is not on the
@@ -888,10 +888,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				else
 					annotatedTile.distanceFromStart += costForNewRail;
 				
-				//if (goingStraight)
+				if (goingStraight)
 					annotatedTile.length = currentAnnotatedTile.length + 1;
-				//else
-				//	annotatedTile.length = currentAnnotatedTile.length + 0.5;
+				else
+					annotatedTile.length = currentAnnotatedTile.length + 0.5;
 					
 				if (!reuseRailTrack)
 					annotatedTile.reusedPieces = 0;
