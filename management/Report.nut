@@ -280,6 +280,9 @@ class Report
 
 		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
 		local totalInitialCost = initialCost + nrVehicles * initialCostPerVehicle;
+
+		if (runningTimeBeforeReplacement == 0)
+			return 0;
 		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) - totalInitialCost / runningTimeBeforeReplacement;
 		
 		if (oldReport != null)
