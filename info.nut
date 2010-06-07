@@ -2,7 +2,7 @@ class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Bram Ridder"; }
       function GetName()      { return "NoCAB";	      }
       function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
-      function GetVersion()	{ return 477; }
+      function GetVersion()	{ return 478; }
       function MinVersionToLoad() { return 8; }
       function GetDate()	{ return "2010-06-07"; }
       function CreateInstance()	{ return "NoCAB"; }
