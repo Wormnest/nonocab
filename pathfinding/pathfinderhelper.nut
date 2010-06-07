@@ -43,7 +43,7 @@ class PathFinderHelper {
 	 * @param direction The direction the tile is going.
 	 * @return True if the tile should be processed, false otherwise.
 	 */
-	function ProcessClosedTile(tile, direction) { return false; }
+	function ProcessTile(inClosedList, tile, direction) { return inClosedList; }
 	
 	/**
 	 * Some helpers might want to keep track of their own closed list instead of

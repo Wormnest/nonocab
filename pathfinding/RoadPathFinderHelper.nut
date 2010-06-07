@@ -354,7 +354,11 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 	return tileArray;
 }
 
-function RoadPathFinderHelper::ProcessClosedTile(tile, direction) {
+function RoadPathFinderHelper::ProcessTile(isInClosedList, tile, direction) {
+
+	if (!isInClosedList)
+		return true;
+
 	if (AITunnel.BuildTunnel(AIVehicle.VT_ROAD, tile))
 		return true;
 

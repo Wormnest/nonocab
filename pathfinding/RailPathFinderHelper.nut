@@ -1063,8 +1063,10 @@ function RailPathFinderHelper::BuildRailTrack(tile, railTrack) {
 	return false;
 }
 
-function RailPathFinderHelper::ProcessClosedTile(tile, direction) {
-	
+function RailPathFinderHelper::ProcessTile(inClosedList, tile, direction) {
+	if (inClosedList)
+		return false;	
+
 	if (closed_list.rawin(tile + "-" + direction))
 		return false;
 	return true;
