@@ -334,6 +334,18 @@ function ConnectionAdvisor::GetReports() {
 		// The industryConnectionNode gives us the actual connection.
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 
+		// If the connection is already build, don't add it!
+		local isAlreadyTransportingCargo = false;
+		foreach (activeConnection in report.fromConnectionNode.activeConnections) {
+			if (activeConnection.cargoID == report.cargoID) {
+				isAlreadyTransportingCargo = true;
+				break;
+			}
+		}
+
+		if (isAlreadyTransportingCargo)
+			continue;
+
 		if (connection.forceReplan || report.isInvalid) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)

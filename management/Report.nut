@@ -193,7 +193,7 @@ class Report
 		}
 		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
 
-		if (nrVehicles > 0.5 && nrVehicles < 1)
+		if (nrVehicles > 0.75 && nrVehicles < 1)
 			nrVehicles = 1;
 		else
 			nrVehicles = nrVehicles.tointeger();

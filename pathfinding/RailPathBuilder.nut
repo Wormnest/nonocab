@@ -158,6 +158,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost)
 
 					if (loopFound) {
 						Log.logWarning("Loop found while building rail road, falling back!");
+						lastBuildIndex = a + 1;
 						return false;
 					}
 				}
