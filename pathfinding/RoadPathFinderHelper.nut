@@ -2,10 +2,10 @@ class RoadPathFinderHelper extends PathFinderHelper {
 
 	costForRoad 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRoad	= 1000;     // Cost for building a new road.
-	costForTurn 	= 60;       // Additional cost if the road makes a turn.
-	costForBridge 	= 1050;     // Cost for building a bridge.
+	costForTurn 	= 200;       // Additional cost if the road makes a turn.
+	costForBridge 	= 1250;     // Cost for building a bridge.
 	costForTunnel 	= 1050;     // Cost for building a tunnel.
-	costForSlope 	= 150;      // Additional cost if the road heads up or down a slope.
+	costForSlope 	= 250;      // Additional cost if the road heads up or down a slope.
 	costTillEnd     = 1200;     // The cost for each tile till the end.
 
 	standardOffsets = null;

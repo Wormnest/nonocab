@@ -209,6 +209,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
 	list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
 	list.KeepValue(1);
+	AIController.Sleep(1);
 
 	if (getFirst) {
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
@@ -228,8 +229,8 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
     
 	/* Couldn't find a suitable place for this town, skip to the next */
 	if (list.Count() == 0) {
-		Log.logWarning("NO spots found :(");
-		 return null;
+		Log.logDebug("NO spots found :(");
+		return null;
 	}
 	list.Sort(AIAbstractList.SORT_BY_VALUE, false);
     

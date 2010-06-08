@@ -284,6 +284,7 @@ class Report
 		if (runningTimeBeforeReplacement == 0)
 			return 0;
 		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) - totalInitialCost / runningTimeBeforeReplacement;
+		//local returnValue = totalBrutoIncomePerMonth - totalBrutoCostPerMonth / (totalInitialCost * runningTimeBeforeReplacement);
 		
 		if (oldReport != null)
 			returnValue -= oldReport.Utility(); 

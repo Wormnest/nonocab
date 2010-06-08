@@ -31,7 +31,8 @@ function Parlement::ExecuteReports() {
 		// a couple of vehicles and can only pay for the road.
 		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) <= 0 ||
 			!report.connection.pathInfo.build && Finance.GetMaxMoneyToSpend() < 
-			(AICompany.GetMaxLoanAmount() / 2 < mostExpensiveConnectionBuild ? mostExpensiveConnectionBuild : AICompany.GetMaxLoanAmount() / 2))
+			mostExpensiveConnectionBuild)
+//			(AICompany.GetMaxLoanAmount() / 2 < mostExpensiveConnectionBuild ? mostExpensiveConnectionBuild : AICompany.GetMaxLoanAmount() / 2))
 			continue;
 			
 		ignoreList.push(report);
@@ -44,6 +45,7 @@ function Parlement::ExecuteReports() {
 			if (!action.Execute()) {
 				Log.logWarning("Execution of raport: " + report.ToString() + " halted!");
 				action.CleanupAfterFailure();
+				report.isInvalid = true;
 				return false;
 			}
 			minimalMoneyNeeded += action.GetExecutionCosts();

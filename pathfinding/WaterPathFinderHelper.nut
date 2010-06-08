@@ -37,7 +37,7 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyStraight
 		local nextTile = currentAnnotatedTile.tile + offset;
 
 		// Skip if this node is already processed and if this node is on water.
-		if (closedList.rawin(nextTile) || !AITile.IsWaterTile(nextTile))
+		if (!AITile.IsWaterTile(nextTile))
 			continue;
 
 		local annotatedTile = AnnotatedTile();
