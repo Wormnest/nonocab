@@ -40,7 +40,7 @@ class Connection {
 		pathInfo = path_info;
 		connectionManager = connection_manager;
 		forceReplan = false;
-		bilateralConnection = travel_from_node.GetProduction(cargo_id) != -1 && travel_to_node.GetProduction(cargo_id) != -1;
+		bilateralConnection = travel_from_node.GetProduction(cargo_id) > 0 && travel_to_node.GetProduction(cargo_id) > 0;
 		refittedForArticulatedVehicles = false;
 		travelFromNodeStationID = null;
 		travelToNodeStationID = null;

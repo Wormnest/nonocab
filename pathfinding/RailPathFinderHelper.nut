@@ -1096,8 +1096,8 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.direction = direction;
 			annotatedTile.tile = target;
 			annotatedTile.alreadyBuild = false;
-			annotatedTile.distanceFromStart = costForBridge * i;
-			annotatedTile.length = i;
+			annotatedTile.distanceFromStart = costForBridge * (i + 1);
+			annotatedTile.length = i + 1;
 			
 			if (direction == 1 || direction == -1)
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SW;

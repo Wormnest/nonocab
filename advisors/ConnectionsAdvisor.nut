@@ -198,7 +198,6 @@ function ConnectionAdvisor::Update(loopCounter) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
 		activeUpdateList = clone updateList;
-		lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
 		UpdateIndustryConnections(activeUpdateList);
 		reportTableLength = connectionReports.Count();
 		lastUpdate = AIDate.GetCurrentDate();
@@ -309,17 +308,6 @@ function ConnectionAdvisor::Update(loopCounter) {
 			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
 		}
 	}
-	
-	// If we find no other possible connections, extend our range!
-	if (connectionReports.Count() == 0 && (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL) ||
-		lastMaxDistanceBetweenNodes != world.max_distance_between_nodes) {
-			
-		if (world.IncreaseMaxDistanceBetweenNodes()) {
-			Log.logInfo("Extend maximum range of " + vehicleType + " to " + world.max_distance_between_nodes + ".");
-			connectionReports = null;
-			lastMaxDistanceBetweenNodes = world.max_distance_between_nodes;
-		}
-	}
 }
 
 function ConnectionAdvisor::GetReports() {
@@ -396,11 +384,6 @@ function ConnectionAdvisor::GetReports() {
 }
 
 function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
-	local maxDistanceMultiplier = 1;
-	if (vehicleType == AIVehicle.VT_WATER)
-		maxDistanceMultiplier = 0.75;
-	else if (vehicleType == AIVehicle.VT_AIR)
-		maxDistanceMultiplier = 0.25;
 
 	local startTicks = AIController.GetTick();
 	local processedConnections = {};
@@ -457,6 +440,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 			
 			if (skip)
 				continue;
+
+			// Calculate how long this engine can travel in 100 days.
+			// speed (in km/h) * #days * 24 (km/day) / (tile length / 24).
+			local maxDistance = (AIEngine.GetMaxSpeed(transportEngineID).tofloat() * 100 * (AIEngine.GetReliability(transportEngineID).tofloat() / 100)) / Tile.straightRoadLength;
 				
 			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
 				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater ||
@@ -468,11 +455,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				// Check if the nodes are not to far away (we restrict it by an extra 
 				// percentage to avoid doing unnecessary work by envoking the pathfinder
 				// where this isn't necessary.
-				if (manhattanDistance * maxDistanceMultiplier > world.max_distance_between_nodes) 
-					continue;			
-
-				// Check if the distance is to big for pathfinders to solve.
-				if ((vehicleType == AIVehicle.VT_WATER || vehicleType == AIVehicle.VT_ROAD) && manhattanDistance > 256)
+				if (manhattanDistance > maxDistance)
 					continue;
 
 				// Check if this connection isn't in the ignore table.

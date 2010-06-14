@@ -184,19 +184,15 @@ function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoa
 		if (!AIRoad.IsDriveThroughRoadStationTile(roadStationTile) && 
 			!AIRoad.BuildDriveThroughRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
 			return false;
-		} else if (!isConnectionBuild) {
-			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
 		}
 	} else {
 		if (!AIRoad.IsRoadStationTile(roadStationTile) && 
 			!AIRoad.BuildRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
 			return false;
-		} else if (!isConnectionBuild) {
-			connection.travelToNodeStationID = AIStation.GetStationID(roadStationTile);
 		}
 	}
-	
-	return true;
+
+	return AIStation.IsValidStation(AIStation.GetStationID(roadStationTile));
 }
 
 function BuildRoadAction::BuildDepot(roadList, startPoint, searchDirection) {

@@ -32,7 +32,6 @@ class World {
 	starting_year = null;
 	years_passed = null;
 	
-	max_distance_between_nodes = null;		// The maximum distance between industries.
 	pathFixer = null;
 	niceCABEnabled = null;
 	
@@ -69,20 +68,12 @@ class World {
 			industryCacheProducing[index] = [];
 		}
 		
-		max_distance_between_nodes = 128;
 		InitCargoTransportEngineIds();
 		
 		//BuildIndustryTree();
 		worldEventManager = WorldEventManager(this);
 	}
 	
-	/**
-	 * Manually increase the maximum distance between industries / towns. We need
-	 * this because sometimes the advisors have already build all possible connections
-	 * and are eager for more!
-	 */
-	function IncreaseMaxDistanceBetweenNodes();
-
 	/**
 	 * Insert an industryNode in the industryList.
 	 * @industryID The id of the industry which needs to be added.
@@ -151,7 +142,6 @@ function World::LoadData(data, connectionManager) {
 	
 	starting_year = data["starting_year"];
 	years_passed = data["years_passed"];
-	max_distance_between_nodes = data["max_distance_between_nodes"];
 	return activeConnections;
 }
 
@@ -183,7 +173,6 @@ function World::SaveData(saveTable) {
 	saveTable["starting_year"] <- starting_year;
 	saveTable["years_passed"] <- years_passed;
 
-	saveTable["max_distance_between_nodes"] <- max_distance_between_nodes;		// The maximum distance between industries.
 	return saveTable;
 }
 
@@ -194,11 +183,6 @@ function World::Update()
 {
 	worldEventManager.ProcessEvents();
 
-	if (AIDate.GetYear(AIDate.GetCurrentDate()) - starting_year > 2) {
-		IncreaseMaxDistanceBetweenNodes();
-		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
-	}
-	
 	// Check if we have any vehicles to sell! :)
 	local vehicleList = AIVehicleList();
 	foreach (vehicleID, value in vehicleList) {
@@ -267,21 +251,6 @@ function World::Update()
 
 		}
 	}
-}
-
-
-/**
- * Manually increase the maximum distance between industries / towns. We need
- * this because sometimes the advisors have already build all possible connections
- * and are eager for more!
- */
-function World::IncreaseMaxDistanceBetweenNodes() {
-	if (max_distance_between_nodes > AIMap.GetMapSizeX() + AIMap.GetMapSizeY())
-		return false;
-
-	max_distance_between_nodes += 32;
-	Log.logDebug("Increased max distance to: " + max_distance_between_nodes);
-	return true;
 }
 
 /**
