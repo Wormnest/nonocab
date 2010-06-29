@@ -39,8 +39,6 @@ class Report
 	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
 	loadingTime = 0;                   // The time it takes to load a vehicle.
 	
-	oldReport = null;
-
 	/**
 	 * Construct a connection report.
 	 * @param world The world.
@@ -86,10 +84,11 @@ class Report
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = 150 * distance;
+				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance +
+				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_DEPOT) +
+				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_TRUCK_STOP) * 2;
 			}
 
-//			loadingTime = 7;
 			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
 
@@ -162,7 +161,10 @@ class Report
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = 150 * distance * 3;
+				initialCost = AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_TRACK) * distance +
+				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_SIGNAL) * distance / 5 +
+				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_DEPOT) +
+				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_STATION) * 6 * 2;
 			}
 
 			loadingTime = 15;
@@ -172,7 +174,6 @@ class Report
 			world.InitCargoTransportEngineIds();
 		}
 		travelTime = travelTimeTo + travelTimeFrom;
-
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
@@ -193,7 +194,10 @@ class Report
 		}
 		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
 
-		if (nrVehicles > 0.75 && nrVehicles < 1)
+//		if (nrVehicles > 0.75 && nrVehicles < 1)
+//			nrVehicles = 1;
+//		else
+		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection == null || connection.pathInfo.build))
 			nrVehicles = 1;
 		else
 			nrVehicles = nrVehicles.tointeger();
@@ -272,23 +276,26 @@ class Report
  	 * gained!
 	 */
 	function Utility() {
-		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoIncomePerMonthPerVehicle);
+
+//		local nr_vehicles_now = GetNrVehicles(max(Finance.GetMaxMoneyToSpend(), AICompany.GetMaxLoanAmount())); 
+		local nr_vehicles_now = nrVehicles;
+		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
+		if (nr_vehicles_now > maxBuildableVehicles)
+			nr_vehicles_now = maxBuildableVehicles;
+			
+		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nr_vehicles_now < 0 ? 0 : nr_vehicles_now * brutoIncomePerMonthPerVehicle);
 		
 		// Check if the connection is subsidised.
 		if (Subsidy.IsSubsidised(fromConnectionNode, toConnectionNode, cargoID))
 			totalBrutoIncomePerMonth *= GameSettings.GetSubsidyMultiplier();
 
-		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
-		local totalInitialCost = initialCost + nrVehicles * initialCostPerVehicle;
+		local totalBrutoCostPerMonth = brutoCostPerMonth + (nr_vehicles_now < 0 ? 0 : nr_vehicles_now * brutoCostPerMonthPerVehicle);
+		local totalInitialCost = initialCost + nr_vehicles_now * initialCostPerVehicle;
 
 		if (runningTimeBeforeReplacement == 0)
 			return 0;
-		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) - totalInitialCost / runningTimeBeforeReplacement;
-		//local returnValue = totalBrutoIncomePerMonth - totalBrutoCostPerMonth / (totalInitialCost * runningTimeBeforeReplacement);
-		
-		if (oldReport != null)
-			returnValue -= oldReport.Utility(); 
-
+// Deze werkt goed! :D		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth).tofloat();// / (totalInitialCost.tofloat() / (runningTimeBeforeReplacement * 12))
+		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth).tofloat();// - (totalInitialCost.tofloat() / (runningTimeBeforeReplacement * 12))
 		return returnValue;
 	}
 	
@@ -302,7 +309,7 @@ class Report
 	function UtilityForMoney(money) {
 		if (money == -1)
 			return Utility();
-		
+
 		// Now calculate the new utility based on the number of vehicles we can buy.
 		local oldNrVehicles = nrVehicles;
 		nrVehicles = GetNrVehicles(money);

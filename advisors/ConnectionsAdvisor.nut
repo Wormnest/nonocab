@@ -216,7 +216,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// Always try to get one more then currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
 	assert(connectionReports != null);
-	while (reportTable.len() < minNrReports &&
+	while ((reportTable.len() < minNrReports || Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 48) &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
 

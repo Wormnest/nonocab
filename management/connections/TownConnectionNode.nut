@@ -99,8 +99,11 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	if (isTownToTown)
 		isAcceptingCargo = true;
 
-	local minimalAcceptance = (isTownToTown ? stationRadius * stationRadius / 1 : stationRadius * stationRadius / 2);
+	local minimalAcceptance = (isTownToTown ? (stationRadius * stationRadius / 2) * 4 : stationRadius * stationRadius / 2);
 	local minimalProduction = (isTownToTown ? stationRadius * stationRadius / 1 : 0);
+
+	if (minimalAcceptance < 8)
+		minimalAcceptance = 8;
 
 	// Make sure the tiles we want to build are producing or accepting our cargo in enough
 	// quantity.

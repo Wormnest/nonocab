@@ -8,6 +8,7 @@ class LocalAuthority
 	static minimumMoneyForStatue = 1000000;
 	static minimumMoneyForRights = 15000000;
 	static minimumMoneyForImproving = 100000;
+	static minimumMoneyForHQ = 1000000;
 
 	improveRelationsEnabled = null;     // Plant trees.
 	buildStatuesEnabled = null;         // Build statues.
@@ -39,6 +40,11 @@ class LocalAuthority
 	 * Secure exclusive transportation rights, but only if we're very rich ;).
 	 */
 	function SecureTransportationsRights();
+
+	/**
+	 * Build an HQ at the given town.
+	 */
+	function BuildHQ(town);
 }
 
 function LocalAuthority::HandlePolitics()
@@ -88,6 +94,7 @@ function LocalAuthority::BuildStatues()
 
 	foreach (town, index in town_list)
 	{
+		BuildHQ(town);
 		Log.logInfo("Build a statue in " + AITown.GetName(town));
 		if (AITown.PerformTownAction(town, AITown.TOWN_ACTION_BUILD_STATUE) && AICompany.GetBankBalance(AICompany.COMPANY_SELF) < minimumMoneyForStatue)
 			return;
@@ -165,3 +172,27 @@ function LocalAuthority::ImproveRelations()
 	}
 }
 
+function LocalAuthority::BuildHQ(town)
+{
+	// Check if we have an HQ.
+	if (AICompany.GetCompanyHQ(AICompany.COMPANY_SELF) != AIMap.TILE_INVALID) {
+		return;
+	}
+	Log.logInfo("Build HQ!");
+	
+	// Find empty 2x2 square as close to town centre as possible
+	local maxRange = Sqrt(AITown.GetPopulation(town)/100) + 5; //TODO check value correctness
+	local HQArea = AITileList();
+	
+	HQArea.AddRectangle(AITown.GetLocation(town) - AIMap.GetTileIndex(maxRange, maxRange), AITown.GetLocation(town) + AIMap.GetTileIndex(maxRange, maxRange));
+	HQArea.Valuate(AITile.IsBuildableRectangle, 2, 2);
+	HQArea.KeepValue(1);
+	HQArea.Valuate(AIMap.DistanceManhattan, AITown.GetLocation(town));
+	HQArea.Sort(AIList.SORT_BY_VALUE, true);
+	
+	for (local tile = HQArea.Begin(); HQArea.HasNext(); tile = HQArea.Next()) {
+		if (AICompany.BuildCompanyHQ(tile)) {
+			return;
+		}
+	}
+}

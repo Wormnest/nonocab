@@ -20,6 +20,11 @@ class Finance {
 	 * Repay as much as possible.
 	 */
 	function RepayLoan();
+
+	/**
+	 * Check if we are allowed to build with the current amount of money.
+	 */
+	function ConstructionAllowed();
 }
 
 function Finance::GetMaxMoneyToSpend() {
@@ -35,4 +40,8 @@ function Finance::RepayLoan() {
 	local loanMode = AIExecMode();
 	local loanInterval = AICompany.GetLoanInterval();
 	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) - loanInterval > Finance.minimumBankReserve && AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
+}
+
+function Finance::ConstructionAllowed() {
+	return Finance.GetMaxMoneyToSpend() >= AICompany.GetMaxLoanAmount() * 0.8;
 }

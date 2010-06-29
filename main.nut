@@ -144,12 +144,6 @@ function NoCAB::Start()
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
 	
-	// Build the HQ.
-	if (GetSetting("Build HQ"))
-		if (AICompany.GetCompanyHQ(AICompany.COMPANY_SELF) == AIMap.TILE_INVALID)
-			BuildHQ();
-	
-	
 	// Start the threads!
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
@@ -233,37 +227,6 @@ function Sqrt(i) {
 	return n;
 }
  
-function NoCAB::BuildHQ()
-{
-	// Check if we have an HQ.
-	if (AICompany.GetCompanyHQ(AICompany.COMPANY_SELF) != AIMap.TILE_INVALID) {
-		Log.logDebug("We already have an HQ, continue!");
-		return;
-	}
-	Log.logInfo("Build HQ!");
-	
-	// Find biggest town for HQ
-	local towns = AITownList();
-	towns.Valuate(AITown.GetPopulation);
-	towns.Sort(AIAbstractList.SORT_BY_VALUE, true);
-	local town = towns.Begin();
-	
-	// Find empty 2x2 square as close to town centre as possible
-	local maxRange = Sqrt(AITown.GetPopulation(town)/100) + 5; //TODO check value correctness
-	local HQArea = AITileList();
-	
-	HQArea.AddRectangle(AITown.GetLocation(town) - AIMap.GetTileIndex(maxRange, maxRange), AITown.GetLocation(town) + AIMap.GetTileIndex(maxRange, maxRange));
-	HQArea.Valuate(AITile.IsBuildableRectangle, 2, 2);
-	HQArea.KeepValue(1);
-	HQArea.Valuate(AIMap.DistanceManhattan, AITown.GetLocation(town));
-	HQArea.Sort(AIList.SORT_BY_VALUE, true);
-	
-	for (local tile = HQArea.Begin(); HQArea.HasNext(); tile = HQArea.Next()) {
-		if (AICompany.BuildCompanyHQ(tile)) {
-			return;
-		}
-	}
-}
 
 /** Required by interface . */
 function NoCAB::Stop() {
