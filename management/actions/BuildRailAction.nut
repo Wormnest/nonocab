@@ -43,7 +43,8 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 
-	local pathFinderHelper = RailPathFinderHelper();
+	local bestRailType = TrainConnectionAdvisor.GetBestRailType(world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID]);
+	local pathFinderHelper = RailPathFinderHelper(bestRailType);
 	pathFinderHelper.updateClosedList = false
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
@@ -732,6 +733,14 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 	// Now build the signals.
 	local tilesAfterCrossing = spread;
 	for (local a = startIndex; a < endIndex; a++) {
+
+		local isTileBeforeCrossing = false;
+		if (tilesAfterCrossing < 0) {
+			RemoveSignal(roadList[a], true);
+			RemoveSignal(roadList[a], false);
+			if (tilesAfterCrossing == -1)
+				tilesAfterCrossing = spread;
+		}
 		
 		// Only build a signal every so many steps, or if we're facing a crossing.
 		// Because we are moving from the end station to the begin station, we need
@@ -741,12 +750,13 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 		if (roadList[a].type != Tile.ROAD)
 			continue;
 
-		local isTileBeforeCrossing = false;
 		// Check if the next tile is a crossing or if the previous tile was a bridge / tunnel.
 		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
 		if (roadList[a - 1].type != Tile.ROAD || roadList[a].type != Tile.ROAD || RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
-			tilesAfterCrossing = 0;
-			isTileBeforeCrossing = true;
+		//	if (tilesAfterCrossing >= 0)
+				isTileBeforeCrossing = true;
+
+			tilesAfterCrossing = -spread;
 		}
 
 		if (++tilesAfterCrossing > spread && (a - startIndex) % spread == 0 || isTileBeforeCrossing)

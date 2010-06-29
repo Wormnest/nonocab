@@ -161,10 +161,11 @@ class Report
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_TRACK) * distance +
-				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_SIGNAL) * distance / 5 +
-				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_DEPOT) +
-				              AIRail.GetBuildCost(AIRail.GetCurrentRailType(), AIRail.BT_STATION) * 6 * 2;
+				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
+				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance +
+				              AIRail.GetBuildCost(rail_type, AIRail.BT_SIGNAL) * distance / 5 +
+				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) +
+				              AIRail.GetBuildCost(rail_type, AIRail.BT_STATION) * 6 * 2;
 			}
 
 			loadingTime = 15;
@@ -222,7 +223,7 @@ class Report
 		if (loadingTime != 0) {
 			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
 			if (nrVehicles > maxVehicles) {
-				Log.logDebug("Dropped max nr. vehicles on line " + travelFromNode.GetName() + " " + travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles);
+				Log.logDebug("Dropped max nr. vehicles on line " + travelFromNode.GetName() + " " + travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(cargoID));
 				nrVehicles = maxVehicles;
 			
 				if (nrVehicles == 0)
@@ -246,7 +247,7 @@ class Report
 					if (AIRail.IsRailTypeAvailable(railTypeOfTrain) && 
 						AIEngine.CanRunOnRail(transportEngineID, railTypeOfTrain) &&
 						AIEngine.HasPowerOnRail(transportEngineID, railTypeOfTrain) &&
-						railTypeOfTrain > foundRailTrack &&
+						AIRail.GetMaxSpeed(railTypeOfTrain) > AIRail.GetMaxSpeed(foundRailTrack) &&
 						(!AIRail.TrainCanRunOnRail(railTypeOfTrain, railTypeOfConnection) ||
 						!AIRail.TrainHasPowerOnRail(railTypeOfTrain, railTypeOfConnection))) {
 						foundRailTrack = railTypeOfTrain;
@@ -261,7 +262,7 @@ class Report
 				// Else, just build more trains :)
 			}
 		}
-		runningTimeBeforeReplacement = AIEngine.GetMaxAge(transportEngineID);//World.MONTHS_BEFORE_AUTORENEW;
+		runningTimeBeforeReplacement = AIEngine.GetMaxAge(transportEngineID);
 	}
 	
 	function ToString() {

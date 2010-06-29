@@ -24,8 +24,11 @@ class RailPathFinderHelper extends PathFinderHelper {
 	goalAndDirectionTable = null;
 
 	expectedEnd = null;
+
+	currentRailType = null;       // The rail track to use.
 	
-	constructor() {
+	constructor(currentRailType_) {
+		currentRailType = currentRailType_;
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
 		// Optimalization, use a prefat annotated tile for heuristics.
@@ -46,6 +49,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		emptyList = AIList();
 		been_near_end = false;
 		goalAndDirectionTable = {};
+		AIRail.SetCurrentRailType(currentRailType);
 	}
 	
 	function UpdateClosedList() { return updateClosedList; }
@@ -868,7 +872,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				if (reuseRailTrack) {
 					
 					// Make sure the train can ride on this!
-					local currentRailType = AIRail.GetCurrentRailType();
+					//local currentRailType = AIRail.GetCurrentRailType();
 					local tileRailType = AIRail.GetRailType(nextTile);
 					if (!AIRail.TrainCanRunOnRail(currentRailType, tileRailType) ||
 					    !AIRail.TrainHasPowerOnRail(currentRailType, tileRailType))

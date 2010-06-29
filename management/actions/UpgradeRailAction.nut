@@ -46,7 +46,6 @@ function RailPathUpgradeAction::Upgrade(connection, newRailType) {
 function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 
 	Log.logWarning("Upgrade " + connections.len() + " connections!");
-	local currentRailType = AIRail.GetCurrentRailType();
 	AIRail.SetCurrentRailType(newRailType);
 	
 	// Check if we need to send the trains back to their depots or if we can update
@@ -138,8 +137,6 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		if (connection.pathInfo.depotOtherEnd)
 			AIRail.ConvertRailType(connection.pathInfo.depotOtherEnd, connection.pathInfo.depotOtherEnd, newRailType);
 	}
-	
-	AIRail.SetCurrentRailType(currentRailType);
 }
 
 function RailPathUpgradeAction::UpgradeTile(tile, newRailType) {

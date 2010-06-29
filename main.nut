@@ -54,18 +54,16 @@ function NoCAB::Load(version, data) {
 function NoCAB::Start()
 {
 	// Initialize the AI.
-	local l = AIRailTypeList();
+/*	local l = AIRailTypeList();
 	foreach (rt, index in l) {
-		if (AIRail.IsRailTypeAvailable(rt)) {
+		if (AIRail.IsRailTypeAvailable(rt) && AIRail.GetMaxSpeed(rt) > AIRail.GetMaxSpeed(AIRail.GetCurrentRailType())) {
 			AIRail.SetCurrentRailType(rt);
 			Log.logDebug("Set Rail type!!!");
 //			break;
 		}
 	}
-
-/*	AICompany.SetAutoRenewStatus(true);
-	AICompany.SetAutoRenewMonths(-1200);
 */
+
 	AICompany.SetAutoRenewMoney(1000000);
 	
 	AIGroup.EnableWagonRemoval(true);

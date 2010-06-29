@@ -541,29 +541,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 		return false;
 
 	local vehicleType = AIEngine.GetVehicleType(engineID);
-
-	if (vehicleType == AIVehicle.VT_RAIL) {
-		// Check if this train can run on a newer rail type.
-		if (AIRail.GetCurrentRailType() < AIEngine.GetRailType(engineID)) {
-			AIRail.SetCurrentRailType(AIEngine.GetRailType(engineID));
-
-			// Also update the wagons we can use. These are not updated automatically!
-			local newWagons = AIEngineList(AIVehicle.VT_RAIL);
-			newWagons.Valuate(AIEngine.IsWagon);
-			newWagons.KeepValue(1);
-			newWagons.Valuate(AIEngine.CanRunOnRail, AIRail.GetCurrentRailType());
-			newWagons.KeepValue(1);
-			newWagons.Valuate(AIEngine.HasPowerOnRail, AIRail.GetCurrentRailType());
-			newWagons.KeepValue(1);
-
-			foreach (wagon, value in newWagons)
-				ProcessNewEngineAvailableEvent(wagon);
-		}
-
-		if (!AIEngine.CanRunOnRail(engineID, AIRail.GetCurrentRailType()) ||
-		    !AIEngine.HasPowerOnRail(engineID, AIRail.GetCurrentRailType()))
-			return false;
-	}
+	local updateWagons = false;
 
 	// We skip trams for now.
 	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
@@ -580,10 +558,17 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 			// Different case for trains as the wagons cannot transport themselves and the locomotives
 			// are unable to carry any cargo (ignorable cases aside).
 			if (vehicleType == AIVehicle.VT_RAIL) {
+
+				// Check if we have to process a new rail type.
+
+				local best_new_rail_type = TrainConnectionAdvisor.GetBestRailType(engineID);
+				local best_old_rail_type = TrainConnectionAdvisor.GetBestRailType(oldEngineID);
+
+//				Log.logWarning("Process: " + AIEngine.GetName(engineID) + " for " + AICargo.GetCargoLabel(cargo) + " v.s. " + AIEngine.GetName(oldEngineID));
 				if (AIEngine.IsWagon(engineID)) {
 					// We only judge a weagon on its merrit to transport cargo.
 					if (AIEngine.GetCapacity(cargoHoldingEngineIds[vehicleType][cargo]) < AIEngine.GetCapacity(engineID) ||
-					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoHoldingEngineIds[vehicleType][cargo])) {
+					    AIRail.GetMaxSpeed(AIEngine.GetRailType(engineID)) > AIRail.GetMaxSpeed(AIEngine.GetRailType(cargoHoldingEngineIds[vehicleType][cargo]))) {
 						cargoHoldingEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to carry: " + AICargo.GetCargoLabel(cargo));
 						newEngineID = engineID;
@@ -593,11 +578,12 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 					// We only judge a locomotive on its merrit to transport weagons (don't care about the
 					// accidental bit of cargo it can move around).
 					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) ||
-					    AIEngine.GetRailType(engineID) > AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo])) {
+					    AIRail.GetMaxSpeed(AIEngine.GetRailType(engineID)) > AIRail.GetMaxSpeed(AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo]))) {
 						cargoTransportEngineIds[vehicleType][cargo] = engineID;
 						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport: " + AICargo.GetCargoLabel(cargo));
 						newEngineID = engineID;
 						engineReplaced = true;
+						updateWagons = true;
 					}
 				}
 			} else if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) {
@@ -633,6 +619,28 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 			}
 		}
 	}
+
+	// If a train engine has been replaced, check if there are new wagons to accompany them.
+	if (updateWagons) {
+		foreach (cargo, value in cargo_list) {
+
+			local transportEngineID = cargoTransportEngineIds[AIVehicle.VT_RAIL][cargo];
+
+			local best_rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
+
+			local newWagons = AIEngineList(AIVehicle.VT_RAIL);
+			newWagons.Valuate(AIEngine.IsWagon);
+			newWagons.KeepValue(1);
+			newWagons.Valuate(AIEngine.CanRunOnRail, best_rail_type);
+			newWagons.KeepValue(1);
+			newWagons.Valuate(AIEngine.HasPowerOnRail, best_rail_type);
+			newWagons.KeepValue(1);
+
+			foreach (wagon, value in newWagons)
+				ProcessNewEngineAvailableEvent(wagon);
+		}
+	}
+
 	return engineReplaced;
 }				
 

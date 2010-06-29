@@ -5,21 +5,24 @@ class RailPathBuilder {
 
 	maxSpeed = null;
 	pathFixer = null;
+	engineID = null;
 	roadList = null;
 	lastBuildIndex = null;
 	stationIDsConnectedTo = null;
 	
 	/**
 	 * @param connection The connection to be realised.
-	 * @param maxSpeed The max speed of the vehicles which are going to use this connection.
+	 * @param engineID The engines which are going to use this connection.
 	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(roadList, maxSpeed, pathFixer) {
+	constructor(roadList, engineID, pathFixer) {
 		this.roadList = roadList;
-		this.maxSpeed = maxSpeed;
+		this.engineID = engineID;
 		this.pathFixer = pathFixer;
+		maxSpeed = AIEngine.GetMaxSpeed(engineID);
 		lastBuildIndex = -1;
 		stationIDsConnectedTo = [];
+
 	}
 
 	/**
@@ -35,7 +38,7 @@ class RailPathBuilder {
 	 * @param estimateCost If true, any errors which might occur during construction are ignored.
 	 * @return True if the construction was succesful, false otherwise.
 	 */
-	function BuildPath(roadList, estimateCost);
+	function BuildPath(roadList, estimateCost, railType);
 
 	/**
 	 * Check if the complete road is build.
@@ -62,8 +65,7 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
 	
 	{
 		local test = AIExecMode();
-		
-		return BuildPath(roadList, false);
+		return BuildPath(roadList, false, TrainConnectionAdvisor.GetBestRailType(engineID));
 	}
 }
 
@@ -77,9 +79,9 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
  * to get as close an estimate of the true cost of building this path as
  * possible.
  */
-function RailPathBuilder::BuildPath(roadList, estimateCost)
+function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 {
-	local railPathHelper = RailPathFinderHelper();
+	local railPathHelper = RailPathFinderHelper(railType);
 	local stationsToIgnore = [];
 	
 	if (!estimateCost) {
@@ -217,12 +219,13 @@ function RailPathBuilder::GetCostForRoad()
 	if(roadList == null || roadList.len() < 3)
 		return 0;
 
-	local currentRailType = AIRail.GetCurrentRailType();
+//	local currentRailType = AIRail.GetCurrentRailType();
+	local currentRailType = TrainConnectionAdvisor.GetBestRailType(engineID);
 	local costs = 0;
 	local accounting = AIAccounting();
 	local test = AITestMode();
 
-	BuildPath(roadList, true);
+	BuildPath(roadList, true, currentRailType);
 
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2 * 3 * 2;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_SIGNAL) * roadList.len() / 6;
