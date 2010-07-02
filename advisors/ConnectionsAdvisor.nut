@@ -367,8 +367,8 @@ function ConnectionAdvisor::GetReports() {
 		local vehicleAction = ManageVehiclesAction();
 		
 		// Buy only half of the vehicles needed, build the rest gradualy.
-		if (report.nrVehicles != 1)
-			report.nrVehicles = report.nrVehicles / 2;
+//		if (report.nrVehicles != 1)
+//			report.nrVehicles = report.nrVehicles / 2;
 		// TODO: Change this for trains.
 		vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, report.nrWagonsPerVehicle, connection);
 		

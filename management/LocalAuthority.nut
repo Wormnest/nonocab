@@ -8,7 +8,7 @@ class LocalAuthority
 	static minimumMoneyForStatue = 1000000;
 	static minimumMoneyForRights = 15000000;
 	static minimumMoneyForImproving = 100000;
-	static minimumMoneyForHQ = 1000000;
+	static minimumMoneyForHQ = 350000;
 
 	improveRelationsEnabled = null;     // Plant trees.
 	buildStatuesEnabled = null;         // Build statues.

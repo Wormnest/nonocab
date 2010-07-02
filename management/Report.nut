@@ -84,7 +84,7 @@ class Report
 			} else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
-				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance +
+				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance * 3 +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_DEPOT) +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_TRUCK_STOP) * 2;
 			}
@@ -162,7 +162,8 @@ class Report
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
-				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance +
+				assert (rail_type != AIRail.RAILTYPE_INVALID);
+				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 4 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_SIGNAL) * distance / 5 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_STATION) * 6 * 2;
@@ -278,26 +279,21 @@ class Report
 	 */
 	function Utility() {
 
-//		local nr_vehicles_now = GetNrVehicles(max(Finance.GetMaxMoneyToSpend(), AICompany.GetMaxLoanAmount())); 
-		local nr_vehicles_now = nrVehicles;
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
-		if (nr_vehicles_now > maxBuildableVehicles)
-			nr_vehicles_now = maxBuildableVehicles;
+		if (nrVehicles > maxBuildableVehicles)
+			nrVehicles = maxBuildableVehicles;
 			
-		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nr_vehicles_now < 0 ? 0 : nr_vehicles_now * brutoIncomePerMonthPerVehicle);
+		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoIncomePerMonthPerVehicle);
 		
 		// Check if the connection is subsidised.
 		if (Subsidy.IsSubsidised(fromConnectionNode, toConnectionNode, cargoID))
 			totalBrutoIncomePerMonth *= GameSettings.GetSubsidyMultiplier();
 
-		local totalBrutoCostPerMonth = brutoCostPerMonth + (nr_vehicles_now < 0 ? 0 : nr_vehicles_now * brutoCostPerMonthPerVehicle);
-		local totalInitialCost = initialCost + nr_vehicles_now * initialCostPerVehicle;
+		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
 
 		if (runningTimeBeforeReplacement == 0)
 			return 0;
-// Deze werkt goed! :D		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth).tofloat();// / (totalInitialCost.tofloat() / (runningTimeBeforeReplacement * 12))
-		local returnValue = (totalBrutoIncomePerMonth - totalBrutoCostPerMonth).tofloat();// - (totalInitialCost.tofloat() / (runningTimeBeforeReplacement * 12))
-		return returnValue;
+		return totalBrutoIncomePerMonth - totalBrutoCostPerMonth;
 	}
 	
 	/**
@@ -313,7 +309,10 @@ class Report
 
 		// Now calculate the new utility based on the number of vehicles we can buy.
 		local oldNrVehicles = nrVehicles;
-		nrVehicles = GetNrVehicles(money);
+		if (GetNrVehicles(money, 0) == 0)
+			nrVehicles = 0;
+		else;
+			nrVehicles = GetNrVehicles(money, 2);
 
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
 		if (nrVehicles > maxBuildableVehicles)
@@ -331,21 +330,31 @@ class Report
 	/**
 	 * Get the number of vehicles we can buy given the amount of money.
 	 * @param money The money to spend, if this value is -1 we have unlimited money to spend.
+	 * @forcast The number of years we want to look ahead. If we construct the construction now,
+	 * how many vehicles will we be able to produce in the future? This only applies to unbuild
+	 * connections.
 	 * @return The maximum number of vehicles we can buy for this money.
 	 */
-	function GetNrVehicles(money) {
+	function GetNrVehicles(money, forcast) {
 		if (nrVehicles < 0)
 			return nrVehicles;
 		money -= initialCost;
-		
 
 		// For the remainder of the money calculate the number of vehicles we could buy.
 		if (initialCostPerVehicle == 0)
 			return nrVehicles;
 		local vehiclesToBuy = (money / initialCostPerVehicle).tointeger();
+
+		// Add the revenue we make on the first month to this number.
+		if (connection == null || !connection.pathInfo.build) {
+			local revenue = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * 12 * forcast * vehiclesToBuy;
+			local extraVehiclesToBuy = (revenue / initialCostPerVehicle).tointeger();
+			vehiclesToBuy += extraVehiclesToBuy;
+		}
+			
 		if (vehiclesToBuy > nrVehicles)
 			vehiclesToBuy = nrVehicles;
-			
+
 		return vehiclesToBuy;
 	}
 	
@@ -358,7 +367,7 @@ class Report
 		if (money == -1) 
 			return initialCost + initialCostPerVehicle * nrVehicles;
 			
-		local maxNrVehicles = GetNrVehicles(money);
+		local maxNrVehicles = GetNrVehicles(money, 0);
 		return initialCost + initialCostPerVehicle * maxNrVehicles;
 	}
 	

@@ -8,18 +8,6 @@
 		// Sort all the reports based on their utility.
 		foreach (report in reportlist) {
 			
-			// Check if the report isn't in the ignore list.
-/*			local skip = false;
-			for (local i = 0; i < ignoreList.len(); i++)
-				if (ignoreList[i] == report) {
-					skip = true;
-					break;
-				}
-				
-			if (skip)
-				continue;
-*/
-	
 			local utility = report.UtilityForMoney(moneyToSpend);
 			Log.logDebug(utility + " for " + report.ToString());
 			// Only add when whe think that they will be profitable in the end.
@@ -38,19 +26,6 @@
 			
 			local report = entry[0];
 			
-/*
-			// Check if the report isn't in the ignore list.
-			local skip = false;
-			for (local i = 0; i < ignoreList.len(); i++)
-				if (ignoreList[i] == report) {
-					skip = true;
-					break;
-				}
-				
-			if (skip)
-				continue;
-*/
-	
 			local utility = report.UtilityForMoney(moneyToSpend);
 			Log.logDebug(utility + " for " + report.ToString());
 			// Only add when whe think that they will be profitable in the end.
@@ -78,7 +53,9 @@
 			
 			if (moneyToSpend >= cost && utility > 0 || report.connection.pathInfo.build) {
 				subsumList.push(report);
-				totalUtility += utility;
+
+				if (report.nrVehicles > 0)
+					totalUtility += utility;
 				
 				if (cost > 0)
 					moneyToSpend -= cost;
@@ -96,7 +73,7 @@
 	 * will be higher than min_utility.
 	 */
 	static function GetRandomSubSum(reportlist, min_utility) {
-		Log.logWarning("Get random sub sub with a maximum utilty of: " + min_utility + " len: " + reportlist.len());
+		Log.logWarning("Get random sub sub with a minimum utilty of: " + min_utility + " len: " + reportlist.len());
 
 		local startTicks = AIController.GetTick();
 		local subsumList = [];
@@ -177,49 +154,81 @@
 		local reportlist = [];
 		reportlist.extend(reportlist_);
 		local constructionAllowed = Finance.ConstructionAllowed();
+		local sellVehiclesReports = [];
 
+ 		local moneyToSpend = Finance.GetMaxMoneyToSpend();
+
+		// Filter the results.
 		for (local i = reportlist.len() - 1; i > -1; i--)
 		{
-			if (!constructionAllowed && !reportlist[i].connection.pathInfo.build)
+			// Do not include reports which build a connection if we do not have enough money.
+			if (reportlist[i].connection == null || !constructionAllowed && !reportlist[i].connection.pathInfo.build)
 			{
 				reportlist.remove(i);
 				continue;
 			}
 
+			// Do not include reports which have been put in the ignore list.
+			local deleted = false;
 			for (local j = 0; j < ignoreList.len(); j++)
 			{
 				if (ignoreList[j] == reportlist[i]) {
 					reportlist.remove(i);
+					deleted = true;
 					break;
 				}
 			}
+			if (deleted)
+				continue;
+
+			// Keep reports which sell vehicles in a separate list, these reports will be included anyways.
+			if (reportlist[i].nrVehicles < 0) {
+				sellVehiclesReports.push(reportlist[i]);
+				reportlist.remove(i);
+				continue;
+			}
+
+			// Do not include reports with 0 or negative utility.
+			if (reportlist[i].UtilityForMoney(moneyToSpend) <= 0) {
+				reportlist.remove(i);
+				continue;
+			}
+
+			Log.logWarning("- " + reportlist[i].ToString() + " --- " +  reportlist[i].UtilityForMoney(moneyToSpend));
 		}
+
+		if (reportlist.len() == 0)
+			return sellVehiclesReports;
 				
  		local greedySubSum = SubSum.GetGreedySubSum(reportlist);
 		local subsumList = greedySubSum[0];
 		local greedyUtility = greedySubSum[1];
 
 		// We now have the utility using the greedy approach, try to find a better solution.
-		local randomSubSum = SubSum.GetRandomSubSum(reportlist, greedyUtility);
-		local randomSubSumList = randomSubSum[0];
-		local randomUtility = randomSubSum[1];
+		if (reportlist.len() > subsumList.len()) {
+			local randomSubSum = SubSum.GetRandomSubSum(reportlist, greedyUtility);
+			local randomSubSumList = randomSubSum[0];
+			local randomUtility = randomSubSum[1];
 
-		if (randomSubSumList.len() != 0) {
-			Log.logWarning("Return random subsum! " + greedyUtility + " < " + randomUtility);
-			Log.logWarning("Greedy:");
-			foreach (report in subsumList) {
-				Log.logWarning(report.ToString());
+			if (randomSubSumList.len() != 0) {
+				Log.logWarning("Return random subsum! " + greedyUtility + " < " + randomUtility);
+				Log.logWarning("Greedy:");
+				foreach (report in subsumList) {
+					Log.logWarning(report.ToString());
+				}
+
+				Log.logWarning("Random:");
+				foreach (report in randomSubSumList) {
+					Log.logWarning(report.ToString());
+				}
+
+				randomSubSumList.extend(sellVehiclesReports);
+				return randomSubSumList;
 			}
-
-			Log.logWarning("Random:");
-			foreach (report in randomSubSumList) {
-				Log.logWarning(report.ToString());
-			}
-
-			return randomSubSumList;
 		}
 
 		Log.logWarning("Return greedy subsum!");
- 		return subsumList;
+ 		subsumList.extend(sellVehiclesReports);
+		return subsumList;
  	}
  }
