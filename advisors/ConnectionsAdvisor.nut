@@ -401,7 +401,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	// actual pathfinding on that selection to find the best one(s).
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
 		
-		if (AIController.GetTick() - startTicks > 750) {
+		if (AIController.GetTick() - startTicks > 1000) {
 			Log.logDebug("Time's up! " + connectionNodeList.len());
 			break;
 		}

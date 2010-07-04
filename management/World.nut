@@ -21,6 +21,7 @@ class World {
 	 */
 	cargoTransportEngineIds = null;		// The best engine IDs to transport cargo.
 	cargoHoldingEngineIds = null;		// The best engine IDs to hold cargo.
+	optimalDistances = null;		// The best distances per engine IDs.
 	maxCargoID = null;				// The highest cargo ID number
 
 	industry_tree = null;
@@ -36,7 +37,7 @@ class World {
 	niceCABEnabled = null;
 	
 	/**
-	 * Initializes a repesentation of the 'world'.
+	 * Initializes a representation of the 'world'.
 	 */
 	constructor(niceCAB) {
 		niceCABEnabled = niceCAB;
@@ -512,10 +513,12 @@ function World::InitCargoTransportEngineIds() {
 	
 	cargoTransportEngineIds = array(4);
 	cargoHoldingEngineIds = array(4);
+	optimalDistances = array(4);
 	
 	for (local i = 0; i < cargoTransportEngineIds.len(); i++) {
 		cargoTransportEngineIds[i] = array(maxCargoID + 1, -1);
 		cargoHoldingEngineIds[i] = array(maxCargoID + 1, -1);
+		optimalDistances[i] = array(maxCargoID + 1, -1);
 	}
 	
 	local engineList = AIEngineList(AIVehicle.VT_ROAD);
@@ -616,6 +619,36 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 				
 				if (vehicleTypesAreCompatible)
 					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
+
+				// Calculate the optimal distance between the nodes for this vehicle.
+				if (!AIEngine.IsWagon(newEngineID)) {
+					local optimal_distance = 0;
+					local optimal_income = 0;
+
+					local capacity = AIEngine.GetCapacity(newEngineID);
+					// Cargo payments for distances over 637 do not change anymore.
+					for (local i = 30; i < 637; i++) {
+
+						local travel_time = i * Tile.straightRoadLength / AIEngine.GetMaxSpeed(newEngineID);
+						local income = AICargo.GetCargoIncome(cargo, i, travel_time.tointeger()) * capacity;
+						local costs = AIEngine.GetRunningCost(newEngineID) / World.DAYS_PER_YEAR * travel_time;
+
+						income -= costs;
+
+						income /= i;
+
+						if (optimal_income > income || income <= 0)
+							continue;
+
+						optimal_income = income;
+						optimal_distance = i;
+//						Log.logWarning("[" + optimal_distance + "]" +  income + " - " + costs + " = " + (income - costs) + " time to: " + travel_time);
+					}
+
+					cargoHoldingEngineIds[vehicleType][cargo] = engineID;
+					optimalDistances[vehicleType][cargo] = optimal_distance;
+					Log.logWarning("Optimal distance: " + optimal_distance);
+				}
 			}
 		}
 	}

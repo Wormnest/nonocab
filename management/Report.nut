@@ -38,6 +38,8 @@ class Report
 	
 	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
 	loadingTime = 0;                   // The time it takes to load a vehicle.
+
+	world = 0;
 	
 	/**
 	 * Construct a connection report.
@@ -50,6 +52,7 @@ class Report
 	 */
 	constructor(world, travelFromNode, travelToNode, cargoID, transportEngineID, holdingEngineID, cargoAlreadyTransported) {
 
+		this.world = world;
 		this.transportEngineID = transportEngineID;
 		this.holdingEngineID = holdingEngineID;
 		toConnectionNode = travelToNode;
@@ -196,9 +199,6 @@ class Report
 		}
 		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
 
-//		if (nrVehicles > 0.75 && nrVehicles < 1)
-//			nrVehicles = 1;
-//		else
 		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection == null || connection.pathInfo.build))
 			nrVehicles = 1;
 		else
@@ -233,7 +233,7 @@ class Report
 		}
 
 		brutoCostPerMonth = 0;
-		brutoCostPerMonthPerVehicle = World.DAYS_PER_MONTH * AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR;
+		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * nrWagonsPerVehicle;
@@ -293,7 +293,31 @@ class Report
 
 		if (runningTimeBeforeReplacement == 0)
 			return 0;
-		return totalBrutoIncomePerMonth - totalBrutoCostPerMonth;
+
+		// Check how much this distances is from the 'optimal' distance.
+		local optimalDistance = world.optimalDistances[AIEngine.GetVehicleType(transportEngineID)][cargoID];
+		local distance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
+
+		local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
+		local income = GetIncomePerVehicle(distance).tointeger();
+		local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
+		return (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) * delta;
+	}
+
+	function GetIncomePerVehicle(distance) {
+
+		if (connection != null && connection.pathInfo.build)
+			return 1;
+
+		local capacity = 20;//AIEngine.GetCapacity(transportEngineID);
+		local travel_time = distance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportEngineID);
+		local income = AICargo.GetCargoIncome(cargoID, distance, travel_time.tointeger()) * capacity;
+		local costs = AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR * travel_time;
+
+		income -= costs;
+
+		income /= distance;
+		return income;
 	}
 	
 	/**
