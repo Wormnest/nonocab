@@ -32,9 +32,7 @@ function Parlement::ExecuteReports() {
 		// other reports. So it may very well be that the utility becomes
 		// negative because we don't have enough money to buy - for instance -
 		// a couple of vehicles and can only pay for the road.
-		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) < 0) {// ||
-//			!report.connection.pathInfo.build && Finance.GetMaxMoneyToSpend() < mostExpensiveConnectionBuild)
-//			!report.connection.pathInfo.build && !canBuild) {
+		if (report.UtilityForMoney(Finance.GetMaxMoneyToSpend()) < 0) {
 			if (report.nrVehicles < 0) {
 				Log.logError(report.ToString());
 				Log.logWarning(report.UtilityForMoney(Finance.GetMaxMoneyToSpend()));
@@ -44,7 +42,7 @@ function Parlement::ExecuteReports() {
 		}
 			
 		// Allow building so long we have at least as much money as the most expensive build in this session.
-		if (!report.connection.pathInfo.build && mostExpensiveBuild > Finance.GetMaxMoneyToSpend())
+		if (report.connection == null || !report.connection.pathInfo.build && mostExpensiveBuild > Finance.GetMaxMoneyToSpend())
 			continue;
 
 		ignoreList.push(report);

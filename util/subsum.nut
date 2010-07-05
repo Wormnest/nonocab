@@ -153,26 +153,29 @@
 		local reportlist = [];
 		reportlist.extend(reportlist_);
 
+ 		local moneyToSpend = Finance.GetMaxMoneyToSpend();
 		local maxLoan = AICompany.GetMaxLoanAmount() * 0.8;
- 		local greedySubSum = SubSum.GetGreedySubSum(reportlist, maxLoan);
 
-		// check if the first connection we 
-		local testList = SubSum.GetGreedySubSum(reportlist, maxLoan);
-		local firstBuildReport = null;
-		foreach (report in testList[0]) {
-			if (report.connection != null && !report.connection.pathInfo.build) {
-				firstBuildReport = report;
-				break;
+		local constructionAllowed = maxLoan < moneyToSpend;
+
+		if (!constructionAllowed) {
+	 		local greedySubSum = SubSum.GetGreedySubSum(reportlist, maxLoan);
+
+			// check if the first connection we 
+			local testList = SubSum.GetGreedySubSum(reportlist, maxLoan);
+			local firstBuildReport = null;
+			foreach (report in testList[0]) {
+				if (report.connection != null && !report.connection.pathInfo.build) {
+					firstBuildReport = report;
+					break;
+				}
 			}
+
+			if (firstBuildReport != null && firstBuildReport.UtilityForMoney(moneyToSpend) > 0)
+				constructionAllowed = true;
 		}
 
-		local constructionAllowed = Finance.ConstructionAllowed();
 		local sellVehiclesReports = [];
-
- 		local moneyToSpend = Finance.GetMaxMoneyToSpend();
-		local constructionAllowed = false;
-		if (firstBuildReport != null && firstBuildReport.UtilityForMoney(moneyToSpend) > 0)
-			constructionAllowed = true;
 
 		// Filter the results.
 		for (local i = reportlist.len() - 1; i > -1; i--)

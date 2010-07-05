@@ -25,15 +25,11 @@ function TrainConnectionAdvisor::GetBuildAction(connection) {
  */
 function TrainConnectionAdvisor::GetPathInfo(report) {
 
-	if (AICargo.HasCargoClass(report.cargoID, AICargo.CC_MAIL))
-		return null;
 	// Don't do towns! Takes to long for the pathfinder sometimes...	
 	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && !allowTownToTownConnections)
 		return null;
 	local stationType = AIStation.STATION_TRAIN; 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
-
-	
 
 	// Check which rail type is best for this connection.
 	local bestRailType = TrainConnectionAdvisor.GetBestRailType(report.transportEngineID);

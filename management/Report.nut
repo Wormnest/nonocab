@@ -278,10 +278,12 @@ class Report
  	 * gained!
 	 */
 	function Utility() {
-
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
 		if (nrVehicles > maxBuildableVehicles)
 			nrVehicles = maxBuildableVehicles;
+
+		if (nrVehicles == 0)
+			return 0;
 			
 		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoIncomePerMonthPerVehicle);
 		
