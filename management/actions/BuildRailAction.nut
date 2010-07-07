@@ -287,6 +287,7 @@ function BuildRailAction::CleanupAfterFailure() {
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
 	
+	local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 	local direction;
 	local terraFormFrom;
 	local width;
@@ -313,7 +314,9 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	}
 
 	if (!AIRail.IsRailStationTile(railStationTile) &&
-		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
+//		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
+		!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, 
+		connection.cargoID, connection.travelFromNode.id, connection.travelToNode.id, distance, isStartStation)) {
 			return false;
 	} else if (!isConnectionBuild) {
 		if (isStartStation)

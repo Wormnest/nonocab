@@ -621,17 +621,25 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
 
 				// Calculate the optimal distance between the nodes for this vehicle.
-				if (!AIEngine.IsWagon(newEngineID)) {
+//				if (!AIEngine.IsWagon(newEngineID)) {
+				{
 					local optimal_distance = 0;
 					local optimal_income = 0;
 
-					local capacity = AIEngine.GetCapacity(newEngineID);
+					local transportingEngineID = cargoTransportEngineIds[vehicleType][cargo];
+					local carryingEngineID = cargoHoldingEngineIds[vehicleType][cargo];
+ 
+					local capacity = AIEngine.GetCapacity(carryingEngineID);
+
+					if (vehicleType == AIVehicle.VT_RAIL)
+						capacity *= 5;
+
 					// Cargo payments for distances over 637 do not change anymore.
 					for (local i = 30; i < 637; i++) {
 
-						local travel_time = i * Tile.straightRoadLength / AIEngine.GetMaxSpeed(newEngineID);
+						local travel_time = i * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportingEngineID);
 						local income = AICargo.GetCargoIncome(cargo, i, travel_time.tointeger()) * capacity;
-						local costs = AIEngine.GetRunningCost(newEngineID) / World.DAYS_PER_YEAR * travel_time;
+						local costs = AIEngine.GetRunningCost(transportingEngineID) / World.DAYS_PER_YEAR * travel_time;
 
 						income -= costs;
 
@@ -642,10 +650,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 
 						optimal_income = income;
 						optimal_distance = i;
-//						Log.logWarning("[" + optimal_distance + "]" +  income + " - " + costs + " = " + (income - costs) + " time to: " + travel_time);
 					}
 
-					cargoHoldingEngineIds[vehicleType][cargo] = engineID;
 					optimalDistances[vehicleType][cargo] = optimal_distance;
 					Log.logWarning("Optimal distance: " + optimal_distance);
 				}

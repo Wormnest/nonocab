@@ -232,6 +232,7 @@ class Report
 			}
 		}
 
+
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
@@ -303,6 +304,7 @@ class Report
 		local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
 		local income = GetIncomePerVehicle(distance).tointeger();
 		local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
+
 		return (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) * delta;
 	}
 
@@ -311,7 +313,9 @@ class Report
 		if (connection != null && connection.pathInfo.build)
 			return 1;
 
-		local capacity = 20;//AIEngine.GetCapacity(transportEngineID);
+		local capacity = AIEngine.GetCapacity(holdingEngineID);
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
+			capacity *= 5;
 		local travel_time = distance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportEngineID);
 		local income = AICargo.GetCargoIncome(cargoID, distance, travel_time.tointeger()) * capacity;
 		local costs = AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR * travel_time;

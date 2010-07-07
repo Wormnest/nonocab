@@ -211,8 +211,6 @@
 				reportlist.remove(i);
 				continue;
 			}
-
-			Log.logWarning("- " + reportlist[i].ToString() + " --- " +  reportlist[i].UtilityForMoney(moneyToSpend));
 		}
 
 		if (reportlist.len() == 0)
