@@ -653,7 +653,6 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 					}
 
 					optimalDistances[vehicleType][cargo] = optimal_distance;
-					Log.logWarning("Optimal distance: " + optimal_distance);
 				}
 			}
 		}
