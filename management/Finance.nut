@@ -28,6 +28,10 @@ class Finance {
 }
 
 function Finance::GetMaxMoneyToSpend() {
+	local balance = AICompany.GetBankBalance(AICompany.COMPANY_SELF)
+	if (balance >= 2147483647)
+		return balance;
+
 	return AICompany.GetBankBalance(AICompany.COMPANY_SELF) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount() - Finance.minimumBankReserve;
 }
 
