@@ -161,7 +161,7 @@ function RailPathUpgradeAction::UpgradeBridge(bridgeTile, newRailType) {
 
 	local bridgeTypes = AIBridgeList_Length(length + 1);
 	local bestBridgeType = null;
-	for (local bridge = bridgeTypes.Begin(); bridgeTypes.HasNext(); bridge = bridgeTypes.Next()) {
+	foreach (bridge, value in bridgeTypes) {
 		if (bestBridgeType == null || AIBridge.GetMaxSpeed(bridge) >= AIBridge.GetMaxSpeed(bestBridgeType))
 			bestBridgeType = bridge;
 	}

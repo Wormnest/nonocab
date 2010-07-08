@@ -239,7 +239,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	/* Walk all the tiles and see if we can build the airport at all */
 	{
     	local test = AITestMode();
-		for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+		foreach (tile, value in list) {
 			local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
 			if (airportType == null)
 				continue;
@@ -256,7 +256,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 		}
 
 		if (good_tile == -1) {
-			for (tile = list.Begin(); list.HasNext(); tile = list.Next()) {
+			foreach (tile, value in list) {
 				local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
 				if (airportType == null)
 					continue;

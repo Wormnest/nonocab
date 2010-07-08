@@ -190,7 +190,7 @@ function LocalAuthority::BuildHQ(town)
 	HQArea.Valuate(AIMap.DistanceManhattan, AITown.GetLocation(town));
 	HQArea.Sort(AIList.SORT_BY_VALUE, true);
 	
-	for (local tile = HQArea.Begin(); HQArea.HasNext(); tile = HQArea.Next()) {
+	foreach (tile, value in HQArea) {
 		if (AICompany.BuildCompanyHQ(tile)) {
 			return;
 		}

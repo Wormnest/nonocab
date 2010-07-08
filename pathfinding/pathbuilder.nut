@@ -116,6 +116,7 @@ class PathFixer extends Thread {
 function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimateCost) {
 
 	local buildSucceded = false;
+	local dummy = 0;
 	
 	switch (tileType) {
 		
@@ -157,10 +158,11 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 			// Find the cheapest and fastest bridge.
 			local bridgeTypes = AIBridgeList_Length(length);
 			local bestBridgeType = null;
-			for (local bridge = bridgeTypes.Begin(); bridgeTypes.HasNext(); bridge = bridgeTypes.Next()) {
-				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed))
+//			for (local bridge = bridgeTypes.Begin(); bridgeTypes.HasNext(); bridge = bridgeTypes.Next()) {
+			foreach (bridge, value in bridgeTypes) {
+				if (bestBridgeType == null || (AIBridge.GetPrice(bestBridgeType, length) > AIBridge.GetPrice(bridge, length) && AIBridge.GetMaxSpeed(bridge) >= maxSpeed)) 
 					bestBridgeType = bridge;
-			}		
+			}
 		
 			// Connect the bridge to the other end. Because the first road tile after the bridge has to
 			// be straight, we have to substract a tile in the opposite direction from where the bridge is
@@ -172,7 +174,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 		default:
 			assert(false);
 	}
-	
+
 	// Next check if the build was succesful, and if not store all relevant information.
 	if (!buildSucceded) {
 		

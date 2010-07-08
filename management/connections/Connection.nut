@@ -282,8 +282,10 @@ class Connection {
 			return;
  
  		local newTileList = AITileList();
- 		local tile = tileList.Begin();
- 		while (true) {
+		foreach (tile, value in tileList) {
+
+			if (excludeList.HasItem(tile))
+				continue;
  			local currentStationID = AIStation.GetStationID(tile);
 			foreach (surroundingTile in Tile.GetTilesAround(tile, true)) {
 				if (excludeList.HasItem(surroundingTile)) continue;
@@ -296,7 +298,9 @@ class Connection {
 					// Only explore this possibility if the station has the same name!
 					if (AIStation.GetName(stationID) != stationName)
 						continue;
-					AITile.DemolishTile(surroundingTile);
+					
+					while (AITile.IsStationTile(surroundingTile))
+						AITile.DemolishTile(surroundingTile);
 					
 					if (!newTileList.HasItem(surroundingTile))
 						newTileList.AddTile(surroundingTile);
@@ -304,15 +308,6 @@ class Connection {
 			}
 			
 			DemolishStations(newTileList, stationName, excludeList);
-			
-			tile = null;
-			while (tileList.HasNext()) {
-				tile = tileList.Next();
-				if (!excludeList.HasItem(tile))
-					break;
-			}
-			if (tile == null)
-				return;
  		}
 	}
 	
