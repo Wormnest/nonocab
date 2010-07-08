@@ -128,47 +128,52 @@ function LocalAuthority::ImproveRelations()
 	// Only improve relations with the town most hostile towards us.
 	local town_list = AITownList();
 	GetActiveTowns(town_list);
-	town_list.Valuate(AITown.GetRating, AICompany.COMPANY_SELF);
+	local companyId = AICompany.COMPANY_SELF;//AICompany.ResolveCompanyID(AICompany.COMPANY_SELF);
+	town_list.Valuate(AITown.GetRating, companyId);
+	town_list.KeepBelowValue(AITown.TOWN_RATING_GOOD);
+	town_list.RemoveValue(AITown.TOWN_RATING_NONE);
+	town_list.RemoveValue(AITown.TOWN_RATING_INVALID);
 	town_list.Sort(AIAbstractList.SORT_BY_VALUE, AIAbstractList.SORT_ASCENDING);
 
 	if (town_list.Count() > 0)
 	{
 		local town = town_list.Begin();
+		local tile = AITown.GetLocation(town);
 
-		// If the rating is below 0, start building trees.
-		if (AITown.GetRating(town, AICompany.COMPANY_SELF) > 0)
-			return;
-
-		Log.logInfo("Improve relations with " + AITown.GetName(town));
+		Log.logInfo("Improve relations with " + AITown.GetName(town) + " [" + AITown.GetRating(town, companyId) + "]");
 
 		// Check how large the town is.
-		local maxXSpread = 20;
-		while (AITile.IsWithinTownInfluence(tile + maxXSpread, id) || AITile.IsWithinTownInfluence(tile - maxXSpread, id))
-			maxXSpread += 10;
+		local maxXSpread = 5;
+		while (AITile.IsWithinTownInfluence(tile + maxXSpread, town) || AITile.IsWithinTownInfluence(tile - maxXSpread, town))
+			maxXSpread += 5;
 
-		local maxYSpread = 20;
-		while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), id) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), id))
-			maxYSpread += 10;
+		local maxYSpread = 5;
+		while (AITile.IsWithinTownInfluence(tile + maxYSpread * AIMap.GetMapSizeX(), town) || AITile.IsWithinTownInfluence(tile - maxYSpread * AIMap.GetMapSizeX(), town))
+			maxYSpread += 5;
 
-		maxXSpread += 20;
-		maxYSpread += 20;
+		maxXSpread += 5;
+		maxYSpread += 5;
 
 		local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
 
 		// Purge all unnecessary entries from the list.
-		list.Valuate(AITile.IsWithinTownInfluence, id);
-		list.KeepAboveValue(0);
+		list.Valuate(AITile.GetClosestTown);
+		list.KeepValue(town);
 		list.Valuate(AITile.IsBuildable);
 		list.KeepAboveValue(0);
 		
-		// Start building trees until we restored our reputation.
+		// Start planting trees until we restored our reputation.
+		list.Valuate(AIBase.RandItem);
+		local exec = AIExecMode();
 		foreach (tile, index in list)
 		{
-			AITile.PlantTree(tile);
-			// If the rating is below 0, start building trees.
-			if (AITown.GetRating(town, AICompany.COMPANY_SELF) > 200)
-				return;
+			while (AITile.PlantTree(tile));
+			// If the rating is good, stop building trees.
+			if (AITown.GetRating(town, companyId) == AITown.TOWN_RATING_GOOD)
+				break;
 		}
+
+		Log.logInfo("[Result] Improve relations with " + AITown.GetName(town) + " [" + AITown.GetRating(town, companyId) + "]");
 	}
 }
 
