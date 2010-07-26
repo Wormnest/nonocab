@@ -99,13 +99,13 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 	if (isTownToTown)
 		isAcceptingCargo = true;
 
-	local minimalAcceptance = (isTownToTown ? (stationRadius * stationRadius / 2) * 6 : 12);//stationRadius * stationRadius / 2);
+	local minimalAcceptance = (isTownToTown ? (stationRadius * stationRadius / 2) * 6 : 12);
 	local minimalProduction = (isTownToTown ? stationRadius * stationRadius / 1 : 8);
 
 	if (minimalAcceptance < 8)
 		minimalAcceptance = 8;
-	else if (minimalAcceptance > 92)
-		minimalAcceptance = 92;
+	else if (minimalAcceptance > 64)
+		minimalAcceptance = 64;
 
 	if (isTownToTown && minimalAcceptance < 32)
 		minimalAcceptance = 32;

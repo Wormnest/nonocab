@@ -13,7 +13,7 @@
 			// Only add when whe think that they will be profitable in the end.
 			// Don't look for things if they are to expensive.
 			if(utility > 0)
-				sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility));
+				sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 + utility : -utility));
 		}
 		
 		return sortedReports;
@@ -31,7 +31,7 @@
 			// Only add when whe think that they will be profitable in the end.
 			// Don't look for things if they are to expensive.
 			if(utility > 0)
-				sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility));
+				sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 + utility : -utility));
 		}
 		
 		return sortedReports;
@@ -108,13 +108,13 @@
 
 				// Check if we can afford this report.
 				local costs = report.GetCost(moneyToSpend);
-				if (moneyToSpend >= (costs = report.GetCost(moneyToSpend)) && utility_for_money > 0 || report.connection.pathInfo.build) {
+				if ((moneyToSpend >= (costs = report.GetCost(moneyToSpend)) || report.connection.pathInfo.build) && utility_for_money > 0) {
 					tmp_subsumList.push(report);
 
 					if (report.nrVehicles > 0)
 						utility += utility_for_money;
 					moneyToSpend -= costs;
-					sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 : -utility_for_money));
+					sortedReports.Insert(report, (report.nrVehicles < 0 ? -2147483647 + utility_for_money : -utility_for_money));
 				}
 			}
 

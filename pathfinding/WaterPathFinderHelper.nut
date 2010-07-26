@@ -2,8 +2,7 @@ class WaterPathFinderHelper extends PathFinderHelper {
 
 	standardOffsets = null;
 	straightOffsets = null;
-//	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
-	costTillEnd     = Tile.straightRoadLength;           // The cost for each tile till the end.
+	costTillEnd     = Tile.diagonalRoadLength;           // The cost for each tile till the end.
 	startLocationIsBuildOnWater = false;
 	endLocationIsBuildOnWater = false;
 	
