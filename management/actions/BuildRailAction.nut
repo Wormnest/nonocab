@@ -315,8 +315,10 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 
 	if (!AIRail.IsRailStationTile(railStationTile) &&
 //		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
-		!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, 
-		connection.cargoID, connection.travelFromNode.id, connection.travelToNode.id, distance, isStartStation)) {
+		!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
+		connection.travelFromNode.nodeType == "i" ? AIIndustryType.INDUSTRYTYPE_UNKNOWN : AIIndustryType.INDUSTRYTYPE_TOWN, 
+		connection.travelToNode.nodeType == "i" ? AIIndustryType.INDUSTRYTYPE_UNKNOWN : AIIndustryType.INDUSTRYTYPE_TOWN, 
+		distance, isStartStation)) {
 			return false;
 	} else if (!isConnectionBuild) {
 		if (isStartStation)
