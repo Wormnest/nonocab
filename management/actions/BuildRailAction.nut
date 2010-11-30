@@ -313,13 +313,21 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		height = 10;
 	}
 
-	if (!AIRail.IsRailStationTile(railStationTile) &&
-//		!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {
-		!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
-		connection.travelFromNode.nodeType == "i" ? AIIndustryType.INDUSTRYTYPE_UNKNOWN : AIIndustryType.INDUSTRYTYPE_TOWN, 
-		connection.travelToNode.nodeType == "i" ? AIIndustryType.INDUSTRYTYPE_UNKNOWN : AIIndustryType.INDUSTRYTYPE_TOWN, 
-		distance, isStartStation)) {
+	if (!AIRail.IsRailStationTile(railStationTile))
+	{
+		if (connection.travelFromNode.nodeType == "i" &&
+		    connection.travelToNode.nodeType == "i")
+		{
+			if (!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
+		        AIIndustry.GetIndustryType(connection.travelFromNode.id),
+		        AIIndustry.GetIndustryType(connection.travelToNode.id),
+		        distance, isStartStation))
+		        return false;
+		}
+		else if(!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW))
+		{
 			return false;
+		}
 	} else if (!isConnectionBuild) {
 		if (isStartStation)
 			connection.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
