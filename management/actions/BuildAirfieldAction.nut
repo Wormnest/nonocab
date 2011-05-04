@@ -164,12 +164,12 @@ function BuildAirfieldAction::Execute() {
 	start.tile = fromTile;
 	local end = AnnotatedTile();
 	end.tile = toTile;
-	connection.pathInfo.depot = AIAirport.GetHangarOfAirport(fromTile);
-	connection.pathInfo.depotOtherEnd = AIAirport.GetHangarOfAirport(toTile);
-	connection.pathInfo.roadList = [end, start];
+//	connection.pathInfo.depot = AIAirport.GetHangarOfAirport(fromTile);
+//	connection.pathInfo.depotOtherEnd = AIAirport.GetHangarOfAirport(toTile);
+//	connection.pathInfo.roadList = [end, start];
 	
 	local maxAirportCoverage = (AIAirport.GetAirportCoverageRadius(fromAirportType) < AIAirport.GetAirportCoverageRadius(toAirportType) ? AIAirport.GetAirportCoverageRadius(toAirportType) : AIAirport.GetAirportCoverageRadius(fromAirportType));
-	connection.UpdateAfterBuild(AIVehicle.VT_AIR, fromTile, toTile, maxAirportCoverage);
+	connection.UpdateAfterBuild(AIVehicle.VT_AIR, [end, start], AIAirport.GetHangarOfAirport(fromTile), AIAirport.GetHangarOfAirport(toTile), maxAirportCoverage);
 
 	CallActionHandlers();
 	totalCosts = AIAirport.GetPrice(toAirportType) + AIAirport.GetPrice(fromAirportType);

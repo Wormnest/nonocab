@@ -11,7 +11,6 @@ class World {
 	industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
-	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
 	/**
 	 * Because some engines are only there to hold cargo (e.g. wagons) while others
@@ -41,7 +40,6 @@ class World {
 	 */
 	constructor(niceCAB) {
 		niceCABEnabled = niceCAB;
-		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
 		town_list = AITownList();
@@ -71,7 +69,6 @@ class World {
 		
 		InitCargoTransportEngineIds();
 		
-		//BuildIndustryTree();
 		worldEventManager = WorldEventManager(this);
 	}
 	
@@ -282,6 +279,11 @@ function World::BuildIndustryTree() {
 	
 	// We want to preprocess all industries which can be build near water.
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
+	
+	// At the end of each iteration a town is added, this is used to construct the town to town connections
+	// by adding a connection between the current iteration's town and all towns processed before. This means
+	// that only a single connection is stored between any pair of towns.
+	local townConnectionNodes = [];
 	
 	Log.logInfo("Build town list.");
 	// Now handle the connections Industry --> Town
@@ -734,5 +736,3 @@ function World::PrintNode(node, depth) {
 	foreach (iNode in node.connectionNodeList)
 		PrintNode(iNode, depth + 1);
 }	
-
-

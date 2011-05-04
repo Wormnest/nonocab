@@ -22,17 +22,21 @@ class Connection {
 	travelFromNode = null;          // The node the cargo is carried from.
 	travelToNode = null;            // The node the cargo is carried to.
 	vehicleGroupID = null;            // The AIGroup of all vehicles serving this connection.
-	timeToTravelFrom = null;        // List containing the travel times for various enigneIDs.
-	timeToTravelTo = null;        // List containing the travel times for various enigneIDs.
 	pathInfo = null;                // PathInfo class which contains all information about the path.
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
-	travelFromNodeStationID = null; // The station ID which is build at the producing side.
-	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
 	connectionManager = null;       // Updates are send to all listeners when connection is realised, demolished or updated.
 
 	forceReplan = null;		// Force this connection to be replanned.
-	refittedForArticulatedVehicles = null; // It this connection able to support articulated vehicles?
 	
+	/**
+	 * Construct a new Connection.
+	 * @param cargo_id The type of cargo carried by this connection.
+	 * @param travel_from_node The ConnectionNode which is the start point of this connection.
+	 * @param travel_to_node The ConnectionNode which is the end point of this connection.
+	 * @param path_info The blueprint of this this connection is to be realized or (if path_info.build is true)
+	 * how it already has been realised.
+	 * @param connection_manager ...
+	 */
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info, connection_manager) {
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
@@ -41,12 +45,6 @@ class Connection {
 		connectionManager = connection_manager;
 		forceReplan = false;
 		bilateralConnection = travel_from_node.GetProduction(cargo_id) > 0 && travel_to_node.GetProduction(cargo_id) > 0;
-		refittedForArticulatedVehicles = false;
-		travelFromNodeStationID = null;
-		travelToNodeStationID = null;
-		
-		timeToTravelFrom = {};
-		timeToTravelTo = {};
 		
 		if (travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
 			if (travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE) {
@@ -69,13 +67,10 @@ class Connection {
 	function LoadData(data) {
 		pathInfo = PathInfo(null, null, null, null);
 		vehicleTypes = data["vehicleTypes"];
-		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		pathInfo.LoadData(data["pathInfo"]);
 		vehicleGroupID = data["vehicleGroupID"];
-		timeToTravelTo = data["timeToTravelTo"];
-		timeToTravelFrom = data["timeToTravelFrom"];
 		
-		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
+		UpdateAfterBuild(vehicleTypes, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
 	}
 	
 	function SaveData() {
@@ -84,11 +79,8 @@ class Connection {
 		saveData["travelFromNode"] <- travelFromNode.GetUID(cargoID);
 		saveData["travelToNode"] <- travelToNode.GetUID(cargoID);
 		saveData["vehicleTypes"] <- vehicleTypes;
-		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
 		saveData["pathInfo"] <- pathInfo.SaveData();
 		saveData["vehicleGroupID"] <- vehicleGroupID;
-		saveData["timeToTravelTo"] <- timeToTravelTo;
-		saveData["timeToTravelFrom"] <- timeToTravelFrom;
 		return saveData;
 	}
 	
@@ -115,9 +107,7 @@ class Connection {
 						local engineID = AIVehicle.GetEngineType(vehicle);
 						if (!AIEngine.IsBuildable(engineID))
 							continue;
-						if (!timeToTravelTo.rawin(engineID))
-							UpdateTravelTimes(engineID);
-						local travelTime = timeToTravelTo.rawget(engineID) + timeToTravelFrom.rawget(engineID);
+						local travelTime = pathInfo.GetTravelTime(engineID, false) + pathInfo.GetTravelTime(engineID, true);
 						cargoAlreadyTransported += (World.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
 					}
 				}
@@ -127,38 +117,26 @@ class Connection {
 		return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
 	}
 	
-	function UpdateTravelTimes(engineID) {	
-		local vehicleType = vehicleTypes;
-		// Check if the travel times are already know for this engine type, if not: update them!
-		if (vehicleType == AIVehicle.VT_ROAD) {
-			timeToTravelTo[engineID] <- RoadPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-			timeToTravelFrom[engineID] <- RoadPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-		} else if (vehicleType == AIVehicle.VT_AIR){ 
-			local manhattanDistance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
-			timeToTravelTo[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
-			timeToTravelFrom[engineID] <- (manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID)).tointeger();
-		} else if (vehicleType == AIVehicle.VT_WATER) {
-			timeToTravelTo[engineID] <- WaterPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-			timeToTravelFrom[engineID] <- WaterPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-		} else if (vehicleType == AIVehicle.VT_RAIL) {
-			timeToTravelTo[engineID] <- RailPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), true);
-			timeToTravelFrom[engineID] <- RailPathFinderHelper.GetTime(pathInfo.roadList, AIEngine.GetMaxSpeed(engineID), false);
-		} else
-			assert (false);
-	}
-	
 	/**
 	 * If the connection is build this function is called to update its
 	 * internal state.
 	 */
-	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
+	function UpdateAfterBuild(vehicleType, pathInfo, stationCoverageRadius) {
+		this.pathInfo = pathInfo;
 		pathInfo.build = true;
-		pathInfo.nrRoadStations = 1;
+		//pathInfo.nrRoadStations = 1;
 		pathInfo.buildDate = AIDate.GetCurrentDate();
+		//pathInfo.roadList = roadList;
+
+		local fromTile = pathInfo.roadList[roadList.len() - 1];
+		local toTile = pathInfo.roadList[0];
+
+		pathInfo.travelFromNodeStationID = AIStation.GetStationID(fromTile);
+		pathInfo.travelToNodeStationID = AIStation.GetStationID(toTile);
+
 		lastChecked = AIDate.GetCurrentDate();
 		vehicleTypes = vehicleType;
-		travelFromNodeStationID = AIStation.GetStationID(fromTile);
-		travelToNodeStationID = AIStation.GetStationID(toTile);
+		
 		forceReplan = false;
 
 		// In the case of a bilateral connection we want to make sure that

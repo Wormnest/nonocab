@@ -11,6 +11,8 @@ class BuildRailAction extends Action
 	stationsConnectedTo = null; // The stations we've shared a connection with.
 	railStationFromTile = -1;   // The location of the rail station at the source location.
 	railStationToTile = -1;     // The location of the rail station at the dropoff location.
+	pathInfo = null;            // While executing the action we keep track of all bits which have
+	                            // been constructed so we can clean them up afterwards.
 	
 	/**
 	 * @param pathList A PathInfo object, the rails to be build.
@@ -53,6 +55,13 @@ function BuildRailAction::Execute() {
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
 	//pathFinderHelper.costForTurn = 20;
+	
+	/**
+	 * We find a possible road to possition the train station. After building the station we look for
+	 * a new path to connect the end and start tiles. This is necessary because it is possible that
+	 * terraforming needs to be performed to place the stations which might make the initial path
+	 * invalid.
+	 */
 	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (prePathInfo == null) {
@@ -129,9 +138,11 @@ function BuildRailAction::Execute() {
 	beginNodes.AddTile(roadList[len - 1].tile);
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
-	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
+	//connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
+	local bestPathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 
-	if (connection.pathInfo == null) {
+	//if (connection.pathInfo == null) {
+	if (bestPathInfo == null) {
 		Log.logWarning("Couldn't find a connection to build the rail road!");
 		if (buildRailStations) {
 			local ex = AIExecMode();
@@ -142,16 +153,18 @@ function BuildRailAction::Execute() {
 		connection.forceReplan = true;
 		return false;
 	}
-	roadList = connection.pathInfo.roadList;
+	//roadList = connection.pathInfo.roadList;
+	roadList = bestPathInfo.roadList;
 	len = roadList.len();
 
 	// Build the actual rails.
-	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	//local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	local pathBuilder = RailPathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
 		connection.forceReplan = true;
-		if (pathBuilder.lastBuildIndex != -1)
-			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(pathBuilder.lastBuildIndex);
+//		if (pathBuilder.lastBuildIndex != -1)
+//			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(pathBuilder.lastBuildIndex);
 		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
@@ -169,21 +182,23 @@ function BuildRailAction::Execute() {
 	}
 	
 	Log.logDebug("Build depot!");
+	local depotAtStart = null;
+	local depotAtEnd = null;
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
-		local depot = BuildDepot(roadList, len - 10, -1);
+		local depotAtStart = BuildDepot(roadList, len - 10, -1);
 
 		// Check if we could actualy build a depot:
-		if (depot == null) {
+		if (depotAtStart == null) {
 			Log.logError("Failed to build a depot :(");
 			connection.forceReplan = true;
 			return false;
 		}
 
-		connection.pathInfo.depot = depot;
+//		connection.pathInfo.depot = depot;
 
-		local otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
+		local depotAtEnd = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
 		if (otherDepot == null) {
 			Log.logError("Failed to build a depot :(");
 			connection.forceReplan = true;
@@ -194,7 +209,7 @@ function BuildRailAction::Execute() {
 	}
 	
 	// We only declare a connection built if both the depots and the rails are build.
-	connection.UpdateAfterBuild(AIVehicle.VT_RAIL, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
+	connection.UpdateAfterBuild(AIVehicle.VT_RAIL, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
@@ -330,9 +345,9 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		}
 	} else if (!isConnectionBuild) {
 		if (isStartStation)
-			connection.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
+			connection.pathInfo.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
 		else
-			connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
+			connection.pathInfo.travelToNodeStationID = AIStation.GetStationID(railStationTile);
 	}
 	
 	local preferedHeight = -1;

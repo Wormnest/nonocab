@@ -116,8 +116,8 @@ function ManageVehiclesAction::Execute()
 		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
-		local directionToggle = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) 
-		> AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
+		local directionToggle = AIStation.GetCargoWaiting(connection.pathInfo.travelFromNodeStationID, connection.cargoID) 
+		> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local roadList = connection.pathInfo.roadList;

@@ -123,10 +123,10 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 		}
 	
 		// Convert the stations too!
-		assert (AIStation.IsValidStation(connection.travelFromNodeStationID));
-		assert (AIStation.IsValidStation(connection.travelToNodeStationID));
-		local beginStationTiles = AITileList_StationType(connection.travelFromNodeStationID, AIStation.STATION_TRAIN);
-		local endStationTiles = AITileList_StationType(connection.travelToNodeStationID, AIStation.STATION_TRAIN);
+		assert (AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID));
+		assert (AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID));
+		local beginStationTiles = AITileList_StationType(connection.pathInfo.travelFromNodeStationID, AIStation.STATION_TRAIN);
+		local endStationTiles = AITileList_StationType(connection.pathInfo.travelToNodeStationID, AIStation.STATION_TRAIN);
 		foreach (tile, value in beginStationTiles)
 			AIRail.ConvertRailType(tile, tile, newRailType);
 		foreach (tile, value in endStationTiles)
