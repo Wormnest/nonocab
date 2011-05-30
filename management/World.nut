@@ -97,77 +97,12 @@ class World {
 	function PrintNode(node, depth);	
 }
 
-function World::LoadData(data, connectionManager) {
-
-	foreach (sd in data["activeConnections"]) {
-		Log.logInfo(sd["travelToNode"] + " " + sd["travelFromNode"] + " " + AICargo.GetCargoLabel(sd["cargoID"]));
-	}
-	
-	local openList = clone industry_tree;
-	local activeConnections = [];
-
-	local closedList = {};
-
-	// Add all connections from the root list to the closed list.
-	foreach (connectionNode in openList)
-		closedList[connectionNode.nodeType + connectionNode.id] <- true;
-
-	while (openList.len() != 0) {
-		local connectionFromNode = openList.remove(0);
-		foreach (connectionToNode in connectionFromNode.connectionNodeList) {
-			foreach (connectionSaveData in data["activeConnections"]) {
-				foreach (cargoID in connectionFromNode.cargoIdsProducing) {
-					if (connectionToNode.GetUID(cargoID) == connectionSaveData["travelToNode"] &&
-					connectionFromNode.GetUID(cargoID) == connectionSaveData["travelFromNode"] &&
-					cargoID == connectionSaveData["cargoID"]) {
-						local existingConnection = Connection(cargoID, connectionFromNode, connectionToNode, null, connectionManager);
-						existingConnection.LoadData(connectionSaveData);
-						connectionFromNode.AddConnection(connectionToNode, existingConnection);
-
-
-						if (!closedList.rawin(connectionToNode.nodeType + connectionToNode.id))
-							openList.push(connectionToNode);
-						closedList[connectionToNode.nodeType + connectionToNode.id] <- true;
-
-						Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + connectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
-						activeConnections.push(existingConnection);
-						break;
-					}
-				}
-			}
-		}
-	}
-	
+function World::LoadData(data) {
 	starting_year = data["starting_year"];
 	years_passed = data["years_passed"];
-	return activeConnections;
 }
 
 function World::SaveData(saveTable) {
-	/**
-	 * Only safe data of constructed connections.
-	 */
-	local activeConnections = [];
-	local openList = clone industry_tree;
-	local closedList = {};
-
-	// Add all connections from the root list to the closed list.
-	foreach (connectionNode in openList)
-		closedList[connectionNode.nodeType + connectionNode.id] <- true;
-	
-	while (openList.len() != 0) {
-		foreach (connection in openList.remove(0).activeConnections) {
-
-			activeConnections.push(connection.SaveData());
-			Log.logInfo("Saved connection from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " carrying " + AICargo.GetCargoLabel(connection.cargoID));
-			
-			if (!closedList.rawin(connection.travelToNode.nodeType + connection.travelToNode.id))
-				openList.push(connection.travelToNode);
-			closedList[connection.travelToNode.nodeType + connection.travelToNode.id] <- true;
-		}
-	}
-	
-	saveTable["activeConnections"] <- activeConnections;
 	saveTable["starting_year"] <- starting_year;
 	saveTable["years_passed"] <- years_passed;
 
@@ -320,8 +255,10 @@ function World::BuildIndustryTree() {
 
 		// Add town <-> town connections, we only store these connections as 1-way directions
 		// because they are bidirectional.
-		foreach (townConnectionNode in townConnectionNodes)
+		foreach (townConnectionNode in townConnectionNodes) {
 			townNode.connectionNodeList.push(townConnectionNode);
+			townConnectionNode.connectionNodeListReversed.push(townNode);
+		}
 
 		townConnectionNodes.push(townNode);
 		industry_tree.push(townNode);

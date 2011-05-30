@@ -220,7 +220,7 @@ function BuildRailAction::Execute() {
 	foreach (station in stationsConnectedTo) {
 		local connectionConnectedTo = connectionManager.GetConnection(station);
 		if (connectionConnectedTo == null) {
-			Log.logWarning("WTF!!!" + connection.travelFromNode.GetName() + " connected to " + connectionConnectedTo.travelFromNode.GetName());
+			Log.logWarning("WTF!!!" + station + " is not linked to a connection!?");
 			assert(false);
 		}
 		connectionManager.MakeInterconnected(connection, connectionConnectedTo);
