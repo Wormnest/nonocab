@@ -2,11 +2,16 @@
  * Handle all new road connections.
  */
 class TrainConnectionAdvisor extends ConnectionAdvisor {
+	
+//	pathFinder = null;
 	allowTownToTownConnections = null;
 
 	constructor(world, connectionManager, allowTownToTown) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
 		allowTownToTownConnections = allowTownToTown;
+/*		local pathFindingHelper = RailPathFinderHelper();
+		pathFindingHelper.updateClosedList = false;
+		pathFinder = RoadPathFinding(pathFindingHelper);
 */
 	}
 }

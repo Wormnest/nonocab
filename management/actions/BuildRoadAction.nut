@@ -30,6 +30,14 @@ function BuildRoadAction::Execute() {
 	local accounter = AIAccounting();
 
 	local isConnectionBuild = connection.pathInfo.build;
+	local newConnection = null;
+	local originalRoadList = null;
+
+	// If the connection is already build we will try to add additional road stations.
+	if (isConnectionBuild) {
+		newConnection = Connection(0, connection.travelFromNode, connection.travelToNode, 0, null);
+		originalRoadList = clone connection.pathInfo.roadList;
+	}
 
 	local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]));
 	local pathFinder = RoadPathFinding(pathFinderHelper);
@@ -50,21 +58,20 @@ function BuildRoadAction::Execute() {
 	local stationType = (!AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP); 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 
-	local bestRoad = null;
 	if (!isConnectionBuild)
-		bestRoad = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
-	else
-		bestRoad = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+		connection.pathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	else 
+		newConnection.pathInfo = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 
 	// If we need to build additional road stations we will temporaly overwrite the 
 	// road list of the connection with the roadlist which will build the additional
 	// road stations. 
 	if (isConnectionBuild) {
 
-		if (bestRoad == NULL)
+		if (newConnection.pathInfo == null)
 			return false;
 
-		connection.pathInfo.roadList = bestRoad;
+		connection.pathInfo.roadList = newConnection.pathInfo.roadList;
 		connection.pathInfo.build = true;
 	} else if (connection.pathInfo == null) {
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_ROAD);
@@ -75,22 +82,24 @@ function BuildRoadAction::Execute() {
 	// Check if we can build the road stations.
 	if (buildRoadStations) {
 		// Check if we have enough permission to build here.
-		if (AITown.GetRating(AITile.GetClosestTown(bestRoad.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
+		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[0].tile), AICompany.COMPANY_SELF) < -200)
 			return false;
 			
 		// Check if we have enough permission to build here.
-		if (AITown.GetRating(AITile.GetClosestTown(bestRoad.roadList[bestRoad.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
+		if (AITown.GetRating(AITile.GetClosestTown(connection.pathInfo.roadList[connection.pathInfo.roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200)
 			return false;	
 	}	
 
-	local roadList = bestRoad.roadList;
+	local roadList = connection.pathInfo.roadList;
 	local len = roadList.len();
 
 	// Build the actual road.
 	local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
-		if (!isConnectionBuild)
+		if (isConnectionBuild)
+			connection.pathInfo.roadList = originalRoadList;
+		else
 			connection.forceReplan = true;
 		Log.logError("BuildRoadAction: Failed to build a road " + AIError.GetLastErrorString());
 		return false;
@@ -98,16 +107,28 @@ function BuildRoadAction::Execute() {
 		
 	if (buildRoadStations) {
 		
-		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK;
+		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK; 
 		if (!BuildRoadStation(connection, roadList[0].tile, roadList[1].tile, roadVehicleType, isConnectionBuild, true) ||
 			!BuildRoadStation(connection, roadList[len - 1].tile, roadList[len - 2].tile, roadVehicleType, isConnectionBuild, isConnectionBuild)) {
 				Log.logError("BuildRoadAction: Road station couldn't be build! " + AIError.GetLastErrorString());
-				if (!isConnectionBuild)
+				if (isConnectionBuild)
+					connection.pathInfo.roadList = originalRoadList;
+				else
 					connection.forceReplan = true;				
 			return false;
 		}
 		
 		connection.pathInfo.nrRoadStations++;
+
+		// In the case of a bilateral connection we want to make sure that
+		// we don't hinder ourselves; Place the stations not to near each
+		// other.
+		if (connection.bilateralConnection && connection.connectionType == Connection.TOWN_TO_TOWN) {
+
+			local stationType = roadVehicleType == AIRoad.ROADVEHTYPE_TRUCK ? AIStation.STATION_TRUCK_STOP : AIStation.STATION_BUS_STOP;
+			connection.travelFromNode.AddExcludeTiles(connection.cargoID, roadList[len - 1].tile, AIStation.GetCoverageRadius(stationType));
+			connection.travelToNode.AddExcludeTiles(connection.cargoID, roadList[0].tile, AIStation.GetCoverageRadius(stationType));
+		}
 	}
 
 	// Check if we need to build a depot.	
@@ -130,16 +151,22 @@ function BuildRoadAction::Execute() {
 			connection.pathInfo.depotOtherEnd = otherDepot;
 		}
 	}
-
-	// If the connection wasn't build before update the connection.
-	if (!isConnectionBuild)
-		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 	
-	if (!connection.pathInfo.refittedForArticulatedVehicles &&
+	// We must make sure that the original road list is restored because we join the new
+	// road station with the existing one, but OpenTTD only recognices the original one!
+	// If we don't do this all vehicles which are build afterwards get wrong orders and
+	// the AI fails :(.
+	if (isConnectionBuild)
+		connection.pathInfo.roadList = originalRoadList;
+	// We only specify a connection as build if both the depots and the roads are build.
+	else
+		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
+	
+	if (!connection.refittedForArticulatedVehicles &&
 		AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
 	{
 		assert(buildRoadStations);
-		connection.pathInfo.refittedForArticulatedVehicles = true;
+		connection.refittedForArticulatedVehicles = true;
 	}
 
 	connection.lastChecked = AIDate.GetCurrentDate();

@@ -3,23 +3,23 @@
  */
 class PathInfo {
 
-	roadList = null;                // List of all road tiles the road needs to follow.
-	roadListReturn = null;          // Like roadList but for the return journey (only for trains).
-	extraRoadBits = null;           // Any extra road bits this connection requires. These are mainly the tracks
-	                                // needed by trains to link to the other platforms at stations or to connect
-	                                // the roadList and roadListReturn.
-	roadCost = null;                // The cost to create this road.
-	depot = null;                   // The location of the depot.
-	depotOtherEnd = null;           // The location of the depot at the other end (if it any).
-	build = null;                   // Is this path build?
-	vehicleType = null;             // The vehicle type this path info is for.
-	travelFromNodeStationID = null; // The station ID which is build at the producing side.
-	travelToNodeStationID = null;   // The station ID which is build at the accepting side.
+	roadList = null;          // List of all road tiles the road needs to follow.
+	roadListReturn = null;    // Like roadList but for the return journey (only for trains).
+	extraRoadBits = null;     // Any extra road bits this connection requires. These are mainly the tracks
+	                          // needed by trains to link to the other platforms at stations or to connect
+	                          // the roadList and roadListReturn.
+	roadCost = null;          // The cost to create this road.
+	depot = null;             // The location of the depot.
+	depotOtherEnd = null;     // The location of the depot at the other end (if it any).
+	build = null;             // Is this path build?
+	vehicleType = null;       // The vehicle type this path info is for.
 							
-	travelTimesCache = null;        // An array containing the travel times in days for vehicles with a certain speed.
+	travelTimesCache = null;  // An array containing the travel times in days for vehicles with a certain speed.
 
-	buildDate = null;               // The date this connection is build.
-	nrRoadStations = null;          // The number of road stations.
+	buildDate = null;         // The date this connection is build.
+	nrRoadStations = null;    // The number of road stations.
+	
+	refittedForArticulatedVehicles = null; // Has this path been refitted to allow articulated vehicles?
 
 	constructor(_roadList, _roadListReturn, _roadCost, _vehicleType) {
 		roadList = _roadList;
@@ -32,9 +32,6 @@ class PathInfo {
 		nrRoadStations = 0;
 		depot = null;
 		depotOtherEnd = null;
-		refittedForArticulatedVehicles = false;
-		travelFromNodeStationID = null;
-		travelToNodeStationID = null;		
 	}
 	
 	function LoadData(data) {
@@ -71,7 +68,6 @@ class PathInfo {
 		travelTimesCache = data["travelTimesCache"];
 		buildDate = data["buildDate"];
 		nrRoadStations = data["nrRoadStations"];
-		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 	}
 	
 	function SaveData() {
@@ -109,7 +105,6 @@ class PathInfo {
 		saveData["travelTimesCache"] <- travelTimesCache;
 		saveData["buildDate"] <- buildDate;
 		saveData["nrRoadStations"] <- nrRoadStations;
-		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
 		return saveData;
 	}
 	
@@ -120,7 +115,7 @@ class PathInfo {
 	 * (as calculated by the pathfinder).
 	 * return The number of days it takes to traverse a certain road.
 	 */
-	function GetTravelTime(engineID, forward);
+	function GetTravelTime(maxSpeed, forward);
 }
 
 function PathInfo::GetTravelTime(engineID, forward) {
@@ -144,11 +139,6 @@ function PathInfo::GetTravelTime(engineID, forward) {
 		time = WaterPathFinderHelper.GetTime(roadList, maxSpeed, forward);
 	else if (vehicleType == AIVehicle.VT_RAIL)
 		time = RailPathFinderHelper.GetTime(roadList, maxSpeed, forward);
-	else if (vehicleType == AIVehicle.VT_AIR)
-	{
-		local manhattanDistance = AIMap.DistanceManhattan(roadList[0].tile, roadList[roadList.len() - 1]);
-		time = (manhattanDistance * Tile.straightRoadLength / maxSpeed).tointeger();
-	} 
 	else
 		Log.logWarning("Unknown vehicle type: " + vehicleType);
 	

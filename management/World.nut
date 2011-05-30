@@ -11,6 +11,7 @@ class World {
 	industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
+	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 
 	/**
 	 * Because some engines are only there to hold cargo (e.g. wagons) while others
@@ -40,6 +41,7 @@ class World {
 	 */
 	constructor(niceCAB) {
 		niceCABEnabled = niceCAB;
+		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
 		town_list = AITownList();
@@ -69,6 +71,7 @@ class World {
 		
 		InitCargoTransportEngineIds();
 		
+		//BuildIndustryTree();
 		worldEventManager = WorldEventManager(this);
 	}
 	
@@ -97,12 +100,77 @@ class World {
 	function PrintNode(node, depth);	
 }
 
-function World::LoadData(data) {
+function World::LoadData(data, connectionManager) {
+
+	foreach (sd in data["activeConnections"]) {
+		Log.logInfo(sd["travelToNode"] + " " + sd["travelFromNode"] + " " + AICargo.GetCargoLabel(sd["cargoID"]));
+	}
+	
+	local openList = clone industry_tree;
+	local activeConnections = [];
+
+	local closedList = {};
+
+	// Add all connections from the root list to the closed list.
+	foreach (connectionNode in openList)
+		closedList[connectionNode.nodeType + connectionNode.id] <- true;
+
+	while (openList.len() != 0) {
+		local connectionFromNode = openList.remove(0);
+		foreach (connectionToNode in connectionFromNode.connectionNodeList) {
+			foreach (connectionSaveData in data["activeConnections"]) {
+				foreach (cargoID in connectionFromNode.cargoIdsProducing) {
+					if (connectionToNode.GetUID(cargoID) == connectionSaveData["travelToNode"] &&
+					connectionFromNode.GetUID(cargoID) == connectionSaveData["travelFromNode"] &&
+					cargoID == connectionSaveData["cargoID"]) {
+						local existingConnection = Connection(cargoID, connectionFromNode, connectionToNode, null, connectionManager);
+						existingConnection.LoadData(connectionSaveData);
+						connectionFromNode.AddConnection(connectionToNode, existingConnection);
+
+
+						if (!closedList.rawin(connectionToNode.nodeType + connectionToNode.id))
+							openList.push(connectionToNode);
+						closedList[connectionToNode.nodeType + connectionToNode.id] <- true;
+
+						Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + connectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
+						activeConnections.push(existingConnection);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
 	starting_year = data["starting_year"];
 	years_passed = data["years_passed"];
+	return activeConnections;
 }
 
 function World::SaveData(saveTable) {
+	/**
+	 * Only safe data of constructed connections.
+	 */
+	local activeConnections = [];
+	local openList = clone industry_tree;
+	local closedList = {};
+
+	// Add all connections from the root list to the closed list.
+	foreach (connectionNode in openList)
+		closedList[connectionNode.nodeType + connectionNode.id] <- true;
+	
+	while (openList.len() != 0) {
+		foreach (connection in openList.remove(0).activeConnections) {
+
+			activeConnections.push(connection.SaveData());
+			Log.logInfo("Saved connection from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + " carrying " + AICargo.GetCargoLabel(connection.cargoID));
+			
+			if (!closedList.rawin(connection.travelToNode.nodeType + connection.travelToNode.id))
+				openList.push(connection.travelToNode);
+			closedList[connection.travelToNode.nodeType + connection.travelToNode.id] <- true;
+		}
+	}
+	
+	saveTable["activeConnections"] <- activeConnections;
 	saveTable["starting_year"] <- starting_year;
 	saveTable["years_passed"] <- years_passed;
 
@@ -215,11 +283,6 @@ function World::BuildIndustryTree() {
 	// We want to preprocess all industries which can be build near water.
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	
-	// At the end of each iteration a town is added, this is used to construct the town to town connections
-	// by adding a connection between the current iteration's town and all towns processed before. This means
-	// that only a single connection is stored between any pair of towns.
-	local townConnectionNodes = [];
-	
 	Log.logInfo("Build town list.");
 	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
@@ -255,10 +318,8 @@ function World::BuildIndustryTree() {
 
 		// Add town <-> town connections, we only store these connections as 1-way directions
 		// because they are bidirectional.
-		foreach (townConnectionNode in townConnectionNodes) {
+		foreach (townConnectionNode in townConnectionNodes)
 			townNode.connectionNodeList.push(townConnectionNode);
-			townConnectionNode.connectionNodeListReversed.push(townNode);
-		}
 
 		townConnectionNodes.push(townNode);
 		industry_tree.push(townNode);
@@ -673,3 +734,5 @@ function World::PrintNode(node, depth) {
 	foreach (iNode in node.connectionNodeList)
 		PrintNode(iNode, depth + 1);
 }	
+
+

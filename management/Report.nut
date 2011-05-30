@@ -24,7 +24,7 @@ class Report
 	nrWagonsPerVehicle = 0;            // The number of wagons per vehicle we'll build.
 	transportEngineID = 0;             // The engine ID to transport the cargo.
 	holdingEngineID = 0;               // The engine ID to hold the cargo to be transported.
-	//utilityForMoneyNrVehicles = 0;     // After a call to 'UtilityForMoney', the number of
+	utilityForMoneyNrVehicles = 0;     // After a call to 'UtilityForMoney', the number of
 	                                   // vehicles used for the utility function is stored
 	                                   // in this parameter.
 	                                   
@@ -34,7 +34,7 @@ class Report
 	connection = null;                 // The proposed connection.
 	cargoID = 0;                       // The cargo to transport.
 	
-//	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
+	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
 	
 	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
 	loadingTime = 0;                   // The time it takes to load a vehicle.
@@ -68,7 +68,6 @@ class Report
 			isInvalid = true;
 			return;
 		}
-		
 		// Calculate the travel times for the prospected engine ID.
 		local maxSpeed = AIEngine.GetMaxSpeed(transportEngineID);
 		
@@ -351,7 +350,7 @@ class Report
 		local utility = Utility();
 		
 		// Restore values.
-		//utilityForMoneyNrVehicles = nrVehicles;
+		utilityForMoneyNrVehicles = nrVehicles;
 		nrVehicles = oldNrVehicles;
 		
 		// Return the utility;

@@ -127,8 +127,8 @@ function BuildShipYardAction::Execute() {
 	newRoadList.push(start);
 	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
 		start.tile = connection.travelFromNode.GetLocation();
-//	connection.pathInfo.roadList = newRoadList;
-	connection.UpdateAfterBuild(AIVehicle.VT_WATER, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
+	connection.pathInfo.roadList = newRoadList;
+	connection.UpdateAfterBuild(AIVehicle.VT_WATER, start.tile, end.tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 
 	CallActionHandlers();
 	totalCosts = accounter.GetCosts();
