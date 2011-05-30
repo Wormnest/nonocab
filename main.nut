@@ -11,7 +11,6 @@ class NoCAB extends AIController {
    	advisors = null;
    	planner = null;
    	loadData = null;
-   	activeConnections = null;
    	connectionManager = null;
    	pathFixer = null;
    	subsidyManager = null;
@@ -83,20 +82,8 @@ function NoCAB::Start()
 	}
 
 	world.BuildIndustryTree();
-
-	if (loadData) {
-		Log.logInfo("(2/5) Load path fixer data");
-		pathFixer.LoadData(loadData);
-		Log.logInfo("(3/5) Load active connections");
-		activeConnections = world.LoadData(loadData, connectionManager);
-		Log.logInfo("(4/5) Load connections to stationIds");
-		connectionManager.LoadData(loadData);
-		Log.logInfo("(5/5) Load successfull!");
-	}
 	
-	advisors = [
-		VehiclesAdvisor(world)
-	];
+	advisors = [];
 
 	if (GetSetting("Enable road vehicles")) {
 		Log.logInfo("Road vehicle advisor initiated!");
@@ -118,12 +105,17 @@ function NoCAB::Start()
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
-	
-	// If we loaded a game, add all active connections to the listeners.
+		
+	advisors.push(VehiclesAdvisor(world, connectionManager));
+
 	if (loadData) {
-		foreach (connection in activeConnections) {
-			connectionManager.ConnectionRealised(connection);
-		}
+		Log.logInfo("(2/5) Load path fixer data");
+		pathFixer.LoadData(loadData);
+		Log.logInfo("(3/5) Load active connections");
+		world.LoadData(loadData);
+		Log.logInfo("(4/5) Load active connections");
+		connectionManager.LoadData(loadData, world);
+		Log.logInfo("(5/5) Load successfull!");
 	}
 	
 	// Required by the Framwork: start with sleep.
@@ -135,9 +127,9 @@ function NoCAB::Start()
 
 	// Set company name.
 	local companyName =  (GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB");
-	if(!AICompany.SetName(companyName + " - v2.1.3")) {
+	if(!AICompany.SetName(companyName + " - v2.2.0")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.1.3 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.2.0 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);

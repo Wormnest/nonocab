@@ -2,14 +2,14 @@
  * This class is responsible of maintaining already build connections by
  * advising to sell or buy vehicles.
  */
-class VehiclesAdvisor extends Advisor { //, ConnectionListener
+class VehiclesAdvisor extends Advisor {
 
-	connections = null;					// The table of connections to manage.
+	connectionManager = null;
 	reports = null;
 	
-	constructor(world) {
+	constructor(world, connectionManager) {
 		Advisor.constructor(world);
-		connections = [];
+		this.connectionManager = connectionManager;
 		reports = [];
 	}
 }
@@ -64,7 +64,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 	
 	reports = [];
 
-	foreach (connection in connections) {
+	foreach (connection in connectionManager.allConnections) {
 
 		// If the road isn't build we can't micro manage, move on!
 		if (!connection.pathInfo.build) {
@@ -249,20 +249,6 @@ function VehiclesAdvisor::GetReports() {
 	}
 	
 	return reportsToReturn;
-}
-
-// Functions related to the interface ConnectionListener.
-function VehiclesAdvisor::ConnectionRealised(connection) {
-	connections.push(connection);
-}
-
-function VehiclesAdvisor::ConnectionDemolished(connection) {
-	for (local i = 0; i < connections.len(); i++) {
-		if (connections[i] == connection) {
-			connections.remove(i);
-			break;
-		}
-	}
 }
 
 function VehiclesAdvisor::HaltPlanner() {
