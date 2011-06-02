@@ -68,9 +68,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		// If the road isn't build we can't micro manage, move on!
 		if (!connection.pathInfo.build) {
-			Log.logWarning(connection.travelToNode.GetName());
-			Log.logWarning(connection.travelFromNode.GetName());
-			assert(false);
+			continue;
 		}
 
 		Log.logDebug("Check connection: " + connection);
