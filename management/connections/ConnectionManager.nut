@@ -95,8 +95,7 @@ function ConnectionManager::LoadData(data, world) {
 				connectionFromNode.AddConnection(foundConnectionToNode, existingConnection);
 					
 				Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + foundConnectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
-				ConnectionRealised(existingConnection);
-					
+
 				connectionProcesses = true;
 				break;
 			}
