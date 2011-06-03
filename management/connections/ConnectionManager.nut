@@ -23,6 +23,7 @@ class ConnectionManager {
 function ConnectionManager::SaveData(saveData) {
 	local CMsaveData = {};
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
+	CMsaveData["stationIDToConnection"] <- stationIDToConnection;
 	
 	local activeConnections = [];
 	foreach (connection in allConnections) {
@@ -36,6 +37,7 @@ function ConnectionManager::SaveData(saveData) {
 function ConnectionManager::LoadData(data, world) {
 	local CMsaveData = data["ConnectionManager"];
 	interConnectedStations = CMsaveData["interConnectedStations"];
+	stationIDToConnection = CMsaveData["stationIDToConnection"];
 	local unsuccessfulLoads = 0;
 	
 	local savedConnectionsData = CMsaveData["allConnections"];
@@ -109,7 +111,7 @@ function ConnectionManager::LoadData(data, world) {
 			Log.logError("A saved connection was not present!");
 		}
 	}
-	
+		
 	Log.logInfo("Successfully load: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
 }
 
@@ -199,6 +201,7 @@ function ConnectionManager::RemoveConnectionListener(listener) {
 
 function ConnectionManager::ConnectionRealised(connection) {
 	
+	assert (connection.pathInfo.build);
 	allConnections.push(connection);
 	
 	assert(AIStation.IsValidStation(connection.travelFromNodeStationID));
