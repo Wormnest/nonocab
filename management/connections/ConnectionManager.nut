@@ -23,7 +23,6 @@ class ConnectionManager {
 function ConnectionManager::SaveData(saveData) {
 	local CMsaveData = {};
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
-	CMsaveData["stationIDToConnection"] <- stationIDToConnection;
 	
 	local activeConnections = [];
 	foreach (connection in allConnections) {
@@ -37,7 +36,6 @@ function ConnectionManager::SaveData(saveData) {
 function ConnectionManager::LoadData(data, world) {
 	local CMsaveData = data["ConnectionManager"];
 	interConnectedStations = CMsaveData["interConnectedStations"];
-	stationIDToConnection = CMsaveData["stationIDToConnection"];
 	local unsuccessfulLoads = 0;
 	
 	local savedConnectionsData = CMsaveData["allConnections"];
