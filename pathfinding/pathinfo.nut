@@ -70,7 +70,6 @@ class PathInfo {
 		depot = data["depot"];
 		depotOtherEnd = data["depotOtherEnd"];
 		build = data["build"];
-		travelTimesCache = data["travelTimesCache"];
 		buildDate = data["buildDate"];
 		nrRoadStations = data["nrRoadStations"];
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
@@ -108,7 +107,6 @@ class PathInfo {
 		saveData["depot"] <- depot;
 		saveData["depotOtherEnd"] <- depotOtherEnd;
 		saveData["build"] <- build;
-		saveData["travelTimesCache"] <- travelTimesCache;
 		saveData["buildDate"] <- buildDate;
 		saveData["nrRoadStations"] <- nrRoadStations;
 		saveData["refittedForArticulatedVehicles"] <- refittedForArticulatedVehicles;
