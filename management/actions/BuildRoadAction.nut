@@ -162,11 +162,11 @@ function BuildRoadAction::Execute() {
 	else
 		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 	
-	if (!connection.refittedForArticulatedVehicles &&
+	if (!connection.pathInfo.refittedForArticulatedVehicles &&
 		AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
 	{
 		assert(buildRoadStations);
-		connection.refittedForArticulatedVehicles = true;
+		connection.pathInfo.refittedForArticulatedVehicles = true;
 	}
 
 	connection.lastChecked = AIDate.GetCurrentDate();

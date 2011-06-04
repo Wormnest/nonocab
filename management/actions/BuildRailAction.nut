@@ -330,9 +330,9 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		}
 	} else if (!isConnectionBuild) {
 		if (isStartStation)
-			connection.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
+			connection.pathInfo.travelFromNodeStationID = AIStation.GetStationID(railStationTile);
 		else
-			connection.travelToNodeStationID = AIStation.GetStationID(railStationTile);
+			connection.pathInfo.travelToNodeStationID = AIStation.GetStationID(railStationTile);
 	}
 	
 	local preferedHeight = -1;

@@ -116,8 +116,8 @@ function ManageVehiclesAction::Execute()
 		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
-		local directionToggle = AIStation.GetCargoWaiting(connection.travelFromNodeStationID, connection.cargoID) 
-		> AIStation.GetCargoWaiting(connection.travelToNodeStationID, connection.cargoID);
+		local directionToggle = AIStation.GetCargoWaiting(connection.pathInfo.travelFromNodeStationID, connection.cargoID) 
+		> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local roadList = connection.pathInfo.roadList;
@@ -236,9 +236,15 @@ function ManageVehiclesAction::Execute()
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.AIOF_NONE | extraOrderFlags);
 
 				// If it's a ship, give it additional orders!
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
-					for (local i = roadList.len() - 2; i > 0; i--)
+				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
+					for (local i = roadList.len() - 2; i > 0; i--) {
+						if (!AIMarine.IsBuoyTile(roadList[i].tile)) {
+							AISign.BuildSign(roadList[i].tile, "NO BUOY!?");
+							assert (false);
+						}
 						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.AIOF_NONE | extraOrderFlags);
+					}
+				}
 
 				if (vehicleType == AIVehicle.VT_RAIL)
 					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.AIOF_NONE | extraOrderFlags);

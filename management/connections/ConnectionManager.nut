@@ -141,8 +141,8 @@ function ConnectionManager::GetConnection(stationID) {
 }
 
 function ConnectionManager::GetInterconnectedConnections(connection) {
-	if (interConnectedStations.rawin(connection.travelFromNodeStationID)) {
-		local stationIDs = interConnectedStations.rawget(connection.travelFromNodeStationID);
+	if (interConnectedStations.rawin(connection.pathInfo.travelFromNodeStationID)) {
+		local stationIDs = interConnectedStations.rawget(connection.pathInfo.travelFromNodeStationID);
 		local connections = [];
 		
 		foreach (stationID in stationIDs)
@@ -155,26 +155,26 @@ function ConnectionManager::GetInterconnectedConnections(connection) {
 function ConnectionManager::MakeInterconnected(connection1, connection2) {
 	// First make the connections share eachother's connections.
 	local connectedStations1 = null;
-	if (interConnectedStations.rawin(connection1.travelFromNodeStationID))
-		connectedStations1 = interConnectedStations.rawget(connection1.travelFromNodeStationID);
+	if (interConnectedStations.rawin(connection1.pathInfo.travelFromNodeStationID))
+		connectedStations1 = interConnectedStations.rawget(connection1.pathInfo.travelFromNodeStationID);
 	else {
-		connectedStations1 = [connection1.travelFromNodeStationID];
-		interConnectedStations[connection1.travelFromNodeStationID] <- connectedStations1;
+		connectedStations1 = [connection1.pathInfo.travelFromNodeStationID];
+		interConnectedStations[connection1.pathInfo.travelFromNodeStationID] <- connectedStations1;
 	}
 	
 	// Make sure these stations weren't connected before.
 	for (local i = 0; i < connectedStations1.len(); i++)
-		if (connectedStations1[i] == connection2.travelFromNodeStationID)
+		if (connectedStations1[i] == connection2.pathInfo.travelFromNodeStationID)
 			return;
 	
 	Log.logWarning(connection1.travelFromNode.GetName() + " connected to " + connection2.travelFromNode.GetName());
 	
 	local connectedStations2 = null;
-	if (interConnectedStations.rawin(connection2.travelFromNodeStationID))
-		connectedStations2 = interConnectedStations.rawget(connection2.travelFromNodeStationID);
+	if (interConnectedStations.rawin(connection2.pathInfo.travelFromNodeStationID))
+		connectedStations2 = interConnectedStations.rawget(connection2.pathInfo.travelFromNodeStationID);
 	else {
-		connectedStations2 = [connection2.travelFromNodeStationID];
-		interConnectedStations[connection2.travelFromNodeStationID] <- connectedStations2;
+		connectedStations2 = [connection2.pathInfo.travelFromNodeStationID];
+		interConnectedStations[connection2.pathInfo.travelFromNodeStationID] <- connectedStations2;
 	}
 	
 	// Combine the arrays.
@@ -202,11 +202,11 @@ function ConnectionManager::ConnectionRealised(connection) {
 	assert (connection.pathInfo.build);
 	allConnections.push(connection);
 	
-	assert(AIStation.IsValidStation(connection.travelFromNodeStationID));
-	stationIDToConnection[connection.travelFromNodeStationID] <- connection;
+	assert(AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID));
+	stationIDToConnection[connection.pathInfo.travelFromNodeStationID] <- connection;
 	
-	assert(AIStation.IsValidStation(connection.travelToNodeStationID));
-	stationIDToConnection[connection.travelToNodeStationID] <- connection;
+	assert(AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID));
+	stationIDToConnection[connection.pathInfo.travelToNodeStationID] <- connection;
 	foreach (listener in connectionListeners)
 		listener.ConnectionRealised(connection);
 }

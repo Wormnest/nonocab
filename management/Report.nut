@@ -24,9 +24,6 @@ class Report
 	nrWagonsPerVehicle = 0;            // The number of wagons per vehicle we'll build.
 	transportEngineID = 0;             // The engine ID to transport the cargo.
 	holdingEngineID = 0;               // The engine ID to hold the cargo to be transported.
-	utilityForMoneyNrVehicles = 0;     // After a call to 'UtilityForMoney', the number of
-	                                   // vehicles used for the utility function is stored
-	                                   // in this parameter.
 	                                   
 	fromConnectionNode = null;         // The node which produces the cargo.
 	toConnectionNode = null;           // The node which accepts the produced cargo.
@@ -350,7 +347,6 @@ class Report
 		local utility = Utility();
 		
 		// Restore values.
-		utilityForMoneyNrVehicles = nrVehicles;
 		nrVehicles = oldNrVehicles;
 		
 		// Return the utility;
