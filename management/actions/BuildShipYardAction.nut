@@ -96,6 +96,8 @@ function BuildShipYardAction::Execute() {
 	local waterBuilder = WaterPathBuilder(connection.pathInfo.roadList);
 	if (!waterBuilder.RealiseConnection()) {
 		AILog.Error("Couldn't build the water way!");
+		AIMarine.RemoveDock(fromTile);
+		AIMarine.RemoveDock(toTile);
 		return false;
 	}
 		
@@ -106,13 +108,20 @@ function BuildShipYardAction::Execute() {
 
 	/* Now build some depots... */
 	connection.pathInfo.depot = BuildDepot(roadList, true);
-	if (connection.pathInfo.depot == null)
+	if (connection.pathInfo.depot == null) {
+		AIMarine.RemoveDock(fromTile);
+		AIMarine.RemoveDock(toTile);
 		return false;
+	}
 
 	if (connection.bilateralConnection) {
 		connection.pathInfo.depotOtherEnd = BuildDepot(roadList, false);
-		if (connection.pathInfo.depotOtherEnd == null)
+		if (connection.pathInfo.depotOtherEnd == null) {
+			AIMarine.RemoveDock(fromTile);
+			AIMarine.RemoveDock(toTile);
+			AIMarine.RemoveWaterDepot(connection.pathInfo.depot);
 			return false;
+		}
 	}
 
 
