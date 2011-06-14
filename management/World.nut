@@ -46,13 +46,13 @@ class World {
 		years_passed = 0;
 		town_list = AITownList();
 		town_list.Valuate(AITown.GetPopulation);
-		town_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		town_list.Sort(AIList.SORT_BY_VALUE, false);
 		industry_table = {};
 		industry_list = AIIndustryList();
 
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
-		cargo_list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+		cargo_list.Sort(AIList.SORT_BY_VALUE, false);
 		maxCargoID = cargo_list.Begin();
 		industryCacheAccepting = array(maxCargoID + 1);
 		industryCacheProducing = array(maxCargoID + 1);

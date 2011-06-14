@@ -25,6 +25,11 @@ class Finance {
 	 * Check if we are allowed to build with the current amount of money.
 	 */
 	function ConstructionAllowed();
+	
+	/**
+	 * Get the income we generate per month.
+	 */
+	 function GetProjectedIncomePerMonth();
 }
 
 function Finance::GetMaxMoneyToSpend() {
@@ -48,4 +53,17 @@ function Finance::RepayLoan() {
 
 function Finance::ConstructionAllowed() {
 	return Finance.GetMaxMoneyToSpend() >= AICompany.GetMaxLoanAmount() * 0.8;
+}
+
+function Finance::GetProjectedIncomePerMonth() {
+
+	local tailSize = 6;
+	if (AICompany.EARLIEST_QUARTER < 6)
+		tailSize = AICompany.EARLIEST_QUARTER;
+
+	local averageGains = 0;
+	for (local i = AICompany.CURRENT_QUARTER; i < tailSize; i++) {
+		averageGains += AICompany.GetQuarterlyIncome(AICompany.COMPANY_SELF, i) + AICompany.GetQuarterlyExpenses(AICompany.COMPANY_SELF, i);
+	}
+	return averageGains / (tailSize + 3);
 }

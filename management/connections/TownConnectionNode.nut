@@ -128,7 +128,7 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 
 		if (keepBestOnly) {
 			list.Valuate(AITile.GetCargoAcceptance, cargoID, stationSizeX, stationSizeY, stationRadius);
-			list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			list.Sort(AIList.SORT_BY_VALUE, false);
 			list.KeepTop(1);
 		}
 	}

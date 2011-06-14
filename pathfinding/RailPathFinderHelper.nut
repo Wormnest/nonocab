@@ -121,11 +121,6 @@ class RailPathFinderHelper extends PathFinderHelper {
  */
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 	this.expectedEnd = expectedEnd;
-	
-	if (closed_list.len() != 0)
-		wdjfklsd();
-	//if (startList.Count() == 0)
-	//	return;
 
 	local mapSizeX = AIMap.GetMapSizeX();
 	if (!checkStartPositions) {
@@ -365,16 +360,10 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 		
 	if (at.parentTile.direction != at.direction)
 		return false;
-		
-	//if (!checkEndPositions && (!AIRail.IsRailStationTile(at.tile + at.direction) || AIRail.GetRailStationDirection(at.tile + at.direction) != direction)) {
-	//	end.RemoveValue(at.tile);
-	//	return false;
-	//}
 
-	//return true;
 	// If we need to check the end positions then we either have to be able to build a road station
-	// Either the slope is flat or it is downhill, othersie we can't build a depot here
-	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
+	// Either the slope is flat or it is downhill, otherwise we can't build a depot here
+	// Don't allow a tunnel to be near the planned end points because it can do terraforming, thereby ruining the prospected location.
 	if (checkEndPositions) {
 
 		if (!goalAndDirectionTable.rawin(at.tile + "-" + at.direction))
@@ -658,7 +647,7 @@ function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 	else if (railTrack1 == AIRail.RAILTRACK_NE_SE)
 		return (railTracks2 & ~AIRail.RAILTRACK_NW_SW) != 0;
 		
-	// All options should be expired.
+	// All options should be exhausted.
 	assert (false);
 }
 
@@ -700,12 +689,6 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		
 		local nextTile = currentTile + offset;
 
-		// Skip if this node is already processed.
-		local isInClosedList = false;
-/*		if (((currentAnnotatedTile.length <= NEAR_STATION_DISTANCE || 
-		        AIMap.DistanceManhattan(currentTile, expectedEnd) <= NEAR_STATION_DISTANCE)) && closed_list.rawin(nextTile + "-" + offset))
-			isInClosedList = true;
-*/
 		local distanceToEnd = AIMap.DistanceManhattan(nextTile, expectedEnd);
 		if (distanceToEnd < NEAR_STATION_DISTANCE / 2)
 			been_near_end = true;
@@ -785,129 +768,120 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				}
 			}
 
-			if (!isInClosedList) {
-				
-				if (AIRail.IsRailStationTile(currentTile) && AIRail.IsRailStationTile(nextTile))
+			if (AIRail.IsRailStationTile(currentTile) && AIRail.IsRailStationTile(nextTile))
+				continue;
+			local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
+			local railTrackDirection = -1;
+			
+			local annotatedTile = GetNextAnnotatedTile(offset, nextTile, currentAnnotatedTile.lastBuildRailTrack);
+			if (annotatedTile == null)
+				continue;
+			nextTile = annotatedTile.tile;
+			railTrackDirection = annotatedTile.lastBuildRailTrack;
+			
+			// If the next tile is a rail tile, make sure we do not cross it ortogonally.
+			local roadTrack = AIRail.GetRailTracks(nextTile);
+			if (roadTrack != AIRail.RAILTRACK_INVALID) {
+				if ((roadTrack & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW && 
+					railTrackDirection == AIRail.RAILTRACK_NW_SE)
 					continue;
-				local previousTile = currentAnnotatedTile.parentTile != currentAnnotatedTile ? currentAnnotatedTile.parentTile.tile : currentAnnotatedTile.tile - offset;
-				local railTrackDirection = -1;
-				
-				local annotatedTile = GetNextAnnotatedTile(offset, nextTile, currentAnnotatedTile.lastBuildRailTrack);
-				if (annotatedTile == null)
+				else if ((roadTrack & AIRail.RAILTRACK_NW_SE) == AIRail.RAILTRACK_NW_SE && 
+					railTrackDirection == AIRail.RAILTRACK_NE_SW)
 					continue;
-				nextTile = annotatedTile.tile;
-				railTrackDirection = annotatedTile.lastBuildRailTrack;
-				
-				// If the next tile is a rail tile, make sure we do not cross it ortogonally.
-				local roadTrack = AIRail.GetRailTracks(nextTile);
-				if (roadTrack != AIRail.RAILTRACK_INVALID) {
-					if ((roadTrack & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW && 
-						railTrackDirection == AIRail.RAILTRACK_NW_SE)
-						continue;
-					else if ((roadTrack & AIRail.RAILTRACK_NW_SE) == AIRail.RAILTRACK_NW_SE && 
-						railTrackDirection == AIRail.RAILTRACK_NE_SW)
-						continue;
-					else if (((roadTrack & AIRail.RAILTRACK_NW_NE) == AIRail.RAILTRACK_NW_NE ||
-						(roadTrack & AIRail.RAILTRACK_SW_SE) == AIRail.RAILTRACK_SW_SE) &&
-						(railTrackDirection == AIRail.RAILTRACK_NW_SW || railTrackDirection == AIRail.RAILTRACK_NE_SE))
-						continue;
-					else if (((roadTrack & AIRail.RAILTRACK_NW_SW) == AIRail.RAILTRACK_NW_SW ||
-						(roadTrack & AIRail.RAILTRACK_NE_SE) == AIRail.RAILTRACK_NE_SE) &&
-						(railTrackDirection == AIRail.RAILTRACK_NW_NE || railTrackDirection == AIRail.RAILTRACK_SW_SE))
-						continue;
-				}
-
-				// If the next tile is a road tile, only allow bridges over or bridges beneath it!
-				if (AIRoad.IsRoadTile(nextTile))
+				else if (((roadTrack & AIRail.RAILTRACK_NW_NE) == AIRail.RAILTRACK_NW_NE ||
+					(roadTrack & AIRail.RAILTRACK_SW_SE) == AIRail.RAILTRACK_SW_SE) &&
+					(railTrackDirection == AIRail.RAILTRACK_NW_SW || railTrackDirection == AIRail.RAILTRACK_NE_SE))
 					continue;
-
-				// Check if the road is sloped.
-				if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
-					annotatedTile.distanceFromStart = costForSlope;
-
-				if (currentAnnotatedTile.direction != offset) {
-					annotatedTile.distanceFromStart += costForTurn;
-					
-					if (currentAnnotatedTile.tilesInSameDirection < 5)
-						annotatedTile.distanceFromStart += costForTurn * 3;
-					annotatedTile.tilesInSameDirection = 0;
-				} else if (goingStraight) {
-					annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 1;
-				} else {
-					annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 0.5;
-				}
-
-				local existingRailTracks = AIRail.GetRailTracks(nextTile);
-				local reuseRailTrack = false;
-				//local reuseRailTrack = existingRailTracks != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
-				if (existingRailTracks != AIRail.RAILTRACK_INVALID) {
-					local doRailCross = DoRailsCross(railTrackDirection, existingRailTracks);
-
-					// If this rail tile crosses, the previous cannot cross. I.e. we MUST make use of 
-					// a piece of rail if we decide to cross.
-					if (doRailCross && 
-					    DoRailsCross(currentAnnotatedTile.lastBuildRailTrack, AIRail.GetRailTracks(currentTile)))
-						continue;
-
-					reuseRailTrack = (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
-					
-					// If we do now cross nor reuse a rail we cannot allow this rail to be build. Because when
-					// we upgrade the rails we upgrade per tile and we cannot have 2 non crossing rails on the
-					// same tile as we do not have the means to detect this. Failing to do this will result in
-					// trains being stuck after upgrading to an incompetable rail type.
-					if (!reuseRailTrack && !doRailCross)
-						continue;
-
-					// If we do reuse increment the counter.
-					if (reuseRailTrack)
-						annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces + 1;
-
-					// If we cross, make sure we have reused at least 6 rail tracks so we can assure
-					// we don't get any trouble with the crossings.
-					if (doRailCross && currentAnnotatedTile.reusedPieces < 6 && currentAnnotatedTile.reusedPieces > 0)
-						continue;
-				}
-
-				// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
-				if (reuseRailTrack) {
-					
-					// Make sure the train can ride on this!
-					//local currentRailType = AIRail.GetCurrentRailType();
-					local tileRailType = AIRail.GetRailType(nextTile);
-					if (!AIRail.TrainCanRunOnRail(currentRailType, tileRailType) ||
-					    !AIRail.TrainHasPowerOnRail(currentRailType, tileRailType))
-						continue;
-					
-					if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
-						continue;
-					
-					annotatedTile.alreadyBuild = true;
-
-					if (!goingStraight)
-						annotatedTile.distanceFromStart += costForRail / 2;
-					else
-						annotatedTile.distanceFromStart += costForRail;
-				} else if (!goingStraight)
-					annotatedTile.distanceFromStart += costForNewRail / 2;
-				else
-					annotatedTile.distanceFromStart += costForNewRail;
-				
-				if (goingStraight)
-					annotatedTile.length = currentAnnotatedTile.length + 1;
-				else
-					annotatedTile.length = currentAnnotatedTile.length + 0.5;
-					
-				if (!reuseRailTrack)
-					annotatedTile.reusedPieces = 0;
-
-				tileArray.push(annotatedTile);
-
-				// Only use the direction sensitive closed list if we are either very close to the
-				// start or very close to the end point.
-				//if (currentAnnotatedTile.length < NEAR_STATION_DISTANCE || AIMap.DistanceManhattan(currentTile, expectedEnd) < NEAR_STATION_DISTANCE)
-				//	closed_list[currentTile + "-" + offset] <- true;
-					//closed_list[currentAnnotatedTile.tile + "-" + offset] <- true;
+				else if (((roadTrack & AIRail.RAILTRACK_NW_SW) == AIRail.RAILTRACK_NW_SW ||
+					(roadTrack & AIRail.RAILTRACK_NE_SE) == AIRail.RAILTRACK_NE_SE) &&
+					(railTrackDirection == AIRail.RAILTRACK_NW_NE || railTrackDirection == AIRail.RAILTRACK_SW_SE))
+					continue;
 			}
+
+			// If the next tile is a road tile, only allow bridges over or bridges beneath it!
+			if (AIRoad.IsRoadTile(nextTile))
+				continue;
+
+			// Check if the road is sloped.
+			if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
+				annotatedTile.distanceFromStart = costForSlope;
+
+			if (currentAnnotatedTile.direction != offset) {
+				annotatedTile.distanceFromStart += costForTurn;
+				
+				if (currentAnnotatedTile.tilesInSameDirection < 5)
+					annotatedTile.distanceFromStart += costForTurn * 3;
+				annotatedTile.tilesInSameDirection = 0;
+			} else if (goingStraight) {
+				annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 1;
+			} else {
+				annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 0.5;
+			}
+
+			local existingRailTracks = AIRail.GetRailTracks(nextTile);
+			local reuseRailTrack = false;
+			//local reuseRailTrack = existingRailTracks != AIRail.RAILTRACK_INVALID && (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+			if (existingRailTracks != AIRail.RAILTRACK_INVALID) {
+				local doRailCross = DoRailsCross(railTrackDirection, existingRailTracks);
+
+				// If this rail tile crosses, the previous cannot cross. I.e. we MUST make use of 
+				// a piece of rail if we decide to cross.
+				if (doRailCross && 
+				    DoRailsCross(currentAnnotatedTile.lastBuildRailTrack, AIRail.GetRailTracks(currentTile)))
+					continue;
+
+				reuseRailTrack = (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
+				
+				// If we do now cross nor reuse a rail we cannot allow this rail to be build. Because when
+				// we upgrade the rails we upgrade per tile and we cannot have 2 non crossing rails on the
+				// same tile as we do not have the means to detect this. Failing to do this will result in
+				// trains being stuck after upgrading to an incompetable rail type.
+				if (!reuseRailTrack && !doRailCross)
+					continue;
+
+				// If we do reuse increment the counter.
+				if (reuseRailTrack)
+					annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces + 1;
+
+				// If we cross, make sure we have reused at least 6 rail tracks so we can assure
+				// we don't get any trouble with the crossings.
+				if (doRailCross && currentAnnotatedTile.reusedPieces < 6 && currentAnnotatedTile.reusedPieces > 0)
+					continue;
+			}
+
+			// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
+			if (reuseRailTrack) {
+				
+				// Make sure the train can ride on this!
+				//local currentRailType = AIRail.GetCurrentRailType();
+				local tileRailType = AIRail.GetRailType(nextTile);
+				if (!AIRail.TrainCanRunOnRail(currentRailType, tileRailType) ||
+				    !AIRail.TrainHasPowerOnRail(currentRailType, tileRailType))
+					continue;
+				
+				if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
+					continue;
+				
+				annotatedTile.alreadyBuild = true;
+
+				if (!goingStraight)
+					annotatedTile.distanceFromStart += costForRail / 2;
+				else
+					annotatedTile.distanceFromStart += costForRail;
+			} else if (!goingStraight)
+				annotatedTile.distanceFromStart += costForNewRail / 2;
+			else
+				annotatedTile.distanceFromStart += costForNewRail;
+			
+			if (goingStraight)
+				annotatedTile.length = currentAnnotatedTile.length + 1;
+			else
+				annotatedTile.length = currentAnnotatedTile.length + 0.5;
+				
+			if (!reuseRailTrack)
+				annotatedTile.reusedPieces = 0;
+
+			tileArray.push(annotatedTile);
 		}
 	}
 	return tileArray;

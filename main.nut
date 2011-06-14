@@ -122,6 +122,8 @@ function NoCAB::Start()
 	initialized = true;
 	this.Sleep(1);
 	
+	Finance.RepayLoan();
+	
 	// Set president name.
 	AICompany.SetPresidentName("B.C. Ridder");
 
@@ -151,7 +153,12 @@ function NoCAB::Start()
 	// Do what we have to do.
 	//local thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
 	while(true) {
+/*		for (local i = AICompany.CURRENT_QUARTER; i != AICompany.EARLIEST_QUARTER && i != 6; i++) {
+			Log.logWarning(AICompany.GetQuarterlyIncome(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyExpenses(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyCargoDelivered(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyPerformanceRating(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyCompanyValue(AICompany.COMPANY_SELF, i));
+		}
 		
+		Log.logWarning("Average income per month: " + Finance.GetProjectedIncomePerMonth());
+*/
 		/*if (thisYear != AIDate.GetYear(AIDate.GetCurrentDate())) {
 			thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
 			AILog.Info(thisYear + "; Value " + AICompany.GetCompanyValue(AICompany.COMPANY_SELF) + "; Money: " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));

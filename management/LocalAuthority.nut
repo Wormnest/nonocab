@@ -90,7 +90,7 @@ function LocalAuthority::BuildStatues()
 	town_list.Valuate(AITown.HasStatue);
 	town_list.RemoveValue(1);
 	GetActiveTowns(town_list);
-	town_list.Sort(AIAbstractList.SORT_BY_VALUE, AIAbstractList.SORT_DESCENDING);
+	town_list.Sort(AIList.SORT_BY_VALUE, AIList.SORT_DESCENDING);
 
 	foreach (town, index in town_list)
 	{
@@ -110,7 +110,7 @@ function LocalAuthority::SecureTransportationsRights()
 	town_list.Valuate(AITown.GetExclusiveRightsCompany);
 	town_list.KeepValue(AICompany.COMPANY_INVALID);
 	GetActiveTowns(town_list);
-	town_list.Sort(AIAbstractList.SORT_BY_VALUE, AIAbstractList.SORT_DESCENDING);
+	town_list.Sort(AIList.SORT_BY_VALUE, AIList.SORT_DESCENDING);
 
 	foreach (town, index in town_list)
 	{
@@ -133,7 +133,7 @@ function LocalAuthority::ImproveRelations()
 	town_list.KeepBelowValue(AITown.TOWN_RATING_GOOD);
 	town_list.RemoveValue(AITown.TOWN_RATING_NONE);
 	town_list.RemoveValue(AITown.TOWN_RATING_INVALID);
-	town_list.Sort(AIAbstractList.SORT_BY_VALUE, AIAbstractList.SORT_ASCENDING);
+	town_list.Sort(AIList.SORT_BY_VALUE, AIList.SORT_ASCENDING);
 
 	if (town_list.Count() > 0)
 	{

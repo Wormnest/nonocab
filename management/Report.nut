@@ -155,7 +155,7 @@ class Report
 				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
 
 				if (!connection.pathInfo.build)
-					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 3;
+					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 2;
 					
 				//Log.logWarning("To get from " + travelFromNode.GetName() + " to " + travelToNode.GetName() + " takes " + travelTimeTo + " " + travelTimeFrom + " days...");
 			} else {
@@ -163,7 +163,7 @@ class Report
 				travelTimeFrom = travelTimeTo;
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
 				assert (rail_type != AIRail.RAILTYPE_INVALID);
-				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 4 +
+				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 3 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_SIGNAL) * distance / 5 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_STATION) * 6 * 2;
@@ -269,13 +269,26 @@ class Report
 		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " " + AIEngine.GetName(transportEngineID) + ". Cost for the road: " +
 		initialCost + ". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + " " + Utility();
 	}
+
+	function NettoIncomePerMonthForMoney(money, forecast) {
+		
+		local oldNrVehicles = nrVehicles;
+		if (GetNrVehicles(money, 0) == 0)
+			nrVehicles = 0;
+		else
+			nrVehicles = GetNrVehicles(money, forecast);
+
+		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
+		if (nrVehicles > maxBuildableVehicles)
+			nrVehicles = maxBuildableVehicles;
+		
+		local nettoIncome = NettoIncomePerMonth();
+		
+		nrVehicles = oldNrVehicles;
+		return nettoIncome;
+	}
 	
-	/**
-	 * The utility for a report is the netto profit per month times
- 	 * the actual number of months over which this netto profit is 
- 	 * gained!
-	 */
-	function Utility() {
+	function NettoIncomePerMonth() {
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
 		if (nrVehicles > maxBuildableVehicles)
 			nrVehicles = maxBuildableVehicles;
@@ -293,16 +306,30 @@ class Report
 
 		if (runningTimeBeforeReplacement == 0)
 			return 0;
+		
+		return totalBrutoIncomePerMonth - totalBrutoCostPerMonth;
+	}
+	
+	/**
+	 * The utility for a report is the netto profit per month times
+ 	 * the actual number of months over which this netto profit is 
+ 	 * gained!
+	 */
+	function Utility() {
+		local vehicleType = AIEngine.GetVehicleType(transportEngineID);
+		if (vehicleType == AIVehicle.VT_INVALID)
+			return 0;
 
 		// Check how much this distances is from the 'optimal' distance.
-		local optimalDistance = world.optimalDistances[AIEngine.GetVehicleType(transportEngineID)][cargoID];
+		local optimalDistance = world.optimalDistances[vehicleType][cargoID];
 		local distance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
 
 		local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
 		local income = GetIncomePerVehicle(distance).tointeger();
 		local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
 
-		return (totalBrutoIncomePerMonth - totalBrutoCostPerMonth) * delta;
+		local nettoIncome = NettoIncomePerMonth();
+		return nettoIncome * delta;
 	}
 
 	function GetIncomePerVehicle(distance) {
@@ -338,8 +365,8 @@ class Report
 		local oldNrVehicles = nrVehicles;
 		if (GetNrVehicles(money, 0) == 0)
 			nrVehicles = 0;
-		else;
-			nrVehicles = GetNrVehicles(money, 2);
+		else
+			nrVehicles = GetNrVehicles(money, 24);
 
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
 		if (nrVehicles > maxBuildableVehicles)
@@ -356,7 +383,7 @@ class Report
 	/**
 	 * Get the number of vehicles we can buy given the amount of money.
 	 * @param money The money to spend, if this value is -1 we have unlimited money to spend.
-	 * @forcast The number of years we want to look ahead. If we construct the construction now,
+	 * @forcast The number of months we want to look ahead. If we construct the construction now,
 	 * how many vehicles will we be able to produce in the future? This only applies to unbuild
 	 * connections.
 	 * @return The maximum number of vehicles we can buy for this money.
@@ -373,7 +400,7 @@ class Report
 
 		// Add the revenue we make on the first month to this number.
 		if (connection == null || !connection.pathInfo.build) {
-			local revenue = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * 12 * forcast * vehiclesToBuy;
+			local revenue = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * forcast * vehiclesToBuy;
 			local extraVehiclesToBuy = (revenue / initialCostPerVehicle).tointeger();
 			vehiclesToBuy += extraVehiclesToBuy;
 		}

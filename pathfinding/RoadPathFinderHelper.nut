@@ -328,7 +328,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.length = currentAnnotatedTile.length + 1;
 	
 					// Check if the road is sloped.
-					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile, currentTile, nextTile))
+					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
 						annotatedTile.distanceFromStart = costForSlope;
 				
 					// Check if the road makes a turn.

@@ -9,10 +9,6 @@ class TrainConnectionAdvisor extends ConnectionAdvisor {
 	constructor(world, connectionManager, allowTownToTown) {
 		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
 		allowTownToTownConnections = allowTownToTown;
-/*		local pathFindingHelper = RailPathFinderHelper();
-		pathFindingHelper.updateClosedList = false;
-		pathFinder = RoadPathFinding(pathFindingHelper);
-*/
 	}
 }
 
@@ -61,7 +57,5 @@ function TrainConnectionAdvisor::GetBestRailType(engineID) {
 			bestRailType = rt;
 		}
 	}
-//	if (bestRailType == AIRail.RAILTYPE_INVALID)
-//		Log.logWarning("No rail type for engine: " + AIEngine.GetName(engineID));
 	return bestRailType;
 }

@@ -29,8 +29,8 @@ class RoadPathFinding {
 
 	/**
 	 * A* pathfinder to find the fastest path from start to end.
-	 * @param start An AIAbstractList which contains all the nodes the path can start from.
-	 * @param end An AIAbstractList which contains all the nodes the path can stop at. The
+	 * @param start An AIList which contains all the nodes the path can start from.
+	 * @param end An AIList which contains all the nodes the path can stop at. The
 	 * middle point of these values will be used to guide the pathfinder to its goal.
 	 * @param checkStartPoints Check the start points before finding a road.
 	 * @param checkEndPoints Check the end points before finding a road.

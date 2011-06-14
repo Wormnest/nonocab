@@ -55,7 +55,7 @@ function ManageVehiclesAction::Execute()
 
 		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
 		vehicleList.Valuate(AIVehicle.GetAge);
-		vehicleList.Sort(AIAbstractList.SORT_BY_VALUE, true);
+		vehicleList.Sort(AIList.SORT_BY_VALUE, true);
 		vehicleList.Valuate(AIVehicle.GetEngineType);
 		vehicleList.KeepValue(engineID);
 		if (!connection.bilateralConnection) {

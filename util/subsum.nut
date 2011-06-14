@@ -135,34 +135,24 @@
 
 		return [subsumList, best_utility];
 	}
-	
 
- 	/**
- 	 * This function goes through the items in the list and tries to get the
- 	 * best subsum from the list that yield the most profit but doesn't cost
- 	 * more then max.
- 	 * @param list A sorted data structure which has the following function:
- 	 * Pop() which returns the item with the lowest value and removes it from
- 	 * the data structure. The content of the list must be an instance of Report.
- 	 * @param max The maximum cost all subsum values added together.
- 	 * @return A list of reports which yield the maximum utility (or at least as
- 	 * close as possible) and which costs doesn't exceed max.
- 	 */
- 	static function GetSubSum(reportlist_) {
+ 	static function GetSubSum(reportList) {
 
-		local reportlist = [];
-		reportlist.extend(reportlist_);
+		local reportListClone = [];
+		reportListClone.extend(reportList);
 
  		local moneyToSpend = Finance.GetMaxMoneyToSpend();
 		local maxLoan = AICompany.GetMaxLoanAmount() * 0.8;
 
+		local mandantoryReports = [];
+
 		local constructionAllowed = maxLoan < moneyToSpend;
 
 		if (!constructionAllowed) {
-	 		local greedySubSum = SubSum.GetGreedySubSum(reportlist, maxLoan);
+	 		local greedySubSum = SubSum.GetGreedySubSum(reportList, maxLoan);
 
-			// check if the first connection we 
-			local testList = SubSum.GetGreedySubSum(reportlist, maxLoan);
+			// If we can build the first connection given the 
+			local testList = SubSum.GetGreedySubSum(reportList, maxLoan);
 			local firstBuildReport = null;
 			foreach (report in testList[0]) {
 				if (report.connection != null && !report.connection.pathInfo.build) {
@@ -175,14 +165,12 @@
 				constructionAllowed = true;
 		}
 
-		local sellVehiclesReports = [];
-
 		// Filter the results.
-		for (local i = reportlist.len() - 1; i > -1; i--)
+		for (local i = reportListClone.len() - 1; i > -1; i--)
 		{
 			// Do not include reports which build a connection if we do not have enough money.
-			if ((reportlist[i].connection == null || !reportlist[i].connection.pathInfo.build) && !constructionAllowed) {
-				reportlist.remove(i);
+			if ((reportList[i].connection == null || !reportList[i].connection.pathInfo.build) && !constructionAllowed) {
+				reportListClone.remove(i);
 				continue;
 			}
 
@@ -190,8 +178,8 @@
 			local deleted = false;
 			for (local j = 0; j < ignoreList.len(); j++)
 			{
-				if (ignoreList[j] == reportlist[i]) {
-					reportlist.remove(i);
+				if (ignoreList[j] == reportListClone[i]) {
+					reportListClone.remove(i);
 					deleted = true;
 					break;
 				}
@@ -200,51 +188,186 @@
 				continue;
 
 			// Keep reports which sell vehicles in a separate list, these reports will be included anyways.
-			if (reportlist[i].nrVehicles < 0) {
-				sellVehiclesReports.push(reportlist[i]);
-				reportlist.remove(i);
+			if (reportListClone[i].nrVehicles < 0) {
+				mandantoryReports.push(reportList[i]);
+				reportListClone.remove(i);
 				continue;
 			}
 
 			// Do not include reports with 0 or negative utility.
-			if (reportlist[i].UtilityForMoney(moneyToSpend) <= 0) {
-				reportlist.remove(i);
+			if (reportListClone[i].UtilityForMoney(moneyToSpend) <= 0) {
+				reportListClone.remove(i);
 				continue;
 			}
 		}
 
-		if (reportlist.len() == 0)
-			return sellVehiclesReports;
+		if (reportListClone.len() == 0)
+			return mandantoryReports;
+		
+		local currentBestSubSum = SubSum.GetLimitedSubSum(reportListClone, moneyToSpend);
+
+		local forecast = 3;
+		
+		// Project the expected money to make in the next year and check if it is better to wait.
+		local incomePerMonth = Finance.GetProjectedIncomePerMonth();
+		local futureBestSubSum = SubSum.GetLimitedSubSum(reportListClone, moneyToSpend + forecast * incomePerMonth);
+
+		Log.logWarning("Current income per month: " + incomePerMonth);
+		
+		// Check which one is the best.
+		// If the current sub sum is better than the future one we're done!
+		if (currentBestSubSum[1] >= futureBestSubSum[1]) {
+			Log.logWarning("- Current and Future subsums are the same; Return the current sub sum!");
+			currentBestSubSum[0].extend(mandantoryReports);
+			return currentBestSubSum[0];
+		}
+
+		local currentIncomePerMonth = 0;
+		local availableMoney = moneyToSpend;
+		foreach (report in currentBestSubSum[0]) {
+			currentIncomePerMonth += report.NettoIncomePerMonthForMoney(availableMoney, forecast);
+			availableMoney -= report.GetCost(availableMoney);
+			Log.logWarning(report.ToString());
+		}
+		Log.logWarning("Current best subsum! " + currentIncomePerMonth);
+
+		local futureIncomePerMonth = 0;
+		availableMoney = moneyToSpend + forecast * incomePerMonth;
+		foreach (report in futureBestSubSum[0]) {
+			futureIncomePerMonth += report.NettoIncomePerMonthForMoney(availableMoney, forecast);
+			availableMoney -= report.GetCost(availableMoney);
+			Log.logWarning(report.ToString());
+		}
+		Log.logWarning("Future best subsum! " + futureIncomePerMonth);
+
+		// Calculate how long till the future best sub sum will break even, given the current best sub sum's
+		// ahead start of forecast months.
+		local delta =  (currentIncomePerMonth + incomePerMonth) - (futureIncomePerMonth + incomePerMonth);
+		local breakEven = (forecast * incomePerMonth - forecast * (futureIncomePerMonth + incomePerMonth)) / delta;
+		
+		Log.logWarning("Break even point: " + breakEven + " months");
+
+		// Given that we go with the currentBestSubSum: Calculate the money we would earn before the break even point.
+		local moneyMadeTillBreakEven = breakEven * (incomePerMonth + currentIncomePerMonth);
+
+		// Check what connections we can build with this money. If the total income per month is higher than what
+		// we would gain by just waiting go with the current report.
+		local reportListClone2 = [];
+		reportListClone2.extend(reportListClone);
+
+		// Remove those reports which we are already going to build.
+		for (local i = reportListClone2.len() - 1; i > -1; i--) {
+			foreach (report in currentBestSubSum[0]) {
+				if (report == reportListClone2[i]) {
+					reportListClone2.remove(i);
+					break;
+				}
+			}
+		}
+		Log.logWarning("Money made till break even: " + moneyMadeTillBreakEven);
+
+		local spinoffSubSum = SubSum.GetLimitedSubSum(reportListClone2, moneyMadeTillBreakEven);
+		local spinoffIncomePerMonth = 0;
+		availableMoney = moneyMadeTillBreakEven;
+		foreach (report in spinoffSubSum[0]) {
+			spinoffIncomePerMonth += report.NettoIncomePerMonthForMoney(availableMoney, 0);
+			availableMoney -= report.GetCost(availableMoney);
+			Log.logWarning(report.ToString());
+		}
+		Log.logWarning("Spinoff income per month: " + spinoffIncomePerMonth);
+
+
+
+		// Check what connections we can build with this money. If the total income per month is higher than what
+		// we would gain by just waiting go with the current report.
+		local reportListClone3 = [];
+		reportListClone3.extend(reportListClone);
+
+		// Remove those reports which we are already going to build.
+		for (local i = reportListClone3.len() - 1; i > -1; i--) {
+			foreach (report in futureBestSubSum[0]) {
+				if (report == reportListClone3[i]) {
+					reportListClone3.remove(i);
+					break;
+				}
+			}
+		}
+		
+		local futureMoneyTillBreakEven = (breakEven - forecast) * (incomePerMonth + futureIncomePerMonth);
+		local spinoffFutureSubSum = SubSum.GetLimitedSubSum(reportListClone3, futureMoneyTillBreakEven);
+		local spinoffFutureIncomePerMonth = 0;
+		availableMoney = futureMoneyTillBreakEven;
+		foreach (report in spinoffFutureSubSum[0]) {
+			spinoffFutureIncomePerMonth += report.NettoIncomePerMonthForMoney(availableMoney, 0);
+			availableMoney -= report.GetCost(availableMoney);
+			Log.logWarning(report.ToString());
+		}
+		Log.logWarning("Future spinoff income per month: " + spinoffFutureIncomePerMonth);
+
+		local bestSubSumList = [];
+		if (spinoffIncomePerMonth + currentIncomePerMonth < futureIncomePerMonth + spinoffFutureIncomePerMonth) {
+/*			Log.logWarning("- Return the future sub sum and return the reports we can afford!");
+			foreach (futureReport in futureBestSubSum[0]) {
+				if (futureReport.UtilityForMoney(moneyToSpend) > 0)
+					bestSubSumList.push(futureReport);
+				else
+					break;
+			}
+*/
+			
+			Log.logWarning("- Return the future sub sum and return the common reports!");
+			foreach (futureReport in futureBestSubSum[0]) {
+				local found = false;
+				foreach (currentReport in currentBestSubSum[0]) {
+					if (currentReport == futureReport) {
+						bestSubSumList.push(futureReport);
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					break;
+			}
+
+		} else {
+			bestSubSumList = currentBestSubSum[0];
+			Log.logWarning("- Return the current sub sum!");
+		}
+		
+ 		bestSubSumList.extend(mandantoryReports);
+ 		return bestSubSumList;
+ 	}
+ 	
+ 	static function GetLimitedSubSum(reportList, moneyToSpend) {
 				
- 		local greedySubSum = SubSum.GetGreedySubSum(reportlist, moneyToSpend);
+ 		local greedySubSum = SubSum.GetGreedySubSum(reportList, moneyToSpend);
 		local subsumList = greedySubSum[0];
 		local greedyUtility = greedySubSum[1];
 
 		// We now have the utility using the greedy approach, try to find a better solution.
-		if (reportlist.len() > subsumList.len()) {
-			local randomSubSum = SubSum.GetRandomSubSum(reportlist, greedyUtility);
+		if (reportList.len() > reportList.len()) {
+			local randomSubSum = SubSum.GetRandomSubSum(reportList, greedyUtility);
 			local randomSubSumList = randomSubSum[0];
 			local randomUtility = randomSubSum[1];
 
 			if (randomSubSumList.len() != 0) {
-				Log.logWarning("Return random subsum! " + greedyUtility + " < " + randomUtility);
-				Log.logWarning("Greedy:");
-				foreach (report in subsumList) {
-					Log.logWarning(report.ToString());
-				}
+//				Log.logWarning("Return random subsum! " + greedyUtility + " < " + randomUtility);
+//				Log.logWarning("Greedy:");
+//				foreach (report in reportList) {
+//					Log.logWarning(report.ToString());
+//				}
 
-				Log.logWarning("Random:");
-				foreach (report in randomSubSumList) {
-					Log.logWarning(report.ToString());
-				}
+//				Log.logWarning("Random:");
+//				foreach (report in randomSubSumList) {
+//					Log.logWarning(report.ToString());
+//				}
 
-				randomSubSumList.extend(sellVehiclesReports);
-				return randomSubSumList;
+//				randomSubSumList.extend(sellVehiclesReports);
+				return randomSubSum;
 			}
 		}
 
-		Log.logWarning("Return greedy subsum!");
- 		subsumList.extend(sellVehiclesReports);
-		return subsumList;
+//		Log.logWarning("Return greedy subsum!");
+		return greedySubSum;
  	}
  }

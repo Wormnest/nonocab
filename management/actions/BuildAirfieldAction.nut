@@ -232,7 +232,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 		Log.logDebug("NO spots found :(");
 		return null;
 	}
-	list.Sort(AIAbstractList.SORT_BY_VALUE, false);
+	list.Sort(AIList.SORT_BY_VALUE, false);
     
 	local good_tile = -1;
 	local airport_type = -1;

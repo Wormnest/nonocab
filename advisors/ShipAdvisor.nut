@@ -35,7 +35,7 @@ function ShipAdvisor::GetPathInfo(report) {
 
 		if (fromNode.nodeType == ConnectionNode.TOWN_NODE) {
 			producingTiles.Valuate(AITile.GetCargoAcceptance, report.cargoID, 1, 1, stationRadius);
-			producingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			producingTiles.Sort(AIList.SORT_BY_VALUE, false);
 			producingTiles.KeepTop(5);
 		}
 	} else {
@@ -50,7 +50,7 @@ function ShipAdvisor::GetPathInfo(report) {
 
 		if (toNode.nodeType == ConnectionNode.TOWN_NODE) {
 			acceptingTiles.Valuate(AITile.GetCargoAcceptance, report.cargoID, 1, 1, stationRadius);
-			acceptingTiles.Sort(AIAbstractList.SORT_BY_VALUE, false);
+			acceptingTiles.Sort(AIList.SORT_BY_VALUE, false);
 			acceptingTiles.KeepTop(5);
 		}
 	} else {
