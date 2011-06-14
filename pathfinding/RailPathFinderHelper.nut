@@ -1205,8 +1205,8 @@ function RailPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 					while (tileLength > 0) {
 						tileLength -= currentSpeed;
 						days++;
-		
-					currentSpeed += 34;
+
+						currentSpeed += 34;
 						if (currentSpeed > maxSpeed) {
 							currentSpeed = maxSpeed;
 							break;
