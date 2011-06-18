@@ -46,13 +46,6 @@ class Terraform {
 }
 
 function Terraform::Terraform(startTile, width, height, preferedHeight) {
-	
-	local startX = AIMap.GetTileX(startTile);
-	local startY = AIMap.GetTileY(startTile);
-	
-	Log.logWarning(startX + ", " + startY);
-	
-	
 	if (preferedHeight == -1)
 		preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
 	if (preferedHeight == 0)
