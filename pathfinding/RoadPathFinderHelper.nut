@@ -47,13 +47,13 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	/**
 	 * Get the time it takes a vehicle to travel among the given road.
 	 * @param roadList Array of annotated tiles which compounds the road.
-	 * @param maxSpeed The maximum speed of the vehicle.
+	 * @param engineID The ID of the engine being used.
 	 * @param forward Traverse the roadList in the given order if true, otherwise 
 	 * traverse it from back to the begin.
 	 * @return The number of days it takes a vehicle to traverse the given road
 	 * with the given maximum speed.
 	 */
-	function GetTime(roadList, maxSpeed, forward);
+	function GetTime(roadList, engineID, forward);
 
 	/**
 	 * Process all possible start locations and add all start locations to the
@@ -439,12 +439,13 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 	return null;
 }
 
-function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
+function RoadPathFinderHelper::GetTime(roadList, engineID, forward) {
 
+	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 	local lastDirection = roadList[0];
 	local currentSpeed = 0;
 	local carry = 0;
-	local days = 0;
+	local hours = 0;
 	local lastDirection = 0;
 
 	for (local i = 0; i < roadList.len(); i++) {
@@ -457,10 +458,10 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 		switch (roadList[i].type) {
 			case Tile.ROAD:
 				if(lastDirection != currentDirection) {		// Bend
-					tileLength = Tile.bendedRoadLength - carry;
+					tileLength = (Tile.bendedRoadLength) * 24 - carry;
 					currentSpeed = maxSpeed / 2;
 				} else if (slope == 1 && forward || slope == 2 && !forward) {			// Uphill
-					tileLength = Tile.upDownHillRoadLength - carry;
+					tileLength = (Tile.upDownHillRoadLength * 24) - carry;
 					
 					local slowDowns = 0;
 		
@@ -472,7 +473,7 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 						local qtl = quarterTileLength - qtl_carry;
 						while (qtl > 0) {
 							qtl -= currentSpeed;
-							days++;
+							hours++;
 						}
 						
 						currentSpeed *= 0.9;
@@ -484,11 +485,11 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 					}
 					
 				} else if (slope == 2 && forward || slope == 1 && !forward) {			// Downhill
-					tileLength = Tile.upDownHillRoadLength - carry;
+					tileLength = (Tile.upDownHillRoadLength * 24) - carry;
 		
 					while (tileLength > 0) {
 						tileLength -= currentSpeed;
-						days++;
+						hours++;
 						
 						currentSpeed += 74;
 						if (currentSpeed >= maxSpeed) {
@@ -497,14 +498,14 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 						}
 					}
 				} else {					// Straight
-					tileLength = Tile.straightRoadLength - carry;
+					tileLength = (Tile.straightRoadLength * 24) - carry;
 					
 					// Calculate the number of days needed to traverse the tile
 					while (tileLength > 0) {
 						tileLength -= currentSpeed;
-						days++;
+						hours++;
 		
-						currentSpeed += 34;
+						currentSpeed += 37;
 						if (currentSpeed > maxSpeed) {
 							currentSpeed = maxSpeed;
 							break;
@@ -517,12 +518,12 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 			case Tile.TUNNEL:
 				local length = (tile - roadList[i + 1].tile) / currentDirection;
 				if (length < 0) length = -length;
-				tileLength = Tile.straightRoadLength * length - carry;
+				tileLength = Tile.straightRoadLength * length * 24 - carry;
 				while (tileLength > 0) {
 					tileLength -= currentSpeed;
-					days++;
+					hours++;
 					
-					currentSpeed += 34;
+					currentSpeed += 37;
 					if (currentSpeed > maxSpeed) {
 						currentSpeed = maxSpeed;
 						break;
@@ -535,13 +536,13 @@ function RoadPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 			local div = (tileLength / currentSpeed).tointeger();
 
 			carry = tileLength - (currentSpeed * div);
-			days += div;
+			hours += div;
 		} else {
 			carry = -tileLength;
 		}
 		lastDirection = currentDirection;
 
 	}
-	return days.tointeger();
+	return (hours / 24).tointeger();
 }
 

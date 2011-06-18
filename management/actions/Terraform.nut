@@ -47,6 +47,12 @@ class Terraform {
 
 function Terraform::Terraform(startTile, width, height, preferedHeight) {
 	
+	local startX = AIMap.GetTileX(startTile);
+	local startY = AIMap.GetTileY(startTile);
+	
+	Log.logWarning(startX + ", " + startY);
+	
+	
 	if (preferedHeight == -1)
 		preferedHeight = Terraform.CalculatePreferedHeight(startTile, width, height);
 	if (preferedHeight == 0)
@@ -57,22 +63,29 @@ function Terraform::Terraform(startTile, width, height, preferedHeight) {
 	local mapSizeX = AIMap.GetMapSizeX();
 	local endTile = startTile + width + height * mapSizeX;
 	
-	for (local i =0; i < width; i++) {
-		for (local j = 0; j < height; j++) {
+	// Current implementation forces us to terraform to a tile which differs in both the
+	// X and Y coordinates.
+	for (local i = 1; i < width; i++) {
+		for (local j = 1; j < height; j++) {
 			local tileToSearch = startTile + i + j * mapSizeX;
 			if (AITile.GetMinHeight(tileToSearch) == preferedHeight &&
 			    AITile.GetMaxHeight(tileToSearch) == preferedHeight) {
 
-				if ((tileToSearch == startTile && 
-				    (Terraform.IsFlat(tileToSearch, width, height) || 
-				    AITile.LevelTiles(tileToSearch, endTile))
-				   ) ||
-				    (AITile.LevelTiles(tileToSearch, startTile) && 
-				    (Terraform.IsFlat(startTile, width, height) || 
-				    AITile.LevelTiles(startTile, endTile))
-				   ))
+				assert (AITile.GetSlope(tileToSearch) == AITile.SLOPE_FLAT);
+
+				if (!Terraform.IsFlat(startTile, i, j))
+					AITile.LevelTiles(tileToSearch, startTile);
+				
+				if (!Terraform.IsFlat(startTile, i, j))
+					return false;
+				
+				if (Terraform.IsFlat(startTile, width, height))
 					return true;
-				return false;
+				
+				AITile.LevelTiles(startTile, endTile);
+				
+				if (Terraform.IsFlat(startTile, width, height))
+					return true;
 			}
 		}
 	}

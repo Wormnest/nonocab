@@ -153,14 +153,42 @@ function PathInfo::GetTravelTime(engineID, forward) {
 	local time;
 
 	if (vehicleType == AIVehicle.VT_ROAD)
-		time = RoadPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+		time = RoadPathFinderHelper.GetTime(roadList, engineID, forward);
 	else if (vehicleType == AIVehicle.VT_WATER)
-		time = WaterPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+		time = WaterPathFinderHelper.GetTime(roadList, engineID, forward);
 	else if (vehicleType == AIVehicle.VT_RAIL)
-		time = RailPathFinderHelper.GetTime(roadList, maxSpeed, forward);
+		time = RailPathFinderHelper.GetTime(roadList, engineID, forward);
 	else if (vehicleType == AIVehicle.VT_AIR) {
-		local manhattanDistance = AIMap.DistanceManhattan(roadList[0].tile, roadList[roadList.len() - 1].tile);
-		time = manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID);
+		
+		// For air connections the distance travelled is different (shorter in general)
+		// than road vehicles. A part of the tiles are traversed diagonal, we want to
+		// capture this so we can make more precise predictions on the income per vehicle.
+		local fromLoc = roadList[roadList.len() -1].tile;
+		local toLoc = roadList[0].tile;
+		local distanceX = AIMap.GetTileX(fromLoc) - AIMap.GetTileX(toLoc);
+		local distanceY = AIMap.GetTileY(fromLoc) - AIMap.GetTileY(toLoc);
+
+		if (distanceX < 0) distanceX = -distanceX;
+		if (distanceY < 0) distanceY = -distanceY;
+
+		local diagonalTiles;
+		local straightTiles;
+
+		if (distanceX < distanceY) {
+			diagonalTiles = distanceX;
+			straightTiles = distanceY - diagonalTiles;
+		} else {
+			diagonalTiles = distanceY;
+			straightTiles = distanceX - diagonalTiles;
+		}
+
+		// Take the landing sequence in consideration.
+		local realDistance = diagonalTiles * Tile.diagonalRoadLength + (straightTiles + 40) * Tile.straightRoadLength;
+		time = realDistance / AIEngine.GetMaxSpeed(engineID);
+		
+		
+		//local manhattanDistance = AIMap.DistanceManhattan(roadList[0].tile, roadList[roadList.len() - 1].tile);
+		//time = manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID);
 	} else
 		Log.logWarning("Unknown vehicle type: " + vehicleType);
 	

@@ -55,8 +55,9 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyStraight
 	return tileArray;
 }
 
-function WaterPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
+function WaterPathFinderHelper::GetTime(roadList, engineID, forward) {
 
+	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 	local lastTile = roadList[0].tile;
 	local distance = 0;
 
@@ -67,16 +68,24 @@ function WaterPathFinderHelper::GetTime(roadList, maxSpeed, forward) {
 		local lastTileY = AIMap.GetTileY(lastTile);
 		local currentX = AIMap.GetTileX(at.tile);
 		local currentY = AIMap.GetTileY(at.tile);
-		local deltaX = currentX - lastTileX;
-		local deltaY = currentY - lastTileY;
-		if (deltaX < 0) deltaX = -deltaX;
-		if (deltaY < 0) deltaY = -deltaY;
-		local tmpDistance = (deltaX < deltaY ? deltaY : deltaX);
-
-		if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-			distance += Tile.diagonalRoadLength * tmpDistance;
-		else
-			distance += Tile.straightRoadLength * tmpDistance;
+		local distanceX = currentX - lastTileX;
+		local distanceY = currentY - lastTileY;
+		
+		if (distanceX < 0) distanceX = -distanceX;
+		if (distanceY < 0) distanceY = -distanceY;
+		
+		local diagonalTiles = 0;
+		local straightTiles = 0;
+		
+		if (distanceX < distanceY) {
+			diagonalTiles = distanceX;
+			straightTiles = distanceY - diagonalTiles;
+		} else {
+			diagonalTiles = distanceY;
+			straightTiles = distanceX - diagonalTiles;
+		}
+		
+		distance += diagonalTiles * Tile.diagonalRoadLength + straightTiles * Tile.straightRoadLength;
 		lastTile = at.tile;
 	}
 	return (distance / maxSpeed).tointeger();

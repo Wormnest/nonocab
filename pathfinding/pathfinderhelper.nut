@@ -22,13 +22,13 @@ class PathFinderHelper {
 	/**
 	 * Get the time it takes a vehicle to travel among the given road.
 	 * @param roadList Array of annotated tiles which compounds the road.
-	 * @param maxSpeed The maximum speed of the vehicle.
+	 * @param engineID The ID of the engine used.
 	 * @param forward Traverse the roadList in the given order if true, otherwise 
 	 * traverse it from back to the begin.
 	 * @return The number of days it takes a vehicle to traverse the given road
 	 * with the given maximum speed.
 	 */
-	function GetTime(roadList, maxSpeed, forward);	
+	function GetTime(roadList, engineID, forward);	
 
 	/**
 	 * Sometimes we want to process tiles which are already in the closed

@@ -315,6 +315,14 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 
 	if (!AIRail.IsRailStationTile(railStationTile))
 	{
+		local preferedHeight = -1;
+		
+		if (direction == AIRail.RAILTRACK_NW_SE)
+			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 2, 3);
+		else
+			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
+		Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
+
 		if (connection.travelFromNode.nodeType == "i" &&
 		    connection.travelToNode.nodeType == "i")
 		{
@@ -334,14 +342,6 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		else
 			connection.pathInfo.travelToNodeStationID = AIStation.GetStationID(railStationTile);
 	}
-	
-	local preferedHeight = -1;
-	
-	if (direction == AIRail.RAILTRACK_NW_SE)
-		preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 2, 3);
-	else
-		preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
-	Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
 	return true;
 }
 

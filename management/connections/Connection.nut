@@ -21,7 +21,7 @@ class Connection {
 	cargoID = null;	                // The type of cargo carried from one node to another.
 	travelFromNode = null;          // The node the cargo is carried from.
 	travelToNode = null;            // The node the cargo is carried to.
-	vehicleGroupID = null;            // The AIGroup of all vehicles serving this connection.
+	vehicleGroupID = null;          // The AIGroup of all vehicles serving this connection.
 	pathInfo = null;                // PathInfo class which contains all information about the path.
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
 	connectionManager = null;       // Updates are send to all listeners when connection is realised, demolished or updated.

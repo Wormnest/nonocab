@@ -119,6 +119,9 @@ class Report
 
 			travelTimeTo = realDistance / maxSpeed;
 			travelTimeFrom = travelTimeTo;
+//			travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
+//			traveltimeFrom = travelTimeTo;
+			
 			if (connection == null || !connection.pathInfo.build) {
 
 				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
@@ -137,7 +140,7 @@ class Report
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
 
 			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
-				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), true);
+				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, transportEngineID, true);
 				travelTimeFrom = travelTimeTo;
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
 			} else {
