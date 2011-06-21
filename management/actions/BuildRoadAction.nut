@@ -39,7 +39,11 @@ function BuildRoadAction::Execute() {
 		originalRoadList = clone connection.pathInfo.roadList;
 	}
 
-	local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]));
+	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_ROAD);
+	assert (bestEngineIDs != null);
+	local transportingEngineID = bestEngineIDs[0];
+	local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(transportingEngineID));
+	//local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]));
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
 	// For existing routs, we want the new path to coher to the existing
@@ -94,7 +98,8 @@ function BuildRoadAction::Execute() {
 	local len = roadList.len();
 
 	// Build the actual road.
-	local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
+	local pathBuilder = PathBuilder(roadList, transportingEngineID, world.pathFixer);
+	//local pathBuilder = PathBuilder(roadList, world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID], world.pathFixer);
 
 	if (!pathBuilder.RealiseConnection(buildRoadStations)) {
 		if (isConnectionBuild)
@@ -161,9 +166,9 @@ function BuildRoadAction::Execute() {
 	// We only specify a connection as build if both the depots and the roads are build.
 	else
 		connection.UpdateAfterBuild(AIVehicle.VT_ROAD, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
-	
 	if (!connection.pathInfo.refittedForArticulatedVehicles &&
-		AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
+	    AIEngine.IsArticulated(transportingEngineID))
+		//AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
 	{
 		assert(buildRoadStations);
 		connection.pathInfo.refittedForArticulatedVehicles = true;
@@ -179,7 +184,12 @@ function BuildRoadAction::BuildRoadStation(connection, roadStationTile, frontRoa
 	
 	// Determine which kind of road station we are looking for. This depends if the 
 	// vehicle type to be constructed is articulated or not.
-	if (AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
+	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_ROAD);
+	assert (bestEngineIDs != null);
+	local transportingEngineID = bestEngineIDs[0];
+	
+	//if (AIEngine.IsArticulated(world.cargoTransportEngineIds[AIVehicle.VT_ROAD][connection.cargoID]))
+	if (AIEngine.IsArticulated(transportingEngineID))
 	{
 		if (!AIRoad.IsDriveThroughRoadStationTile(roadStationTile) && 
 			!AIRoad.BuildDriveThroughRoadStation(roadStationTile, frontRoadStationTile, roadVehicleType, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW)) {

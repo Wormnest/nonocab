@@ -262,8 +262,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 		}
 						
 		// Compile the report :)
-		report = connection.CompileReport(world, report.transportEngineID, report.holdingEngineID);
-		if (report.isInvalid || report.nrVehicles < 1)
+		report = connection.CompileReport(world, pathInfo.vehicleType);//, report.transportEngineID, report.holdingEngineID);
+		if (report == null || report.isInvalid || report.nrVehicles < 1)
 			continue;
 
 		// If a connection already exists, see if it already has a report. If so we can only
@@ -350,7 +350,7 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, world.cargoTransportEngineIds[vehicleType][connection.cargoID], world.cargoHoldingEngineIds[vehicleType][connection.cargoID]);
+		report = connection.CompileReport(world, vehicleType);//, world.cargoTransportEngineIds[vehicleType][connection.cargoID], world.cargoHoldingEngineIds[vehicleType][connection.cargoID]);
 		if (report.isInvalid || report.nrVehicles < 1 || report.Utility() < 0) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)

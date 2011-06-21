@@ -43,7 +43,11 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 
-	local bestRailType = TrainConnectionAdvisor.GetBestRailType(world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID]);
+///	local bestRailType = TrainConnectionAdvisor.GetBestRailType(world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID]);
+	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
+	assert (bestEngineIDs != null);
+	local transportingEngineID = bestEngineIDs[0];
+	local bestRailType = TrainConnectionAdvisor.GetBestRailType(transportingEngineID);
 	local pathFinderHelper = RailPathFinderHelper(bestRailType);
 	pathFinderHelper.updateClosedList = false
 	local pathFinder = RoadPathFinding(pathFinderHelper);
@@ -146,7 +150,8 @@ function BuildRailAction::Execute() {
 	len = roadList.len();
 
 	// Build the actual rails.
-	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	//local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, transportingEngineID, world.pathFixer);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
 		connection.forceReplan = true;
@@ -215,6 +220,10 @@ function BuildRailAction::Execute() {
 }
 
 function BuildRailAction::CleanupTile(at, considerRemovedTracks) {
+	
+	// If the tile we are asked to remove has been marked as already built it means that the piece of rail to
+	// destroy is part of another rail network and cannot be removed lest we disrupt that other connection. Similary
+	// if the rail is crossing a road we will not remove it, because it might disrupt a road network.
 	if (at.alreadyBuild || AIRoad.IsRoadTile(at.tile))
 		return;
 
@@ -283,6 +292,7 @@ function BuildRailAction::CleanupAfterFailure() {
 		Log.logDebug("We have a depotOtherEnd!");
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
+//	quit();
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
@@ -596,7 +606,11 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	if (secondPath == null)
 		return false;
 	
-	local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
+	assert (bestEngineIDs != null);
+	local transportingEngineID = bestEngineIDs[0];
+	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID, world.pathFixer);
+	//local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
 	//pathBuilder.stationIDsConnectedTo = stationsConnectedTo;
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(false)) {
@@ -712,7 +726,11 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	pathFinder.pathFinderHelper.reverseSearch = false;
 
 	if (toPlatformPath != null) {
-		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
+		local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
+		assert (bestEngineIDs != null);
+		local transportingEngineID = bestEngineIDs[0];
+		
+		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, transportingEngineID, world.pathFixer);
 		pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 		if (!pathBuilder.RealiseConnection(false)) {
 			//AISign.BuildSign(stationPoint, "TO HERE!");

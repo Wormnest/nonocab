@@ -81,7 +81,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 		
 		connection.lastChecked = currentDate;
-		local report = connection.CompileReport(world, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
+		local report = connection.CompileReport(world, connection.vehicleTypes);//, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.pathInfo.travelFromNodeStationID), connection);

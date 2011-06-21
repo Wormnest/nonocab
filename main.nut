@@ -68,9 +68,9 @@ function NoCAB::Start()
 	AIGroup.EnableWagonRemoval(true);
 	
 	parlement = Parlement();
-	world = World(GetSetting("NiceCAB"));
+	world = World(GetSetting("NiceCAB"), GetSetting("UseDelta"));
 	GameSettings.InitGameSettings();
-	connectionManager = ConnectionManager();
+	connectionManager = ConnectionManager(world.worldEventManager);
 	pathFixer = PathFixer();
 	subsidyManager = SubsidyManager(world.worldEventManager);
 		
@@ -149,39 +149,157 @@ function NoCAB::Start()
 	local buildStatues = politicHardness > 1;
 	local secureRights = politicHardness > 2;
 	local la = LocalAuthority(plantTrees, buildStatues, secureRights);
-
+	
 	// Do what we have to do.
-	//local thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
 	while(true) {
-/*		for (local i = AICompany.CURRENT_QUARTER; i != AICompany.EARLIEST_QUARTER && i != 6; i++) {
-			Log.logWarning(AICompany.GetQuarterlyIncome(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyExpenses(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyCargoDelivered(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyPerformanceRating(AICompany.COMPANY_SELF, i) + " " + AICompany.GetQuarterlyCompanyValue(AICompany.COMPANY_SELF, i));
-		}
 		
-		Log.logWarning("Average income per month: " + Finance.GetProjectedIncomePerMonth());
+		local numberOfShips = 0;
+		local shipPercentageErrors = [];
+			
+		local numberOfTrains = 0;
+		local trainPercentageErrors = [];
+			
+		local numberOfTrucks = 0;
+		local truckPercentageErrors = [];
+			
+		local numberOfAirplanes = 0;
+		local airplanePercentageErrors = [];
+			
+		local counter = 0;
+			
+		foreach (connection in connectionManager.allConnections) {
+			local allVehiclesInGroup = AIVehicleList_Group(connection.vehicleGroupID);
+			local cargoIDTransported = connection.cargoID;
+			
+			local numberOfVehicles = 0;
+			local incomeError = 0;
+			local percentageError = 0;
+			local prospectedAvgEarnings = 0;
+			local actualAvgEarnings = 0;
+			local percentageList = "{";
+
+			foreach (vehicle, value in allVehiclesInGroup) {
+				++counter;
+				
+				assert (AIVehicle.IsValidVehicle(vehicle));
+				if (AIVehicle.GetAge(vehicle) > 3  * World.DAYS_PER_YEAR) 
+				{
+					// Validate that the projected income of the vehicle is close to the actual earnings.
+					local transportEngineID = AIVehicle.GetEngineType(vehicle);
+					assert (AIEngine.IsValidEngine(transportEngineID));
+						
+					// Wagons will be handled by the vehicles pulling them.
+					if (AIEngine.IsWagon(transportEngineID))
+						continue;
+							
+					// Don't consider vehicles who have been ordered to stop.
+					if (AIVehicle.IsStoppedInDepot(vehicle))
+						continue;
+						
+					local travelTimeForward = connection.pathInfo.GetTravelTime(transportEngineID, true);
+					local travelTimeBackward = connection.pathInfo.GetTravelTime(transportEngineID, false);
+					local travelTime = travelTimeForward + travelTimeBackward;
+					assert (travelTime > 0);
+
+					local vehicleCapacity = AIVehicle.GetCapacity(vehicle, connection.cargoID);
+					Log.logWarning("Main vehicle capacity: " + vehicleCapacity + "; Wagons attached to it: " + AIVehicle.GetNumWagons(vehicle));
+					assert (vehicleCapacity > 0);
+						
+					// Calculate netto income per vehicle.
+					local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;						
+/*
+					// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
+					if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(transportEngineID), AICargo.CC_PASSENGERS) && 
+					    !AICargo.HasCargoClass(cargoIDTransported, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoIDTransported, AICargo.CC_MAIL)) {
+						if (AICargo.GetTownEffect(cargoIDTransported) == AICargo.TE_GOODS)
+							transportedCargoPerVehiclePerMonth *= 0.6;
+						else
+							transportedCargoPerVehiclePerMonth *= 0.3;
+					}
 */
-		/*if (thisYear != AIDate.GetYear(AIDate.GetCurrentDate())) {
-			thisYear = AIDate.GetYear(AIDate.GetCurrentDate());
-			AILog.Info(thisYear + "; Value " + AICompany.GetCompanyValue(AICompany.COMPANY_SELF) + "; Money: " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
-			local trucks = AIVehicleList();
-			trucks.Valuate(AIVehicle.GetVehicleType);
-			trucks.KeepValue(AIVehicle.VT_ROAD);
-			AILog.Info("Trucks: " + trucks.Count());
+					local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
+					local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeForward.tointeger()) * transportedCargoPerVehiclePerMonth;
+
+					// In case of a bilateral connection we take a persimistic take on the amount of 
+					// vehicles supported by this connection, but we do increase the income by adding
+					// the expected income of the other connection to the total.
+					if (connection.bilateralConnection || connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
+						brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeBackward.tointeger()) * transportedCargoPerVehiclePerMonth;
+					}
+					assert (brutoIncomePerMonthPerVehicle > 0);
+						
+					local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
+					assert (brutoCostPerMonthPerVehicle > 0);
+					local projectedIncomePerVehiclePerYear = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * World.MONTHS_PER_YEAR;
+						
+					local actualIncomePerYear = AIVehicle.GetProfitLastYear(vehicle);
+						
+					local error = actualIncomePerYear - projectedIncomePerVehiclePerYear;
+					//Log.logWarning(error + " - Actual income: " + actualIncomePerYear + "; Projected income: " + projectedIncomePerVehiclePerYear);
+
+					++numberOfVehicles;
+					incomeError += error;
+					percentageError += projectedIncomePerVehiclePerYear / actualIncomePerYear;
+					percentageList += percentageError + ", ";
+					prospectedAvgEarnings += projectedIncomePerVehiclePerYear;
+					actualAvgEarnings += actualIncomePerYear;
+				}
+				percentageList += "}";
+			}
 			
-			local trains = AIVehicleList();
-			trains.Valuate(AIVehicle.GetVehicleType);
-			trains.KeepValue(AIVehicle.VT_RAIL);
-			AILog.Info("Trains: " + trains.Count());
+			if (numberOfVehicles > 0) {
+				//if (AIVehicle.GetVehicleType(connection.vehicleTypes) == AIVehicle.VT_WATER) {
+				if (connection.vehicleTypes == AIVehicle.VT_WATER) {
+					++numberOfShips;
+					shipPercentageErrors.push(percentageError / numberOfVehicles);
+					Log.logWarning("SHIP CONNECTION: " + percentageList);
+				} else if (connection.vehicleTypes == AIVehicle.VT_RAIL) {
+					++numberOfTrains;
+					trainPercentageErrors.push(percentageError / numberOfVehicles);
+					Log.logWarning("TRAIN CONNECTION: " + percentageList);
+				} else if (connection.vehicleTypes == AIVehicle.VT_ROAD) {
+					++numberOfTrucks;
+					truckPercentageErrors.push(percentageError / numberOfVehicles);
+					Log.logWarning("TRUCK CONNECTION: " + percentageList);
+				} else if (connection.vehicleTypes == AIVehicle.VT_AIR) {
+					++numberOfAirplanes;
+					airplanePercentageErrors.push(percentageError / numberOfVehicles);
+					Log.logWarning("AEROPLANE CONNECTION: " + percentageList);
+				} else {
+					assert (false);
+				}
+				
+				Log.logWarning("Prospected avg earnings: " + (prospectedAvgEarnings / numberOfVehicles) + " v.s. actual avg earnings: " + (actualAvgEarnings / numberOfVehicles));
+			}
+		}
 			
-			local ships = AIVehicleList();
-			ships.Valuate(AIVehicle.GetVehicleType);
-			ships.KeepValue(AIVehicle.VT_WATER);
-			AILog.Info("Ships: " + ships.Count());
+		Log.logWarning(counter + " vehicles in spected.");
+		if (numberOfShips > 0) {
+			Log.logWarning("Ships: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
+			DrawHistogram(0.37, 3, 0.25, shipPercentageErrors);
+		}
+		else {
+			Log.logWarning("No ships!");
+		}
 			
-			local planes = AIVehicleList();
-			planes.Valuate(AIVehicle.GetVehicleType);
-			planes.KeepValue(AIVehicle.VT_AIR);
-			AILog.Info("Planes: " + planes.Count());
-		}*/
+		if (numberOfTrains > 0) {
+			Log.logWarning("Trains: " + numberOfTrains);// + " - average error: " + (trainIncomeError / numberOfTrains) + " (" + (trainPercentageError / numberOfTrains) + ").");
+			DrawHistogram(0.37, 3, 0.25, trainPercentageErrors);
+		} else
+			Log.logWarning("No trains!");
+					
+		if (numberOfTrucks > 0) {
+			Log.logWarning("Trucks: " + numberOfTrucks);// + " - average error: " + (truckIncomeError / numberOfTrucks) + " (" + (truckPercentageError / numberOfTrucks) + ").");
+			DrawHistogram(0.37, 3, 0.25, truckPercentageErrors);
+		} else
+			Log.logWarning("No trucks!");
+				
+		if (numberOfAirplanes > 0) {
+			Log.logWarning("Airplanes: " + numberOfAirplanes);//	 + " - average error: " + (airplaneIncomeError / numberOfAirplanes) + " (" + (airplanePercentageError / numberOfAirplanes) + ").");
+			DrawHistogram(0.37, 3, 0.25, airplanePercentageErrors);
+		} else
+			Log.logWarning("No airplanes!");
+			
 		
 		GameSettings.UpdateGameSettings();
 		planner.ScheduleAndExecute();
@@ -207,6 +325,42 @@ function NoCAB::Start()
 	}
 }
 
+function DrawHistogram(min, max, step, data) {
+	assert (min < max);
+	assert (step > 0);
+
+	for (local i = min; i < max + step; i += step) {
+		local counter = 0.0;
+		
+		// Count all the data elements between [i - step, i]; 
+		foreach (number in data) {
+			if ((i > max || number < i) && (i == min || number > i - step)) {
+				++counter;
+			} 
+		}
+		
+		local percentage = counter / data.len();
+		local axis;
+		if (i == min)
+			axis = " < min ";
+		else if (i > max)
+			axis = " > max ";
+		else
+			axis = "# " + (i - step) + "-" + i;
+		
+		for (local j = axis.len(); j < 20; j++)
+			axis += " ";
+		axis += ": ";
+		
+		for (local j = 0; j < percentage * 25; j++) {
+			axis += "*";
+		}
+		
+		axis += "    " + counter + " / " + data.len() + " - " + percentage;
+		
+		Log.logWarning(axis);
+	}
+}
 
 /**
  * Build Head Quaters at the largest place available.

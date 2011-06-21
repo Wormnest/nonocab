@@ -189,8 +189,11 @@ function PathInfo::GetTravelTime(engineID, forward) {
 		
 		//local manhattanDistance = AIMap.DistanceManhattan(roadList[0].tile, roadList[roadList.len() - 1].tile);
 		//time = manhattanDistance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(engineID);
-	} else
+	} else {
 		Log.logWarning("Unknown vehicle type: " + vehicleType);
+		quit();
+		return 2147483647;
+	}
 	
 	travelTimesCache[cacheID] <- time;
 	return time;

@@ -28,6 +28,9 @@ class Connection {
 
 	forceReplan = null;		// Force this connection to be replanned.
 	
+	bestTransportEngine = null;
+	bestHoldingEngine = null;
+	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info, connection_manager) {
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
@@ -75,16 +78,37 @@ class Connection {
 		return saveData;
 	}
 	
+	function NewEngineAvailable(engineID) {
+		local bestEngines = GetBestTransportingEngine(vehicleTypes);
+		if (bestEngines != null) {
+			AIGroup.SetAutoReplace(vehicleGroupID, bestTransportEngine, bestEngines[0]);
+			AIGroup.SetAutoReplace(vehicleGroupID, bestHoldingEngine, bestEngines[1]);
+			
+			bestTransportEngine = bestEngines[0];
+			bestHoldingEngine = bestEngines[1];
+		}
+	}
+	
 	/**
-	 * Based on this connection get a report which tells how many vehicles
-	 * of type engineID are supported on top of the already existing fleet of
-	 * vehicles.
+	 * Generate a report which details how many vehicles must be build of what time and how much the connection
+	 * (if not already built) is going to cost. If the connection has already been built, it will take into account
+	 * the amount of cargo already transported when generating a report detailing how many more vehicles should be built.
 	 * @param world The world.
-	 * @param transportingEngineID The engine id to build which will transport the cargo.
-	 * @param holdingEngineID The engine id to build which will hold the cargo to transport.
+	 * @vehicleType The type of vehicle to use for this connection.
 	 * @return A Report instance.
 	 */
-	function CompileReport(world, transportingEngineID, holdingEngineID) {
+	function CompileReport(world, vehicleType) {
+		
+		local bestEngines = GetBestTransportingEngine(vehicleType);
+		
+		if (bestEngines == null) {
+			Log.logWarning("No suitable engines found!");
+			return null;
+		}
+		
+		local transportingEngineID = bestEngines[0];
+		local holdingEngineID = bestEngines[1];
+
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
 		// the number of vehicles we need to build.
@@ -103,9 +127,195 @@ class Connection {
 					}
 				}
 			}
-		}
+		}	
 		
 		return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
+	}
+	
+	function GetEstimatedTravelTime(transportEngineID, forward) {
+		// If the road list is known we will simulate the engine and get a better estimate.
+		if (pathInfo != null && pathInfo.roadList != null) {
+			return pathInfo.GetTravelTime(transportEngineID, forward);
+		} else {
+			
+			local maxSpeed = AIEngine.GetMaxSpeed(transportEngineID);
+			
+			// If this is not the case we estimate the distance the engine needs to travel.
+			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
+				local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+				return distance * Tile.straightRoadLength / maxSpeed;
+			} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
+	
+				// For air connections the distance travelled is different (shorter in general)
+				// than road vehicles. A part of the tiles are traversed diagonal, we want to
+				// capture this so we can make more precise predictions on the income per vehicle.
+				local fromLoc = travelFromNode.GetLocation();
+				local toLoc = travelToNode.GetLocation();
+				local distanceX = AIMap.GetTileX(fromLoc) - AIMap.GetTileX(toLoc);
+				local distanceY = AIMap.GetTileY(fromLoc) - AIMap.GetTileY(toLoc);
+	
+				if (distanceX < 0) distanceX = -distanceX;
+				if (distanceY < 0) distanceY = -distanceY;
+	
+				local diagonalTiles;
+				local straightTiles;
+	
+				if (distanceX < distanceY) {
+					diagonalTiles = distanceX;
+					straightTiles = distanceY - diagonalTiles;
+				} else {
+					diagonalTiles = distanceY;
+					straightTiles = distanceX - diagonalTiles;
+				}
+	
+				// Take the landing sequence in consideration.
+				local realDistance = diagonalTiles * Tile.diagonalRoadLength + (straightTiles + 40) * Tile.straightRoadLength;
+	
+				return realDistance / maxSpeed;
+			} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
+				local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+				return distance * Tile.straightRoadLength / maxSpeed;
+			} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
+				local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+				return distance * Tile.straightRoadLength / maxSpeed;
+			} else {
+				Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
+				quit();
+				isInvalid = true;
+				world.InitCargoTransportEngineIds();
+			}
+		}
+	}
+	
+	function GetBestTransportingEngine(vehicleType) {
+		assert (vehicleType != AIVehicle.VT_INVALID);
+		
+		// If the connection is built and the vehicle type inquired is the same as the vehicle type in use by this connection.
+		if (vehicleType == this.vehicleTypes && bestTransportEngine != null && bestHoldingEngine != null)
+			return [bestTransportEngine, bestHoldingEngine];
+		
+		local bestTransportEngine = null;
+		local bestHoldingEngine = null;
+		local bestIncomePerMonth = 0;
+		local engineList = AIEngineList(vehicleType);
+		
+		foreach (engineID, value in engineList) {
+			local transportEngineID = engineID;
+			
+			if (AIEngine.IsWagon(transportEngineID) || !AIEngine.IsValidEngine(transportEngineID) || !AIEngine.IsBuildable(transportEngineID))
+				continue;
+
+//			Log.logWarning("Process the engine: " + AIEngine.GetName(transportEngineID));
+			
+			// If the engine is a train we need to check for the best wagon it can pull.
+			local holdingEngineID = null;
+			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
+				
+				// TODO: Check if there is a restriction on the rail types we can use.
+				local bestRailType = TrainConnectionAdvisor.GetBestRailType(engineID);
+				
+				if (!AIEngine.CanPullCargo(transportEngineID, cargoID))
+					continue;
+				
+				local wagonEngineList = AIEngineList(vehicleType);
+				foreach (wagonEngineID, value in wagonEngineList) {
+					if (!AIEngine.IsWagon(wagonEngineID) || !AIEngine.IsValidEngine(wagonEngineID) || !AIEngine.IsBuildable(wagonEngineID))
+						continue;
+					
+					if (AIEngine.GetCargoType(wagonEngineID) != cargoID && !AIEngine.CanRefitCargo(wagonEngineID, cargoID))
+						continue;
+					
+					if (!AIEngine.CanRunOnRail(wagonEngineID, bestRailType))
+						continue;
+					
+					// Select the wagon with the biggest capacity.
+					if (holdingEngineID == null)
+						holdingEngineID = wagonEngineID;
+					else if (AIEngine.GetCapacity(wagonEngineID) > AIEngine.GetCapacity(holdingEngineID))
+						holdingEngineID = wagonEngineID;
+				}
+			} else {
+				holdingEngineID = engineID;
+				
+				if (AIEngine.GetCargoType(holdingEngineID) != cargoID && !AIEngine.CanRefitCargo(holdingEngineID, cargoID))
+					continue;
+			}
+			
+			if (holdingEngineID == null)
+				continue;
+			
+			local travelTimeTo = GetEstimatedTravelTime(transportEngineID, true);
+			local travelTimeFrom = GetEstimatedTravelTime(transportEngineID, false);
+			
+			if (travelTimeTo == null || travelTimeFrom == null)
+				continue;
+				
+//			Log.logWarning("Travel times: " + travelTimeTo + ", " + travelTimeFrom);
+			
+			local travelTime = travelTimeTo + travelTimeFrom;
+			
+			// Calculate netto income per vehicle.
+			local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
+			
+			// In case of trains, we have 5 wagons.
+			//nrWagonsPerVehicle = 5;
+			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
+				transportedCargoPerVehiclePerMonth *= 5;
+			
+			
+			// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
+			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
+			    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
+				if (AICargo.GetTownEffect(cargoID) == AICargo.TE_GOODS)
+					transportedCargoPerVehiclePerMonth *= 0.6;
+				else
+					transportedCargoPerVehiclePerMonth *= 0.3;
+			}
+//			Log.logWarning("Cargo transported per vehicle: " + transportedCargoPerVehiclePerMonth);
+			
+			local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+			local nrVehicles = travelFromNode.GetProduction(cargoID).tofloat() / transportedCargoPerVehiclePerMonth;
+			local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
+	
+			// In case of a bilateral connection we take a persimistic take on the amount of 
+			// vehicles supported by this connection, but we do increase the income by adding
+			// the expected income of the other connection to the total.
+			if (bilateralConnection) {
+				// Also calculate the route in the other direction.
+				nrVehicles += (travelToNode.GetProduction(cargoID) / transportedCargoPerVehiclePerMonth).tointeger();
+				brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
+			}
+	
+			local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
+			local initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
+			local replacementTimeInMonths = AIEngine.GetMaxAge(transportEngineID) * 12;
+			
+			local initialCostPerVehiclePerMonth = initialCostPerVehicle / replacementTimeInMonths;
+			
+//			Log.logWarning("Income / costs (init costs): " + brutoIncomePerMonthPerVehicle + " / " + brutoCostPerMonthPerVehicle + "(" + initialCostPerVehiclePerMonth + "): " + nrVehicles);
+			
+			local nettoIncomePerMonth = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth) * nrVehicles;
+			if (nettoIncomePerMonth > bestIncomePerMonth) {
+//				if (bestTransportEngine != null)
+//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
+//				else
+//					Log.logWarning("+ New engine " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
+				bestIncomePerMonth = nettoIncomePerMonth;
+				bestTransportEngine = transportEngineID;
+				bestHoldingEngine = holdingEngineID;
+			}// else {
+			//	Log.logWarning("- The old engine + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") is better than " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
+			//}
+		}
+		
+//		if (bestTransportEngine != null)
+//			Log.logWarning("* The best engine for the connection: " + ToString() + " is " + AIEngine.GetName(bestTransportEngine) + " holding cargo by: " + AIEngine.GetName(bestHoldingEngine));
+//		else
+//			Log.logWarning("* No engine found suitable!");
+
+		if (bestTransportEngine == null)
+			return null;
+		return [bestTransportEngine, bestHoldingEngine];
 	}
 	
 	/**
@@ -113,13 +323,26 @@ class Connection {
 	 * internal state.
 	 */
 	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
+		
+		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
+			vehicleGroupID = AIGroup.CreateGroup(vehicleType);
+			AIGroup.SetName(vehicleGroupID, travelFromNode.GetName() + " to " + travelToNode.GetName());
+		}
+		
 		pathInfo.UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius);
 		lastChecked = AIDate.GetCurrentDate();
 		vehicleTypes = vehicleType;
 		forceReplan = false;
+		
+		// Cache the best vehicle we can build for this connection.
+		local bestEngines = GetBestTransportingEngine(vehicleTypes);
+		if (bestEngines != null) {
+			bestTransportEngine = bestEngines[0];
+			bestHoldingEngine = bestEngines[1];
+		}
 
 		// In the case of a bilateral connection we want to make sure that
-		// we don't hinder ourselves; Place the stations not to near each
+		// we don't hinder ourselves; Place the stations not too near each
 		// other.
 		if (bilateralConnection && connectionType == TOWN_TO_TOWN) {
 			travelFromNode.AddExcludeTiles(cargoID, fromTile, stationCoverageRadius);
@@ -314,5 +537,9 @@ class Connection {
 	
 	function GetUID() {
 		return travelFromNode.GetUID(cargoID);
+	}
+	
+	function ToString() {
+		return "From: " + travelFromNode.GetName() + " to " + travelToNode.GetName() + " carrying: " + AICargo.GetCargoLabel(cargoID);
 	}
 }

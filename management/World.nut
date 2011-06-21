@@ -36,11 +36,14 @@ class World {
 	pathFixer = null;
 	niceCABEnabled = null;
 	
+	useDelta = null;
+	
 	/**
 	 * Initializes a representation of the 'world'.
 	 */
-	constructor(niceCAB) {
+	constructor(niceCAB, delta) {
 		niceCABEnabled = niceCAB;
+		useDelta = delta;
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
@@ -514,7 +517,7 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 						engineReplaced = true;
 					}						
 				} else {
-					// We only judge a locomotive on its merrit to transport weagons (don't care about the
+					// We only judge a locomotive on its merrit to transport wagons (don't care about the
 					// accidental bit of cargo it can move around).
 					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) ||
 					    AIRail.GetMaxSpeed(AIEngine.GetRailType(engineID)) > AIRail.GetMaxSpeed(AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo]))) {
@@ -553,8 +556,8 @@ function World::ProcessNewEngineAvailableEvent(engineID) {
 				}
 */
 				
-				if (vehicleTypesAreCompatible)
-					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
+//				if (vehicleTypesAreCompatible)
+//					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
 
 				// Calculate the optimal distance between the nodes for this vehicle.
 //				if (!AIEngine.IsWagon(newEngineID)) {

@@ -81,6 +81,9 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
  */
 function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 {
+	
+	local alreadyBuiltRailTracks = 0;
+	
 	local railPathHelper = RailPathFinderHelper(railType);
 	local stationsToIgnore = [];
 	
@@ -114,6 +117,15 @@ function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 			//AIRail.BuildRailTrack(roadList[a].tile, roadList[a].lastBuildRailTrack);
 			local tile = roadList[a].tile;
 			local railTrack = roadList[a].lastBuildRailTrack;
+			
+			if (roadList[a].alreadyBuild) {
+				AISign.BuildSign(tile, "O");
+				++alreadyBuiltRailTracks;
+			}/* else if (alreadyBuiltRailTracks > 15 && !roadList[a + 1].alreadyBuild) {
+				lastBuildIndex = a + 1;
+				return false;
+			}*/
+			
 			if (!AIRail.BuildRailTrack(tile, railTrack) && !estimateCost) { 
 				if (!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0) {
 					lastBuildIndex = a + 1;

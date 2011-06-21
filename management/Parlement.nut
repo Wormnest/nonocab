@@ -63,6 +63,8 @@ function Parlement::ExecuteReports() {
 
 		if (minimalMoneyNeeded > mostExpensiveBuild)
 			mostExpensiveBuild = minimalMoneyNeeded;
+		
+		AISign.BuildSign(report.connection.pathInfo.roadList[0].tile, "Month: " + (report.brutoIncomePerMonthPerVehicle - report.brutoCostPerMonthPerVehicle) + "; year: " + (report.brutoIncomePerMonthPerVehicle - report.brutoCostPerMonthPerVehicle) * 12);
 	}
 	
 	// Pay back as much load as possible.

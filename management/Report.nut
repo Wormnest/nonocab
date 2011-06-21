@@ -69,10 +69,16 @@ class Report
 		local maxSpeed = AIEngine.GetMaxSpeed(transportEngineID);
 		
 		// Get the distances (real or estimated).
-		local travelTime;
-		local travelTimeTo;
-		local travelTimeFrom;
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
+		//assert (connection != null);
+		//local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
+		//local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
+		//local travelTime = travelTimeTo + travelTimeFrom;
+
+		
+		local travelTimeTo = 0;
+		local travelTimeFrom = 0;
+		local travelTime = 0;
 		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
 			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_ROAD) {
@@ -91,7 +97,6 @@ class Report
 
 			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
-
 			// For air connections the distance travelled is different (shorter in general)
 			// than road vehicles. A part of the tiles are traversed diagonal, we want to
 			// capture this so we can make more precise predictions on the income per vehicle.
@@ -119,9 +124,6 @@ class Report
 
 			travelTimeTo = realDistance / maxSpeed;
 			travelTimeFrom = travelTimeTo;
-//			travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
-//			traveltimeFrom = travelTimeTo;
-			
 			if (connection == null || !connection.pathInfo.build) {
 
 				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
@@ -143,7 +145,8 @@ class Report
 				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, transportEngineID, true);
 				travelTimeFrom = travelTimeTo;
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
-			} else {
+			}
+ 			else {
 				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
 				travelTimeFrom = travelTimeTo;
 			}
@@ -175,6 +178,7 @@ class Report
 			loadingTime = 15;
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
+			quit();
 			isInvalid = true;
 			world.InitCargoTransportEngineIds();
 		}
@@ -323,16 +327,23 @@ class Report
 		if (vehicleType == AIVehicle.VT_INVALID)
 			return 0;
 
-		// Check how much this distances is from the 'optimal' distance.
-		local optimalDistance = world.optimalDistances[vehicleType][cargoID];
-		local distance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
-
-		local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
-		local income = GetIncomePerVehicle(distance).tointeger();
-		local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
-
-		local nettoIncome = NettoIncomePerMonth();
-		return nettoIncome * delta;
+		if (world.useDelta)
+		{
+			// Check how much this distances is from the 'optimal' distance.
+			local optimalDistance = world.optimalDistances[vehicleType][cargoID];
+			local distance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
+	
+			local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
+			local income = GetIncomePerVehicle(distance).tointeger();
+			local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
+	
+			local nettoIncome = NettoIncomePerMonth();
+			return nettoIncome * delta;
+		}
+		else
+		{
+			return NettoIncomePerMonth();
+		}
 	}
 
 	function GetIncomePerVehicle(distance) {
@@ -391,7 +402,7 @@ class Report
 	 * connections.
 	 * @return The maximum number of vehicles we can buy for this money.
 	 */
-	function GetNrVehicles(money, forcast) {
+	function GetNrVehicles(money, forecast) {
 		if (nrVehicles < 0)
 			return nrVehicles;
 		money -= initialCost;
@@ -401,9 +412,9 @@ class Report
 			return nrVehicles;
 		local vehiclesToBuy = (money / initialCostPerVehicle).tointeger();
 
-		// Add the revenue we make on the first month to this number.
+		// Add the revenue we make on the first {forecast} month(s) to this number.
 		if (connection == null || !connection.pathInfo.build) {
-			local revenue = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * forcast * vehiclesToBuy;
+			local revenue = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * forecast * vehiclesToBuy;
 			local extraVehiclesToBuy = (revenue / initialCostPerVehicle).tointeger();
 			vehiclesToBuy += extraVehiclesToBuy;
 		}

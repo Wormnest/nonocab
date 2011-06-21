@@ -7,7 +7,8 @@ class ConnectionManager {
 	                               // keep track of rail connections which must be upgraded together.
 	allConnections = null;
 	
-	constructor() {
+	constructor(worldEventManager) {
+		worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		connectionListeners = [];
 		allConnections = [];
 		stationIDToConnection = {};
@@ -111,6 +112,21 @@ function ConnectionManager::LoadData(data, world) {
 	}
 		
 	Log.logInfo("Successfully load: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
+}
+
+/**
+ * Whenever a new Engine becomes available, update the cached transport and holding engine IDs for all built connections.
+ */
+function ConnectionManager::WE_EngineReplaced(newEngineID) {
+	foreach (connection in allConnections) {
+		connection.NewEngineAvailable(newEngineID);
+		/*
+		local bestEngines = connection.GetBestTransportingEngine(connection.vehicleType);
+		if (bestEngines != null) {
+			connection.bestTransportEngine = bestEngines[0];
+			connection.bestHoldingEngine = bestEngines[1];
+		}*/
+	}
 }
 
 function ConnectionManager::FindConnectionNode(connectionNodeList, cargoID, connectionNodeToFindGUID) {
