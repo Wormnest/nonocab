@@ -84,6 +84,8 @@ class Connection {
 			AIGroup.SetAutoReplace(vehicleGroupID, bestTransportEngine, bestEngines[0]);
 			AIGroup.SetAutoReplace(vehicleGroupID, bestHoldingEngine, bestEngines[1]);
 			
+			AISign.BuildSign(travelFromNode.GetLocation(), "Replace " + AIEngine.GetName(bestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
+			
 			bestTransportEngine = bestEngines[0];
 			bestHoldingEngine = bestEngines[1];
 		}
@@ -102,7 +104,7 @@ class Connection {
 		local bestEngines = GetBestTransportingEngine(vehicleType);
 		
 		if (bestEngines == null) {
-			Log.logWarning("No suitable engines found!");
+			//Log.logWarning("No suitable engines found!");
 			return null;
 		}
 		
@@ -258,7 +260,6 @@ class Connection {
 			local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
 			
 			// In case of trains, we have 5 wagons.
-			//nrWagonsPerVehicle = 5;
 			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
 				transportedCargoPerVehiclePerMonth *= 5;
 			

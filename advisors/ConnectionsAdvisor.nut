@@ -225,7 +225,9 @@ function ConnectionAdvisor::Update(loopCounter) {
 			continue;
 
 		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
-		if (connection != null && connection.pathInfo != null && connection.pathInfo.build)
+		assert (connection != null);
+		assert (connection.pathInfo != null);
+		if (connection.pathInfo.build)
 			continue;
 		
 		Log.logDebug("Considder: " + report.ToString());
@@ -233,47 +235,37 @@ function ConnectionAdvisor::Update(loopCounter) {
 		local bestReport = report.fromConnectionNode.GetBestReport(report.cargoID);
 		
 		// Check if this connection has already been checked.
-		if (connection != null && !connection.forceReplan && reportTable.rawin(connection.GetUID())) {
+		if (!connection.forceReplan && reportTable.rawin(connection.GetUID())) {
 			local otherCon = reportTable.rawget(connection.GetUID());
 			if (otherCon.connection.travelToNode.GetUID(report.cargoID) == connection.travelToNode.GetUID(report.cargoID))
 				continue;
 		}
 
-		if (connection != null && bestReport == report)
+		if (bestReport == report)
 			connection.forceReplan = false;
 
 		// If we haven't calculated yet what it cost to build this report, we do it now.
 		local pathInfo = GetPathInfo(report);
 		if (pathInfo == null) {
-			if (connection != null && bestReport == report)
+			if (bestReport == report)
 				bestReport = null;
 			continue;
 		}
 		
 		// Check if the industry connection node actually exists else create it, and update it! If it exists
 		// we must be carefull because an other report may already have clamed it.
-		local oldPathInfo;
-		if (connection == null) {
-			connection = Connection(report.cargoID, report.fromConnectionNode, report.toConnectionNode, pathInfo, connectionManager);
-			report.fromConnectionNode.AddConnection(report.toConnectionNode, connection);
-		} else {
-			oldPathInfo = clone connection.pathInfo;
-			connection.pathInfo = pathInfo;
-		}
+		connection.pathInfo = pathInfo;
 						
 		// Compile the report :)
-		report = connection.CompileReport(world, pathInfo.vehicleType);//, report.transportEngineID, report.holdingEngineID);
+		report = connection.CompileReport(world, pathInfo.vehicleType);
 		if (report == null || report.isInvalid || report.nrVehicles < 1)
 			continue;
 
 		// If a connection already exists, see if it already has a report. If so we can only
 		// overwrite it if our report is better or if the original needs a rewrite.
 		// If the other is better we restore the original pathInfo and back off.
-		if (bestReport && !connection.forceReplan && report.Utility() <= bestReport.Utility()) {
-			if (oldPathInfo)
-				connection.pathInfo = oldPathInfo;
+		if (bestReport && !connection.forceReplan && report.Utility() <= bestReport.Utility())
 			continue;
-		}
 		
 		// If the report yields a positive result we add it to the list of possible connections.
 		if (report.Utility() > 0) {
@@ -350,7 +342,10 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, vehicleType);//, world.cargoTransportEngineIds[vehicleType][connection.cargoID], world.cargoHoldingEngineIds[vehicleType][connection.cargoID]);
+		report = connection.CompileReport(world, vehicleType);
+		if (report == null)
+			continue;
+
 		if (report.isInvalid || report.nrVehicles < 1 || report.Utility() < 0) {
 			// Only mark a connection as invalid if it's the same report!
 			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)
@@ -463,9 +458,16 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 					continue;
 
 				// Check if the connection is actually profitable.
-				local report = Report(world, fromConnectionNode, toConnectionNode, cargoID, transportEngineID, holdingEngineID, 0);
+				local connection = fromConnectionNode.GetConnection(toConnectionNode, cargoID);
+				if (connection == null) {
+					local pathInfo = PathInfo(null, null, 0, AIVehicle.VT_INVALID);
+					connection = Connection(cargoID, fromConnectionNode, toConnectionNode, pathInfo, connectionManager);
+					fromConnectionNode.AddConnection(toConnectionNode, connection);
+				}
+				connection.pathInfo.vehicleType = AIVehicle.VT_INVALID;
+				local report = connection.CompileReport(world, vehicleType);
 				
-				if (!report.isInvalid && report.Utility() > 0) {
+				if (report != null && !report.isInvalid && report.Utility() > 0) {
 					
 					// For airlines we can very accurately estimate the travel times and
 					// income, so we can already prune connections here since we know

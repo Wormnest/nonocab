@@ -70,26 +70,20 @@ class Report
 		
 		// Get the distances (real or estimated).
 		connection = travelFromNode.GetConnection(travelToNode, cargoID);
-		//assert (connection != null);
-		//local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
-		//local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
-		//local travelTime = travelTimeTo + travelTimeFrom;
-
-		
-		local travelTimeTo = 0;
-		local travelTimeFrom = 0;
-		local travelTime = 0;
+		assert (connection != null);
+		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
+		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
+		local travelTime = travelTimeTo + travelTimeFrom;
 		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+		
+		assert (connection.pathInfo.vehicleType == AIVehicle.VT_INVALID || connection.pathInfo.vehicleType == AIEngine.GetVehicleType(transportEngineID));
+		
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
-			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_ROAD) {
-				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
-				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
+			if (connection.pathInfo.roadList != null) {
 
 				if (!connection.pathInfo.build)
 					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad();
 			} else {
-				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
-				travelTimeFrom = travelTimeTo;
 				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance * 3 +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_DEPOT) +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_TRUCK_STOP) * 2;
@@ -97,34 +91,7 @@ class Report
 
 			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
-			// For air connections the distance travelled is different (shorter in general)
-			// than road vehicles. A part of the tiles are traversed diagonal, we want to
-			// capture this so we can make more precise predictions on the income per vehicle.
-			local fromLoc = travelFromNode.GetLocation();
-			local toLoc = travelToNode.GetLocation();
-			local distanceX = AIMap.GetTileX(fromLoc) - AIMap.GetTileX(toLoc);
-			local distanceY = AIMap.GetTileY(fromLoc) - AIMap.GetTileY(toLoc);
-
-			if (distanceX < 0) distanceX = -distanceX;
-			if (distanceY < 0) distanceY = -distanceY;
-
-			local diagonalTiles;
-			local straightTiles;
-
-			if (distanceX < distanceY) {
-				diagonalTiles = distanceX;
-				straightTiles = distanceY - diagonalTiles;
-			} else {
-				diagonalTiles = distanceY;
-				straightTiles = distanceX - diagonalTiles;
-			}
-
-			// Take the landing sequence in consideration.
-			local realDistance = diagonalTiles * Tile.diagonalRoadLength + (straightTiles + 40) * Tile.straightRoadLength;
-
-			travelTimeTo = realDistance / maxSpeed;
-			travelTimeFrom = travelTimeTo;
-			if (connection == null || !connection.pathInfo.build) {
+			if (!connection.pathInfo.build) {
 
 				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
 				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, isTowntoTown ? true : false);
@@ -140,33 +107,19 @@ class Report
 
 			loadingTime = 20;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
-
-			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
-				travelTimeTo = WaterPathFinderHelper.GetTime(connection.pathInfo.roadList, transportEngineID, true);
-				travelTimeFrom = travelTimeTo;
+			if (connection.pathInfo.roadList != null) {
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
 			}
- 			else {
-				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
-				travelTimeFrom = travelTimeTo;
-			}
 
-			if (connection == null || !connection.pathInfo.build)
+			if (!connection.pathInfo.build)
 				initialCost += BuildShipYardAction.GetCosts();
 
 			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
-			if (connection != null && connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
-				travelTimeTo = connection.pathInfo.GetTravelTime(transportEngineID, true);
-				travelTimeFrom = connection.pathInfo.GetTravelTime(transportEngineID, false);
-
+			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				if (!connection.pathInfo.build)
 					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 2;
-					
-				//Log.logWarning("To get from " + travelFromNode.GetName() + " to " + travelToNode.GetName() + " takes " + travelTimeTo + " " + travelTimeFrom + " days...");
 			} else {
-				travelTimeTo = distance * Tile.straightRoadLength / maxSpeed;
-				travelTimeFrom = travelTimeTo;
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
 				assert (rail_type != AIRail.RAILTYPE_INVALID);
 				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 3 +
@@ -182,7 +135,6 @@ class Report
 			isInvalid = true;
 			world.InitCargoTransportEngineIds();
 		}
-		travelTime = travelTimeTo + travelTimeFrom;
 
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
@@ -235,7 +187,6 @@ class Report
 					nrVehicles = 1;
 			}
 		}
-
 
 		brutoCostPerMonth = 0;
 		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
