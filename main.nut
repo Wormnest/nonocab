@@ -8,6 +8,7 @@ class NoCAB extends AIController {
 	stop = false;
    	parlement = null;
    	world = null;
+   	worldEventManager = null;
    	advisors = null;
    	planner = null;
    	loadData = null;
@@ -69,10 +70,11 @@ function NoCAB::Start()
 	
 	parlement = Parlement();
 	world = World(GetSetting("NiceCAB"), GetSetting("UseDelta"));
+	worldEventManager = WorldEventManager(world);
 	GameSettings.InitGameSettings();
-	connectionManager = ConnectionManager(world.worldEventManager);
+	connectionManager = ConnectionManager(worldEventManager);
 	pathFixer = PathFixer();
-	subsidyManager = SubsidyManager(world.worldEventManager);
+	subsidyManager = SubsidyManager(worldEventManager);
 		
 	planner = Planner(world);
 
@@ -87,26 +89,26 @@ function NoCAB::Start()
 
 	if (GetSetting("Enable road vehicles")) {
 		Log.logInfo("Road vehicle advisor initiated!");
-		advisors.push(RoadConnectionAdvisor(world, connectionManager));
+		advisors.push(RoadConnectionAdvisor(world, worldEventManager, connectionManager));
 	}
 	if (GetSetting("Enable airplanes")) {
 		Log.logInfo("Airplane advisor initiated!");
-		advisors.push(AircraftAdvisor(world, connectionManager));
+		advisors.push(AircraftAdvisor(world, worldEventManager, connectionManager));
 	}
 	if (GetSetting("Enable ships")) {
 		Log.logInfo("Ship advisor initiated!");
-		advisors.push(ShipAdvisor(world, connectionManager));
+		advisors.push(ShipAdvisor(world, worldEventManager, connectionManager));
 	}
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
-		advisors.push(TrainConnectionAdvisor(world, connectionManager, GetSetting("Allow trains town to town")));
+		advisors.push(TrainConnectionAdvisor(world, worldEventManager, connectionManager, GetSetting("Allow trains town to town")));
 	}
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
 		
-	advisors.push(VehiclesAdvisor(world, connectionManager));
+	advisors.push(VehiclesAdvisor(connectionManager));
 
 	if (loadData) {
 		Log.logInfo("(2/5) Load path fixer data");
@@ -182,7 +184,7 @@ function NoCAB::Start()
 				++counter;
 				
 				assert (AIVehicle.IsValidVehicle(vehicle));
-				if (AIVehicle.GetAge(vehicle) > 3  * World.DAYS_PER_YEAR) 
+				if (AIVehicle.GetAge(vehicle) > 3  * Date.DAYS_PER_YEAR) 
 				{
 					// Validate that the projected income of the vehicle is close to the actual earnings.
 					local transportEngineID = AIVehicle.GetEngineType(vehicle);
@@ -206,17 +208,8 @@ function NoCAB::Start()
 					assert (vehicleCapacity > 0);
 						
 					// Calculate netto income per vehicle.
-					local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;						
-/*
-					// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
-					if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(transportEngineID), AICargo.CC_PASSENGERS) && 
-					    !AICargo.HasCargoClass(cargoIDTransported, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoIDTransported, AICargo.CC_MAIL)) {
-						if (AICargo.GetTownEffect(cargoIDTransported) == AICargo.TE_GOODS)
-							transportedCargoPerVehiclePerMonth *= 0.6;
-						else
-							transportedCargoPerVehiclePerMonth *= 0.3;
-					}
-*/
+					local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;						
+
 					local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 					local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeForward.tointeger()) * transportedCargoPerVehiclePerMonth;
 
@@ -228,9 +221,9 @@ function NoCAB::Start()
 					}
 					assert (brutoIncomePerMonthPerVehicle > 0);
 						
-					local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
+					local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / Date.MONTHS_PER_YEAR;
 					assert (brutoCostPerMonthPerVehicle > 0);
-					local projectedIncomePerVehiclePerYear = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * World.MONTHS_PER_YEAR;
+					local projectedIncomePerVehiclePerYear = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * Date.MONTHS_PER_YEAR;
 						
 					local actualIncomePerYear = AIVehicle.GetProfitLastYear(vehicle);
 						
@@ -310,7 +303,13 @@ function NoCAB::Start()
 		}
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		world.Update();	
+		
+		// Process all the events which have been fired in the mean time.
+		worldEventManager.ProcessEvents();
+		
+		// Update all active connections and check if vehicles need to be sold / replaced, etc.
+		connectionManager.MaintainActiveConnections();
+		
 		
 		AICompany.SetAutoRenewMoney(5000000);
 		parlement.SelectReports(reports);

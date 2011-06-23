@@ -125,7 +125,7 @@ class Connection {
 						if (!AIEngine.IsBuildable(engineID))
 							continue;
 						local travelTime = pathInfo.GetTravelTime(engineID, true) +  pathInfo.GetTravelTime(engineID, false);
-						cargoAlreadyTransported += (World.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
+						cargoAlreadyTransported += (Date.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
 					}
 				}
 			}

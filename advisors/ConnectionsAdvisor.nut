@@ -25,8 +25,8 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 	reportTableLength = null;
 	closedIndustryList = null;  // Keep track of which industries have recently closed. We won't allow the AI to work on these.
 
-	constructor(world, vehType, conManager) {
-		Advisor.constructor(world);
+	constructor(world, worldEventManager, vehType, conManager) {
+		Advisor.constructor();
 		reportTable = {};
 		ignoreTable = {};
 		updateList = [];
@@ -38,9 +38,9 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		needUpdate = false;
 		closedIndustryList = {};
 	
-		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
-		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
-		world.worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
+		worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
+		worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
+		worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
 		
 		updateList = clone world.industry_tree;
 	}
@@ -216,8 +216,8 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// Always try to get one more then currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
 	assert(connectionReports != null);
-	while ((reportTable.len() < minNrReports || Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 48) &&
-		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < World.DAYS_PER_YEAR / 24 &&
+	while ((reportTable.len() < minNrReports || Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 48) &&
+		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
 
 		// Check if the report is flagged invalid or already build / closed in the mean time.		
@@ -412,12 +412,6 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		// Take a guess at the travel time and profit for each cargo type.
 		foreach (cargoID in fromConnectionNode.cargoIdsProducing) {
 
-			// Check if we even have an engine to transport this cargo.
-			local transportEngineID = world.cargoTransportEngineIds[vehicleType][cargoID];
-			local holdingEngineID = world.cargoHoldingEngineIds[vehicleType][cargoID];
-			if (transportEngineID == -1 || holdingEngineID == -1)
-				continue;
-				
 			// Check if this building produces enough (yet) to be considered.
 			if (fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
 				fromConnectionNode.GetProduction(cargoID) == 0)
@@ -435,21 +429,9 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 			if (skip)
 				continue;
 
-			// Calculate how long this engine can travel in 100 days.
-			// speed (in km/h) * #days * 24 (km/day) / (tile length / 24).
-			local maxDistance = (AIEngine.GetMaxSpeed(transportEngineID).tofloat() * 100 * (AIEngine.GetReliability(transportEngineID).tofloat() / 100)) / Tile.straightRoadLength;
-				
 			foreach (toConnectionNode in fromConnectionNode.connectionNodeList) {
 				if (vehicleType == AIVehicle.VT_WATER && !toConnectionNode.isNearWater ||
 					toConnectionNode.isInvalid)
-					continue;
-
-				local manhattanDistance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
-
-				// Check if the nodes are not to far away (we restrict it by an extra 
-				// percentage to avoid doing unnecessary work by envoking the pathfinder
-				// where this isn't necessary.
-				if (manhattanDistance > maxDistance)
 					continue;
 
 				// Check if this connection isn't in the ignore table.
@@ -467,6 +449,17 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				local report = connection.CompileReport(vehicleType);
 				
 				if (report != null && !report.isInvalid && report.Utility() > 0) {
+
+					// Calculate how long this engine can travel in 100 days.
+					// speed (in km/h) * #days * 24 (km/day) / (tile length / 24).
+					local maxDistance = (AIEngine.GetMaxSpeed(report.transportEngineID).tofloat() * 100 * (AIEngine.GetReliability(report.transportEngineID).tofloat() / 100)) / Tile.straightRoadLength;
+					local manhattanDistance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
+
+					// Check if the nodes are not to far away (we restrict it by an extra 
+					// percentage to avoid doing unnecessary work by envoking the pathfinder
+					// where this isn't necessary.
+					if (manhattanDistance > maxDistance)
+						continue;
 					
 					// For airlines we can very accurately estimate the travel times and
 					// income, so we can already prune connections here since we know
@@ -493,5 +486,5 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 		connectionNodeList.remove(i);
 	}
 	
-	Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks));
+	Log.logDebug("Ticks: " + (AIController.GetTick() - startTicks) + " found connections: " + connectionReports.Count());
 }

@@ -4,18 +4,15 @@
 class PathBuilder {
 
 	maxSpeed = null;
-	pathFixer = null;
 	roadList = null;
 	
 	/**
 	 * @param connection The connection to be realised.
 	 * @param maxSpeed The max speed of the vehicles which are going to use this connection.
-	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(roadList, maxSpeed, pathFixer) {
+	constructor(roadList, maxSpeed) {
 		this.roadList = roadList;
 		this.maxSpeed = maxSpeed;
-		this.pathFixer = pathFixer;
 	}
 
 	/**
@@ -249,8 +246,9 @@ function PathBuilder::CheckError(buildResult)
 			if (buildResult[0] == roadList[0].tile || buildResult[0] == roadList[roadList.len() - 1].tile ||
 			buildResult[1] == roadList[0].tile || buildResult[1] == roadList[roadList.len() - 1].tile)
 				return false;
-			pathFixer.AddBuildPieceToFix(buildResult);
-			return true;
+//			pathFixer.AddBuildPieceToFix(buildResult);
+//			return true;
+			return false;
 			
 		// Serious onces:
 		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:

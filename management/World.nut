@@ -2,33 +2,16 @@
  * World holds the current status of the world as the AI sees it.
  */
 class World {
-	static DAYS_PER_MONTH = 30.0;
-	static DAYS_PER_YEAR = 364.0;
-	static MONTHS_PER_YEAR = 12.0;
-	static MONTHS_BEFORE_AUTORENEW = 144; // 12 years
-	
 	town_list = null;			// List with all towns.
 	industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
-
-	/**
-	 * Because some engines are only there to hold cargo (e.g. wagons) while others
-	 * only move the cargo without holding any (e.g. locomotives), we split these
-	 * duties into two separate arrays. Although for the same entry they can contain
-	 * the same engine IDs (e.g. for trucks).
-	 */
-	cargoTransportEngineIds = null;		// The best engine IDs to transport cargo.
-	cargoHoldingEngineIds = null;		// The best engine IDs to hold cargo.
-	optimalDistances = null;		// The best distances per engine IDs.
 	maxCargoID = null;				// The highest cargo ID number
 
 	industry_tree = null;
 	industryCacheAccepting = null;
 	industryCacheProducing = null;
-	
-	worldEventManager = null;     // Manager to fire events to all world event listeners.
 	
 	starting_year = null;
 	years_passed = null;
@@ -60,8 +43,6 @@ class World {
 		industryCacheAccepting = array(maxCargoID + 1);
 		industryCacheProducing = array(maxCargoID + 1);
 
-		InitCargoTransportEngineIds();
-	
 		industry_tree = [];
 	
 		// Fill the arrays with empty arrays, we can't use:
@@ -71,10 +52,6 @@ class World {
 			industryCacheAccepting[index] = [];
 			industryCacheProducing[index] = [];
 		}
-		
-		InitCargoTransportEngineIds();
-		
-		worldEventManager = WorldEventManager(this);
 	}
 	
 	/**
@@ -112,83 +89,6 @@ function World::SaveData(saveTable) {
 	saveTable["years_passed"] <- years_passed;
 
 	return saveTable;
-}
-
-/**
- * Updates the view on the world.
- */
-function World::Update()
-{
-	worldEventManager.ProcessEvents();
-
-	// Check if we have any vehicles to sell! :)
-	local vehicleList = AIVehicleList();
-	foreach (vehicleID, value in vehicleList) {
-		local vehicleType = AIVehicle.GetVehicleType(vehicleID);
-		if (AIVehicle.IsStoppedInDepot(vehicleID)) {
-			
-			// If the vehicle is very old, we assume it needs to be replaced
-			// by a new vehicle.
-			if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
-				local currentEngineID = AIVehicle.GetEngineType(vehicleID);
-				local groupID = AIVehicle.GetGroupID(vehicleID);
-				
-				// Check the type of cargo the vehicle was carrying.
-				local mostCargo = 0;
-				local currentCargoID = -1;
-				foreach (index, value in cargo_list) {
-					if (AIVehicle.GetCapacity(vehicleID, index) > mostCargo)
-						currentCargoID = index;
-				}
-				
-				// Check what the best engine at the moment is.
-				local replacementEngineID = cargoTransportEngineIds[vehicleType][currentCargoID];
-				
-				if (AIEngine.IsBuildable(replacementEngineID)) {
-					
-					local doReplace = true;
-					// Don't replace an airplane if the airfield is very small.
-					if (vehicleType == AIVehicle.VT_AIR) {
-						if (AIEngine.GetPlaneType(AIVehicle.GetEngineType(vehicleID)) !=
-							AIEngine.GetPlaneType(replacementEngineID))
-							doReplace = false;
-					}
-					
-					// Don't replace trains, ever!
-					// TODO: Be smarter about this.
-					else if (vehicleType == AIVehicle.VT_RAIL) {
-						doReplace = false;
-					}
-					
-					if (doReplace) {
-						// Create a new vehicle.
-						local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
-						if (AIVehicle.IsValidVehicle(newVehicleID)) {
-							
-							// Let is share orders with the vehicle.
-							AIOrder.ShareOrders(newVehicleID, vehicleID);
-							AIGroup.MoveVehicle(groupID, newVehicleID);
-							AIVehicle.StartStopVehicle(newVehicleID);
-						} else {
-							// If we failed, simply try again next time.
-							continue;
-						}
-					}
-				}
-			}
-			
-			AIVehicle.SellVehicle(vehicleID);
-		}
-		
-		// Check if the vehicle is profitable.
-		if (AIVehicle.GetAge(vehicleID) > DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
-			if (vehicleType == AIVehicle.VT_WATER)
-				AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
-			else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
-				AIVehicle.SendVehicleToDepot(vehicleID);
-
-		}
-	}
 }
 
 /**
@@ -440,186 +340,6 @@ function World::RemoveIndustry(industryID) {
 	industryNode.isInvalid = true;
 	return industryNode;
 }
-
-/**
- * Check all available vehicles to transport all sorts of cargos and save
- * the max speed of the fastest transport for each cargo.
- *
- * Update the engine IDs for each cargo type and select the fastest engines
- * which can cary the most (speed * capacity).
- */
-function World::InitCargoTransportEngineIds() {
-	
-	cargoTransportEngineIds = array(4);
-	cargoHoldingEngineIds = array(4);
-	optimalDistances = array(4);
-	
-	for (local i = 0; i < cargoTransportEngineIds.len(); i++) {
-		cargoTransportEngineIds[i] = array(maxCargoID + 1, -1);
-		cargoHoldingEngineIds[i] = array(maxCargoID + 1, -1);
-		optimalDistances[i] = array(maxCargoID + 1, -1);
-	}
-	
-	local engineList = AIEngineList(AIVehicle.VT_ROAD);
-	engineList.Valuate(AIEngine.GetRoadType);
-	engineList.KeepValue(AIRoad.ROADTYPE_ROAD);
-	engineList.AddList(AIEngineList(AIVehicle.VT_AIR));
-	engineList.AddList(AIEngineList(AIVehicle.VT_WATER));
-	engineList.AddList(AIEngineList(AIVehicle.VT_RAIL));
-	
-	// Handle initializing new engines by using the event method
-	// already present :).
-	foreach (engine, value in engineList)
-		ProcessNewEngineAvailableEvent(engine);
-}
-
-/**
- * Handle the insertion of a new engine.
- * @param engineID The new engine ID.
- * @return true If the new engine replaced other onces, otherwise false.
- */
-function World::ProcessNewEngineAvailableEvent(engineID) {
-	if (!AIEngine.IsBuildable(engineID))
-		return false;
-
-	local vehicleType = AIEngine.GetVehicleType(engineID);
-	local updateWagons = false;
-
-	// We skip trams for now.
-	if (vehicleType == AIVehicle.VT_ROAD && AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
-		return false;
-		
-	local engineReplaced = false;
-
-	foreach (cargo, value in cargo_list) {
-		local oldEngineID = cargoTransportEngineIds[vehicleType][cargo];
-		local newEngineID = -1;
-		
-		if ((AIEngine.GetCargoType(engineID) == cargo || AIEngine.CanRefitCargo(engineID, cargo) || (!AIEngine.IsWagon(engineID) && AIEngine.CanPullCargo(engineID, cargo)))) {
-			
-			// Different case for trains as the wagons cannot transport themselves and the locomotives
-			// are unable to carry any cargo (ignorable cases aside).
-			if (vehicleType == AIVehicle.VT_RAIL) {
-
-				// Check if we have to process a new rail type.
-
-				local best_new_rail_type = TrainConnectionAdvisor.GetBestRailType(engineID);
-				local best_old_rail_type = TrainConnectionAdvisor.GetBestRailType(oldEngineID);
-
-//				Log.logWarning("Process: " + AIEngine.GetName(engineID) + " for " + AICargo.GetCargoLabel(cargo) + " v.s. " + AIEngine.GetName(oldEngineID));
-				if (AIEngine.IsWagon(engineID)) {
-					// We only judge a weagon on its merrit to transport cargo.
-					if (AIEngine.GetCapacity(cargoHoldingEngineIds[vehicleType][cargo]) < AIEngine.GetCapacity(engineID) ||
-					    AIRail.GetMaxSpeed(AIEngine.GetRailType(engineID)) > AIRail.GetMaxSpeed(AIEngine.GetRailType(cargoHoldingEngineIds[vehicleType][cargo]))) {
-						cargoHoldingEngineIds[vehicleType][cargo] = engineID;
-						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to carry: " + AICargo.GetCargoLabel(cargo));
-						newEngineID = engineID;
-						engineReplaced = true;
-					}						
-				} else {
-					// We only judge a locomotive on its merrit to transport wagons (don't care about the
-					// accidental bit of cargo it can move around).
-					if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) ||
-					    AIRail.GetMaxSpeed(AIEngine.GetRailType(engineID)) > AIRail.GetMaxSpeed(AIEngine.GetRailType(cargoTransportEngineIds[vehicleType][cargo]))) {
-						cargoTransportEngineIds[vehicleType][cargo] = engineID;
-						Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport: " + AICargo.GetCargoLabel(cargo));
-						newEngineID = engineID;
-						engineReplaced = true;
-						updateWagons = true;
-					}
-				}
-			} else if (AIEngine.GetMaxSpeed(cargoTransportEngineIds[vehicleType][cargo]) * AIEngine.GetCapacity(cargoTransportEngineIds[vehicleType][cargo]) < AIEngine.GetMaxSpeed(engineID) * AIEngine.GetCapacity(engineID)) {
-				cargoTransportEngineIds[vehicleType][cargo] = engineID;
-				cargoHoldingEngineIds[vehicleType][cargo] = engineID;
-				newEngineID = engineID;
-				Log.logInfo("Replaced " + AIEngine.GetName(oldEngineID) + " with " + AIEngine.GetName(engineID) + " to transport and carry: " + AICargo.GetCargoLabel(cargo));
-				engineReplaced = true;
-			}
-			
-			// If we have replaced an engine, we want to upgrade all groups with an old engine to the new one.
-			if (newEngineID != -1) {
-				// Only set autoreplace if the types of vehicles are compatible.
-				local vehicleTypesAreCompatible = true;
-				
-				// Don't replace little air planes with bigger ones!
-				if (vehicleType == AIVehicle.VT_AIR &&
-					AIEngine.GetPlaneType(oldEngineID) != AIEngine.GetPlaneType(newEngineID))
-					vehicleTypesAreCompatible = false;
-				
-				// Old: Don't replace trains if the new one cannot run on the olds rails.
-				// Don't need to check this because if the depot cannot build the new type of train, we're safe :).
-/*				if (vehicleType == AIVehicle.VT_RAIL) {
-					local railType = AIEngine.GetRailType(oldEngineID);
-					if (!AIEngine.HasPowerOnRail(newEngineID, railType) ||
-						!AIEngine.CanRunOnRail(newEngineID, railType))
-						vehicleTypesAreCompatible = false;
-				}
-*/
-				
-//				if (vehicleTypesAreCompatible)
-//					AIGroup.SetAutoReplace(AIGroup.GROUP_ALL, oldEngineID, newEngineID);
-
-				// Calculate the optimal distance between the nodes for this vehicle.
-//				if (!AIEngine.IsWagon(newEngineID)) {
-				{
-					local optimal_distance = 0;
-					local optimal_income = 0;
-
-					local transportingEngineID = cargoTransportEngineIds[vehicleType][cargo];
-					local carryingEngineID = cargoHoldingEngineIds[vehicleType][cargo];
- 
-					local capacity = AIEngine.GetCapacity(carryingEngineID);
-
-					if (vehicleType == AIVehicle.VT_RAIL)
-						capacity *= 5;
-
-					// Cargo payments for distances over 637 do not change anymore.
-					for (local i = 30; i < 637; i++) {
-
-						local travel_time = i * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportingEngineID);
-						local income = AICargo.GetCargoIncome(cargo, i, travel_time.tointeger()) * capacity;
-						local costs = AIEngine.GetRunningCost(transportingEngineID) / World.DAYS_PER_YEAR * travel_time;
-
-						income -= costs;
-
-						income /= i;
-
-						if (optimal_income > income || income <= 0)
-							continue;
-
-						optimal_income = income;
-						optimal_distance = i;
-					}
-
-					optimalDistances[vehicleType][cargo] = optimal_distance;
-				}
-			}
-		}
-	}
-
-	// If a train engine has been replaced, check if there are new wagons to accompany them.
-	if (updateWagons) {
-		foreach (cargo, value in cargo_list) {
-
-			local transportEngineID = cargoTransportEngineIds[AIVehicle.VT_RAIL][cargo];
-
-			local best_rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
-
-			local newWagons = AIEngineList(AIVehicle.VT_RAIL);
-			newWagons.Valuate(AIEngine.IsWagon);
-			newWagons.KeepValue(1);
-			newWagons.Valuate(AIEngine.CanRunOnRail, best_rail_type);
-			newWagons.KeepValue(1);
-			newWagons.Valuate(AIEngine.HasPowerOnRail, best_rail_type);
-			newWagons.KeepValue(1);
-
-			foreach (wagon, value in newWagons)
-				ProcessNewEngineAvailableEvent(wagon);
-		}
-	}
-
-	return engineReplaced;
-}				
 
 /**
  * Handle the event where an industry is opened in the world. We add it to

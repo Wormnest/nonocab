@@ -7,8 +7,8 @@ class VehiclesAdvisor extends Advisor {
 	connectionManager = null;
 	reports = null;
 	
-	constructor(world, connectionManager) {
-		Advisor.constructor(world);
+	constructor(connectionManager) {
+		Advisor.constructor();
 		this.connectionManager = connectionManager;
 		reports = [];
 	}
@@ -81,7 +81,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 		
 		connection.lastChecked = currentDate;
-		local report = connection.CompileReport(connection.vehicleTypes);//, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
+		local report = connection.CompileReport(connection.vehicleTypes);
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.pathInfo.travelFromNodeStationID), connection);
@@ -204,7 +204,7 @@ function VehiclesAdvisor::GetReports() {
 			AIEngine.IsArticulated(report.transportEngineID)) {
 			
 			if (connection.vehicleTypes == AIVehicle.VT_ROAD)
-				actionList.push(BuildRoadAction(report.connection, false, true, world));
+				actionList.push(BuildRoadAction(report.connection, false, true));
 
 			// Don't build extra airfields (yet).
 			else if (connection.vehicleTypes == AIVehicle.VT_AIR)

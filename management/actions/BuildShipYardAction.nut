@@ -3,11 +3,9 @@
  */
 class BuildShipYardAction extends Action {
 	connection = null;			// Connection object of the road to build.
-	world = null;				// The world.
 	
-	constructor(connection, world) {
+	constructor(connection) {
 		this.connection = connection;
-		this.world = world;
 		Action.constructor();
 	}
 }

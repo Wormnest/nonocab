@@ -92,7 +92,7 @@ class Subsidy {
 		// Because we need to allow time before the subsidy is awarded (we first need to
 		// build and get at least 1 vehicle to the destination), we allow the AI 4 months
 		// slack in trying to secure subsidies.
-		if (Date.GetDaysBetween(AISubsidy.GetExpireDate(subsidyID), AIDate.GetCurrentDate()) < 4 * World.DAYS_PER_MONTH)
+		if (Date.GetDaysBetween(AISubsidy.GetExpireDate(subsidyID), AIDate.GetCurrentDate()) < 4 * Date.DAYS_PER_MONTH)
 			return false;
 		return true;
 	}

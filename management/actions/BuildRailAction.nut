@@ -7,7 +7,6 @@ class BuildRailAction extends Action
 	buildDepot = false;         // Should we create a depot?
 	buildRailStations = false;  // Should we build rail stations?
 	directions = null;          // A list with all directions.
-	world = null;               // The world.
 	stationsConnectedTo = null; // The stations we've shared a connection with.
 	railStationFromTile = -1;   // The location of the rail station at the source location.
 	railStationToTile = -1;     // The location of the rail station at the dropoff location.
@@ -17,12 +16,11 @@ class BuildRailAction extends Action
 	 * @buildDepot Should a depot be build?
 	 * @param buildRailStaions Should rail stations be build?
 	 */
-	constructor(connection, buildDepot, buildRailStations, world) {
+	constructor(connection, buildDepot, buildRailStations) {
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
 		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRailStations = buildRailStations;
-		this.world = world;
 		stationsConnectedTo = [];
 		railStationFromTile = -1;
 		railStationToTile = -1;
@@ -43,7 +41,6 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 
-///	local bestRailType = TrainConnectionAdvisor.GetBestRailType(world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID]);
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
 	assert (bestEngineIDs != null);
 	local transportingEngineID = bestEngineIDs[0];
@@ -150,8 +147,7 @@ function BuildRailAction::Execute() {
 	len = roadList.len();
 
 	// Build the actual rails.
-	//local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, transportingEngineID, world.pathFixer);
+	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(buildRailStations)) {
 		connection.forceReplan = true;
@@ -609,9 +605,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
 	assert (bestEngineIDs != null);
 	local transportingEngineID = bestEngineIDs[0];
-	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID, world.pathFixer);
-	//local pathBuilder = RailPathBuilder(secondPath.roadList, world.cargoTransportEngineIds[AIVehicle.VT_RAIL][connection.cargoID], world.pathFixer);
-	//pathBuilder.stationIDsConnectedTo = stationsConnectedTo;
+	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(false)) {
 
@@ -730,7 +724,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 		assert (bestEngineIDs != null);
 		local transportingEngineID = bestEngineIDs[0];
 		
-		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, transportingEngineID, world.pathFixer);
+		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, transportingEngineID);
 		pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 		if (!pathBuilder.RealiseConnection(false)) {
 			//AISign.BuildSign(stationPoint, "TO HERE!");

@@ -52,9 +52,8 @@ function WorldEventManager::ProcessEvents() {
 				case AIEvent.AI_ET_ENGINE_AVAILABLE:
 					local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 					
-					if (world.ProcessNewEngineAvailableEvent(newEngineID))
-						foreach (listener in eventListeners.rawget("" + e.GetEventType()))
-							listener.WE_EngineReplaced(newEngineID);
+					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
+						listener.WE_EngineReplaced(newEngineID);
 					break;
 					
 				case AIEvent.AI_ET_INDUSTRY_OPEN:

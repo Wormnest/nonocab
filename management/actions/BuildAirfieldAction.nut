@@ -3,12 +3,10 @@
  */
 class BuildAirfieldAction extends Action {
 	connection = null;			// Connection object of the road to build.
-	world = null;				// The world.
 
-	constructor(connection, world) {
+	constructor(connection) {
 		Action.constructor();
 		this.connection = connection;
-		this.world = world;
 	}
 }
 

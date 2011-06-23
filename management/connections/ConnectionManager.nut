@@ -21,6 +21,76 @@ class ConnectionManager {
 	function ConnectionDemolished(connection);
 }
 
+/**
+ * TODO: Go through all connections and check which vehicles need to be sold (at least 3 years old
+ * and making a loss the last year in operation) and which need to be replaced (in depot but max age
+ * not yet reached).
+ */ 
+function ConnectionManager::MaintainActiveConnections() {
+	
+	foreach (connection in allConnections) {
+		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
+		
+		foreach (vehicleID, value in vehicleList) {
+			local vehicleType = AIVehicle.GetVehicleType(vehicleID);
+			if (AIVehicle.IsStoppedInDepot(vehicleID)) {
+				
+				// If the vehicle is very old, we assume it needs to be replaced
+				// by a new vehicle.
+				if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
+					local currentEngineID = AIVehicle.GetEngineType(vehicleID);
+
+					// Check what the best engine at the moment is.
+					local replacementEngineID = connection.GetBestTransportingEngine(vehicleType);
+					
+					if (AIEngine.IsBuildable(replacementEngineID)) {
+						
+						local doReplace = true;
+						// Don't replace an airplane if the airfield is very small.
+						if (vehicleType == AIVehicle.VT_AIR) {
+							if (AIEngine.GetPlaneType(AIVehicle.GetEngineType(vehicleID)) !=
+								AIEngine.GetPlaneType(replacementEngineID))
+								doReplace = false;
+						}
+						
+						// Don't replace trains, ever!
+						// TODO: Be smarter about this.
+						else if (vehicleType == AIVehicle.VT_RAIL) {
+							doReplace = false;
+						}
+						
+						if (doReplace) {
+							// Create a new vehicle.
+							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
+							if (AIVehicle.IsValidVehicle(newVehicleID)) {
+								
+								// Let is share orders with the vehicle.
+								AIOrder.ShareOrders(newVehicleID, vehicleID);
+								AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
+								AIVehicle.StartStopVehicle(newVehicleID);
+							} else {
+								// If we failed, simply try again next time.
+								continue;
+							}
+						}
+					}
+				}
+				
+				AIVehicle.SellVehicle(vehicleID);
+			}
+			
+			// Check if the vehicle is profitable.
+			if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
+				if (vehicleType == AIVehicle.VT_WATER)
+					AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
+				else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+					AIVehicle.SendVehicleToDepot(vehicleID);
+	
+			}
+		}
+	}
+}
+
 function ConnectionManager::SaveData(saveData) {
 	local CMsaveData = {};
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
@@ -120,12 +190,6 @@ function ConnectionManager::LoadData(data, world) {
 function ConnectionManager::WE_EngineReplaced(newEngineID) {
 	foreach (connection in allConnections) {
 		connection.NewEngineAvailable(newEngineID);
-		/*
-		local bestEngines = connection.GetBestTransportingEngine(connection.vehicleType);
-		if (bestEngines != null) {
-			connection.bestTransportEngine = bestEngines[0];
-			connection.bestHoldingEngine = bestEngines[1];
-		}*/
 	}
 }
 

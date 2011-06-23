@@ -6,14 +6,14 @@ class TrainConnectionAdvisor extends ConnectionAdvisor {
 //	pathFinder = null;
 	allowTownToTownConnections = null;
 
-	constructor(world, connectionManager, allowTownToTown) {
-		ConnectionAdvisor.constructor(world, AIVehicle.VT_RAIL, connectionManager);
+	constructor(world, worldEventManager, connectionManager, allowTownToTown) {
+		ConnectionAdvisor.constructor(world, worldEventManager, AIVehicle.VT_RAIL, connectionManager);
 		allowTownToTownConnections = allowTownToTown;
 	}
 }
 
 function TrainConnectionAdvisor::GetBuildAction(connection) {
-	return BuildRailAction(connection, true, true, world);
+	return BuildRailAction(connection, true, true);
 }
 
 /**

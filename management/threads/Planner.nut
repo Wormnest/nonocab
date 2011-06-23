@@ -36,7 +36,7 @@ function Planner::ScheduleAndExecute() {
 	local currentDate = AIDate.GetCurrentDate();
 	local loopCounter = 0;
 	
-	while (!haltPlanner && Date.GetDaysBetween(currentDate, AIDate.GetCurrentDate()) < world.DAYS_PER_MONTH) {
+	while (!haltPlanner && Date.GetDaysBetween(currentDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_MONTH) {
 		foreach (thread in threads) {
 			thread.Update(loopCounter);
 			

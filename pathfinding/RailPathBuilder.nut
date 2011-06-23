@@ -4,7 +4,6 @@
 class RailPathBuilder {
 
 	maxSpeed = null;
-	pathFixer = null;
 	engineID = null;
 	roadList = null;
 	lastBuildIndex = null;
@@ -13,12 +12,10 @@ class RailPathBuilder {
 	/**
 	 * @param connection The connection to be realised.
 	 * @param engineID The engines which are going to use this connection.
-	 * @param pathFixer The path fixer instance to use when things go wrong.
 	 */
-	constructor(roadList, engineID, pathFixer) {
+	constructor(roadList, engineID) {
 		this.roadList = roadList;
 		this.engineID = engineID;
-		this.pathFixer = pathFixer;
 		maxSpeed = AIEngine.GetMaxSpeed(engineID);
 		lastBuildIndex = -1;
 		stationIDsConnectedTo = [];

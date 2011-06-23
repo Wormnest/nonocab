@@ -73,7 +73,7 @@ class Report
 			if (connection.pathInfo.roadList != null) {
 
 				if (!connection.pathInfo.build)
-					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad();
+					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID)).GetCostForRoad();
 			} else {
 				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance * 3 +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_DEPOT) +
@@ -109,7 +109,7 @@ class Report
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				if (!connection.pathInfo.build)
-					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID), null).GetCostForRoad() * 2;
+					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID)).GetCostForRoad() * 2;
 			} else {
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
 				assert (rail_type != AIRail.RAILTYPE_INVALID);
@@ -168,7 +168,7 @@ class Report
 		local travelTime = travelTimeTo + travelTimeFrom;
 		
 		// Calculate netto income per vehicle.
-		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
+		local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
 		
 		// In case of trains, we have 5 wagons.
 		nrWagonsPerVehicle = 5;
@@ -219,7 +219,7 @@ class Report
 		}
 
 		brutoCostPerMonth = 0;
-		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
+		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / Date.MONTHS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
 
 		runningTimeBeforeReplacement = AIEngine.GetMaxAge(transportEngineID);
@@ -290,7 +290,7 @@ class Report
 			capacity *= 5;
 		local travel_time = distance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportEngineID);
 		local income = AICargo.GetCargoIncome(connection.cargoID, distance, travel_time.tointeger()) * capacity;
-		local costs = AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR * travel_time;
+		local costs = AIEngine.GetRunningCost(transportEngineID) / Date.DAYS_PER_YEAR * travel_time;
 
 		income -= costs;
 
