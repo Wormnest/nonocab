@@ -22,7 +22,7 @@ function TrainConnectionAdvisor::GetBuildAction(connection) {
 function TrainConnectionAdvisor::GetPathInfo(report) {
 
 	// Don't do towns! Takes to long for the pathfinder sometimes...	
-	if (report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && !allowTownToTownConnections)
+	if (report.connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && !allowTownToTownConnections)
 		return null;
 	local stationType = AIStation.STATION_TRAIN; 
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
@@ -33,10 +33,9 @@ function TrainConnectionAdvisor::GetPathInfo(report) {
 	pathFindingHelper.updateClosedList = false;
 	local pathFinder = RoadPathFinding(pathFindingHelper);
 
-	local pathInfo = pathFinder.FindFastestRoad(report.fromConnectionNode.GetAllProducingTiles(report.cargoID, stationRadius, 1, 1), report.toConnectionNode.GetAllAcceptingTiles(report.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.fromConnectionNode.GetLocation(), report.toConnectionNode.GetLocation()) * 1.2 + 20, null);
+	local pathInfo = pathFinder.FindFastestRoad(report.connection.travelFromNode.GetAllProducingTiles(report.connection.cargoID, stationRadius, 1, 1), report.connection.travelToNode.GetAllAcceptingTiles(report.connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(report.connection.travelFromNode.GetLocation(), report.connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	if (pathInfo == null)
-		Log.logDebug("No path found from " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " Cargo: " + AICargo.GetCargoLabel(report.cargoID));
-	Log.logDebug("Path found!");
+		Log.logDebug("No path for connection: " + report.connection.ToString() + ".");
 	return pathInfo;
 }
 

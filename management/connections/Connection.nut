@@ -99,7 +99,7 @@ class Connection {
 	 * @vehicleType The type of vehicle to use for this connection.
 	 * @return A Report instance.
 	 */
-	function CompileReport(world, vehicleType) {
+	function CompileReport(vehicleType) {
 		
 		local bestEngines = GetBestTransportingEngine(vehicleType);
 		
@@ -131,7 +131,8 @@ class Connection {
 			}
 		}	
 		
-		return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
+		//return Report(world, travelFromNode, travelToNode, cargoID, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
+		return Report(this, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
 	}
 	
 	function GetEstimatedTravelTime(transportEngineID, forward) {
@@ -183,7 +184,6 @@ class Connection {
 			} else {
 				Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
 				quit();
-				isInvalid = true;
 				world.InitCargoTransportEngineIds();
 			}
 		}
@@ -246,56 +246,11 @@ class Connection {
 			if (holdingEngineID == null)
 				continue;
 			
-			local travelTimeTo = GetEstimatedTravelTime(transportEngineID, true);
-			local travelTimeFrom = GetEstimatedTravelTime(transportEngineID, false);
-			
-			if (travelTimeTo == null || travelTimeFrom == null)
+			local report = Report(this, transportEngineID, holdingEngineID, 0);
+			if (report.isInvalid)
 				continue;
-				
-//			Log.logWarning("Travel times: " + travelTimeTo + ", " + travelTimeFrom);
-			
-			local travelTime = travelTimeTo + travelTimeFrom;
-			
-			// Calculate netto income per vehicle.
-			local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
-			
-			// In case of trains, we have 5 wagons.
-			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
-				transportedCargoPerVehiclePerMonth *= 5;
-			
-			
-			// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
-			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
-			    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
-				if (AICargo.GetTownEffect(cargoID) == AICargo.TE_GOODS)
-					transportedCargoPerVehiclePerMonth *= 0.6;
-				else
-					transportedCargoPerVehiclePerMonth *= 0.3;
-			}
-//			Log.logWarning("Cargo transported per vehicle: " + transportedCargoPerVehiclePerMonth);
-			
-			local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
-			local nrVehicles = travelFromNode.GetProduction(cargoID).tofloat() / transportedCargoPerVehiclePerMonth;
-			local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
-	
-			// In case of a bilateral connection we take a persimistic take on the amount of 
-			// vehicles supported by this connection, but we do increase the income by adding
-			// the expected income of the other connection to the total.
-			if (bilateralConnection) {
-				// Also calculate the route in the other direction.
-				nrVehicles += (travelToNode.GetProduction(cargoID) / transportedCargoPerVehiclePerMonth).tointeger();
-				brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
-			}
-	
-			local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
-			local initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
-			local replacementTimeInMonths = AIEngine.GetMaxAge(transportEngineID) * 12;
-			
-			local initialCostPerVehiclePerMonth = initialCostPerVehicle / replacementTimeInMonths;
-			
-//			Log.logWarning("Income / costs (init costs): " + brutoIncomePerMonthPerVehicle + " / " + brutoCostPerMonthPerVehicle + "(" + initialCostPerVehiclePerMonth + "): " + nrVehicles);
-			
-			local nettoIncomePerMonth = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth) * nrVehicles;
+
+			local nettoIncomePerMonth = report.NettoIncomePerMonth();
 			if (nettoIncomePerMonth > bestIncomePerMonth) {
 //				if (bestTransportEngine != null)
 //					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");

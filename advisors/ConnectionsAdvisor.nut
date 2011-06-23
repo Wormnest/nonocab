@@ -94,10 +94,10 @@ function ConnectionAdvisor::WE_IndustryClosed(industryNode) {
 	
 	// Remove all related reports from the report table.
 	foreach (report in reportTable) {
-		if (report.fromConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.fromConnectionNode.id == industryID ||
-			report.toConnectionNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
-			report.toConnectionNode.id == industryID)
+		if (report.connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.connection.travelFromNode.id == industryID ||
+			report.connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && 
+			report.connection.travelToNode.id == industryID)
 			report.isInvalid = true;
 	}
 	
@@ -221,10 +221,11 @@ function ConnectionAdvisor::Update(loopCounter) {
 		(report = connectionReports.Pop()) != null) {
 
 		// Check if the report is flagged invalid or already build / closed in the mean time.		
-		if (report.isInvalid || closedIndustryList.rawin(report.fromConnectionNode.id) || closedIndustryList.rawin(report.toConnectionNode.id))
+		if (report.isInvalid || closedIndustryList.rawin(report.connection.travelFromNode.id) || closedIndustryList.rawin(report.connection.travelToNode.id))
 			continue;
 
-		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+//		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local connection = report.connection;
 		assert (connection != null);
 		assert (connection.pathInfo != null);
 		if (connection.pathInfo.build)
@@ -232,12 +233,12 @@ function ConnectionAdvisor::Update(loopCounter) {
 		
 		Log.logDebug("Considder: " + report.ToString());
 			
-		local bestReport = report.fromConnectionNode.GetBestReport(report.cargoID);
+		local bestReport = report.connection.travelFromNode.GetBestReport(report.connection.cargoID);
 		
 		// Check if this connection has already been checked.
 		if (!connection.forceReplan && reportTable.rawin(connection.GetUID())) {
 			local otherCon = reportTable.rawget(connection.GetUID());
-			if (otherCon.connection.travelToNode.GetUID(report.cargoID) == connection.travelToNode.GetUID(report.cargoID))
+			if (otherCon.connection.travelToNode.GetUID(report.connection.cargoID) == connection.travelToNode.GetUID(report.connection.cargoID))
 				continue;
 		}
 
@@ -257,7 +258,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		connection.pathInfo = pathInfo;
 						
 		// Compile the report :)
-		report = connection.CompileReport(world, pathInfo.vehicleType);
+		report = connection.CompileReport(pathInfo.vehicleType);
 		if (report == null || report.isInvalid || report.nrVehicles < 1)
 			continue;
 
@@ -284,7 +285,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 				
 				// If the new one is better, add the original one to the ignore list.
 				local originalReport = reportTable.rawget(connection.GetUID());
-				ignoreTable[originalReport.fromConnectionNode.GetUID(originalReport.cargoID) + "_" + originalReport.toConnectionNode.GetUID(originalReport.cargoID)] <- null;
+				ignoreTable[originalReport.connection.travelFromNode.GetUID(originalReport.connection.cargoID) + "_" + originalReport.connection.travelToNode.GetUID(originalReport.connection.cargoID)] <- null;
 				Log.logDebug("Replace: " + report.Utility() + " > " + originalReport.Utility());
 			}
 			
@@ -312,12 +313,13 @@ function ConnectionAdvisor::GetReports() {
 	foreach (report in reportTable) {
 
 		// The industryConnectionNode gives us the actual connection.
-		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		//local connection = report.connectfromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local connection = report.connection;
 
 		// If the connection is already build, don't add it!
 		local isAlreadyTransportingCargo = false;
-		foreach (activeConnection in report.fromConnectionNode.activeConnections) {
-			if (activeConnection.cargoID == report.cargoID) {
+		foreach (activeConnection in report.connection.travelFromNode.activeConnections) {
+			if (activeConnection.cargoID == report.connection.cargoID) {
 				isAlreadyTransportingCargo = true;
 				break;
 			}
@@ -328,7 +330,7 @@ function ConnectionAdvisor::GetReports() {
 
 		if (connection.forceReplan || report.isInvalid) {
 			// Only mark a connection as invalid if it's the same report!
-			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)
+			if (connection.travelFromNode.GetBestReport(connection.cargoID) == report)
 				connection.forceReplan = true;
 			continue;
 		}
@@ -342,13 +344,13 @@ function ConnectionAdvisor::GetReports() {
 			continue;
 			
 		// Update report.
-		report = connection.CompileReport(world, vehicleType);
+		report = connection.CompileReport(vehicleType);
 		if (report == null)
 			continue;
 
 		if (report.isInvalid || report.nrVehicles < 1 || report.Utility() < 0) {
 			// Only mark a connection as invalid if it's the same report!
-			if (connection.travelFromNode.GetBestReport(report.cargoID) == report)
+			if (connection.travelFromNode.GetBestReport(connection.cargoID) == report)
 				connection.forceReplan = true;
 			continue;
 		}
@@ -360,10 +362,7 @@ function ConnectionAdvisor::GetReports() {
 			
 		// Add the action to build the vehicles.
 		local vehicleAction = ManageVehiclesAction();
-		
-		// Buy only half of the vehicles needed, build the rest gradualy.
-//		if (report.nrVehicles != 1)
-//			report.nrVehicles = report.nrVehicles / 2;
+
 		// TODO: Change this for trains.
 		vehicleAction.BuyVehicles(report.transportEngineID, report.nrVehicles, report.holdingEngineID, report.nrWagonsPerVehicle, connection);
 		
@@ -465,7 +464,7 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 					fromConnectionNode.AddConnection(toConnectionNode, connection);
 				}
 				connection.pathInfo.vehicleType = AIVehicle.VT_INVALID;
-				local report = connection.CompileReport(world, vehicleType);
+				local report = connection.CompileReport(vehicleType);
 				
 				if (report != null && !report.isInvalid && report.Utility() > 0) {
 					

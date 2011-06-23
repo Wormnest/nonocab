@@ -16,12 +16,12 @@ function AircraftAdvisor::GetBuildAction(connection) {
 function AircraftAdvisor::GetPathInfo(report) {
 	
 	// We don't do mail! :X
-	if (AICargo.HasCargoClass(report.cargoID, AICargo.CC_MAIL))
+	if (AICargo.HasCargoClass(report.connection.cargoID, AICargo.CC_MAIL))
 		return null;
 	
-	local townToTown = report.fromConnectionNode.nodeType == ConnectionNode.TOWN_NODE && report.toConnectionNode.nodeType == ConnectionNode.TOWN_NODE;
-	if (!BuildAirfieldAction.FindSuitableAirportSpot(report.fromConnectionNode, report.cargoID, false, true, townToTown) ||
-		!BuildAirfieldAction.FindSuitableAirportSpot(report.toConnectionNode, report.cargoID, true, true, townToTown))
+	local townToTown = report.connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && report.connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+	if (!BuildAirfieldAction.FindSuitableAirportSpot(report.connection.travelFromNode, report.connection.cargoID, false, true, townToTown) ||
+		!BuildAirfieldAction.FindSuitableAirportSpot(report.connection.travelToNode, report.connection.cargoID, true, true, townToTown))
 		return null;
 			
 	return PathInfo(null, null, 0, AIVehicle.VT_AIR);

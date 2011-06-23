@@ -105,7 +105,7 @@ function ConnectionNode::GetAllConnections() {
  */
 function ConnectionNode::GetBestReport(cargoID) {
 	foreach (report in bestReports)
-		if (report.cargoID == cargoID)
+		if (report.connection.cargoID == cargoID)
 			return report;
 	return null;
 }
@@ -117,7 +117,7 @@ function ConnectionNode::GetBestReport(cargoID) {
  */
 function ConnectionNode::AddBestReport(report) {
 	for (local i = 0; i < bestReports.len(); i++) {
-		if (bestReports[i].cargoID == report.cargoID) {
+		if (bestReports[i].connection.cargoID == report.connection.cargoID) {
 			bestReports[i] = report;
 			return;
 		}

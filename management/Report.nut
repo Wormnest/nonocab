@@ -25,19 +25,16 @@ class Report
 	transportEngineID = 0;             // The engine ID to transport the cargo.
 	holdingEngineID = 0;               // The engine ID to hold the cargo to be transported.
 	                                   
-	fromConnectionNode = null;         // The node which produces the cargo.
-	toConnectionNode = null;           // The node which accepts the produced cargo.
 	isInvalid = null;                  // If an error is found during the construction this value is set to true.
 	connection = null;                 // The proposed connection.
-	cargoID = 0;                       // The cargo to transport.
 	
 	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
 	
 	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
 	loadingTime = 0;                   // The time it takes to load a vehicle.
 
-	world = 0;
-	
+	//world = 0;
+
 	/**
 	 * Construct a connection report.
 	 * @param world The world.
@@ -47,21 +44,18 @@ class Report
 	 * @param holdingEngineID The engine which is used (or will be used) for holding the cargo.
 	 * @param cargoAlreadyTransported The cargo which is already transpored.
 	 */
-	constructor(world, travelFromNode, travelToNode, cargoID, transportEngineID, holdingEngineID, cargoAlreadyTransported) {
+	constructor(connection, transportEngineID, holdingEngineID, cargoAlreadyTransported) {
 
-		this.world = world;
 		this.transportEngineID = transportEngineID;
 		this.holdingEngineID = holdingEngineID;
-		toConnectionNode = travelToNode;
-		fromConnectionNode = travelFromNode;
-		this.cargoID = cargoID;
+		this.connection = connection;
 		isInvalid = false;
 		upgradeToRailType = null;
 		loadingTime = 0;
 		
 		// Check if the engine is valid.
 		if (!AIEngine.IsBuildable(transportEngineID) || !AIEngine.IsBuildable(holdingEngineID) ||
-			toConnectionNode.isInvalid || fromConnectionNode.isInvalid) {
+			connection.travelToNode.isInvalid || connection.travelFromNode.isInvalid) {
 			isInvalid = true;
 			return;
 		}
@@ -69,12 +63,9 @@ class Report
 		local maxSpeed = AIEngine.GetMaxSpeed(transportEngineID);
 		
 		// Get the distances (real or estimated).
-		connection = travelFromNode.GetConnection(travelToNode, cargoID);
+		//connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		assert (connection != null);
-		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
-		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
-		local travelTime = travelTimeTo + travelTimeFrom;
-		local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
+		local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 		
 		assert (connection.pathInfo.vehicleType == AIVehicle.VT_INVALID || connection.pathInfo.vehicleType == AIEngine.GetVehicleType(transportEngineID));
 		
@@ -93,9 +84,9 @@ class Report
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
 			if (!connection.pathInfo.build) {
 
-				local isTowntoTown = travelFromNode.nodeType == ConnectionNode.TOWN_NODE && travelToNode.nodeType == ConnectionNode.TOWN_NODE;
-				local costForFrom = BuildAirfieldAction.GetAirportCost(travelFromNode, cargoID, isTowntoTown ? true : false);
-				local costForTo = BuildAirfieldAction.GetAirportCost(travelToNode, cargoID, true);
+				local isTowntoTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+				local costForFrom = BuildAirfieldAction.GetAirportCost(connection.travelFromNode, connection.cargoID, isTowntoTown ? true : false);
+				local costForTo = BuildAirfieldAction.GetAirportCost(connection.travelToNode, connection.cargoID, true);
 
 				if (costForFrom == -1 || costForTo == -1) {
 					isInvalid = true;
@@ -132,71 +123,14 @@ class Report
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
 			quit();
-			isInvalid = true;
-			world.InitCargoTransportEngineIds();
 		}
-
-		// Calculate netto income per vehicle.
-		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
+		InitializeReport(loadingTime, cargoAlreadyTransported, distance);
 		
-		// In case of trains, we have 5 wagons.
-		nrWagonsPerVehicle = 5;
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
-			transportedCargoPerVehiclePerMonth *= nrWagonsPerVehicle;
-		
-		
-		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
-		    !AICargo.HasCargoClass(cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(cargoID, AICargo.CC_MAIL)) {
-			if (AICargo.GetTownEffect(cargoID) == AICargo.TE_GOODS)
-				transportedCargoPerVehiclePerMonth *= 0.6;
-			else
-				transportedCargoPerVehiclePerMonth *= 0.3;
-		}
-		nrVehicles = (travelFromNode.GetProduction(cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
-
-		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection == null || connection.pathInfo.build))
-			nrVehicles = 1;
-		else
-			nrVehicles = nrVehicles.tointeger();
-
-		brutoIncomePerMonth = 0;
-		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
-
-		// In case of a bilateral connection we take a persimistic take on the amount of 
-		// vehicles supported by this connection, but we do increase the income by adding
-		// the expected income of the other connection to the total.
-		if (connection != null && connection.bilateralConnection || travelToNode.nodeType == ConnectionNode.TOWN_NODE && travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
-			// Also calculate the route in the other direction.
-			local nrVehiclesOtherDirection = ((travelToNode.GetProduction(cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
-
-			if (nrVehiclesOtherDirection < nrVehicles)
-				nrVehicles = nrVehiclesOtherDirection;
-
-			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
-		}
-
-		// Calculate the maximum number of vehicles this line supports.
-		if (loadingTime != 0) {
-			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
-			if (nrVehicles > maxVehicles) {
-				Log.logDebug("Dropped max nr. vehicles on line " + travelFromNode.GetName() + " " + travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(cargoID));
-				nrVehicles = maxVehicles;
-			
-				if (nrVehicles == 0)
-					nrVehicles = 1;
-			}
-		}
-
-		brutoCostPerMonth = 0;
-		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
-		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * nrWagonsPerVehicle;
 			// Check if the current rail type of this connection is such that the new
 			// train cannot run on it.
 			if (connection != null && connection.pathInfo.build) {
-				//local railTypeOfTrain = AIEngine.GetRailType(transportEngineID);
 				local railTypeOfConnection = AIRail.GetRailType(connection.pathInfo.depot);
 				local foundRailTrack = -1;
 				local l = AIRailTypeList();
@@ -219,13 +153,82 @@ class Report
 				// Else, just build more trains :)
 			}
 		}
+	}
+	
+	function InitializeReport(loadingTime, cargoAlreadyTransported, distance) {
+
+		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
+		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
+		
+		if (travelTimeTo == null || travelTimeFrom == null) {
+			isInvalid = true;
+			return;
+		}
+		
+		local travelTime = travelTimeTo + travelTimeFrom;
+		
+		// Calculate netto income per vehicle.
+		local transportedCargoPerVehiclePerMonth = (World.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
+		
+		// In case of trains, we have 5 wagons.
+		nrWagonsPerVehicle = 5;
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
+			transportedCargoPerVehiclePerMonth *= nrWagonsPerVehicle;
+		
+		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
+		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
+		    !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_MAIL)) {
+			if (AICargo.GetTownEffect(connection.cargoID) == AICargo.TE_GOODS)
+				transportedCargoPerVehiclePerMonth *= 0.6;
+			else
+				transportedCargoPerVehiclePerMonth *= 0.3;
+		}
+		nrVehicles = (connection.travelFromNode.GetProduction(connection.cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
+
+		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection == null || connection.pathInfo.build))
+			nrVehicles = 1;
+		else
+			nrVehicles = nrVehicles.tointeger();
+
+		brutoIncomePerMonth = 0;
+		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(connection.cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
+
+		// In case of a bilateral connection we take a persimistic take on the amount of 
+		// vehicles supported by this connection, but we do increase the income by adding
+		// the expected income of the other connection to the total.
+		if (connection != null && connection.bilateralConnection || connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
+			// Also calculate the route in the other direction.
+			local nrVehiclesOtherDirection = ((connection.travelToNode.GetProduction(connection.cargoID) - cargoAlreadyTransported) / transportedCargoPerVehiclePerMonth).tointeger();
+
+			if (nrVehiclesOtherDirection < nrVehicles)
+				nrVehicles = nrVehiclesOtherDirection;
+
+			brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(connection.cargoID, distance, travelTimeFrom.tointeger()) * transportedCargoPerVehiclePerMonth;
+		}
+
+		// Calculate the maximum number of vehicles this line supports.
+		if (loadingTime != 0) {
+			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
+			if (nrVehicles > maxVehicles) {
+				Log.logDebug("Dropped max nr. vehicles on line " + connection.travelFromNode.GetName() + " " + connection.travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(connection.cargoID));
+				nrVehicles = maxVehicles;
+			
+				if (nrVehicles == 0)
+					nrVehicles = 1;
+			}
+		}
+
+		brutoCostPerMonth = 0;
+		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / World.MONTHS_PER_YEAR;
+		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
+
 		runningTimeBeforeReplacement = AIEngine.GetMaxAge(transportEngineID);
 	}
 	
 	function ToString() {
-		return "Build a connection from " + fromConnectionNode.GetName() + " to " + toConnectionNode.GetName() +
-		" transporting " + AICargo.GetCargoLabel(cargoID) + " and build " + nrVehicles + " " + AIEngine.GetName(transportEngineID) + ". Cost for the road: " +
-		initialCost + ". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + " " + Utility();
+		return "Build the connection " + connection.ToString() + " and build " + nrVehicles + " " + AIEngine.GetName(transportEngineID) + 
+		". Cost for the road: " + initialCost + ". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + 
+		" " + Utility();
 	}
 
 	function NettoIncomePerMonthForMoney(money, forecast) {
@@ -247,6 +250,9 @@ class Report
 	}
 	
 	function NettoIncomePerMonth() {
+		if (runningTimeBeforeReplacement == 0)
+			return 0;
+
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
 		if (nrVehicles > maxBuildableVehicles)
 			nrVehicles = maxBuildableVehicles;
@@ -254,18 +260,12 @@ class Report
 		if (nrVehicles == 0)
 			return 0;
 			
-		local totalBrutoIncomePerMonth = brutoIncomePerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoIncomePerMonthPerVehicle);
+		local subsidyMultiplier = 1;
+		if (Subsidy.IsSubsidised(connection.travelFromNode, connection.travelToNode, connection.cargoID))
+			subsidyMultiplier = GameSettings.GetSubsidyMultiplier();
 		
-		// Check if the connection is subsidised.
-		if (Subsidy.IsSubsidised(fromConnectionNode, toConnectionNode, cargoID))
-			totalBrutoIncomePerMonth *= GameSettings.GetSubsidyMultiplier();
-
-		local totalBrutoCostPerMonth = brutoCostPerMonth + (nrVehicles < 0 ? 0 : nrVehicles * brutoCostPerMonthPerVehicle);
-
-		if (runningTimeBeforeReplacement == 0)
-			return 0;
-		
-		return totalBrutoIncomePerMonth - totalBrutoCostPerMonth;
+		local initialCostPerVehiclePerMonth = initialCostPerVehicle / runningTimeBeforeReplacement;
+		return brutoIncomePerMonth - brutoCostPerMonth + (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth) * nrVehicles;
 	}
 	
 	/**
@@ -277,24 +277,7 @@ class Report
 		local vehicleType = AIEngine.GetVehicleType(transportEngineID);
 		if (vehicleType == AIVehicle.VT_INVALID)
 			return 0;
-
-		if (world.useDelta)
-		{
-			// Check how much this distances is from the 'optimal' distance.
-			local optimalDistance = world.optimalDistances[vehicleType][cargoID];
-			local distance = AIMap.DistanceManhattan(fromConnectionNode.GetLocation(), toConnectionNode.GetLocation());
-	
-			local optimalIncome = GetIncomePerVehicle(optimalDistance).tointeger();
-			local income = GetIncomePerVehicle(distance).tointeger();
-			local delta = min(optimalIncome, income).tofloat() / max(optimalIncome, income).tofloat();
-	
-			local nettoIncome = NettoIncomePerMonth();
-			return nettoIncome * delta;
-		}
-		else
-		{
-			return NettoIncomePerMonth();
-		}
+		return NettoIncomePerMonth();
 	}
 
 	function GetIncomePerVehicle(distance) {
@@ -306,7 +289,7 @@ class Report
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
 			capacity *= 5;
 		local travel_time = distance * Tile.straightRoadLength / AIEngine.GetMaxSpeed(transportEngineID);
-		local income = AICargo.GetCargoIncome(cargoID, distance, travel_time.tointeger()) * capacity;
+		local income = AICargo.GetCargoIncome(connection.cargoID, distance, travel_time.tointeger()) * capacity;
 		local costs = AIEngine.GetRunningCost(transportEngineID) / World.DAYS_PER_YEAR * travel_time;
 
 		income -= costs;
@@ -388,8 +371,4 @@ class Report
 		local maxNrVehicles = GetNrVehicles(money, 0);
 		return initialCost + initialCostPerVehicle * maxNrVehicles;
 	}
-	
-/*	function ToString() {
-		return "Bruto income: " + brutoIncomePerMonth + "; BrutoCost: " + brutoCostPerMonth + "; Running time: " + runningTimeBeforeReplacement + "; Init cost: " + initialCost + ".";
-	}*/
 }

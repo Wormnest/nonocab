@@ -81,7 +81,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		}
 		
 		connection.lastChecked = currentDate;
-		local report = connection.CompileReport(world, connection.vehicleTypes);//, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
+		local report = connection.CompileReport(connection.vehicleTypes);//, world.cargoTransportEngineIds[connection.vehicleTypes][connection.cargoID], world.cargoHoldingEngineIds[connection.vehicleTypes][connection.cargoID]);
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.pathInfo.travelFromNodeStationID), connection);
@@ -180,7 +180,7 @@ function VehiclesAdvisor::GetReports() {
 	foreach (report in reports) {
 	
 		// The industryConnectionNode gives us the actual connection.
-		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
+		local connection = report.connection.travelFromNode.GetConnection(report.connection.travelToNode, report.connection.cargoID);
 		
 		// If the connection was termintated in the mean time, drop the report.
 		if (!connection.pathInfo.build) {
@@ -188,7 +188,7 @@ function VehiclesAdvisor::GetReports() {
 			continue;
 		}
 		
-		Log.logDebug("Report an update from: " + report.fromConnectionNode.GetName() + " to " + report.toConnectionNode.GetName() + " with " + report.nrVehicles + " vehicles! Utility: " + report.Utility());
+		Log.logDebug("Report an update from: " + report.ToString());
 		local actionList = [];
 						
 		// Add the action to build the vehicles.
