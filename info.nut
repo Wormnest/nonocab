@@ -4,7 +4,7 @@ class FNoCAB extends AIInfo {
       function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
       function GetVersion()	{ return 513; }
       function MinVersionToLoad() { return 9; }
-      function GetDate()	{ return "2011-06-04"; }
+      function GetDate()	{ return "2011-06-23"; }
       function CreateInstance()	{ return "NoCAB"; }
       function GetShortName() { return "BCAB"; }
       function GetAPIVersion() { return "1.2"; }
@@ -29,9 +29,6 @@ class FNoCAB extends AIInfo {
 
 		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
 		AddLabels("Politics Setting", {_0 = "NoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues and an HQ to see who's boss", _3 = "Machiavellian - No one transports but NoCAB!"});
-		
-		AddSetting( { name = "UseDelta", description = "UseDelta", easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
-		AddLabels("UseDelta", {_0 = "No", _1 = "Yes"});
       }
 }
 

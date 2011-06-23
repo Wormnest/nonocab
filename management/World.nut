@@ -19,14 +19,11 @@ class World {
 	pathFixer = null;
 	niceCABEnabled = null;
 	
-	useDelta = null;
-	
 	/**
 	 * Initializes a representation of the 'world'.
 	 */
-	constructor(niceCAB, delta) {
+	constructor(niceCAB) {
 		niceCABEnabled = niceCAB;
-		useDelta = delta;
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;

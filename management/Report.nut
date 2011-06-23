@@ -274,6 +274,8 @@ class Report
  	 * gained!
 	 */
 	function Utility() {
+		if (nrVehicles < 0)
+			return 2147483647;
 		local vehicleType = AIEngine.GetVehicleType(transportEngineID);
 		if (vehicleType == AIVehicle.VT_INVALID)
 			return 0;
@@ -306,7 +308,7 @@ class Report
 	 * @return the net income per month for the money to spend.
 	 */
 	function UtilityForMoney(money) {
-		if (money == -1)
+		if (money == -1 || nrVehicles < 0)
 			return Utility();
 
 		// Now calculate the new utility based on the number of vehicles we can buy.

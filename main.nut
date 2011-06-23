@@ -69,7 +69,7 @@ function NoCAB::Start()
 	AIGroup.EnableWagonRemoval(true);
 	
 	parlement = Parlement();
-	world = World(GetSetting("NiceCAB"), GetSetting("UseDelta"));
+	world = World(GetSetting("NiceCAB"));
 	worldEventManager = WorldEventManager(world);
 	GameSettings.InitGameSettings();
 	connectionManager = ConnectionManager(worldEventManager);
@@ -131,9 +131,9 @@ function NoCAB::Start()
 
 	// Set company name.
 	local companyName =  (GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB");
-	if(!AICompany.SetName(companyName + " - v2.2a3")) {
+	if(!AICompany.SetName(companyName + " - v2.2a4")) {
 		local i = 2;
-		while(!AICompany.SetName(companyName + " - v2.2a3 - #" + i)) { i++; }
+		while(!AICompany.SetName(companyName + " - v2.2a4 - #" + i)) { i++; }
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
