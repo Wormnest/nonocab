@@ -67,10 +67,8 @@ class Report
 		assert (connection != null);
 		local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 		
-		assert (connection.pathInfo.vehicleType == AIVehicle.VT_INVALID || connection.pathInfo.vehicleType == AIEngine.GetVehicleType(transportEngineID));
-		
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
-			if (connection.pathInfo.roadList != null) {
+			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_ROAD) {
 
 				if (!connection.pathInfo.build)
 					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID)).GetCostForRoad();
@@ -98,7 +96,7 @@ class Report
 
 			loadingTime = 20;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
-			if (connection.pathInfo.roadList != null) {
+			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
 			}
 
