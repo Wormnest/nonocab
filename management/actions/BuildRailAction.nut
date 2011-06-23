@@ -42,7 +42,11 @@ function BuildRailAction::Execute() {
 	}
 
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
-	assert (bestEngineIDs != null);
+	if (bestEngineIDs == null) {
+		Log.logError("Could not find a suitable engine!");
+		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
+		return false;
+	}
 	local transportingEngineID = bestEngineIDs[0];
 	local bestRailType = TrainConnectionAdvisor.GetBestRailType(transportingEngineID);
 	local pathFinderHelper = RailPathFinderHelper(bestRailType);
@@ -153,6 +157,8 @@ function BuildRailAction::Execute() {
 		connection.forceReplan = true;
 		if (pathBuilder.lastBuildIndex != -1)
 			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(pathBuilder.lastBuildIndex);
+		else
+			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
@@ -555,6 +561,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	//return false;
 	// Build the RoRo station.
+	assert (connection.pathInfo.roadListReturn == null);
+	
 	local roadList = connection.pathInfo.roadList;
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile + roadList[0].direction * 2);
@@ -603,7 +611,11 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		return false;
 	
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
-	assert (bestEngineIDs != null);
+	if (bestEngineIDs == null) {
+		Log.logError("No suitable engine found!");
+		return false;
+	}
+	
 	local transportingEngineID = bestEngineIDs[0];
 	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];

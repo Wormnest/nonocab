@@ -204,6 +204,18 @@ class Connection {
 		foreach (engineID, value in engineList) {
 			local transportEngineID = engineID;
 			
+			// If the vehicle type is an aeroplane, the connection is built and the airport is a small one, make sure we only
+			// build small airplanes.
+			if (vehicleType == AIVehicle.VT_AIR) {
+				if (pathInfo.build && (
+				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
+				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER
+				    )) {
+				    if (AIEngine.GetPlaneType(transportEngineID) == AIAirport.PT_BIG_PLANE)
+				    	continue;
+				    }
+			}
+			
 			if (AIEngine.IsWagon(transportEngineID) || !AIEngine.IsValidEngine(transportEngineID) || !AIEngine.IsBuildable(transportEngineID))
 				continue;
 

@@ -38,7 +38,10 @@ function BuildRoadAction::Execute() {
 	}
 
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_ROAD);
-	assert (bestEngineIDs != null);
+	if (bestEngineIDs == null) {
+		Log.logError("Could not find a suitable engine!");
+		return false;
+	}
 	local transportingEngineID = bestEngineIDs[0];
 	local pathFinderHelper = RoadPathFinderHelper(AIEngine.IsArticulated(transportingEngineID));
 	local pathFinder = RoadPathFinding(pathFinderHelper);
