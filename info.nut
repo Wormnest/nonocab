@@ -2,7 +2,7 @@ class FNoCAB extends AIInfo {
       function GetAuthor()    { return "Bram Ridder"; }
       function GetName()      { return "NoCAB - Bleeding Edge Edition";	      }
       function GetDescription()	{ return "Competitive AI which uses trains, trucks, busses, aircrafts and ships. See the forum for more info."; }
-      function GetVersion()	{ return 513; }
+      function GetVersion()	{ return 523; }
       function MinVersionToLoad() { return 9; }
       function GetDate()	{ return "2011-06-23"; }
       function CreateInstance()	{ return "NoCAB"; }

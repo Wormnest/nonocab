@@ -265,15 +265,15 @@ class Connection {
 			local nettoIncomePerMonth = report.NettoIncomePerMonth();
 			if (nettoIncomePerMonth > bestIncomePerMonth) {
 //				if (bestTransportEngine != null)
-//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
+//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
 //				else
-//					Log.logWarning("+ New engine " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
+//					Log.logWarning("+ New engine " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
 				bestIncomePerMonth = nettoIncomePerMonth;
 				bestTransportEngine = transportEngineID;
 				bestHoldingEngine = holdingEngineID;
-			}// else {
-			//	Log.logWarning("- The old engine + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") is better than " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") for the connection: " + ToString() + ".");
-			//}
+			}// else if (bestTransportEngine != null) {
+//				Log.logWarning("- The old engine + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") is better than " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
+//			}
 		}
 		
 //		if (bestTransportEngine != null)

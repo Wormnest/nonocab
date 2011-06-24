@@ -43,13 +43,17 @@ function ConnectionManager::MaintainActiveConnections() {
 					// Check what the best engine at the moment is.
 					local replacementEngineID = connection.GetBestTransportingEngine(vehicleType);
 					
-					if (AIEngine.IsBuildable(replacementEngineID)) {
+					if (replacementEngineID == null)
+						continue;
+					local replacementTransportEngineID = replacementEngineID[0];
+					
+					if (AIEngine.IsBuildable(replacementTransportEngineID)) {
 						
 						local doReplace = true;
 						// Don't replace an airplane if the airfield is very small.
 						if (vehicleType == AIVehicle.VT_AIR) {
 							if (AIEngine.GetPlaneType(AIVehicle.GetEngineType(vehicleID)) !=
-								AIEngine.GetPlaneType(replacementEngineID))
+								AIEngine.GetPlaneType(replacementTransportEngineID))
 								doReplace = false;
 						}
 						
@@ -61,7 +65,7 @@ function ConnectionManager::MaintainActiveConnections() {
 						
 						if (doReplace) {
 							// Create a new vehicle.
-							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID);
+							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementTransportEngineID);
 							if (AIVehicle.IsValidVehicle(newVehicleID)) {
 								
 								// Let is share orders with the vehicle.

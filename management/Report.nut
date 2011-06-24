@@ -11,27 +11,27 @@
 class Report
 {
 	
-	actions = null;                   // The list of actions.
-	brutoIncomePerMonth = 0;          // The bruto income per month which is invariant of the number of vehicles.
-	brutoCostPerMonth = 0;            // The bruto cost per month which is invariant of the number of vehicles.
-	initialCost = 0;                  // Initial cost, which is only paid once!
-	runningTimeBeforeReplacement = 0; // The running time in which profit can be made.
+	actions = null;                           // The list of actions.
+	brutoIncomePerMonth = 0;                  // The bruto income per month which is invariant of the number of vehicles.
+	brutoCostPerMonth = 0;                    // The bruto cost per month which is invariant of the number of vehicles.
+	initialCost = 0;                          // Initial cost, which is only paid once!
+	runningTimeBeforeReplacementInMonths = 0; // The running time in which profit can be made.
 	
-	brutoIncomePerMonthPerVehicle = 0; // The bruto income per month per vehicle.
-	brutoCostPerMonthPerVehicle = 0;   // The bruto cost per month per vehicle.
-	initialCostPerVehicle = 0;         // The initial cost per vehicle which is only paid once!
-	nrVehicles = 0;                    // The total number of vehicles.
-	nrWagonsPerVehicle = 0;            // The number of wagons per vehicle we'll build.
-	transportEngineID = 0;             // The engine ID to transport the cargo.
-	holdingEngineID = 0;               // The engine ID to hold the cargo to be transported.
+	brutoIncomePerMonthPerVehicle = 0;         // The bruto income per month per vehicle.
+	brutoCostPerMonthPerVehicle = 0;           // The bruto cost per month per vehicle.
+	initialCostPerVehicle = 0;                 // The initial cost per vehicle which is only paid once!
+	nrVehicles = 0;                            // The total number of vehicles.
+	nrWagonsPerVehicle = 0;                    // The number of wagons per vehicle we'll build.
+	transportEngineID = 0;                     // The engine ID to transport the cargo.
+	holdingEngineID = 0;                       // The engine ID to hold the cargo to be transported.
 	                                   
-	isInvalid = null;                  // If an error is found during the construction this value is set to true.
-	connection = null;                 // The proposed connection.
+	isInvalid = null;                          // If an error is found during the construction this value is set to true.
+	connection = null;                         // The proposed connection.
 	
-	nrRoadStations = 0;                // The number of road stations which need to be build on each side.
+	nrRoadStations = 0;                        // The number of road stations which need to be build on each side.
 	
-	upgradeToRailType = 0;             // The rail type to upgrade an existing connection to (or null if not).
-	loadingTime = 0;                   // The time it takes to load a vehicle.
+	upgradeToRailType = 0;                     // The rail type to upgrade an existing connection to (or null if not).
+	loadingTime = 0;                           // The time it takes to load a vehicle.
 
 	//world = 0;
 
@@ -220,7 +220,7 @@ class Report
 		brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / Date.MONTHS_PER_YEAR;
 		initialCostPerVehicle = AIEngine.GetPrice(transportEngineID);
 
-		runningTimeBeforeReplacement = AIEngine.GetMaxAge(transportEngineID);
+		runningTimeBeforeReplacementInMonths = AIEngine.GetMaxAge(transportEngineID) / Date.DAYS_PER_MONTH;
 	}
 	
 	function ToString() {
@@ -248,7 +248,7 @@ class Report
 	}
 	
 	function NettoIncomePerMonth() {
-		if (runningTimeBeforeReplacement == 0)
+		if (runningTimeBeforeReplacementInMonths == 0)
 			return 0;
 
 		local maxBuildableVehicles = GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(transportEngineID));
@@ -262,7 +262,7 @@ class Report
 		if (Subsidy.IsSubsidised(connection.travelFromNode, connection.travelToNode, connection.cargoID))
 			subsidyMultiplier = GameSettings.GetSubsidyMultiplier();
 		
-		local initialCostPerVehiclePerMonth = initialCostPerVehicle / runningTimeBeforeReplacement;
+		local initialCostPerVehiclePerMonth = initialCostPerVehicle / runningTimeBeforeReplacementInMonths;
 		return brutoIncomePerMonth - brutoCostPerMonth + (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth) * nrVehicles;
 	}
 	
