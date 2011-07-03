@@ -1,12 +1,10 @@
 /**
  * Action class for the creation of airfields.
  */
-class BuildAirfieldAction extends Action {
-	connection = null;			// Connection object of the road to build.
+class BuildAirfieldAction extends BuildConnectionAction {
 
 	constructor(connection) {
-		Action.constructor();
-		this.connection = connection;
+		BuildConnectionAction.constructor(connection);
 	}
 }
 
@@ -80,6 +78,7 @@ function BuildAirfieldAction::Execute() {
 	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
 	local fromTileAndAirportType = FindSuitableAirportSpot(/*airportType, */connection.travelFromNode, connection.cargoID, false, false, townToTown);
 	if (fromTileAndAirportType == null) {
+		
 /*
 		// If no tile was found, check if the industry has a helipad to land on.
 		if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
@@ -89,8 +88,7 @@ function BuildAirfieldAction::Execute() {
 			airportType = heliportType;
 		} else {
 */
-			Log.logWarning("No spot found for the first airfield!");
-			connection.forceReplan = true;
+			FailedToExecute("No spot found for the first airfield!");
 			return false;
 //		}
 	}
@@ -104,8 +102,7 @@ function BuildAirfieldAction::Execute() {
 			airportType = heliportType;
 		} else {
 */
-			Log.logWarning("No spot found for the second airfield!");
-			connection.forceReplan = true;
+			FailedToExecute("No spot found for the second airfield!");
 			return false;
 //		}
 	}
@@ -121,9 +118,7 @@ function BuildAirfieldAction::Execute() {
 	local fromAirportY = AIAirport.GetAirportHeight(fromAirportType);
 	if (!AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW) && 
 	!Terraform.Terraform(fromTile, fromAirportX, fromAirportY, -1)) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "].");
-	    AILog.Error(AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "]." + AIError.GetLastErrorString());
 	    return false;
 	}
 
@@ -131,9 +126,7 @@ function BuildAirfieldAction::Execute() {
 	local toAirportY = AIAirport.GetAirportHeight(fromAirportType);
 	if (!AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW) && 
 	!Terraform.Terraform(toTile, toAirportX, toAirportY, -1)) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + " [" + toAirportType + "].");
-	    AILog.Error(AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + fromTile + " [" + fromAirportType + "]." + AIError.GetLastErrorString());
 	    AIAirport.RemoveAirport(fromTile);
 	    return false;
 	}
@@ -144,16 +137,12 @@ function BuildAirfieldAction::Execute() {
 	local test = AIExecMode();
 	if (!AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW) && 
 	!(Terraform.Terraform(fromTile, fromAirportX, fromAirportY, -1) && AIAirport.BuildAirport(fromTile, fromAirportType, AIStation.STATION_NEW))) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "].");
-	    AILog.Error(AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 airports, it still failed on the first airport at tile " + fromTile + " [" + fromAirportType + "]." + AIError.GetLastErrorString());
 	    return false;
 	}
 	if (!AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW) && 
 	!(Terraform.Terraform(toTile, toAirportX, toAirportY, -1) && AIAirport.BuildAirport(toTile, toAirportType, AIStation.STATION_NEW))) {
-	    AILog.Error("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + toTile + " [" + toAirportType + "].");
-	    AILog.Error(AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 airports, it still failed on the second airport at tile " + fromTile + " [" + fromAirportType + "]." + AIError.GetLastErrorString());
 	    AIAirport.RemoveAirport(fromTile);
 	    return false;
 	}

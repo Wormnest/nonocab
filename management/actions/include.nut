@@ -1,4 +1,5 @@
 require("Action.nut");
+require("BuildConnectionAction.nut");
 require("BuildAirfieldAction.nut");
 require("BuildShipYardAction.nut");
 require("BuildRoadAction.nut");

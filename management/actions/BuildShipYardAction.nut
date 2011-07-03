@@ -1,12 +1,10 @@
 /**
  * Action class for the creation of ship yards.
  */
-class BuildShipYardAction extends Action {
-	connection = null;			// Connection object of the road to build.
+class BuildShipYardAction extends BuildConnectionAction {
 	
 	constructor(connection) {
-		this.connection = connection;
-		Action.constructor();
+		BuildConnectionAction.constructor(connection);
 	}
 }
 
@@ -54,22 +52,26 @@ function BuildShipYardAction::Execute() {
 	}
 
 	if (producingTiles.Count() == 0 || acceptingTiles.Count() == 0) {
-		connection.forceReplan = true;
+		FailedToExecute("No point found to build the docks");
 		return false;
 	}
 	
 	// Check if we have enough permission to build here.
-	if (AITown.GetRating(AITile.GetClosestTown(producingTiles.Begin()), AICompany.COMPANY_SELF) < -200)
+	if (AITown.GetRating(AITile.GetClosestTown(producingTiles.Begin()), AICompany.COMPANY_SELF) < -200) {
+		FailedToExecute("No point found to build the docks");
 		return false;
+	}
 		
 	// Check if we have enough permission to build here.
-	if (AITown.GetRating(AITile.GetClosestTown(acceptingTiles.Begin()), AICompany.COMPANY_SELF) < -200)
-		return false;	
+	if (AITown.GetRating(AITile.GetClosestTown(acceptingTiles.Begin()), AICompany.COMPANY_SELF) < -200) {
+		FailedToExecute("No point found to build the docks");
+		return false;
+	}	
 	
 	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 3, null);
 
 	if (pathInfo == null) {
-		connection.forceReplan = true;
+		FailedToExecute("No point found to build the docks");
 		return false;
 	}
 	connection.pathInfo = pathInfo;
@@ -79,21 +81,19 @@ function BuildShipYardAction::Execute() {
 
 	/* Build the shipYards for real */
 	if (!(connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)) && !AIMarine.BuildDock(fromTile, AIStation.STATION_NEW)) {
-		AILog.Error("Although the testing told us we could build 2 shipYards, it still failed on the first shipYard at tile " + AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 shipYards, it still failed on the first shipYard at tile " + AIError.GetLastErrorString());
 		return false;
 	}
 
 	if (!(connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id)) && !AIMarine.BuildDock(toTile, AIStation.STATION_NEW)) {
-		AILog.Error("Although the testing told us we could build 2 shipYards, it still failed on the second shipYard at tile." + AIError.GetLastErrorString());
-		connection.forceReplan = true;
+		FailedToExecute("Although the testing told us we could build 2 shipYards, it still failed on the second shipYard at tile." + AIError.GetLastErrorString());
 		AIMarine.RemoveDock(fromTile);
 		return false;
 	}
 
 	local waterBuilder = WaterPathBuilder(connection.pathInfo.roadList);
 	if (!waterBuilder.RealiseConnection()) {
-		AILog.Error("Couldn't build the water way!");
+		FailedToExecute("Couldn't build the water way!");
 		AIMarine.RemoveDock(fromTile);
 		AIMarine.RemoveDock(toTile);
 		return false;
@@ -109,6 +109,7 @@ function BuildShipYardAction::Execute() {
 	if (connection.pathInfo.depot == null) {
 		AIMarine.RemoveDock(fromTile);
 		AIMarine.RemoveDock(toTile);
+		FailedToExecute("Build not buil the depots");
 		return false;
 	}
 
@@ -118,6 +119,7 @@ function BuildShipYardAction::Execute() {
 			AIMarine.RemoveDock(fromTile);
 			AIMarine.RemoveDock(toTile);
 			AIMarine.RemoveWaterDepot(connection.pathInfo.depot);
+			FailedToExecute("Build not buil the depots");
 			return false;
 		}
 	}

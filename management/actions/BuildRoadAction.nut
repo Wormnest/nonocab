@@ -1,9 +1,8 @@
 /**
  * Action class for the creation of roads.
  */
-class BuildRoadAction extends Action
+class BuildRoadAction extends BuildConnectionAction
 {
-	connection = null;         // Connection object of the road to build.
 	buildDepot = false;        // Should we create a depot?
 	buildRoadStations = false; // Should we build road stations?
 	directions = null;         // A list with all directions.
@@ -14,11 +13,10 @@ class BuildRoadAction extends Action
 	 * @param buildRoadStaions Should road stations be build?
 	 */
 	constructor(connection, buildDepot, buildRoadStations) {
+		BuildConnectionAction.constructor(connection);
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
-		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRoadStations = buildRoadStations;
-		Action.constructor();
 	}
 }
 

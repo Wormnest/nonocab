@@ -1,9 +1,8 @@
 /**
  * Action class for the creation of rails.
  */
-class BuildRailAction extends Action
+class BuildRailAction extends BuildConnectionAction
 {
-	connection = null;          // Connection object of the rails to build.
 	buildDepot = false;         // Should we create a depot?
 	buildRailStations = false;  // Should we build rail stations?
 	directions = null;          // A list with all directions.
@@ -17,14 +16,13 @@ class BuildRailAction extends Action
 	 * @param buildRailStaions Should rail stations be build?
 	 */
 	constructor(connection, buildDepot, buildRailStations) {
+		BuildConnectionAction.constructor(connection);
 		this.directions = [1, -1, AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
-		this.connection = connection;
 		this.buildDepot = buildDepot;
 		this.buildRailStations = buildRailStations;
 		stationsConnectedTo = [];
 		railStationFromTile = -1;
 		railStationToTile = -1;
-		Action.constructor();
 	}
 }
 
@@ -36,14 +34,14 @@ function BuildRailAction::Execute() {
 	if (connection.pathInfo.build) {
 		
 		assert(false);
-		Log.logWarning("We do not support extending existing rail stations, skipping!");
+		FailedToExecute("We do not support extending existing rail stations, skipping!");
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		return false;
 	}
 
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
 	if (bestEngineIDs == null) {
-		Log.logError("Could not find a suitable engine!");
+		FailedToExecute("Could not find a suitable engine!");
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		return false;
 	}
@@ -61,7 +59,7 @@ function BuildRailAction::Execute() {
 	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (prePathInfo == null) {
-		Log.logWarning("Couldn't find a connection to build the rail road!");
+		FailedToExecute("Could not find a proper path!");
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		connection.forceReplan = true;
 		return false;
@@ -77,14 +75,14 @@ function BuildRailAction::Execute() {
 		
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[0].tile), AICompany.COMPANY_SELF) < -200) {
-			connection.forceReplan = true;
+			FailedToExecute("Authorities do not like us :(.");
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 			return false;
 		}
 			
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200) {
-			connection.forceReplan = true;
+			FailedToExecute("Authorities do not like us :(.");
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 			return false;
 		}
@@ -99,8 +97,7 @@ function BuildRailAction::Execute() {
 		}
 		
 		if (stationBuildingFailed) {
-			Log.logError("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
-			connection.forceReplan = true;	
+			FailedToExecute("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);			
 			return false;
 		}
@@ -137,14 +134,13 @@ function BuildRailAction::Execute() {
 	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 
 	if (connection.pathInfo == null) {
-		Log.logWarning("Couldn't find a connection to build the rail road!");
 		if (buildRailStations) {
 			local ex = AIExecMode();
 			AITile.DemolishTile(roadList[0].tile);
 			AITile.DemolishTile(roadList[len - 1].tile);
 		}
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
-		connection.forceReplan = true;
+		FailedToExecute("Couldn't find a connection to build the rail road!");
 		return false;
 	}
 	roadList = connection.pathInfo.roadList;
@@ -159,7 +155,7 @@ function BuildRailAction::Execute() {
 			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(pathBuilder.lastBuildIndex);
 		else
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
-		Log.logError("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
+		FailedToExecute("BuildRailAction: Failed to build a rail " + AIError.GetLastErrorString());
 		return false;
 	}
 	
@@ -167,12 +163,8 @@ function BuildRailAction::Execute() {
 
 	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
 	if (!BuildRoRoStation(stationType, pathFinder)) {
-		Log.logWarning("Failed to build the RoRo station...");
-//		if (!BuildTerminusStation(stationType, pathFinder)) {
-//			Log.logWarning("Failed to build the Terminus station...");
-			connection.forceReplan = true;
-			return false;
-//		}
+		FailedToExecute("Failed to build the RoRo station...");
+		return false;
 	}
 	
 	Log.logDebug("Build depot!");
@@ -183,8 +175,7 @@ function BuildRailAction::Execute() {
 
 		// Check if we could actualy build a depot:
 		if (depot == null) {
-			Log.logError("Failed to build a depot :(");
-			connection.forceReplan = true;
+			FailedToExecute("Failed to build a depot :(");
 			return false;
 		}
 
@@ -192,8 +183,7 @@ function BuildRailAction::Execute() {
 
 		local otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
 		if (otherDepot == null) {
-			Log.logError("Failed to build a depot :(");
-			connection.forceReplan = true;
+			FailedToExecute("Failed to build a depot :(");
 			return false;
 		}
 

@@ -204,7 +204,6 @@ function NoCAB::Start()
 					assert (travelTime > 0);
 
 					local vehicleCapacity = AIVehicle.GetCapacity(vehicle, connection.cargoID);
-					Log.logWarning("Main vehicle capacity: " + vehicleCapacity + "; Wagons attached to it: " + AIVehicle.GetNumWagons(vehicle));
 					assert (vehicleCapacity > 0);
 						
 					// Calculate netto income per vehicle.
