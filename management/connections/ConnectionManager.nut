@@ -8,7 +8,7 @@ class ConnectionManager {
 	allConnections = null;
 	
 	constructor(worldEventManager) {
-		worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
+		worldEventManager.AddEventListener(this, AIEvent.ET_ENGINE_AVAILABLE);
 		connectionListeners = [];
 		allConnections = [];
 		stationIDToConnection = {};
@@ -87,7 +87,7 @@ function ConnectionManager::MaintainActiveConnections() {
 			if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
 				if (vehicleType == AIVehicle.VT_WATER)
 					AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
-				else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0)
+				else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0)
 					AIVehicle.SendVehicleToDepot(vehicleID);
 	
 			}

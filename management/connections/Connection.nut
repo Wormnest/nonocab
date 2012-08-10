@@ -358,7 +358,7 @@ class Connection {
 						if (vehicleTypes != AIVehicle.VT_ROAD && vehicleTypes != AIVehicle.VT_WATER)
 							vehicleNotHeadingToDepot = true;
 						// Check if the vehicles is actually going to the depot!
-						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.AIOF_STOP_IN_DEPOT) == 0) {
+						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0) {
 							if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
 								AIVehicle.ReverseVehicle(vehicleId);
 								AIController.Sleep(5);

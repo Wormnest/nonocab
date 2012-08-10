@@ -38,9 +38,9 @@ class ConnectionAdvisor extends Advisor { // EventListener, ConnectionListener
 		needUpdate = false;
 		closedIndustryList = {};
 	
-		worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_OPEN);
-		worldEventManager.AddEventListener(this, AIEvent.AI_ET_INDUSTRY_CLOSE);
-		worldEventManager.AddEventListener(this, AIEvent.AI_ET_ENGINE_AVAILABLE);
+		worldEventManager.AddEventListener(this, AIEvent.ET_INDUSTRY_OPEN);
+		worldEventManager.AddEventListener(this, AIEvent.ET_INDUSTRY_CLOSE);
+		worldEventManager.AddEventListener(this, AIEvent.ET_ENGINE_AVAILABLE);
 		
 		updateList = clone world.industry_tree;
 	}

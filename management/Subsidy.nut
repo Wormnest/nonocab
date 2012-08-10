@@ -11,10 +11,10 @@ class SubsidyManager extends WorldEventListener {
 		local subsidies = AISubsidyList();
 		foreach (subsidy, dummy in subsidies)
 			WE_SubsidyOffer(subsidy);
-		worldEvenManager.AddEventListener(this, AIEvent.AI_ET_SUBSIDY_OFFER);
-		worldEvenManager.AddEventListener(this, AIEvent.AI_ET_SUBSIDY_OFFER_EXPIRED);
-		worldEvenManager.AddEventListener(this, AIEvent.AI_ET_SUBSIDY_AWARDED);
-		worldEvenManager.AddEventListener(this, AIEvent.AI_ET_SUBSIDY_EXPIRED);
+		worldEvenManager.AddEventListener(this, AIEvent.ET_SUBSIDY_OFFER);
+		worldEvenManager.AddEventListener(this, AIEvent.ET_SUBSIDY_OFFER_EXPIRED);
+		worldEvenManager.AddEventListener(this, AIEvent.ET_SUBSIDY_AWARDED);
+		worldEvenManager.AddEventListener(this, AIEvent.ET_SUBSIDY_EXPIRED);
 	}
 
 	function WE_SubsidyOffer(subsidyID) {

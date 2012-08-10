@@ -45,18 +45,18 @@ function WorldEventManager::ProcessEvents() {
 		if (eventListeners.rawin("" + e.GetEventType())) {
 			switch (e.GetEventType()) {
 				
-				case AIEvent.AI_ET_ENGINE_PREVIEW:
+				case AIEvent.ET_ENGINE_PREVIEW:
 					AIEventEnginePreview.AcceptPreview();
 					break;
 
-				case AIEvent.AI_ET_ENGINE_AVAILABLE:
+				case AIEvent.ET_ENGINE_AVAILABLE:
 					local newEngineID = AIEventEngineAvailable.Convert(e).GetEngineID();
 					
 					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
 						listener.WE_EngineReplaced(newEngineID);
 					break;
 					
-				case AIEvent.AI_ET_INDUSTRY_OPEN:
+				case AIEvent.ET_INDUSTRY_OPEN:
 					local industryID = AIEventIndustryOpen.Convert(e).GetIndustryID();
 					local industryNode = world.ProcessIndustryOpenedEvent(industryID);
 					
@@ -64,7 +64,7 @@ function WorldEventManager::ProcessEvents() {
 						listener.WE_IndustryOpened(industryNode);
 					break;
 					
-				case AIEvent.AI_ET_INDUSTRY_CLOSE:
+				case AIEvent.ET_INDUSTRY_CLOSE:
 					local industryID = AIEventIndustryClose.Convert(e).GetIndustryID();
 					local industryNode = world.ProcessIndustryClosedEvent(industryID);
 					
@@ -75,25 +75,25 @@ function WorldEventManager::ProcessEvents() {
 					break;
 
 				// Subsidy:
-				case AIEvent.AI_ET_SUBSIDY_OFFER:
+				case AIEvent.ET_SUBSIDY_OFFER:
 					local subsidyID = AIEventSubsidyOffer.Convert(e).GetSubsidyID();
 					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
 						listener.WE_SubsidyOffer(subsidyID);
 					break;
 					
-				case AIEvent.AI_ET_SUBSIDY_EXPIRED:
+				case AIEvent.ET_SUBSIDY_EXPIRED:
 					local subsidyID = AIEventSubsidyExpired.Convert(e).GetSubsidyID();
 					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
 						listener.WE_SubsidyExpired(subsidyID);
 					break;
 				
-				case AIEvent.AI_ET_SUBSIDY_OFFER_EXPIRED:
+				case AIEvent.ET_SUBSIDY_OFFER_EXPIRED:
 					local subsidyID = AIEventSubsidyOfferExpired.Convert(e).GetSubsidyID();
 					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
 						listener.WE_SubsidyOfferExpired(subsidyID);
 					break;
 				
-				case AIEvent.AI_ET_SUBSIDY_AWARDED:
+				case AIEvent.ET_SUBSIDY_AWARDED:
 					local subsidyID = AIEventSubsidyAwarded.Convert(e).GetSubsidyID();
 					foreach (listener in eventListeners.rawget("" + e.GetEventType()))
 						listener.WE_SubsidyAwarded(subsidyID);
