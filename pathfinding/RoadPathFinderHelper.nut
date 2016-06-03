@@ -207,7 +207,7 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 		end.RemoveList(listToRemove);
 
 		if (end.IsEmpty()) {
-			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
+			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;
 		}
 		return false;
@@ -250,7 +250,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 
 		local isBridgeOrTunnelEntrance = false;
 		
-		// Check if we can exploit excising bridges and tunnels.
+		// Check if we can exploit existing bridges and tunnels.
 		if (!onlyRoads && AITile.HasTransportType(nextTile, AITile.TRANSPORT_ROAD)) {
 			local type = Tile.NONE;
 			local otherEnd;
