@@ -1,6 +1,6 @@
 class Log { 
 
-	logLevel = 1;
+	logLevel = -1; // -1 So that we know when we set it for the first time.
 }
 
 /** If logLevel is ok log debug. */

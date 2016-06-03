@@ -29,6 +29,25 @@ class FNoCAB extends AIInfo {
 
 		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
 		AddLabels("Politics Setting", {_0 = "NoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues and an HQ to see who's boss", _3 = "Machiavellian - No one transports but NoCAB!"});
+
+		// Developer setting to make it possible to change log level in a running game.
+		AddSetting({
+			name = "log_level",
+			description = "How much info to show in the AI log.",
+			min_value = 0,
+			max_value = 3,
+			easy_value = 1,
+			medium_value = 1,
+			hard_value = 1,
+			custom_value = 1,
+			step_size = 1,
+			flags = CONFIG_DEVELOPER + CONFIG_INGAME
+		});
+		AddLabels(
+			"log_level", 
+			{_0 = "Everything including debug info",_1 = "Everything except debug info", _2 = "Warnings and errors only", _3 = "Errors only"}
+		);
+
       }
 }
 

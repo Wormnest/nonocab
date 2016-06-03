@@ -25,6 +25,17 @@ class NoCAB extends AIController {
 	}
 }
 
+/// Function to check the Log Level AI setting.
+function NoCAB::CheckLogLevel()
+{
+	// Since this is a class variable of a class that doesn't get instantiated
+	// we have to set it in the global table.
+	local old = Log.logLevel;
+	Log.logLevel <- GetSetting("log_level");
+	if ((old != Log.logLevel))
+		Log.logDebug("Changed log level to " + Log.logLevel);
+}
+
 function NoCAB::Save() { 
 	Log.logInfo("Saving game using version " + minimalSaveVersion + "... (might take a while...)");
 	local saveTable = {};
@@ -42,6 +53,7 @@ function NoCAB::Save() {
 }
 
 function NoCAB::Load(version, data) {
+	CheckLogLevel();
 	local saveVersion = data["SaveVersion"];
 	if (saveVersion != minimalSaveVersion) {
 		Log.logWarning("Saved version is incompatible with this version of NoCAB!");
@@ -64,6 +76,7 @@ function NoCAB::Start()
 	}
 */
 
+	CheckLogLevel();
 	AICompany.SetAutoRenewMoney(1000000);
 	
 	AIGroup.EnableWagonRemoval(true);
@@ -154,7 +167,7 @@ function NoCAB::Start()
 	
 	// Do what we have to do.
 	while(true) {
-		
+		CheckLogLevel();
 		local numberOfShips = 0;
 		local shipPercentageErrors = [];
 			
