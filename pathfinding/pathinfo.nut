@@ -73,6 +73,15 @@ class PathInfo {
 		buildDate = data["buildDate"];
 		nrRoadStations = data["nrRoadStations"];
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
+		// We need to fix up roadlists because roadList.type and direction are used
+		// in GetTravelTime which otherwise would return 0 causing problems.
+		if ((vehicleType == AIVehicle.VT_ROAD) || (vehicleType == AIVehicle.VT_RAIL)) {
+			// Also for rail for now!
+			RoadPathFinderHelper.FixRoadlist(roadList);
+			// @todo Do we need to do this for roadListReturn and extraRoadBits too?
+		}
+		// else it looks like we don't need to do fixups for water and air since they don't use
+		// roadList.type and roadList.direction
 	}
 	
 	function SaveData() {

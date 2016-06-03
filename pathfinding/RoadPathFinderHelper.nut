@@ -261,7 +261,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 				type = Tile.TUNNEL;
 				otherEnd = AITunnel.GetOtherTunnelEnd(nextTile);
 			}
-			
+
 			if (type != Tile.NONE) {
 
 				local length = otherEnd - nextTile;
@@ -437,6 +437,38 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 		return annotatedTile;
 	}
 	return null;
+}
+
+/**
+ * After loading a savegame we need to fix certain parts of roadList otherwise GetTime will always return 0.
+ * Seems we can use this also for RailPathFinderHelper. Probably should be moved to PathFinderHelper.
+ * @note I'm not sure whether direction of the first and last tile are correct. It looks like they should be [-1,-1].
+ * @param roadList The roadList that needs to be fixed.
+ */
+function RoadPathFinderHelper::FixRoadlist(roadList)
+{
+	Log.logDebug("Fixing roadlist after loading a savegame.");
+	if ((roadList == null) || (roadList.len() == 0))
+		return;
+
+	//Log.logDebug("!! Length roadList: " + roadList.len());
+	local rlen = roadList.len();
+	for (local i = 0; i < rlen; i++) {
+		if ((roadList[i].type != null) && (roadList[i].type != Tile.NONE))
+			continue;
+		local tile = roadList[i].tile;
+		if (AIBridge.IsBridgeTile(tile))
+			roadList[i].type = Tile.BRIDGE;
+		else if (AITunnel.IsTunnelTile(tile))
+			roadList[i].type = Tile.TUNNEL;
+		else
+			roadList[i].type = Tile.ROAD;
+		
+		if (i < rlen-1)
+			roadList[i].direction = roadList[i+1].tile - tile;
+		else // What to do here? [-1,-1]?
+			roadList[i].direction = roadList[i-1].direction; //????
+	}
 }
 
 function RoadPathFinderHelper::GetTime(roadList, engineID, forward) {
