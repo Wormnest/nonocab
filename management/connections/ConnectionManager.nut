@@ -100,7 +100,16 @@ function ConnectionManager::SaveData(saveData) {
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
 	
 	local activeConnections = [];
-	foreach (connection in allConnections) {
+	foreach (idx, connection in allConnections) {
+		// Wormnest: To me it seems better to have incomplete connections in savedata
+		// than for the saving to run out of time since that will make us crash.
+		// Longest connection seen so far used 8625 ops (4kx4k map)!
+		// So I guess it's better to use a limit of at least 10000. Lower values may be possible on smaller maps?
+		if (AIController.GetOpsTillSuspend() < 10000) {
+			Log.logError("Almost out of time saving. Discarding " + (allConnections.len() - idx - 1) +
+			" of " + allConnections.len() + " connections!");
+			break;
+		}
 		activeConnections.push(connection.SaveData());
 	}
 	

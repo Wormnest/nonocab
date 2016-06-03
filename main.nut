@@ -40,14 +40,28 @@ function NoCAB::Save() {
 	Log.logInfo("Saving game using version " + minimalSaveVersion + "... (might take a while...)");
 	local saveTable = {};
 	if (initialized) {
+		saveTable["SaveVersion"] <- minimalSaveVersion;
 		pathFixer.SaveData(saveTable);
 		world.SaveData(saveTable);
 		connectionManager.SaveData(saveTable);
-		saveTable["SaveVersion"] <- minimalSaveVersion;
 		Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
 	} else {
 		// If we didn't initialize the AI yet, make the savegame invalid.
+		Log.logWarning("Can't save, we haven't finished initializing yet!");
 		saveTable["SaveVersion"] <- -1;
+	}
+
+	// We don't want saving to fail since that will crash our AI.
+	local opsleft = GetOpsTillSuspend();
+	if (opsleft > 100) {
+		if (Log.logLevel == 0)
+			Log.logWarning("Ops till suspend: " + opsleft);
+		local opspct = (100000-opsleft) * 100 / 100000;
+		local logmsg = "Saving used " + opspct + "% of max allowed time.";
+		if (opsleft < 10000)
+			Log.logWarning(logmsg + " Almost running out of time saving!");
+		else
+			Log.logInfo(logmsg);
 	}
 	return saveTable;
 }
@@ -56,6 +70,7 @@ function NoCAB::Load(version, data) {
 	CheckLogLevel();
 	local saveVersion = data["SaveVersion"];
 	if (saveVersion != minimalSaveVersion) {
+		// Wormnest: If you set MinVersionToLoad in info.nut correctly you will never arrive here.
 		Log.logWarning("Saved version is incompatible with this version of NoCAB!");
 		Log.logWarning("Only save version " + minimalSaveVersion + " is supported, your version is: " + saveVersion);
 		return;
