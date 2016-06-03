@@ -124,6 +124,8 @@ function NoCAB::Start()
 	advisors.push(VehiclesAdvisor(connectionManager));
 
 	if (loadData) {
+		// We need up to date game settings when there are already vehicles present.
+		GameSettings.UpdateGameSettings();
 		Log.logInfo("(2/5) Load path fixer data");
 		pathFixer.LoadData(loadData);
 		Log.logInfo("(3/5) Load active connections");
@@ -131,6 +133,8 @@ function NoCAB::Start()
 		Log.logInfo("(4/5) Load active connections");
 		connectionManager.LoadData(loadData, world);
 		Log.logInfo("(5/5) Load successfull!");
+		// Free memory since we don't need it anymore.
+		loadData = null;
 	}
 	
 	// Required by the Framwork: start with sleep.
