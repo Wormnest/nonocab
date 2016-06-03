@@ -166,8 +166,8 @@ function Tile::GetRectangle(centre, sizeX, sizeY) {
 		local min_y = y - sizeY;
 		local max_x = x + sizeX;
 		local max_y = y + sizeY;
-		if (min_x < 0) min_x = 1; else if (max_x >= AIMap.GetMapSizeX()) max_x = AIMap.GetMapSizeX() - 2;
-		if (min_y < 0) min_y = 1; else if (max_y >= AIMap.GetMapSizeY()) max_y = AIMap.GetMapSizeY() - 2;
+		if (min_x < 1) min_x = 1; else if (max_x > AIMap.GetMapSizeX()-2) max_x = AIMap.GetMapSizeX() - 2;
+		if (min_y < 1) min_y = 1; else if (max_y > AIMap.GetMapSizeY()-2) max_y = AIMap.GetMapSizeY() - 2;
 		list.AddRectangle(AIMap.GetTileIndex(min_x, min_y), AIMap.GetTileIndex(max_x, max_y));
 		return list;
 }
