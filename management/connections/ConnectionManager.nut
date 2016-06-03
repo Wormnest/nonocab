@@ -34,6 +34,7 @@ function ConnectionManager::MaintainActiveConnections() {
 		foreach (vehicleID, value in vehicleList) {
 			local vehicleType = AIVehicle.GetVehicleType(vehicleID);
 			if (AIVehicle.IsStoppedInDepot(vehicleID)) {
+				Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleID) + " is stopped in depot.");
 				
 				// If the vehicle is very old, we assume it needs to be replaced
 				// by a new vehicle.
@@ -42,18 +43,16 @@ function ConnectionManager::MaintainActiveConnections() {
 
 					// Check what the best engine at the moment is.
 					local replacementEngineID = connection.GetBestTransportingEngine(vehicleType);
-					
-					if (replacementEngineID == null)
-						continue;
-					local replacementTransportEngineID = replacementEngineID[0];
-					
-					if (AIEngine.IsBuildable(replacementTransportEngineID)) {
+
+					// Replace if we have a valid replacement engine.
+					if ((replacementEngineID != null) && (replacementEngineID[0] != null) &&
+						AIEngine.IsBuildable(replacementEngineID[0])) {
 						
 						local doReplace = true;
 						// Don't replace an airplane if the airfield is very small.
 						if (vehicleType == AIVehicle.VT_AIR) {
 							if (AIEngine.GetPlaneType(AIVehicle.GetEngineType(vehicleID)) !=
-								AIEngine.GetPlaneType(replacementTransportEngineID))
+								AIEngine.GetPlaneType(replacementEngineID[0]))
 								doReplace = false;
 						}
 						
@@ -65,21 +64,35 @@ function ConnectionManager::MaintainActiveConnections() {
 						
 						if (doReplace) {
 							// Create a new vehicle.
-							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementTransportEngineID);
+							// Wormnest: I think when replacing it's better to sell the vehicle first and
+							// then try to replace it. However then we won't be able to share orders with
+							// the old vehicle so for now we will leave it as is.
+							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID[0]);
 							if (AIVehicle.IsValidVehicle(newVehicleID)) {
+								Log.logDebug("Replacing it with " + AIVehicle.GetName(newVehicleID));
 								
 								// Let is share orders with the vehicle.
 								AIOrder.ShareOrders(newVehicleID, vehicleID);
 								AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
 								AIVehicle.StartStopVehicle(newVehicleID);
 							} else {
+								local lasterr = AIError.GetLastError();
+								if ((lasterr == AIVehicle.ERR_VEHICLE_TOO_MANY) ||
+									(lasterr == AIVehicle.ERR_VEHICLE_BUILD_DISABLED)) {
+									Log.logDebug("Can't replace vehicle because we have reached the current limit!");
+									// Next we will sell it anyway and not try again since that will keep failing.
+								}
+								else {
 								// If we failed, simply try again next time.
-								continue;
+									Log.logDebug("Failed to replace vehicle! " + AIError.GetLastErrorString());
+									continue;
+								}
 							}
 						}
 					}
 				}
 				
+				Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID));
 				AIVehicle.SellVehicle(vehicleID);
 			}
 			
