@@ -59,10 +59,12 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 
 	while (!xBuildable || !yBuildable) {
 
-		if (AITile.IsBuildableRectangle(tile + maxXSpread, stationSizeX, stationSizeY))
+		// We need to check that tile stays within the borders of the map thus check if
+		// tile is valid before checking IsBuildableRectangle
+		if ((!Tile.IsValidTileMaxXOffset(tile, maxXSpread)) || AITile.IsBuildableRectangle(tile + maxXSpread, stationSizeX, stationSizeY))
 			xBuildable = true;
 
-		if (AITile.IsBuildableRectangle(tile - maxXSpread - stationSizeX, stationSizeX, stationSizeY)) {
+		if ((!Tile.IsValidTileMinXOffset(tile, maxXSpread - stationSizeX)) || AITile.IsBuildableRectangle(tile - maxXSpread - stationSizeX, stationSizeX, stationSizeY)) {
 			yBuildable = true;
 		}
 
@@ -77,12 +79,15 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 
 	while (!xBuildable || !yBuildable) {
 
-		if (AITile.IsBuildableRectangle(tile - maxYSpread * AIMap.GetMapSizeX(), stationSizeX, stationSizeY))
+		// We need to check that tile stays within the borders of the map thus check if
+		// tile is valid before checking IsBuildableRectangle
+		local isValidMaxY = Tile.IsValidTileMaxYOffset(tile, maxYSpread);
+		if ((!isValidMaxY) || AITile.IsBuildableRectangle(tile + maxYSpread * AIMap.GetMapSizeX(), stationSizeX, stationSizeY))
 			xBuildable = true;
 
-		if (AITile.IsBuildableRectangle(tile - maxYSpread * AIMap.GetMapSizeX() - stationSizeY * AIMap.GetMapSizeX(), stationSizeX, stationSizeY)) {
+		local isValidMinY = Tile.IsValidTileMinYOffset(tile, maxYSpread+stationSizeY);
+		if ((!isValidMinY) || AITile.IsBuildableRectangle(tile - maxYSpread * AIMap.GetMapSizeX() - stationSizeY * AIMap.GetMapSizeX(), stationSizeX, stationSizeY))
 			yBuildable = true;
-		}
 
 		maxYSpread++;
 	}

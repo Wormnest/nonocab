@@ -171,3 +171,70 @@ function Tile::GetRectangle(centre, sizeX, sizeY) {
 		list.AddRectangle(AIMap.GetTileIndex(min_x, min_y), AIMap.GetTileIndex(max_x, max_y));
 		return list;
 }
+
+/// We need extra functions to determine if tile with offset is valid
+function Tile::IsValidTileOffset(tile, offset)
+{
+	local tx = AIMap.GetTileX(tile);
+	local ty = AIMap.GetTileY(tile);
+	local xmax = AIMap.GetMapSizeX()-2;
+	local ymax = AIMap.GetMapSizeY()-2;
+	if ((tx - offset < 1) || (ty - offset < 1) ||
+		(tx + offset > xmax) || (ty + offset > ymax))
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMinOffset(tile, offset)
+{
+	local tx = AIMap.GetTileX(tile);
+	local ty = AIMap.GetTileY(tile);
+	if ((tx - offset < 1) || (ty - offset < 1))
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMaxOffset(tile, offset)
+{
+	local tx = AIMap.GetTileX(tile);
+	local ty = AIMap.GetTileY(tile);
+	local xmax = AIMap.GetMapSizeX()-2;
+	local ymax = AIMap.GetMapSizeY()-2;
+	if ((tx + offset > xmax) || (ty + offset > ymax))
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMinXOffset(tile, offset)
+{
+	local tx = AIMap.GetTileX(tile);
+	if (tx - offset < 1)
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMinYOffset(tile, offset)
+{
+	local ty = AIMap.GetTileY(tile);
+	if (ty - offset < 1)
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMaxXOffset(tile, offset)
+{
+	local tx = AIMap.GetTileX(tile);
+	local xmax = AIMap.GetMapSizeX()-2;
+	if (tx + offset > xmax)
+		return false;
+	return true;
+}
+
+function Tile::IsValidTileMaxYOffset(tile, offset)
+{
+	local ty = AIMap.GetTileY(tile);
+	local ymax = AIMap.GetMapSizeY()-2;
+	if (ty + offset > ymax)
+		return false;
+	return true;
+}
