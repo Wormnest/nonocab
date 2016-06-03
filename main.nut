@@ -243,6 +243,11 @@ function NoCAB::Start()
 					local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;						
 
 					local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
+					if (distance < 0) {
+						// This could happen if from or to node (industry) disappears.
+						Log.logError("Invalid distance: " + distance + ", From and/or To node probably invalid!");
+						continue;
+					}
 					local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeForward.tointeger()) * transportedCargoPerVehiclePerMonth;
 
 					// In case of a bilateral connection we take a persimistic take on the amount of 
