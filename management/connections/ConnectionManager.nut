@@ -239,7 +239,10 @@ function ConnectionManager::GetInterconnectedConnections(connection) {
 		local connections = [];
 		
 		foreach (stationID in stationIDs)
-			connections.push(stationIDToConnection.rawget(stationID));
+			if (stationIDToConnection.rawin(stationID))
+				connections.push(stationIDToConnection.rawget(stationID));
+			else
+				Log.logError("stationID not found! Probably caused by an incomplete savegame.");
 		return connections;
 	}
 	return null;
