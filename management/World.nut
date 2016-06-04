@@ -2,8 +2,12 @@
  * World holds the current status of the world as the AI sees it.
  */
 class World {
-	town_list = null;			// List with all towns.
-	industry_list = null;		// List with all industries.
+	static MAX_TOWNS = 1000;
+	static MAX_INDUSTRIES = 2000;
+	// We don't need town_list available all the time, replaced by a local.
+	//town_list = null;			// List with all towns.
+	// We don't need industry_list to be available all the time, commented out here.
+	//industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
@@ -27,11 +31,11 @@ class World {
 		townConnectionNodes = [];
 		starting_year = AIDate.GetYear(AIDate.GetCurrentDate());
 		years_passed = 0;
-		town_list = AITownList();
-		town_list.Valuate(AITown.GetPopulation);
-		town_list.Sort(AIList.SORT_BY_VALUE, false);
+		//town_list = AITownList();
+		//town_list.Valuate(AITown.GetPopulation);
+		//town_list.Sort(AIList.SORT_BY_VALUE, false);
 		industry_table = {};
-		industry_list = AIIndustryList();
+		//industry_list = AIIndustryList();
 
 		// Construct complete industry node list.
 		cargo_list = AICargoList();
@@ -109,18 +113,46 @@ function World::BuildIndustryTree() {
 	//
 	//
 	// Every industry is stored in an IndustryNode.
-	Log.logInfo("Build industry list.");
+	local industry_list = AIIndustryList();
+	Log.logInfo("Build industry list consisting of " + industry_list.Count() + " industries.");
+
+	// On large maps we can get way to many industries. We should limit it.
+	// Maybe in the future let the use set it within limits depending on how much memory they have.
+	// For now I think a reasonable limit is 2000 industries.
+	// On a test 2kx2k map I got 3520 industres on a 4kx4k map 14080 industries.
+	if (industry_list.Count() > MAX_INDUSTRIES) {
+		// There's no real good way to select a top x number of industries.
+		// For base producting industries it's possible but for industries that need products
+		// to be delivered first we can't do that.
+		// So for now we just randomly select 2000 industries.
+		Log.logWarning("There are more industries on this map than we can reasonably handle. Limiting to top " + MAX_INDUSTRIES + ".");
+		industry_list.Valuate(AIBase.RandItem);
+		industry_list.KeepTop(MAX_INDUSTRIES);
+	}
 	foreach (industry, value in industry_list)
 		InsertIndustry(industry);
+	industry_list = null; // Free all the memory as soon as possible.
 	Log.logInfo("Build industry list - done.");
 	
 	// We want to preprocess all industries which can be build near water.
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	
-	Log.logInfo("Build town list.");
+	local town_list = AITownList();
+	town_list.Valuate(AITown.GetPopulation);
+	Log.logInfo("Build town list consisting of " + town_list.Count() + " towns.");
+	// On large maps we can get way to many towns. We should limit it.
+	// Maybe in the future let the use set it within limits depending on how much memory they have.
+	// For now I think a reasonable limit is 1000 towns.
+	// On a test 2kx2k map I got 1600 towns on a 4kx4k map 7680 towns.
+	if (town_list.Count() > MAX_TOWNS) {
+		Log.logWarning("There are more towns on this map than we can reasonably handle. Limiting to top " + MAX_TOWNS + ".");
+		town_list.KeepTop(MAX_TOWNS);
+	}
+	town_list.Sort(AIList.SORT_BY_VALUE, false);
+
 	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
-		
+		Log.logDebug("Town: " + AITown.GetName(town));
 		local townNode = TownConnectionNode(town);
 		local isNearWater = townNode.isNearWater;
 		
@@ -181,7 +213,7 @@ function World::InsertIndustry(industryID) {
 	local hasBilateral = false;
 	local isPrimaryIndustry = false;
 
-	// We want to preprocess all industries which can be build near water.
+	// We want to preprocess all industries which can be built near water.
 	local isNearWater = industryNode.isNearWater;
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
 	local ignoreProducersList = {};
@@ -313,12 +345,12 @@ function World::RemoveIndustry(industryID) {
 	// be destroyed are identified they will be demolished out side the iterators.
 	local toDemolishList = [];
 	foreach (connection in industryNode.reverseActiveConnections)
-		// Remove all connections which are already build!
+		// Remove all connections which are already built!
 		foreach (fromConnnection in connection.travelFromNode.activeConnections)
 			if (fromConnnection.travelToNode == industryNode)
 				toDemolishList.push([fromConnnection, true]);
 	
-	// Remove all connections which are already build!
+	// Remove all connections which are already built!
 	foreach (connection in industryNode.activeConnections) {
 		// If there are more connections dropping cargo off at
 		// the end destination, we don't destroy those road stations!
@@ -345,8 +377,11 @@ function World::RemoveIndustry(industryID) {
  * @return The stored industry node.
  */
 function World::ProcessIndustryOpenedEvent(industryID) {
-	industry_list = AIIndustryList();
-	Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
+	// We don't want more than MAX_INDUSTRIES industries or we might run out of memory.
+	if (industry_table.len() >= MAX_INDUSTRIES)
+		return null;
+
+		Log.logInfo("New industry: " + AIIndustry.GetName(industryID) + " added to the world!");
 	InsertIndustry(industryID);
 	return industry_table[industryID];
 }			
@@ -358,7 +393,6 @@ function World::ProcessIndustryOpenedEvent(industryID) {
  * @return The removed industry node.
  */
 function World::ProcessIndustryClosedEvent(industryID) {
-	industry_list = AIIndustryList();
 	Log.logInfo("Industry: " + AIIndustry.GetName(industryID) + " removed from the world!");
 	return RemoveIndustry(industryID);
 }

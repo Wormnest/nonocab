@@ -60,8 +60,10 @@ function WorldEventManager::ProcessEvents() {
 					local industryID = AIEventIndustryOpen.Convert(e).GetIndustryID();
 					local industryNode = world.ProcessIndustryOpenedEvent(industryID);
 					
-					foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
-						listener.WE_IndustryOpened(industryNode);
+					// If we already have the maximum allowed industries null will be returned.
+					if (industryNode != null)
+						foreach (listener in eventListeners.rawget("" + e.GetEventType())) 
+							listener.WE_IndustryOpened(industryNode);
 					break;
 					
 				case AIEvent.ET_INDUSTRY_CLOSE:
