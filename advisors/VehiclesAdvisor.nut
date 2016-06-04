@@ -72,14 +72,14 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 		}
 
-		Log.logDebug("Check connection: " + connection);
-
 		// Make sure we don't update a connection to often!
 		local currentDate = AIDate.GetCurrentDate();
 		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 15) {
 			continue;
 		}
 		
+		Log.logDebug("Check connection: " + connection.ToString());
+
 		connection.lastChecked = currentDate;
 		local report = connection.CompileReport(connection.vehicleTypes);
 		report.nrVehicles = 0;
