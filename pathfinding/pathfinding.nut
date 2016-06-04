@@ -43,7 +43,7 @@ class RoadPathFinding {
 }
 
 function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, checkEndPositions, stationType, maxPathLength, tilesToIgnore) {
-
+	Log.logDebug("PathFinding: Find fastest route.");
 	// Safety trigger, if we take longer than 3 months to plan for a path, abort!
 	local startingDay = AIDate.GetCurrentDate();
 	local lastCheckingTime = 0;
@@ -76,7 +76,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	pathFinderHelper.ProcessEndPositions(end, checkEndPositions);
 
 	if(end.IsEmpty()) {
-		Log.logDebug("Could not find a fasted road for an empty endlist.");
+		Log.logDebug("Could not find a faster road for an empty endlist.");
 		return null;
 	}
 
