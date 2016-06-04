@@ -17,7 +17,7 @@ class RailPathUpgradeAction extends Action {
 
 function RailPathUpgradeAction::Execute() {
 	local accounter = AIAccounting();
-	Log.logWarning("STARTING UPGRADE!!! " + railType);
+	Log.logWarning("Starting rail upgrade to " + AIRail.GetName(railType));
 	local exec = AIExecMode();
 	Upgrade(connection, railType);
 	totalCosts = accounter.GetCosts();
@@ -143,6 +143,8 @@ function RailPathUpgradeAction::UpgradeTile(tile, newRailType) {
 	if (AIBridge.IsBridgeTile(tile))
 		UpgradeBridge(tile, newRailType);
 	else
+		// @todo: Is there a possibility of an infinite loop here? Maybe add a max loops counter?
+		// OTOH We don't want a piece of old rail left leaving the route unusable.
 		while (AIRail.GetRailType(tile) != newRailType)
 			AIRail.ConvertRailType(tile, tile, newRailType);
 }
