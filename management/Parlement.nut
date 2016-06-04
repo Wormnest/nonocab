@@ -4,13 +4,15 @@ class Parlement
 {
 	reports = null;
 	ignoreList = null;
-	balance = null;
-	mostExpensiveConnectionBuild = null;
+
+	// The next two seem not to be used: commented out
+	//balance = null;
+	//mostExpensiveConnectionBuild = null;
 	
 	constructor() {
 		reports = BinaryHeap();
 		ignoreList = [];
-		mostExpensiveConnectionBuild = 0;
+		//mostExpensiveConnectionBuild = 0;
 	}
 }
 
