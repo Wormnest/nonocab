@@ -43,6 +43,24 @@ function GameSettings::InitGameSettings() {
 	GameSettings.vehicleTypes[3] = AIVehicle.VT_AIR;
 }
 
+function GameSettings::UpdateMaxVehicles(vehicleType)
+{
+	local gameSettingName = GameSettings.vehicleGameSettingNames[vehicleType];
+	if (AIGameSettings.IsValid(gameSettingName)) {
+		local maxVehicles = AIGameSettings.GetValue(gameSettingName);
+		local allVehicles = AIVehicleList();
+		allVehicles.Valuate(AIVehicle.GetVehicleType);
+		allVehicles.KeepValue(GameSettings.vehicleTypes[vehicleType]);
+
+		GameSettings.maxVehiclesLimit[vehicleType] = maxVehicles;
+		local max = maxVehicles - allVehicles.Count();
+		if (max < 0)
+			GameSettings.maxVehiclesBuildLimit[vehicleType] = 0;
+		else
+			GameSettings.maxVehiclesBuildLimit[vehicleType] = maxVehicles - allVehicles.Count();
+	}
+}
+
 function GameSettings::UpdateGameSettings() {
 
 	if (AIGameSettings.IsValid("difficulty.subsidy_multiplier"))
@@ -52,22 +70,10 @@ function GameSettings::UpdateGameSettings() {
 
 	for (local i = 0; i < GameSettings.maxVehiclesLimit.len(); i++) {
 
-		local gameSettingName = GameSettings.vehicleGameSettingNames[i];
-		if (AIGameSettings.IsValid(gameSettingName)) {
-			local maxVehicles = AIGameSettings.GetValue(gameSettingName);
-			local allVehicles = AIVehicleList();
-			allVehicles.Valuate(AIVehicle.GetVehicleType);
-			allVehicles.KeepValue(GameSettings.vehicleTypes[i]);
-
-			GameSettings.maxVehiclesLimit[i] = maxVehicles;
-			local max = maxVehicles - allVehicles.Count();
-			if (max < 0)
-				GameSettings.maxVehiclesBuildLimit[i] = 0;
-			else
-				GameSettings.maxVehiclesBuildLimit[i] = maxVehicles - allVehicles.Count();
-		} else {
-			Log.logWarning("Setting " + gameSettingName + " couldn't be found, not sure if we can actually build this type of vehicles!");
-		}
+		GameSettings.UpdateMaxVehicles(i);
+		local max = GameSettings.maxVehiclesLimit[i];
+		Log.logDebug("VEHICLES (type=" + i + ") max: " + max +
+			", current: " + (max-GameSettings.maxVehiclesBuildLimit[i]));
 	}
 
 	if (AIGameSettings.IsValid("vehicle.plane_speed")) {
@@ -82,6 +88,10 @@ function GameSettings::GetSubsidyMultiplier() {
 function GameSettings::GetMaxBuildableVehicles(vehicleType) {
 	if (vehicleType >= GameSettings.maxVehiclesBuildLimit.len() || AIGameSettings.IsDisabledVehicleType(vehicleType))
 		return 0;
+	// Actual numbers of vehicles continually change so we need to update actual number.
+	// Once every main loop is not enough.
+	GameSettings.UpdateMaxVehicles(vehicleType);
+
 	return GameSettings.maxVehiclesBuildLimit[vehicleType];
 }
 
