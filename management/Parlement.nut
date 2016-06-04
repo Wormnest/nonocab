@@ -28,7 +28,10 @@ function Parlement::ExecuteReports() {
 	local mostExpensiveBuild = 0;
 
 	foreach (report in reports) {
-
+		if (report.isInvalid) {
+			Log.logError("Parlement: Invalid report!");
+			continue;
+		}
 		// Because we planned all reports in advance, we havan't take
 		// into account the effects of having less money available for
 		// other reports. So it may very well be that the utility becomes
