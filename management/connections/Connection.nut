@@ -80,7 +80,12 @@ class Connection {
 	
 	function NewEngineAvailable(engineID) {
 		local bestEngines = GetBestTransportingEngine(vehicleTypes);
-		if (bestEngines != null) {
+		if ((bestEngines != null) && (bestEngines[0] != null) && (bestEngines[1] != null)) {
+			if (bestTransportEngine == null) {
+				// Rare condition that seems to happen once in a while. Don't crash but report the problem.
+				Log.logError("bestTransportEngine is null! Connection: " + ToString());
+				return;
+			}
 			AIGroup.SetAutoReplace(vehicleGroupID, bestTransportEngine, bestEngines[0]);
 			AIGroup.SetAutoReplace(vehicleGroupID, bestHoldingEngine, bestEngines[1]);
 			
