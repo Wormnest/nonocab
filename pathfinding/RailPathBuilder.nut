@@ -116,7 +116,7 @@ function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 			local railTrack = roadList[a].lastBuildRailTrack;
 			
 			if (roadList[a].alreadyBuild) {
-				AISign.BuildSign(tile, "O");
+				//AISign.BuildSign(tile, "O");
 				++alreadyBuiltRailTracks;
 			}/* else if (alreadyBuiltRailTracks > 15 && !roadList[a + 1].alreadyBuild) {
 				lastBuildIndex = a + 1;
