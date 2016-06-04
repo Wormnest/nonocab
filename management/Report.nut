@@ -155,14 +155,17 @@ class Report
 	
 	function InitializeReport(loadingTime, cargoAlreadyTransported, distance) {
 
+		Log.logDebug("Report for " + connection.ToString());
 		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
 		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
 		
 		if (travelTimeTo == null || travelTimeFrom == null) {
+			Log.logDebug("Invalid estimation!");
 			isInvalid = true;
 			return;
 		}
 		
+		Log.logDebug("Estimated travel time to: " + travelTimeTo + ", from: " + travelTimeFrom);
 		local travelTime = travelTimeTo + travelTimeFrom;
 		
 		// Calculate netto income per vehicle.
@@ -187,11 +190,11 @@ class Report
 			nrVehicles = 1;
 		else
 			nrVehicles = nrVehicles.tointeger();
-
+		Log.logDebug("Estimated number of vehicles required: " + nrVehicles);
 		brutoIncomePerMonth = 0;
 		brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(connection.cargoID, distance, travelTimeTo.tointeger()) * transportedCargoPerVehiclePerMonth;
 
-		// In case of a bilateral connection we take a persimistic take on the amount of 
+		// In case of a bilateral connection we take a pessimistic take on the amount of 
 		// vehicles supported by this connection, but we do increase the income by adding
 		// the expected income of the other connection to the total.
 		if (connection != null && connection.bilateralConnection || connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
