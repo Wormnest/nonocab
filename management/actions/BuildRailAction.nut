@@ -202,10 +202,11 @@ function BuildRailAction::Execute() {
 	foreach (station in stationsConnectedTo) {
 		local connectionConnectedTo = connectionManager.GetConnection(station);
 		if (connectionConnectedTo == null) {
-			Log.logWarning("WTF!!!" + station + " is not linked to a connection!?");
-			assert(false);
+			Log.logWarning("Station " + station + " is not linked to a connection! Probably caused by an incomplete savegame.");
+			Log.LogWarning("We wanted to connect it with connection " + connection.ToString());
 		}
-		connectionManager.MakeInterconnected(connection, connectionConnectedTo);
+		else
+			connectionManager.MakeInterconnected(connection, connectionConnectedTo);
 	}
 	
 	return true;
