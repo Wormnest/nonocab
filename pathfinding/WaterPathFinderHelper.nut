@@ -189,7 +189,7 @@ function WaterPathFinderHelper::CheckGoalState(at, end, checkEndPositions, close
 		end.RemoveTile(at.tile);
 
 		if (end.IsEmpty()) {
-			Log.logDebug("End list is empty, original goal isn't satisviable anymore.");
+			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;
 		}
 		return false;
