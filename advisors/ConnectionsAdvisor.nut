@@ -182,7 +182,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		} else
 			disabled = false;
 
-		// Check if some connections in the reportTable have been build, if so remove them!
+		// Check if some connections in the reportTable have been built already, if so remove them!
 		local reportsToBeRemoved = [];
 		foreach (report in reportTable)
 			if (report.isInvalid || report.connection.pathInfo.build || report.connection.forceReplan)
@@ -192,7 +192,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 			reportTable.rawdelete(report.connection.GetUID());
 	}
 	
-	// Every time something might have been build, we update all possible
+	// Every time something might have been built, we update all possible
 	// reports and consequentially get the latest data from the world.
 	if (connectionReports == null || connectionReports.Count() <= reportTableLength / 4) {
 		Log.logInfo("(Re)populate active update list.");
@@ -213,14 +213,14 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	local startDate = AIDate.GetCurrentDate();
 
-	// Always try to get one more then currently available in the report table.
+	// Always try to get one more than currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
 	assert(connectionReports != null);
 	while ((reportTable.len() < minNrReports || Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 48) &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
 
-		// Check if the report is flagged invalid or already build / closed in the mean time.		
+		// Check if the report is flagged invalid or already built / closed in the mean time.		
 		if (report.isInvalid || closedIndustryList.rawin(report.connection.travelFromNode.id) || closedIndustryList.rawin(report.connection.travelToNode.id))
 			continue;
 
@@ -231,7 +231,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		if (connection.pathInfo.build)
 			continue;
 		
-		Log.logDebug("Considder: " + report.ToString());
+		Log.logDebug("Consider: " + report.ToString());
 			
 		local bestReport = report.connection.travelFromNode.GetBestReport(report.connection.cargoID);
 		
@@ -245,7 +245,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		if (bestReport == report)
 			connection.forceReplan = false;
 
-		// If we haven't calculated yet what it cost to build this report, we do it now.
+		// If we haven't calculated yet what it costs to build this report, we do it now.
 		local pathInfo = GetPathInfo(report);
 		if (pathInfo == null) {
 			if (bestReport == report)
@@ -254,7 +254,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		}
 		
 		// Check if the industry connection node actually exists else create it, and update it! If it exists
-		// we must be carefull because an other report may already have clamed it.
+		// we must be careful because another report may already have clamed it.
 		connection.pathInfo = pathInfo;
 						
 		// Compile the report :)
