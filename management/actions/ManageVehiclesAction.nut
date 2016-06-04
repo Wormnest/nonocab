@@ -66,6 +66,7 @@ function ManageVehiclesAction::Execute()
 		local vehiclesDeleted = 0;
 		
 		foreach (vehicleID, value in vehicleList) {
+			Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleID) + " is being sent to depot.");
 			
 			// Take a different approach with ships, as they might get lost.
 			if (vehicleType == AIVehicle.VT_WATER) {
@@ -106,6 +107,10 @@ function ManageVehiclesAction::Execute()
 		if (vehicleNumbers > maxBuildableVehicles)
 			vehicleNumbers = maxBuildableVehicles;
 		
+		if (vehicleNumbers == 0) {
+			Log.logInfo("Can't buy more vehicles, we have reached the maximum!");
+			continue;
+		}
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + AIEngine.GetName(wagonEngineID) + ".");
 
 		// Search if there are already have a vehicle group for this connection.
