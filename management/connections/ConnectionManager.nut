@@ -146,12 +146,12 @@ function ConnectionManager::LoadData(data, world) {
 				if (connectionFromNode.GetUID(cargoID) != savedConnectionData["travelFromNode"])
 					continue;
 					
-				Log.logDebug("Found propper from node! " + connectionFromNode.GetName());
+				Log.logDebug("Found proper from node! " + connectionFromNode.GetName());
 					
 				if (cargoID != savedConnectionData["cargoID"])
 					continue;
 					
-				Log.logDebug("Found propper Cargo ID! " + AICargo.GetCargoLabel(cargoID));
+				Log.logDebug("Found proper Cargo ID! " + AICargo.GetCargoLabel(cargoID));
 				
 				local foundConnectionToNode = -1;
 				
@@ -185,7 +185,7 @@ function ConnectionManager::LoadData(data, world) {
 				if (foundConnectionToNode == -1)
 					continue;
 						
-				Log.logDebug("Found propper to node!");
+				Log.logDebug("Found proper to node! " + foundConnectionToNode.GetName());
 				    	
 				local existingConnection = Connection(cargoID, connectionFromNode, foundConnectionToNode, null, this);
 				existingConnection.LoadData(savedConnectionData);
