@@ -26,7 +26,7 @@ function UpgradeConnectionAdvisor::Update(loopCounter) {
 
 	foreach (connection in connections) {
 
-		// If the road isn't build we can't micro manage, move on!		
+		// If the road isn't built yet we can't micro manage, move on!
 		if (!connection.pathInfo.build) {
 			Log.logWarning("Not present! " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
 			assert(false);	
