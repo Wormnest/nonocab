@@ -54,7 +54,7 @@ class Report
 		loadingTime = 0;
 		
 		// Check if the engine is valid.
-		if (!AIEngine.IsBuildable(transportEngineID) || !AIEngine.IsBuildable(holdingEngineID) ||
+		if ((transportEngineID == null) || !AIEngine.IsBuildable(transportEngineID) || !AIEngine.IsBuildable(holdingEngineID) ||
 			connection.travelToNode.isInvalid || connection.travelFromNode.isInvalid) {
 			isInvalid = true;
 			return;
