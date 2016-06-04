@@ -281,8 +281,8 @@ class Connection {
 //			}
 		}
 		
-//		if (bestTransportEngine != null)
-//			Log.logWarning("* The best engine for the connection: " + ToString() + " is " + AIEngine.GetName(bestTransportEngine) + " holding cargo by: " + AIEngine.GetName(bestHoldingEngine));
+		if (bestTransportEngine != null)
+			Log.logDebug("The best engine for the connection: " + ToString() + " is " + AIEngine.GetName(bestTransportEngine) + " holding cargo by: " + AIEngine.GetName(bestHoldingEngine));
 //		else
 //			Log.logWarning("* No engine found suitable!");
 
