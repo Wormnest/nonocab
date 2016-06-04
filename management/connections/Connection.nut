@@ -340,8 +340,10 @@ class Connection {
 		// Cache the best vehicle we can build for this connection.
 		local bestEngines = GetBestTransportingEngine(vehicleTypes);
 		if (bestEngines != null) {
-			bestTransportEngine = bestEngines[0];
-			bestHoldingEngine = bestEngines[1];
+			if (bestEngines[0] != null)
+				bestTransportEngine = bestEngines[0];
+			if (bestEngines[1] != null)
+				bestHoldingEngine = bestEngines[1];
 		}
 
 		// In the case of a bilateral connection we want to make sure that
@@ -389,7 +391,12 @@ class Connection {
 			
 				foreach (vehicleId, value in AIVehicleList_Group(vehicleGroupID)) {
 					if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
-						
+						// Note that with trains it can take a very long time before all of them
+						// are finally in depot, spamming this next message until then
+						// Probably it would be better first sending all trains to depot then
+						// once in a while check if they are all in depot and after that start the Demolish.
+						// @todo The trains (and other vehicles?) also don't seem to get sold!!!!!!!!!!!!!!!!!!!!!!
+						//Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleId) + " is being sent to depot.");
 						if (vehicleTypes != AIVehicle.VT_ROAD && vehicleTypes != AIVehicle.VT_WATER)
 							vehicleNotHeadingToDepot = true;
 						// Check if the vehicles is actually going to the depot!
