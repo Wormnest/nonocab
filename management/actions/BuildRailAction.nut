@@ -97,7 +97,7 @@ function BuildRailAction::Execute() {
 		}
 		
 		if (stationBuildingFailed) {
-			FailedToExecute("BuildRailAction: Rail station couldn't be build! " + AIError.GetLastErrorString());
+			FailedToExecute("BuildRailAction: Rail station couldn't be built! " + AIError.GetLastErrorString());
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);			
 			return false;
 		}
@@ -190,14 +190,14 @@ function BuildRailAction::Execute() {
 		connection.pathInfo.depotOtherEnd = otherDepot;
 	}
 	
-	// We only declare a connection built if both the depots and the rails are build.
+	// We only declare a connection built if both the depots and the rails are built.
 	connection.UpdateAfterBuild(AIVehicle.VT_RAIL, roadList[len - 1].tile, roadList[0].tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK));
 
 	connection.lastChecked = AIDate.GetCurrentDate();
 	CallActionHandlers();
 	totalCosts = accounter.GetCosts();
 	
-	// Now that everything is build, make sure the connections we share a rail with are linked.
+	// Now that everything is built, make sure the connections we share a rail with are linked.
 	local connectionManager = connection.connectionManager;
 	foreach (station in stationsConnectedTo) {
 		local connectionConnectedTo = connectionManager.GetConnection(station);
