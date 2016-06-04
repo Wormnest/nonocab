@@ -300,7 +300,37 @@ class Connection {
 		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
 			vehicleGroupID = AIGroup.CreateGroup(vehicleType);
 			AIGroup.SetName(vehicleGroupID, travelFromNode.GetName() + " to " + travelToNode.GetName());
+			// Group names have a max length.
+			// If you try to set it to something longer the groupname doesn't get changed.
+			// However the last characters are not shown in the gui, instead "..." is shown, so use 28 as max
+			// Make it also less likely that group name is not unique by adding cargo label to it.
+			local fromName = travelFromNode.GetName();
+			if (fromName.len() > 10)
+				fromName = fromName.slice(0, 10);
+			local toName = travelToNode.GetName();
+			if (toName.len() > 10)
+				toName = toName.slice(0, 10);
+			local groupname = AICargo.GetCargoLabel(cargoID) + " " + fromName + " - " + toName;
+			local namelen = 29;
+			if (groupname.len() < 29)
+				namelen = groupname.len();
+			while (!AIGroup.SetName(vehicleGroupID, groupname)) {
+				// We give up if our preferred groupname is not unique
+				if (AIError.GetLastError() == AIError.ERR_NAME_IS_NOT_UNIQUE) {
+					Log.logWarning("Can't set preferred group name. It is not unique!");
+					break;
+				}
+				// String should be at least a few characters long so we can recognize what the group is about.
+				if (groupname.len() < 10)
+					break;
+				namelen--;
+				groupname = groupname.slice(0, namelen);
+			}
+			Log.logDebug("Set group name for group " + vehicleGroupID + " for connection " + ToString() + " to " + groupname);
+			if (AIGroup.GetName(vehicleGroupID) != groupname)
+				Log.logWarning("Failed to set group name, name used instead: " + AIGroup.GetName(vehicleGroupID));
 		}
+		Log.logDebug("Updating group " + AIGroup.GetName(vehicleGroupID));
 		
 		pathInfo.UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius);
 		lastChecked = AIDate.GetCurrentDate();
