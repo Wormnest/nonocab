@@ -32,7 +32,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 		local isAir = false;
 		local isRail = false;
 
-		// Check if there are any vehicles waiting on this tile and if so, sell them!
+		// Check if there are any vehicles waiting on this tile.
 		foreach (vehicleID, value in AIVehicleList_Group(connection.vehicleGroupID)) {
 			hasVehicles = true;
 
@@ -56,7 +56,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 					nrVehiclesInStation++;
 			}
 		}
-		Log.logDebug("Vehicles waiting: " + nrVehicles + " " + nrVehiclesInStation);
+		Log.logDebug("Vehicles waiting: " + nrVehicles + ", " + nrVehiclesInStation);
 		return [nrVehicles, nrVehiclesInStation, hasVehicles];
 }
 
@@ -184,7 +184,7 @@ function VehiclesAdvisor::GetReports() {
 		
 		// If the connection was termintated in the mean time, drop the report.
 		if (!connection.pathInfo.build) {
-			Log.logWarning("Connection isn't build!");
+			Log.logWarning("Connection wasn't built!");
 			continue;
 		}
 		
