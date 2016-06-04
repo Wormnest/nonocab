@@ -82,6 +82,10 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		connection.lastChecked = currentDate;
 		local report = connection.CompileReport(connection.vehicleTypes);
+		if ((report == null) || (report.isInvalid)) {
+			Log.logWarning("Invalid report for connection " + connection.ToString());
+			continue;
+		}
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.pathInfo.travelFromNodeStationID), connection);
