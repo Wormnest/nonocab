@@ -1,13 +1,19 @@
 class RailPathFinderHelper extends PathFinderHelper {
 
 	static NEAR_STATION_DISTANCE = 15;
-	costForRail 	= 100;       // Cost for utilizing an existing road, bridge, or tunnel.
-	costForNewRail	= 1000;       // Cost for building a new road.
-	costForTurn 	= 300;       // Additional cost if the road makes a turn.
-	costForBridge 	= 1000;//65;  // Cost for building a bridge.
-	costForTunnel 	= 1000;//65;  // Cost for building a tunnel.
-	costForSlope 	= 300;       // Additional cost if the road heads up or down a slope.
-	costTillEnd     = 1200;       // The cost for each tile till the end.
+	static MAX_BRIDGE_LENGTH = 15;
+	static MAX_TUNNEL_LENGTH = 15;
+
+	costForRail 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
+	costForNewRail	= 1000;     // Cost for building a new road.
+	costForTurn 	= 300;      // Additional cost if the road makes a turn.
+	// Wormnest: Cost for bridges and tunnels seem way to low. Changed from 1000 to 2000/1500.
+	// @todo Possibly even better for bridges would be to determine a value based on the costs of bridges
+	// since NewGRF's can sometimes make them extra expensive.
+	costForBridge 	= 2500;  	// Cost for building a bridge.
+	costForTunnel 	= 2000;  	// Cost for building a tunnel.
+	costForSlope 	= 300;      // Additional cost if the road heads up or down a slope.
+	costTillEnd     = 1200;     // The cost for each tile till the end.
 
 	standardOffsets = null;
 	dummyAnnotatedTile = null;
@@ -1063,7 +1069,8 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 	if (Tile.GetSlope(startNode, direction) != 2 && !bridgeRailOrRoad)
 		return null;
 
-	for (local i = 1; i < 30; i++) {
+	/// @todo Check if we already want to build a bridge just before this one. In that case they should be combined into one bridge!
+	for (local i = 1; i < MAX_BRIDGE_LENGTH; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
@@ -1123,7 +1130,7 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {
+	if (tunnel_length >= 1 && tunnel_length < MAX_TUNNEL_LENGTH && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;

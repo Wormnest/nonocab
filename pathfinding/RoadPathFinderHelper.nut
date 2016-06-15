@@ -1,11 +1,14 @@
 class RoadPathFinderHelper extends PathFinderHelper {
 
-	costForRoad 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
-	costForNewRoad	= 1000;     // Cost for building a new road.
-	costForTurn 	= 200;       // Additional cost if the road makes a turn.
-	costForBridge 	= 1250;     // Cost for building a bridge.
-	costForTunnel 	= 1050;     // Cost for building a tunnel.
-	costForSlope 	= 250;      // Additional cost if the road heads up or down a slope.
+	static MAX_ROAD_BRIDGE_LENGTH = 15;
+	static MAX_ROAD_TUNNEL_LENGTH = 15;
+
+	costForRoad 	= 50;       // Cost for utilizing an existing road, bridge, or tunnel. (Original: 100)
+	costForNewRoad	= 1200;     // Cost for building a new road. (Original: 1000)
+	costForTurn 	= 200;      // Additional cost if the road makes a turn. (Original: 200)
+	costForBridge 	= 2000;     // Cost for building a bridge. (original: 1250)
+	costForTunnel 	= 1750;     // Cost for building a tunnel. (original: 1050)
+	costForSlope 	= 500;      // Additional cost if the road heads up or down a slope.
 	costTillEnd     = 1200;     // The cost for each tile till the end.
 
 	standardOffsets = null;
@@ -374,7 +377,7 @@ function RoadPathFinderHelper::ProcessTile(isInClosedList, tile, direction) {
 	if (AITunnel.BuildTunnel(AIVehicle.VT_ROAD, tile))
 		return true;
 
-	for (local i = 1; i < 30; i++) {
+	for (local i = 1; i < MAX_ROAD_BRIDGE_LENGTH; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = tile + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
@@ -391,7 +394,7 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 	local isRailTile = AIRail.IsRailTile(startNode + direction);
 	if (Tile.GetSlope(startNode, direction) != 2 && !isRailTile) return null;
 
-	for (local i = 1; i < 30; i++) {
+	for (local i = 1; i < MAX_ROAD_BRIDGE_LENGTH; i++) {
 		local bridge_list = AIBridgeList_Length(i + 1);
 		local target = startNode + i * direction;
 		if (!AIMap.DistanceFromEdge(target))
@@ -437,7 +440,7 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 		
 	
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < 20 && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
+	if (tunnel_length >= 1 && tunnel_length < MAX_ROAD_TUNNEL_LENGTH && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_ROAD, startNode) && AIRoad.BuildRoad(other_tunnel_end, other_tunnel_end + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
