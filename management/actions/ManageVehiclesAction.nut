@@ -209,79 +209,7 @@ function ManageVehiclesAction::Execute()
 				}
 			}
 
-			local extraOrderFlags = (vehicleType == AIVehicle.VT_RAIL || vehicleType == AIVehicle.VT_ROAD ? AIOrder.OF_NON_STOP_INTERMEDIATE : 0);
-			
-			// Send the vehicles on their way.
-			if (connection.bilateralConnection && !directionToggle) {
-				if (vehicleType == AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
-				AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-				if (vehicleType != AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
-
-				// If it's a ship, give it additional orders!
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
-					for (local i = 1; i < roadList.len() - 1; i++)
-						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-
-				if (vehicleType == AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-
-				if (vehicleType != AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
-
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) 
-					for (local i = roadList.len() - 2; i > 0; i--)
-						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-			} else {
-				if (vehicleType == AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
-				AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-				if (vehicleType != AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
-
-				// If it's a ship, give it additional orders!
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER) {
-					for (local i = roadList.len() - 2; i > 0; i--) {
-						if (!AIMarine.IsBuoyTile(roadList[i].tile)) {
-							AISign.BuildSign(roadList[i].tile, "NO BUOY!?");
-							assert (false);
-						}
-						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-					}
-				}
-
-				if (vehicleType == AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
-
-				if (connection.bilateralConnection)
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-				else
-					AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_UNLOAD | AIOrder.OF_NO_LOAD);
-
-				if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL)
-					AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
-					
-				if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER)
-					for (local i = 1; i < roadList.len() - 1; i++)
-						AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-			}
-
-			// As a first order, let the vehicle do it's normal actions when not old enough.
-			AIOrder.InsertConditionalOrder(vehicleID, 0, 0);
-			
-			// Set orders to stop the vehicle in a depot once it reached its max age.
-			AIOrder.SetOrderCondition(vehicleID, 0, AIOrder.OC_AGE);
-			AIOrder.SetOrderCompareFunction(vehicleID, 0, AIOrder.CF_LESS_THAN);
-			AIOrder.SetOrderCompareValue(vehicleID, 0, AIEngine.GetMaxAge(engineID) / 366);
-			
-			// Insert the stopping order, which will be skipped by the previous conditional order
-			// if the vehicle hasn't reached its maximum age.
-			if (connection.bilateralConnection && directionToggle)
-				AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depotOtherEnd, AIOrder.OF_STOP_IN_DEPOT);
-			else
-				AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depot, AIOrder.OF_STOP_IN_DEPOT);
+			SetOrders(vehicleID, vehicleType, connection, directionToggle);
 
 			AIVehicle.StartStopVehicle(vehicleID);
 
@@ -294,4 +222,90 @@ function ManageVehiclesAction::Execute()
 	}
 	CallActionHandlers();
 	return true;
+}
+
+/**
+ * Set orders for vehicle.
+ * @param vehicleID The ID of the vehicle to assign orders to.
+ * @param vehicleType The type of vehicle.
+ * @param connection The connection this vehicle belongs to.
+ * @param directionToggle Whether or not to reverse the to and from stations in orders.
+ * @pre Valid vehicle, connection, connection.pathInfo, connection.pathInfo.roadList.
+ */
+function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, directionToggle)
+{
+	local extraOrderFlags = (vehicleType == AIVehicle.VT_RAIL || vehicleType == AIVehicle.VT_ROAD ? AIOrder.OF_NON_STOP_INTERMEDIATE : 0);
+	local roadList = connection.pathInfo.roadList;
+	
+	// Send the vehicles on their way.
+	if (connection.bilateralConnection && !directionToggle) {
+		if (vehicleType == AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
+		AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
+		if (vehicleType != AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
+
+		// If it's a ship, give it additional orders!
+		if (vehicleType == AIVehicle.VT_WATER)
+			for (local i = 1; i < roadList.len() - 1; i++)
+				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
+
+		if (vehicleType == AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
+		AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
+
+		if (vehicleType != AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
+
+		if (vehicleType == AIVehicle.VT_WATER) 
+			for (local i = roadList.len() - 2; i > 0; i--)
+				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
+	} else {
+		if (vehicleType == AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
+		AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
+		if (vehicleType != AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
+
+		// If it's a ship, give it additional orders!
+		if (vehicleType == AIVehicle.VT_WATER) {
+			for (local i = roadList.len() - 2; i > 0; i--) {
+				if (!AIMarine.IsBuoyTile(roadList[i].tile)) {
+					AISign.BuildSign(roadList[i].tile, "NO BUOY!?");
+					assert (false);
+				}
+				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
+			}
+		}
+
+		if (vehicleType == AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
+
+		if (connection.bilateralConnection)
+			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
+		else
+			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_UNLOAD | AIOrder.OF_NO_LOAD);
+
+		if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL)
+			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
+			
+		if (vehicleType == AIVehicle.VT_WATER)
+			for (local i = 1; i < roadList.len() - 1; i++)
+				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
+	}
+
+	// As a first order, let the vehicle do it's normal actions when not old enough.
+	AIOrder.InsertConditionalOrder(vehicleID, 0, 0);
+	
+	// Set orders to stop the vehicle in a depot once it reached its max age.
+	AIOrder.SetOrderCondition(vehicleID, 0, AIOrder.OC_AGE);
+	AIOrder.SetOrderCompareFunction(vehicleID, 0, AIOrder.CF_LESS_THAN);
+	AIOrder.SetOrderCompareValue(vehicleID, 0, AIVehicle.GetMaxAge(vehicleID) / 366);
+	
+	// Insert the stopping order, which will be skipped by the previous conditional order
+	// if the vehicle hasn't reached its maximum age.
+	if (connection.bilateralConnection && directionToggle)
+		AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depotOtherEnd, AIOrder.OF_STOP_IN_DEPOT);
+	else
+		AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depot, AIOrder.OF_STOP_IN_DEPOT);
 }
