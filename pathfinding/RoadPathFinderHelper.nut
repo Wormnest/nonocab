@@ -467,14 +467,18 @@ function RoadPathFinderHelper::GetTunnel(startNode, previousNode) {
 function RoadPathFinderHelper::FixRoadlist(roadList)
 {
 	Log.logDebug("Fixing roadlist after loading a savegame.");
-	if ((roadList == null) || (roadList.len() == 0))
+	if ((roadList == null) || (roadList.len() == 0)) {
+		Log.logError("Invalid roadList " + (roadList == null ? "is null." : "length is 0."));
 		return;
+	}
 
 	//Log.logDebug("!! Length roadList: " + roadList.len());
 	local rlen = roadList.len();
 	for (local i = 0; i < rlen; i++) {
-		if ((roadList[i].type != null) && (roadList[i].type != Tile.NONE))
+		if ((roadList[i].type != null) && (roadList[i].type != Tile.NONE)) {
+			Log.logWarning("Tile Type unexpected! Skipping.");
 			continue;
+		}
 		local tile = roadList[i].tile;
 		if (AIBridge.IsBridgeTile(tile))
 			roadList[i].type = Tile.BRIDGE;
@@ -580,6 +584,13 @@ function RoadPathFinderHelper::GetTime(roadList, engineID, forward) {
 						break;
 					}
 				}
+				break;
+			default:
+				// Should not happen anymore but leave this in just in case.
+				Log.logError("Road Get TravelTime: Unexpected roadList type! i = " + i);
+				AISign.BuildSign(tile, "x");
+				AISign.BuildSign(roadList[0].tile, "0");
+				AISign.BuildSign(roadList[roadList.len()-1].tile, "1");
 				break;
 		}
 			
