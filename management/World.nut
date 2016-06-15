@@ -10,6 +10,7 @@ class World {
 	//industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
 	cargo_list = null;			// List with all cargos.
+	town_cargo_list = null;		// List of cargos that have effect on towns.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
 	maxCargoID = null;				// The highest cargo ID number
 
@@ -43,6 +44,11 @@ class World {
 		maxCargoID = cargo_list.Begin();
 		industryCacheAccepting = array(maxCargoID + 1);
 		industryCacheProducing = array(maxCargoID + 1);
+		
+		town_cargo_list = AICargoList();
+		town_cargo_list.Valuate(HasCargoEffectOnTownsValuator);
+		town_cargo_list.KeepValue(1);
+		//town_cargo_list.Sort(AIList.SORT_BY_VALUE, false);
 
 		industry_tree = [];
 	
@@ -78,6 +84,11 @@ class World {
 	 * Print a single node in the industry tree.
 	 */
 	function PrintNode(node, depth);	
+}
+
+function World::HasCargoEffectOnTownsValuator(cargoID)
+{
+	return AICargo.IsValidTownEffect(AICargo.GetTownEffect(cargoID));
 }
 
 function World::LoadData(data) {
@@ -158,8 +169,13 @@ function World::BuildIndustryTree() {
 		local townNode = TownConnectionNode(town);
 		local isNearWater = townNode.isNearWater;
 		
+		/// @todo The problem with towns is that if they grow/shrink what they accept/produce can change!
+		/// @todo We may need to regularly recheck their production/acceptance. Check this!
+		// Hmm I've also seen it ignore PASS for certain town-town connections. Why? Hedingstone was already very large, maybe it couldn't find a usable tile for buses?
+		
 		// Check if this town accepts something an industry creates.
-		foreach (cargo, value in cargo_list) {
+		foreach (cargo, dummyvalue in town_cargo_list) {
+			
 			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
 				
 				// Check if this town is near to water.
@@ -178,14 +194,18 @@ function World::BuildIndustryTree() {
 				
 				// Add this town to the accepting cache for future industries.
 				industryCacheAccepting[cargo].push(townNode);
-				
-				townNode.cargoIdsProducing.push(cargo);
+
+				// Only add cargo as produced in town if it has at least some production
+				// This will filter out GOODS on the producing side for towns.
+				if (AITown.GetLastMonthProduction(town, cargo) > 0)
+					townNode.cargoIdsProducing.push(cargo);
 				townNode.cargoIdsAccepting.push(cargo);
 			}
 		}
 
 		// Add town <-> town connections, we only store these connections as 1-way directions
 		// because they are bidirectional.
+		/// @todo This is not completely true. Certain towns can produce or accept cargo that another doesn't.
 		foreach (townConnectionNode in townConnectionNodes) {
 			townNode.connectionNodeList.push(townConnectionNode);
 			townConnectionNode.connectionNodeListReversed.push(townNode);
