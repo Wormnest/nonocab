@@ -36,6 +36,10 @@ function BuildRoadAction::Execute() {
 	
 	// Find the best engine for this connection so we know what kind of stations we need to build. In this case we only need 
 	// to consider articulated vehicles and 'normal' vehicles. For articulated vehicles we need to build drive through stations.
+	// Wormnest: I don't understand why this has to be determined again here. In the report it should
+	// have already been decided what engine we want to use so why do it again here.
+	// OTOH GetBestTransportingEngine just returns that best engine for the connection unless it can't be built anymore so I guess this is OK.
+	// But for new connections I guess the best engine etc hasn't been entered into the connection even if we had a report which told us about the best engine.
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_ROAD);
 	if (bestEngineIDs == null) {
 		FailedToExecute("Could not find a suitable engine!");
@@ -64,9 +68,16 @@ function BuildRoadAction::Execute() {
 
 	local bestPathToBuild = null;
 	if (connection.pathInfo.build)
-		bestPathToBuild = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+		/// @todo The distance may need to be increased if we want to support reusing existing roads more
+		/// @todo because that usually means the distance will increase.
+		bestPathToBuild = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false),
+			true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	else
-		bestPathToBuild = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+		/// @todo The distance may need to be increased if we want to support reusing existing roads more
+		/// @todo because that usually means the distance will increase.
+		bestPathToBuild = pathFinder.FindFastestRoad(connection.travelFromNode.GetProducingTiles(connection.cargoID, stationRadius, 1, 1),
+			connection.travelToNode.GetAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType,
+			AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 
 	if (bestPathToBuild == null) {
 		FailedToExecute("No path found!");

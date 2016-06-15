@@ -40,7 +40,7 @@ function ManageVehiclesAction::Execute()
 {
 	AIExecMode();
 	// Sell the vehicles.
-	Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
+	//Log.logInfo("Sell " + vehiclesToSell.len() + " vehicles.");
 	foreach (engineInfo in vehiclesToSell) {
 		local engineID = engineInfo[0];
 		local vehicleNumbers = engineInfo[1];
@@ -66,7 +66,7 @@ function ManageVehiclesAction::Execute()
 		local vehiclesDeleted = 0;
 		
 		foreach (vehicleID, value in vehicleList) {
-			Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleID) + " is being sent to depot.");
+			Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleID) + " is being sent to depot to be sold.");
 			
 			// Take a different approach with ships, as they might get lost.
 			if (vehicleType == AIVehicle.VT_WATER) {

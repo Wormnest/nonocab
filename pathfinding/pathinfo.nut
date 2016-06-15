@@ -8,6 +8,7 @@ class PathInfo {
 	extraRoadBits = null;            // Any extra road bits this connection requires. These are mainly the tracks
 	                                 // needed by trains to link to the other platforms at stations or to connect
 	                                 // the roadList and roadListReturn.
+	/// @todo roadCost doesn't seem to be used anywhere. Remove?
 	roadCost = null;                 // The cost to create this road.
 	depot = null;                    // The location of the depot.
 	depotOtherEnd = null;            // The location of the depot at the other end (if it any).

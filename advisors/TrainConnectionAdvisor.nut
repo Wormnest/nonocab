@@ -41,6 +41,9 @@ function TrainConnectionAdvisor::GetPathInfo(report) {
 
 /**
  * Given an engineID, give the best rails to build for it.
+ * @todo Since this is called so often we should think of caching best railtype per engineID.
+ * However since railtypes can become unavailable and new types introduced it needs to be rechecked regularly.
+ * Do we get a notice when there is a change in available railtypes?
  */
 function TrainConnectionAdvisor::GetBestRailType(engineID) {
 	if (!AIEngine.IsValidEngine(engineID))
@@ -56,5 +59,6 @@ function TrainConnectionAdvisor::GetBestRailType(engineID) {
 			bestRailType = rt;
 		}
 	}
+	//Log.logWarning("Best rail type: " + AIRail.GetName(bestRailType) + " for engine " + AIEngine.GetName(engineID));
 	return bestRailType;
 }

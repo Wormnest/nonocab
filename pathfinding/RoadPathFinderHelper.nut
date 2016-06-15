@@ -328,6 +328,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					annotatedTile.length = currentAnnotatedTile.length + 1;
 	
 					// Check if the road is sloped.
+					/// @todo Differentiate between slope up and down? However roads are usually used in both directions.
 					if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
 						annotatedTile.distanceFromStart = costForSlope;
 				
@@ -337,6 +338,7 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 	
 					// Check if there is already a road here.
 					if (AIRoad.IsRoadTile(nextTile)) {
+						/// @todo Can/Should we check if there is already a lot of traffic here?
 						annotatedTile.distanceFromStart += costForRoad;
 						if (AIRoad.IsDriveThroughRoadStationTile(nextTile))
 							annotatedTile.distanceFromStart += costForRoad * 10;
@@ -344,12 +346,18 @@ function RoadPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRoads, cl
 					else
 						annotatedTile.distanceFromStart += costForNewRoad;
 	
-	
 					tileArray.push(annotatedTile);
 				}
 			}
 		}
 	}
+
+	/*foreach(at in tileArray) {
+		if (at.type == null) {
+			Log.logError("NULL type - ROAD!")
+			Log.logWarning("Problem Tile " + AIMap.GetTileX(at.tile) + ", " + AIMap.GetTileY(at.tile));
+		}
+	}*/
 
 	return tileArray;
 }

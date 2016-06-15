@@ -332,9 +332,11 @@ function NoCAB::Start()
 			
 		
 		GameSettings.UpdateGameSettings();
+		Log.logWarning("Planner: Schedule and Execute");
 		planner.ScheduleAndExecute();
 		// Get all reports from our advisors.
 		local reports = [];
+		Log.logWarning("Get reports from advisors");
 		foreach (advisor in advisors) {
 			reports.extend(advisor.GetReports());
 		}
@@ -342,19 +344,24 @@ function NoCAB::Start()
 		parlement.ClearReports();
 		
 		// Process all the events which have been fired in the mean time.
+		Log.logWarning("Process World Events");
 		worldEventManager.ProcessEvents();
 		
 		// Update all active connections and check if vehicles need to be sold / replaced, etc.
+		Log.logWarning("Maintain Active connections");
 		connectionManager.MaintainActiveConnections();
 		
 		
 		AICompany.SetAutoRenewMoney(5000000);
+		Log.logWarning("Select reports");
 		parlement.SelectReports(reports);
 		
+		Log.logWarning("Execute and Select reports");
 		while (!parlement.ExecuteReports()) {
 			parlement.SelectReports(reports);
 		}
 
+		Log.logWarning("Handle politics");
 		la.HandlePolitics();
 		
 		AICompany.SetAutoRenewMoney(1000000);

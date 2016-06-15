@@ -803,6 +803,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				continue;
 
 			// Check if the road is sloped.
+			/// @todo Slope down isn't so bad but slope up is (depending on settings how bad)
+			/// @todo so maybe check Tile.GetSlope instead and depend extra costs on up or down
+			// Possibly even depending on whether there were multiple slopes close together.
 			if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
 				annotatedTile.distanceFromStart = costForSlope;
 
@@ -1144,6 +1147,7 @@ function RailPathFinderHelper::GetTime(roadList, engineID, forward) {
 	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 
 	// For now we assume a train always runs on top speed.
+	/// @todo We need to check if wagon speeds matter and if so lower maxSpeed if wagon speed is lower than engine speed.
 
 	local lastDirection = roadList[0];
 	local currentSpeed = 0;

@@ -56,12 +56,14 @@ function RailPathBuilder::RealiseConnection(buildRoadStations)
 	local estimatedCost = GetCostForRoad();
 	lastBuildIndex = -1;
 	if (estimatedCost > Finance.GetMaxMoneyToSpend()) {
-		Log.logWarning("Not enough money, aborting construction!");
+		/// @todo: Maybe instead wait a little while to see if we have the money then.
+		Log.logWarning("Not enough money (" + Finance.GetMaxMoneyToSpend() + " needed " + estimatedCost + "), aborting construction!");
 		return false;
 	}
 	
 	{
 		local test = AIExecMode();
+		/// @todo If we already have stations we should pick the railtype of the stations.
 		return BuildPath(roadList, false, TrainConnectionAdvisor.GetBestRailType(engineID));
 	}
 }

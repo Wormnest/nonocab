@@ -73,6 +73,8 @@ class Report
 				if (!connection.pathInfo.build)
 					initialCost = PathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID)).GetCostForRoad();
 			} else {
+				/// @todo Instead of a guess of 3 * distance we could use that as initial value but
+				/// @todo after building a few connections use the average cost for those.
 				initialCost = AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_ROAD) * distance * 3 +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_DEPOT) +
 				              AIRoad.GetBuildCost(AIRoad.ROADTYPE_ROAD, AIRoad.BT_TRUCK_STOP) * 2;
@@ -115,6 +117,7 @@ class Report
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_SIGNAL) * distance / 5 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_STATION) * 6 * 2;
+				//Log.logWarning("Initial cost (roadList null): " + initialCost);
 			}
 
 			loadingTime = 15;
@@ -147,6 +150,7 @@ class Report
 				if (foundRailTrack > railTypeOfConnection) {
 					initialCost += RailPathUpgradeAction.GetCostForUpgrade(connection, foundRailTrack);
 					upgradeToRailType = foundRailTrack;
+					Log.logDebug("Best upgrade rail type: " + AIRail.GetName(foundRailTrack) + " for engine " + AIEngine.GetName(transportEngineID));
 				}
 				// Else, just build more trains :)
 			}
@@ -155,7 +159,7 @@ class Report
 	
 	function InitializeReport(loadingTime, cargoAlreadyTransported, distance) {
 
-		Log.logDebug("Report for " + connection.ToString());
+		Log.logDebug("Report for " + connection.ToString() + " using engine " + AIEngine.GetName(transportEngineID));
 		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
 		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
 		

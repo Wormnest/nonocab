@@ -32,6 +32,7 @@ class Connection {
 	bestHoldingEngine = null;
 	
 	constructor(cargo_id, travel_from_node, travel_to_node, path_info, connection_manager) {
+		//Log.logDebug("Init Connection");
 		cargoID = cargo_id;
 		travelFromNode = travel_from_node;
 		travelToNode = travel_to_node;
@@ -106,6 +107,7 @@ class Connection {
 	 */
 	function CompileReport(vehicleType) {
 		
+		//Log.logDebug("Compile Report, now first get best transporting engine");
 		local bestEngines = GetBestTransportingEngine(vehicleType);
 		
 		if (bestEngines == null) {
@@ -194,6 +196,7 @@ class Connection {
 		}
 	}
 	
+	/// @todo WE NEED TO CHECK WHY THE HELICOPTER IS CHOSEN SO OFTEN AS BEST AIRCRAFT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	function GetBestTransportingEngine(vehicleType) {
 		assert (vehicleType != AIVehicle.VT_INVALID);
 		
@@ -297,6 +300,7 @@ class Connection {
 	 */
 	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
 		
+		//Log.logDebug("Connection: UpdateAfterBuild");
 		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
 			vehicleGroupID = AIGroup.CreateGroup(vehicleType);
 			AIGroup.SetName(vehicleGroupID, travelFromNode.GetName() + " to " + travelToNode.GetName());
@@ -435,6 +439,7 @@ class Connection {
 			AITile.DemolishTile(pathInfo.roadList[0].tile);
 		}
 		
+// Wormnest: Not sure why this is disabled. Maybe because before I changed it vehicles for destroyed connections were not sold?
 /*		if (destroyDepots) {
 			AITile.DemolishTile(pathInfo.depot);
 			if (pathInfo.depotOtherEnd)

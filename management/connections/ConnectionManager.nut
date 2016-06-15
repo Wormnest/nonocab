@@ -57,7 +57,7 @@ function ConnectionManager::MaintainActiveConnections() {
 						}
 						
 						// Don't replace trains, ever!
-						// TODO: Be smarter about this.
+						/// @todo Replacement for trains!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						else if (vehicleType == AIVehicle.VT_RAIL) {
 							doReplace = false;
 						}
@@ -207,7 +207,7 @@ function ConnectionManager::LoadData(data, world) {
 		}
 	}
 		
-	Log.logInfo("Successfully load: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
+	Log.logInfo("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
 }
 
 /**

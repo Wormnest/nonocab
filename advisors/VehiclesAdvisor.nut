@@ -61,7 +61,7 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 }
 
 function VehiclesAdvisor::Update(loopCounter) {
-	
+	Log.logInfo("Evaluate existing connections.");
 	reports = [];
 
 	foreach (connection in connectionManager.allConnections) {
@@ -83,7 +83,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		connection.lastChecked = currentDate;
 		local report = connection.CompileReport(connection.vehicleTypes);
 		if ((report == null) || (report.isInvalid)) {
-			Log.logWarning("Invalid report for connection " + connection.ToString());
+			//Log.logWarning("Invalid report for connection " + connection.ToString());
 			continue;
 		}
 		report.nrVehicles = 0;
@@ -134,6 +134,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		if (report.nrVehicles > 0)
 			report.nrVehicles = 0;
+		
+		Log.logDebug("Rating = " + rating + ", production = " + production + ", vehicle count = " + nrVehicles);
 
 		if (!hasVehicles || rating < 60 || production > 100 || nrVehicles == 0) {
 
@@ -168,9 +170,15 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
 			continue;
 
-		if (report.nrVehicles != 0)
+		if (report.nrVehicles != 0) {
+			if (report.nrVehicles > 0)
+				Log.logInfo("We advise to add " + report.nrVehicles + " vehicles.");
+			else
+				Log.logInfo("We advise to sell " + (-report.nrVehicles) + " vehicles.");
 			reports.push(report);
+		}
 	}
+	Log.logInfo("Done evaluating existing connections.");
 }
 
 /**

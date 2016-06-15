@@ -88,6 +88,7 @@ function BuildRailAction::Execute() {
 		}
 
 		local abc = AIExecMode();
+		Log.logInfo("Build stations.")
 		local stationBuildingFailed = false;
 		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, false, false))
 			stationBuildingFailed = true;
@@ -203,7 +204,7 @@ function BuildRailAction::Execute() {
 		local connectionConnectedTo = connectionManager.GetConnection(station);
 		if (connectionConnectedTo == null) {
 			Log.logWarning("Station " + station + " is not linked to a connection! Probably caused by an incomplete savegame.");
-			Log.LogWarning("We wanted to connect it with connection " + connection.ToString());
+			Log.logWarning("We wanted to connect it with connection " + connection.ToString());
 		}
 		else
 			connectionManager.MakeInterconnected(connection, connectionConnectedTo);
@@ -552,6 +553,7 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	//return false;
 	// Build the RoRo station.
+	Log.logInfo("Build RoRo.")
 	assert (connection.pathInfo.roadListReturn == null);
 	
 	local roadList = connection.pathInfo.roadList;
@@ -596,10 +598,12 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	BuildSignals(roadList, false, 10, roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
 
+	Log.logInfo("Find second path.")
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 40, tilesToIgnore);
 	if (secondPath == null)
 		return false;
+	Log.logInfo("Build second path.")
 	
 	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
 	if (bestEngineIDs == null) {
@@ -616,7 +620,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 			secondPath.roadList = secondPath.roadList.slice(pathBuilder.lastBuildIndex);
 			connection.pathInfo.roadListReturn = secondPath.roadList;
 		}
-		Log.logWarning("Failed to build RoRo-station!");		
+		Log.logWarning("Failed to build RoRo!");
 		return false;
 	}
 	stationsConnectedTo.extend(pathBuilder.stationIDsConnectedTo);
@@ -628,6 +632,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	
 	connection.pathInfo.roadListReturn = secondPath.roadList;
 
+	Log.logInfo("Connect other platforms.")
 	// Now play to connect the other platforms.
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
 	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder, stationType, false, true);

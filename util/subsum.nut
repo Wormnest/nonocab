@@ -4,6 +4,7 @@
  class SubSum 
  {
 	static function init(reportlist, moneyToSpend) {
+		Log.logDebug("SubSum: Init");
 		local sortedReports = BinaryHeap();
 		// Sort all the reports based on their utility.
 		foreach (report in reportlist) {
@@ -20,6 +21,7 @@
 	}
 
 	static function orderReports(reportlist, moneyToSpend) {
+		Log.logDebug("SubSum: OrderReports");
 		local sortedReports = BinaryHeap();
 		// Sort all the reports based on their utility.
 		foreach (entry in reportlist._queue) {

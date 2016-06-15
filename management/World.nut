@@ -128,6 +128,7 @@ function World::BuildIndustryTree() {
 		Log.logWarning("There are more industries on this map than we can reasonably handle. Limiting to top " + MAX_INDUSTRIES + ".");
 		industry_list.Valuate(AIBase.RandItem);
 		industry_list.KeepTop(MAX_INDUSTRIES);
+		/// @todo If we're loading a savegame we may be skipping an industry we're already using in a connection. In that case it should be added again!
 	}
 	foreach (industry, value in industry_list)
 		InsertIndustry(industry);
@@ -147,6 +148,7 @@ function World::BuildIndustryTree() {
 	if (town_list.Count() > MAX_TOWNS) {
 		Log.logWarning("There are more towns on this map than we can reasonably handle. Limiting to top " + MAX_TOWNS + ".");
 		town_list.KeepTop(MAX_TOWNS);
+		/// @todo If we're loading a savegame we may be skipping a town we're already using in a connection. In that case it should be added again!
 	}
 	town_list.Sort(AIList.SORT_BY_VALUE, false);
 

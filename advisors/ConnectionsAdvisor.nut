@@ -174,6 +174,7 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
  */
 function ConnectionAdvisor::Update(loopCounter) {
 
+	Log.logWarning("Connection advisor for vehicletype " + vehicleType);
 	if (loopCounter == 0) {
 
 		if (!GameSettings.IsBuildable(vehicleType)) {
@@ -204,6 +205,9 @@ function ConnectionAdvisor::Update(loopCounter) {
 		closedIndustryList = {};
 		Log.logInfo("Done populating!");
 	}
+	else {
+		Log.logWarning("There are " + connectionReports.Count() + " connection reports left to evaluate.");
+	}
 
 	if (disabled)
 		return;
@@ -216,19 +220,26 @@ function ConnectionAdvisor::Update(loopCounter) {
 	// Always try to get one more than currently available in the report table.
 	local minNrReports = (reportTable.len() < 5 ?  5 : reportTable.len() + 1);
 	assert(connectionReports != null);
+	Log.logInfo("Evaluate reports.");
+	/// @todo Why 2 checks for DaysBetween. Doesn't the /48 overrule the /24? Check this!
+	/// @todo Also due to the longer pathfinding for trains we can evaluate less train routes
+	/// @maybe we need to set DaysBetween for train routes longer so there's more chance to evaluate a reasonable amount.
 	while ((reportTable.len() < minNrReports || Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 48) &&
 		Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) < Date.DAYS_PER_YEAR / 24 &&
 		(report = connectionReports.Pop()) != null) {
 
 		// Check if the report is flagged invalid or already built / closed in the mean time.		
-		if (report.isInvalid || closedIndustryList.rawin(report.connection.travelFromNode.id) || closedIndustryList.rawin(report.connection.travelToNode.id))
+		if (report.isInvalid || closedIndustryList.rawin(report.connection.travelFromNode.id) || closedIndustryList.rawin(report.connection.travelToNode.id)) {
+			Log.logDebug("Skipping report invalid, or industry closed.");
 			continue;
+		}
 
 //		local connection = report.fromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		local connection = report.connection;
 		assert (connection != null);
 		assert (connection.pathInfo != null);
-		if (connection.pathInfo.build)
+		if (connection.pathInfo.build) {
+			Log.logDebug("Skipping report: path already built.");
 			continue;
 		
 		Log.logDebug("Consider: " + report.ToString());
@@ -248,6 +259,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// If we haven't calculated yet what it costs to build this report, we do it now.
 		local pathInfo = GetPathInfo(report);
 		if (pathInfo == null) {
+			Log.logDebug("Skipping report: no pathInfo.");
 			if (bestReport == report)
 				bestReport = null;
 			continue;
@@ -256,11 +268,13 @@ function ConnectionAdvisor::Update(loopCounter) {
 		// Check if the industry connection node actually exists else create it, and update it! If it exists
 		// we must be careful because another report may already have clamed it.
 		connection.pathInfo = pathInfo;
-						
+
 		// Compile the report :)
 		report = connection.CompileReport(pathInfo.vehicleType);
-		if (report == null || report.isInvalid || report.nrVehicles < 1)
+		if (report == null || report.isInvalid || report.nrVehicles < 1) {
+			Log.logDebug("Skipping report: either invalid or vehicles less than 1.");
 			continue;
+		}
 
 		// If a connection already exists, see if it already has a report. If so we can only
 		// overwrite it if our report is better or if the original needs a rewrite.
@@ -298,9 +312,10 @@ function ConnectionAdvisor::Update(loopCounter) {
 			//connection.travelFromNode.bestReport = report;
 			connection.travelFromNode.AddBestReport(report);
 			connection.forceReplan = false;
-			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] " + report.ToString());
+			Log.logInfo("[" + reportTable.len() +  "/" + minNrReports + "] It's possible to " + report.ToString());
 		}
 	}
+	Log.logInfo("Done Evaluating reports.");
 }
 
 function ConnectionAdvisor::GetReports() {
@@ -356,7 +371,8 @@ function ConnectionAdvisor::GetReports() {
 		}
 			
 		local actionList = [];
-			
+		
+		Log.logWarning("Give orders to build the connection " + connection.ToString());
 		// Give the action to build the road.
 		actionList.push(GetBuildAction(connection));
 			
@@ -378,6 +394,7 @@ function ConnectionAdvisor::GetReports() {
 }
 
 function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
+	Log.logDebug("Update industry connections currently containing " + connectionNodeList.len() + " nodes.");
 
 	local startTicks = AIController.GetTick();
 	local processedConnections = {};
