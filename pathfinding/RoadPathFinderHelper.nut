@@ -181,7 +181,8 @@ function RoadPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	// If we need to check the end positions then we either have to be able to build a road station
 	// Either the slope is flat or it is downhill, othersie we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
-	if (checkEndPositions && (!buildStationsFunction(at.tile, at.parentTile.tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT) || Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
+	if (checkEndPositions && (!buildStationsFunction(at.tile, at.parentTile.tile, AIRoad.ROADVEHTYPE_TRUCK, AIStation.STATION_JOIN_ADJACENT) ||
+		Tile.GetSlope(at.tile, at.direction) == 1 || at.parentTile.type == Tile.TUNNEL)) {
 
 		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
 		// endpoints that aren't valid anymore.
@@ -400,7 +401,10 @@ function RoadPathFinderHelper::GetBridge(startNode, direction) {
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
 
-		if ((Tile.GetSlope(target, direction) == 1 || isRailTile) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), startNode, target) && AIRoad.BuildRoad(target, target + direction) && AIRoad.BuildRoad(startNode, startNode - direction)) {
+		if ((Tile.GetSlope(target, direction) == 1 || isRailTile) && !bridge_list.IsEmpty() &&
+			AIBridge.BuildBridge(AIVehicle.VT_ROAD, bridge_list.Begin(), startNode, target) &&
+			AIRoad.BuildRoad(target, target + direction) &&
+			AIRoad.BuildRoad(startNode, startNode - direction)) {
 
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.type = Tile.BRIDGE;
