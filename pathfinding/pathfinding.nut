@@ -154,8 +154,8 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		
 		// Check every 100 iterations if we have run out of time.
 		if (++lastCheckingTime == 100) {
-			if (AIDate.GetCurrentDate() - startingDay > 60) {
-				Log.logDebug("Time expired, move on!");
+			if (AIDate.GetCurrentDate() - startingDay > pathFinderHelper.GetTimeLimit()) {
+				Log.logWarning("Time expired (" + (AIDate.GetCurrentDate() - startingDay) + " days), move on!");
 				return null;
 			}
 			lastCheckingTime = 0;

@@ -26,6 +26,10 @@ class RoadPathFinderHelper extends PathFinderHelper {
 		SetStationBuilder(buildDriveThroughStations_);
 	}
 	
+	function GetTimeLimit() {
+		return 45;	// The maximum time in days we should try to find a path (for roads 45 days should be fine I think).
+	}
+
 	/**
 	 * By using this function you can configure if the road pathfinder should work
 	 * with 'normal' station or drive through stations.

@@ -8,6 +8,10 @@ class PathFinderHelper {
 	function Reset() {
 		emptyList = AIList();
 	}
+	
+	function GetTimeLimit() {
+		return 60;	// The maximum time in days we should try to find a path (default 60).
+	}
 
 	/**
 	 * Search for all tiles which are reachable from the given tile, either by road or

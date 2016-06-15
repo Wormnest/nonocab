@@ -52,6 +52,9 @@ class RailPathFinderHelper extends PathFinderHelper {
 		AIRail.SetCurrentRailType(currentRailType);
 	}
 	
+	function GetTimeLimit() {
+		return 100;	// The maximum time in days we should try to find a path (for rail we use 100 days since rail routes can be long).
+	}
 	function UpdateClosedList() { return updateClosedList; }
 
 	/**
