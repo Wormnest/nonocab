@@ -57,7 +57,9 @@ function BuildRailAction::Execute() {
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
 	//pathFinderHelper.costForTurn = 20;
-	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1), connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
+	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1),
+		connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType,
+		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (prePathInfo == null) {
 		FailedToExecute("Could not find a proper path!");
@@ -109,8 +111,10 @@ function BuildRailAction::Execute() {
 		railStationToTile = roadList[0].tile;
 		
 		// After building the stations make sure the rail approach the station in the right way.
-		local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ? AIMap.GetMapSizeX() : 1;
-		local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 || roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
+		local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ?
+			AIMap.GetMapSizeX() : 1;
+		local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 ||
+			roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
 		
 		tilesToIgnore = [];
 		// Start station.
@@ -133,7 +137,8 @@ function BuildRailAction::Execute() {
 	beginNodes.AddTile(roadList[len - 1].tile);
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
-	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
+	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType,
+		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
 
 	if (connection.pathInfo == null) {
 		if (buildRailStations) {
@@ -331,13 +336,15 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		if (connection.travelFromNode.nodeType == "i" &&
 		    connection.travelToNode.nodeType == "i")
 		{
-			if (!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
+			if (!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ?
+				AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
 		        AIIndustry.GetIndustryType(connection.travelFromNode.id),
 		        AIIndustry.GetIndustryType(connection.travelToNode.id),
 		        distance, isStartStation))
 		        return false;
 		}
-		else if(!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ? AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW))
+		else if(!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ?
+			AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW))
 		{
 			return false;
 		}
@@ -578,8 +585,10 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	// === STATION === === ===
 	// XXX XXX XXX XXX
 	
-	local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ? AIMap.GetMapSizeX() : 1;
-	local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 || roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
+	local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ?
+		AIMap.GetMapSizeX() : 1;
+	local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 ||
+		roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
 	
 	// Start station.
 	for (local j = 1; j < 3; j++) {
@@ -601,7 +610,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 
 	Log.logInfo("Find second path.")
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
-	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 40, tilesToIgnore);
+	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType,
+		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 40, tilesToIgnore);
 	if (secondPath == null)
 		return false;
 	Log.logInfo("Build second path.")
@@ -629,16 +639,20 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	Log.logInfo("Connect other platforms.")
 	// Now play to connect the other platforms.
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
-	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder, stationType, false, true);
+	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder,
+		stationType, false, true);
 	if (toStartStationPath == null)
 		return false;
-	local toEndStationPath = ConnectRailToStation(roadList, roadList[roadList.len() - 1].tile + startOrthogonalDirection, pathFinder, stationType, true, true);
+	local toEndStationPath = ConnectRailToStation(roadList, roadList[roadList.len() - 1].tile + startOrthogonalDirection,
+		pathFinder, stationType, true, true);
 	if (toEndStationPath == null)
 		return false;
-	local toStartStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[0].tile + startOrthogonalDirection, pathFinder, stationType, false, true);
+	local toStartStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[0].tile + startOrthogonalDirection,
+		pathFinder, stationType, false, true);
 	if (toStartStationReturnPath == null)
 		return false;
-	local toEndStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile + endOrthogonalDirection, pathFinder, stationType, true, true);
+	local toEndStationReturnPath = ConnectRailToStation(secondPath.roadList, secondPath.roadList[secondPath.roadList.len() - 1].tile +
+		endOrthogonalDirection, pathFinder, stationType, true, true);
 	if (toEndStationReturnPath == null)
 		return false;
 
@@ -744,7 +758,8 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 
 function BuildRailAction::IsSingleRailTrack(railTracks) {
 	//local railTracks = AIRail.GetRailTracks(tile);
-	return railTracks == 1 || railTracks == 2 || railTracks == 4 || railTracks == 8 || railTracks == 16 || railTracks == 32 || railTracks == 64 || railTracks == 128;
+	return railTracks == 1 || railTracks == 2 || railTracks == 4 || railTracks == 8 || railTracks == 16 ||
+		railTracks == 32 || railTracks == 64 || railTracks == 128;
 }
 
 function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
@@ -775,7 +790,8 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 
 		// Check if the next tile is a crossing or if the previous tile was a bridge / tunnel.
 		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
-		if (roadList[a - 1].type != Tile.ROAD || roadList[a].type != Tile.ROAD || RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
+		if (roadList[a - 1].type != Tile.ROAD || roadList[a].type != Tile.ROAD ||
+			RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
 		//	if (tilesAfterCrossing >= 0)
 				isTileBeforeCrossing = true;
 
