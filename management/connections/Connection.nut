@@ -170,7 +170,8 @@ class Connection {
 	
 	function GetEstimatedTravelTime(transportEngineID, forward) {
 		// If the road list is known we will simulate the engine and get a better estimate.
-		if (pathInfo != null && pathInfo.roadList != null) {
+		// But only if the path roadList is for the same vehicle type as the engine.
+		if (pathInfo != null && pathInfo.vehicleType == AIEngine.GetVehicleType(transportEngineID) && pathInfo.roadList != null) {
 			return pathInfo.GetTravelTime(transportEngineID, forward);
 		} else {
 			
