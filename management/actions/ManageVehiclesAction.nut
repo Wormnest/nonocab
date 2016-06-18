@@ -139,9 +139,6 @@ function ManageVehiclesAction::Execute()
 		local directionToggle = AIStation.GetCargoWaiting(connection.pathInfo.travelFromNodeStationID, connection.cargoID) 
 			> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
 		
-		// Use a 'main' vehicle to enable the sharing of orders.
-		local roadList = connection.pathInfo.roadList;
-
 		// If we want to build aircrafts or ships, we only want to build 1 per station!
 		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER || AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
 			if (connection.bilateralConnection && vehicleNumbers > 4)
