@@ -168,6 +168,8 @@ function ManageVehiclesAction::Execute()
 					
 			local vehicleID;
 
+			// Currently NO SHARED vehicle routes. I think the reason is to be able to change the
+			// orders for just one vehicle easily. Possibly only used with ships to send it to depot early? NEED TO CHECK THIS!
 			if (!directionToggle && connection.bilateralConnection) {
 				if (vehicleCloneIDReverse != -1) {
 					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, false);
@@ -176,7 +178,12 @@ function ManageVehiclesAction::Execute()
 					AIVehicle.StartStopVehicle(vehicleID);
 					continue;
 				}
-				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depotOtherEnd, engineID);
+				if (vehicleType == AIVehicle.VT_RAIL)
+					vehicleID = BuildTrain(connection.pathInfo.depotOtherEnd, engineID, connection.cargoID, wagonEngineID, numberWagons);
+				else
+					vehicleID = BuildVehicle(connection.pathInfo.depotOtherEnd, engineID, connection.cargoID, true);
+				if (vehicleID == null)
+					break;
 				vehicleCloneIDReverse = vehicleID;
 			} else {
 				if (vehicleCloneID != -1) {
@@ -186,42 +193,19 @@ function ManageVehiclesAction::Execute()
 					AIVehicle.StartStopVehicle(vehicleID);
 					continue;
 				}
-				vehicleID = AIVehicle.BuildVehicle(connection.pathInfo.depot, engineID);
+				if (vehicleType == AIVehicle.VT_RAIL)
+					vehicleID = BuildTrain(connection.pathInfo.depot, engineID, connection.cargoID, wagonEngineID, numberWagons);
+				else
+					vehicleID = BuildVehicle(connection.pathInfo.depot, engineID, connection.cargoID, true);
+				if (vehicleID == null)
+					break; // No need trying to build more of the same vehicle if building this one failed.
 				vehicleCloneID = vehicleID;
 			}
-			if (!AIVehicle.IsValidVehicle(vehicleID)) {
-				Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + connection.pathInfo.depotOtherEnd + "!");
-				continue;
-			}
-
-			// Refit if necessary.
-			if (connection.cargoID != AIEngine.GetCargoType(engineID))
-				AIVehicle.RefitVehicle(vehicleID, connection.cargoID);
-			//vehicleGroup.vehicleIDs.push(vehicleID);
+			// Add vehicle to the correct group for this connection.
 			AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
-
-			// In the case of a train, also build the wagons, make sure that we cut on the wagons
-			// if the train is bigger than 1 tile.
-			// TODO: Make sure to make this also works for cloned vehicles.
-			if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL) {
-				local nrWagons = numberWagons - (AIVehicle.GetLength(vehicleID) / 8) + 1;
-				for (local j = 0; j < nrWagons; j++) {
-					local wagonVehicleID = AIVehicle.BuildVehicle((!directionToggle && connection.bilateralConnection ? connection.pathInfo.depotOtherEnd : connection.pathInfo.depot), wagonEngineID);
-				
-					if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
-						Log.logError("Error building vehicle: " + AIError.GetLastErrorString() + " " + connection.pathInfo.depot + "!");
-						continue;
-					}
-
-					if (connection.cargoID != AIEngine.GetCargoType(wagonVehicleID))
-						AIVehicle.RefitVehicle(wagonVehicleID, connection.cargoID);
-				
-					AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
-				}
-			}
-
+			
+			// Give the vehicle orders and start it.
 			SetOrders(vehicleID, vehicleType, connection, directionToggle);
-
 			AIVehicle.StartStopVehicle(vehicleID);
 
 			// Update the game setting so subsequent actions won't build more vehicles then possible!
@@ -233,6 +217,90 @@ function ManageVehiclesAction::Execute()
 	}
 	CallActionHandlers();
 	return true;
+}
+
+/**
+ * Build a vehicle at the specified depot and refit to the specified cargoID if necessary.
+ * @param depot The depot where the vehicle should be built.
+ * @param engineID The ID of the engine to build.
+ * @param cargoID The cargoID of the cargo that should be transported.
+ * @param failOnRefitError Whether failure to refit should sell the vehicle or not.
+ * @pre Valid engineID, depot should be valid and be able to handle the chosen engine, engineID should be able to be refitted to cargoID.
+ */
+function ManageVehiclesAction::BuildVehicle(depot, engineID, cargoID, failOnRefitError)
+{
+	local vehicleID = AIVehicle.BuildVehicle(depot, engineID);
+	if (!AIVehicle.IsValidVehicle(vehicleID)) {
+		Log.logError("Error building vehicle with engine: "  + AIEngine.GetName(engineID) + ", " + AIError.GetLastErrorString() + " depot: " + depot + "!");
+		if (!AIEngine.IsBuildable(engineID))
+			Log.logError("Engine is not buildable!");
+		return null;
+	}
+
+	// Refit if necessary.
+	if (cargoID != AIEngine.GetCargoType(engineID))
+		if (!AIVehicle.RefitVehicle(vehicleID, cargoID) && failOnRefitError) {
+			Log.logError("Refitting vehicle " + AIVehicle.GetName(vehicleID) + " to " +
+			AICargo.GetCargoLabel(cargoID) + " failed! " + AIError.GetLastErrorString());
+
+			// Since it's no use having a vehicle that can't transport the cargo we want sell it again!
+			AIVehicle.SellVehicle(vehicleID);
+			return null;
+		}
+	
+	return vehicleID;
+}
+
+/**
+ * Build a train.
+ * @param depot The depot where the vehicle should be built.
+ * @param engineID The ID of the train engine to build.
+ * @param cargoID The cargoID of the cargo that should be transported.
+ * @param wagonEngineID The ID of the wagon to build.
+ * @param numberWagons The amount of wagons to build.
+ * @pre Valid engineID, wagonEngineID, depot should be valid and be able to handle the chosen engine, wagonEngineID should be able to be refitted to cargoID.
+ */
+function ManageVehiclesAction::BuildTrain(depot, engineID, cargoID, wagonEngineID, numberWagons)
+{
+	// First build the train engine
+	//Log.logDebug("Build train with engine " + AIEngine.GetName(engineID));
+	local vehicleID = BuildVehicle(depot, engineID, cargoID, false);
+	if (vehicleID != null) {
+		//Log.logDebug("Build wagons with engine " + AIEngine.GetName(wagonEngineID));
+		/// @todo This is expecting wagons to alwats have a length of 0.5 tile? This needs to be changed! Maybe also in a few other places!
+		local nrWagons = numberWagons - (AIVehicle.GetLength(vehicleID) / 8) + 1;
+		local wagonsBuilt = 0;
+		// Now build the train wagons
+		for (local j = 0; j < nrWagons; j++) {
+			local wagonVehicleID = AIVehicle.BuildVehicle(depot, wagonEngineID);
+		
+			if (!AIVehicle.IsValidVehicle(wagonVehicleID)) {
+				Log.logError("Error building train wagon with engine: "  + AIEngine.GetName(wagonEngineID) + ", " + AIError.GetLastErrorString() + " depot: " + depot + "!");
+				break;
+			}
+
+			if (cargoID != AIEngine.GetCargoType(wagonVehicleID))
+				if (!AIVehicle.RefitVehicle(wagonVehicleID, cargoID)) {
+					Log.logError("Refitting wagon " + AIVehicle.GetName(wagonVehicleID) + " to " +
+					AICargo.GetCargoLabel(cargoID) + " failed! " + AIError.GetLastErrorString());
+					// Since it's no use having a vehicle that can't transport the cargo we want sell it again!
+					AIVehicle.SellVehicle(wagonVehicleID);
+					break;
+				}
+		
+			AIVehicle.MoveWagon(wagonVehicleID, 0, vehicleID, 0);
+			wagonsBuilt++;
+		}
+		if (wagonsBuilt == 0 && AIVehicle.GetCapacity(vehicleID, cargoID) == 0) {
+			Log.logError("We couldn't add any wagons to this train and the train itself doesn't have any capacity for cargo " + AICargo.GetCargoLabel(cargoID));
+			// Since it's no use having a vehicle that can't transport the cargo we want sell it again!
+			AIVehicle.SellVehicle(vehicleID);
+			return null;
+		}
+		return vehicleID;
+	}
+	else
+		return null;
 }
 
 /**
