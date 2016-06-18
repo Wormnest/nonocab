@@ -226,9 +226,15 @@ class Connection {
 	/// @todo WE NEED TO CHECK WHY THE HELICOPTER IS CHOSEN SO OFTEN AS BEST AIRCRAFT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	function GetBestTransportingEngine(vehicleType) {
 		assert (vehicleType != AIVehicle.VT_INVALID);
+
+		// Don't check for max buildable vehicles here because we need to be able to find better replacement vehicles even when
+		// we can't buy more vehicles because replacing is possible even at max vehicles.
 		
 		// If the connection is built and the vehicle type inquired is the same as the vehicle type in use by this connection.
-		if (vehicleType == this.vehicleTypes && bestTransportEngine != null && bestHoldingEngine != null)
+		// Engines can expire so we also need to check that they are still buildable.
+		if ((vehicleType == this.vehicleTypes) && bestTransportEngine != null && bestHoldingEngine != null &&
+			AIEngine.IsBuildable(bestTransportEngine) && AIEngine.IsBuildable(bestHoldingEngine)) {
+			Log.logWarning("Keeping current best engine for existing connection " + ToString() + " - " + AIEngine.GetName(bestTransportEngine));
 			return [bestTransportEngine, bestHoldingEngine];
 		
 		local bestTransportEngine = null;
