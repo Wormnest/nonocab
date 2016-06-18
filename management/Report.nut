@@ -196,6 +196,7 @@ class Report
 		local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
 		
 		// In case of trains, we have 5 wagons.
+		/// @todo The engine itself can also have cargo capacity! Besides that number of wagons can be for if length(engine) == 2.
 		nrWagonsPerVehicle = 5;
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
 			transportedCargoPerVehiclePerMonth *= nrWagonsPerVehicle;
@@ -237,7 +238,7 @@ class Report
 		if (loadingTime != 0) {
 			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
 			if (nrVehicles > maxVehicles) {
-				Log.logDebug("Dropped max nr. vehicles on line " + connection.travelFromNode.GetName() + " " + connection.travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(connection.cargoID));
+				Log.logDebug("Reduced max nr. vehicles on line " + connection.travelFromNode.GetName() + " " + connection.travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(connection.cargoID));
 				nrVehicles = maxVehicles;
 			
 				if (nrVehicles == 0)
@@ -254,8 +255,9 @@ class Report
 	
 	function ToString() {
 		return "Build the connection " + connection.ToString() + " and build " + nrVehicles + " " + AIEngine.GetName(transportEngineID) + 
-		". Cost for the road: " + initialCost + ". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + 
-		" " + Utility();
+		". Route cost: " + initialCost + ", 1 vehicle cost: " + initialCostPerVehicle +
+		". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + 
+		", " + Utility();
 	}
 
 	function NettoIncomePerMonthForMoney(money, forecast) {
@@ -406,7 +408,7 @@ class Report
 	 * @return The cost for executing this report given the amount of money.
 	 */
 	function GetCost(money) {
-		if (money == -1) 
+		if (money == -1)
 			return initialCost + initialCostPerVehicle * nrVehicles;
 			
 		local maxNrVehicles = GetNrVehicles(money, 0);
