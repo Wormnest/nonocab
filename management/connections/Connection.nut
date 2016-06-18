@@ -297,7 +297,15 @@ class Connection {
 			if (report.isInvalid)
 				continue;
 
+			local reported_veh = report.nrVehicles;
 			local nettoIncomePerMonth = report.NettoIncomePerMonth();
+			if ((nettoIncomePerMonth == 0) && (reported_veh > 0) && (this.bestTransportEngine == null)) {
+				// If we need to know the best replacement engine when replacing an old vehicle and
+				// we already have the max allowed vehicles we get 0 back from NettoIncomePerMonth
+				// In that case compute income for one vehicle regardless of whether it can currently be built.
+				Log.logDebug("We need to check income per month for one vehicle!");
+				nettoIncomePerMonth = report.NettoIncomePerMonthForOneVehicle();
+			}
 			if (nettoIncomePerMonth > bestIncomePerMonth) {
 //				if (bestTransportEngine != null)
 //					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");

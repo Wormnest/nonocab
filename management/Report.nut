@@ -293,6 +293,18 @@ class Report
 		return brutoIncomePerMonth - brutoCostPerMonth + (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth) * nrVehicles;
 	}
 	
+	function NettoIncomePerMonthForOneVehicle() {
+		if (runningTimeBeforeReplacementInMonths == 0)
+			return 0;
+
+		local subsidyMultiplier = 1;
+		if (Subsidy.IsSubsidised(connection.travelFromNode, connection.travelToNode, connection.cargoID))
+			subsidyMultiplier = GameSettings.GetSubsidyMultiplier();
+		
+		local initialCostPerVehiclePerMonth = initialCostPerVehicle / runningTimeBeforeReplacementInMonths;
+		return brutoIncomePerMonth - brutoCostPerMonth + (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle - initialCostPerVehiclePerMonth);
+	}
+	
 	/**
 	 * The utility for a report is the netto profit per month times
  	 * the actual number of months over which this netto profit is 
