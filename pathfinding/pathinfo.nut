@@ -164,10 +164,17 @@ function PathInfo::GetTravelTime(engineID, forward) {
 	local vehicleType = AIEngine.GetVehicleType(engineID);
 	local cacheID = "" + forward + "_" + vehicleType + "_" + maxSpeed;
 
-	if (travelTimesCache.rawin(cacheID))
-		return travelTimesCache.rawget(cacheID);
-		
 	local time;
+
+	//Log.logDebug("Get travel time for engine " + AIEngine.GetName(engineID) + (forward ? " going to destination." : " going back to source."));
+	if (travelTimesCache.rawin(cacheID)) {
+		time = travelTimesCache.rawget(cacheID);
+		if (time > 0)
+			return time;
+		else
+			// Should not happen! Maybe caused by loading a savegame?
+			Log.logError("TravelTime in cache == 0! Updating cache.");
+	}
 
 	if (vehicleType == AIVehicle.VT_ROAD)
 		time = RoadPathFinderHelper.GetTime(roadList, engineID, forward);
@@ -211,7 +218,10 @@ function PathInfo::GetTravelTime(engineID, forward) {
 		quit();
 		return 2147483647;
 	}
-	
-	travelTimesCache[cacheID] <- time;
+
+	if (time > 0)
+		travelTimesCache[cacheID] <- time;
+	else
+		Log.logError("Computed TravelTime == 0! Something is wrong!");
 	return time;
 }
