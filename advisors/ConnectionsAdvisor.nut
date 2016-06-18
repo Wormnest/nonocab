@@ -469,6 +469,24 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 				// Check if this connection isn't in the ignore table.
 				if (ignoreTable.rawin(fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)))
 					continue;
+				
+				/// @todo: I'm not sure if this is the best place to test for this. Can't we do this right at the start when loading all industries?
+				local ignore_cargo = true;
+				foreach (acceptingcargoID  in toConnectionNode.cargoIdsAccepting) {
+					if (acceptingcargoID == cargoID) {
+						ignore_cargo = false;
+						break;
+					}
+				}
+				if (ignore_cargo) {
+					// This node doesn't accept the cargo. Example: Oil refinery doesn't accept PASS produced by Oil Rig, but does accept OIL.
+					// Add this entry to the ignore table.
+					// Note I see this happening for VALU too. But a bank (VALU) can appear at a later time so maybe not add to ignore table?
+					Log.logDebug("Ignoring " + AICargo.GetCargoLabel(cargoID) + " for connection from " + fromConnectionNode.GetName() +
+						" to " + toConnectionNode.GetName());
+					ignoreTable[fromConnectionNode.GetUID(cargoID) + "_" + toConnectionNode.GetUID(cargoID)] <- null;
+					continue;
+				}
 
 				// Check if the connection is actually profitable.
 				local connection = fromConnectionNode.GetConnection(toConnectionNode, cargoID);
