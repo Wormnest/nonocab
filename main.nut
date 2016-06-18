@@ -123,13 +123,13 @@ function NoCAB::Start()
 		Log.logInfo("Airplane advisor initiated!");
 		advisors.push(AircraftAdvisor(world, worldEventManager, connectionManager));
 	}
-	if (GetSetting("Enable ships")) {
-		Log.logInfo("Ship advisor initiated!");
-		advisors.push(ShipAdvisor(world, worldEventManager, connectionManager));
-	}
 	if (GetSetting("Enable trains")) {
 		Log.logInfo("Train advisor initiated!");
 		advisors.push(TrainConnectionAdvisor(world, worldEventManager, connectionManager, GetSetting("Allow trains town to town")));
+	}
+	if (GetSetting("Enable ships")) {
+		Log.logInfo("Ship advisor initiated!");
+		advisors.push(ShipAdvisor(world, worldEventManager, connectionManager));
 	}
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	
