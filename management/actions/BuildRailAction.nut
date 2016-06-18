@@ -9,6 +9,7 @@ class BuildRailAction extends BuildConnectionAction
 	stationsConnectedTo = null; // The stations we've shared a connection with.
 	railStationFromTile = -1;   // The location of the rail station at the source location.
 	railStationToTile = -1;     // The location of the rail station at the dropoff location.
+	transportingEngineID = null; // Cache transportingEngineID.
 	
 	/**
 	 * @param pathList A PathInfo object, the rails to be build.
@@ -45,7 +46,7 @@ function BuildRailAction::Execute() {
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		return false;
 	}
-	local transportingEngineID = bestEngineIDs[0];
+	transportingEngineID = bestEngineIDs[0];
 	local bestRailType = TrainConnectionAdvisor.GetBestRailType(transportingEngineID);
 	local pathFinderHelper = RailPathFinderHelper(bestRailType);
 	pathFinderHelper.updateClosedList = false
@@ -605,13 +606,6 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		return false;
 	Log.logInfo("Build second path.")
 	
-	local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
-	if (bestEngineIDs == null) {
-		Log.logError("No suitable engine found!");
-		return false;
-	}
-	
-	local transportingEngineID = bestEngineIDs[0];
 	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 	if (!pathBuilder.RealiseConnection(false)) {
@@ -728,10 +722,6 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	pathFinder.pathFinderHelper.reverseSearch = false;
 
 	if (toPlatformPath != null) {
-		local bestEngineIDs = connection.GetBestTransportingEngine(AIVehicle.VT_RAIL);
-		assert (bestEngineIDs != null);
-		local transportingEngineID = bestEngineIDs[0];
-		
 		local pathBuilder = RailPathBuilder(toPlatformPath.roadList, transportingEngineID);
 		pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
 		if (!pathBuilder.RealiseConnection(false)) {
