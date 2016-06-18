@@ -210,7 +210,9 @@ class Report
 		}
 		nrVehicles = (connection.travelFromNode.GetProduction(connection.cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
 
-		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection == null || connection.pathInfo.build))
+		// Testing for connection is null doesn't make sense here! If it was null we would have crashed already before we came here!
+		// Maybe it should be connection.pathInfo == null
+		if (nrVehicles > 0.75 && nrVehicles < 1 && (connection.pathInfo == null || connection.pathInfo.build))
 			nrVehicles = 1;
 		else
 			nrVehicles = nrVehicles.tointeger();
