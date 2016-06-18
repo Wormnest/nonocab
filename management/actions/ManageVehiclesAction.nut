@@ -140,12 +140,12 @@ function ManageVehiclesAction::Execute()
 			> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
 		
 		// If we want to build aircrafts or ships, we only want to build 1 per station!
-		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_WATER || AIEngine.GetVehicleType(engineID) == AIVehicle.VT_AIR) {
+		if (vehicleType == AIVehicle.VT_WATER || vehicleType == AIVehicle.VT_AIR) {
 			if (connection.bilateralConnection && vehicleNumbers > 4)
 				vehicleNumbers = 4;
 			else if (vehicleNumbers > 2)
 				vehicleNumbers = 2;
-		} else if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_ROAD) {
+		} else if (vehicleType == AIVehicle.VT_ROAD) {
 			if (connection.bilateralConnection && vehicleNumbers > 30)
 				vehicleNumbers = 30;
 			else if (vehicleNumbers > 15)
@@ -153,7 +153,7 @@ function ManageVehiclesAction::Execute()
 		}
 			
 		local vehiclePrice = AIEngine.GetPrice(engineID);
-		if (AIEngine.GetVehicleType(engineID) == AIVehicle.VT_RAIL)
+		if (vehicleType == AIVehicle.VT_RAIL)
 			vehiclePrice += numberWagons * AIEngine.GetPrice(wagonEngineID);
 		totalCosts = vehiclePrice;
 
