@@ -144,6 +144,9 @@ class PathInfo {
 }
 
 function PathInfo::UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
+	// Wormnest: I think vehicleType should be set here too. Or is there a reason that's not done here?
+	this.vehicleType = vehicleType;
+	
 	build = true;
 	nrRoadStations = 1;
 	buildDate = AIDate.GetCurrentDate();
