@@ -237,6 +237,10 @@ class Connection {
 		local engineList = AIEngineList(vehicleType);
 		
 		foreach (engineID, value in engineList) {
+			if (!AIEngine.IsValidEngine(engineID) || !AIEngine.IsBuildable(engineID) || AIEngine.IsWagon(engineID)) {
+				// I guess engines that become invalid still stay in the AIEngineList so filter them out.
+				continue;
+			}
 			local transportEngineID = engineID;
 			
 			// If the vehicle type is an aeroplane, the connection is built and the airport is a small one, make sure we only
