@@ -163,7 +163,7 @@ function NoCAB::Start()
 
 	// Set company name.
 	local companyName =  (GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB");
-	local _version = " - v2.2a5";
+	local _version = " - v2.2b1";
 	if(!AICompany.SetName(companyName + _version)) {
 		local i = 2;
 		while(!AICompany.SetName(companyName + _version + " - #" + i)) { i++; }
