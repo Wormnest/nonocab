@@ -422,22 +422,20 @@ class Connection {
 		// Sell all vehicles.
 		if (AIGroup.IsValidGroup(vehicleGroupID)) {
 			
-			local vehicleNotHeadingToDepot = true;
+			local allVehiclesInDepot = false;
 		
 			// Send and wait till all vehicles are in their respective depots.
-			while (vehicleNotHeadingToDepot) {
-				vehicleNotHeadingToDepot = false;
+			while (!allVehiclesInDepot) {
+				allVehiclesInDepot = true;
 			
 				foreach (vehicleId, value in AIVehicleList_Group(vehicleGroupID)) {
 					if (!AIVehicle.IsStoppedInDepot(vehicleId)) {
+						allVehiclesInDepot = false;
 						// Note that with trains it can take a very long time before all of them
 						// are finally in depot, spamming this next message until then
-						// Probably it would be better first sending all trains to depot then
-						// once in a while check if they are all in depot and after that start the Demolish.
-						// @todo The trains (and other vehicles?) also don't seem to get sold!!!!!!!!!!!!!!!!!!!!!!
+						/// @todo Probably it would be better first sending all trains to depot then
+						/// @todo once in a while check if they are all in depot and after that start the Demolish.
 						//Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleId) + " is being sent to depot.");
-						if (vehicleTypes != AIVehicle.VT_ROAD && vehicleTypes != AIVehicle.VT_WATER)
-							vehicleNotHeadingToDepot = true;
 						// Check if the vehicles is actually going to the depot!
 						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0) {
 							if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
@@ -445,10 +443,18 @@ class Connection {
 								AIController.Sleep(5);
 								AIVehicle.SendVehicleToDepot(vehicleId);
 							}
-							vehicleNotHeadingToDepot = true;
 						}
 					}
 				}
+				if (!allVehiclesInDepot)
+					AIController.Sleep(10);
+			}
+			// Now that all vehicles are stopped sell them.
+			local veh_list = AIVehicleList_Group(vehicleGroupID);
+			foreach (veh, dummy in veh_list) {
+				Log.logDebug("Selling vehicle " + AIVehicle.GetName(veh));
+				if (!AIVehicle.SellVehicle(veh))
+					Log.logError("Couldn't sell " + AIVehicle.GetName(veh));
 			}
 		}
 		
