@@ -231,8 +231,10 @@ function RailPathBuilder::GetCostForRoad(include_station_costs)
 	if(roadList == null || roadList.len() < 3)
 		return 0;
 
-//	local currentRailType = AIRail.GetCurrentRailType();
 	local currentRailType = TrainConnectionAdvisor.GetBestRailType(engineID);
+	if (currentRailType == AIRail.RAILTYPE_INVALID)
+		return 0;
+
 	local costs = 0;
 	local accounting = AIAccounting();
 	local test = AITestMode();
