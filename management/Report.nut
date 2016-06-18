@@ -186,6 +186,11 @@ class Report
 		
 		Log.logDebug("Estimated travel time to: " + travelTimeTo + ", from: " + travelTimeFrom);
 		local travelTime = travelTimeTo + travelTimeFrom;
+		if (travelTime == 0) {
+			Log.logWarning("Invalid travel time estimation!");
+			isInvalid = true;
+			return;
+		}
 		
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
