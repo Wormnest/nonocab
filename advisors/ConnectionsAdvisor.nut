@@ -241,6 +241,13 @@ function ConnectionAdvisor::Update(loopCounter) {
 		if (connection.pathInfo.build) {
 			Log.logDebug("Skipping report: path already built.");
 			continue;
+		}
+		
+		// No need to consider if build costs are higher than what we can spend.
+		if (report.initialCost > Finance.GetMaxMoneyToSpend()) {
+			Log.logDebug("Skipping report: costs more money than we can spend.");
+			continue;
+		}
 		
 		Log.logDebug("Consider: " + report.ToString());
 			
