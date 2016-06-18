@@ -66,8 +66,16 @@ class Report
 		//connection = travelFromNode.GetConnection(travelToNode, cargoID);
 		assert (connection != null);
 		local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
-		
-		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_ROAD) {
+		if (distance < 0) {
+			// Probably an industry disappeared
+			isInvalid = true;
+			return;
+		}
+
+		// Don't use a function call to get the same info again and again since I read somewhere Squirrel function calls can be quite slow.
+		local veh_type = AIEngine.GetVehicleType(transportEngineID);
+		/// @todo We should probably change the below if structure to a switch.
+		if (veh_type == AIVehicle.VT_ROAD) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_ROAD) {
 
 				if (!connection.pathInfo.build)
@@ -81,7 +89,7 @@ class Report
 			}
 
 			loadingTime = 0;
-		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR) {
+		} else if (veh_type == AIVehicle.VT_AIR) {
 			if (!connection.pathInfo.build) {
 
 				local isTowntoTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
@@ -97,7 +105,7 @@ class Report
 			}
 
 			loadingTime = 20;
-		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_WATER) {
+		} else if (veh_type == AIVehicle.VT_WATER) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
 			}
@@ -106,7 +114,7 @@ class Report
 				initialCost += BuildShipYardAction.GetCosts();
 
 			loadingTime = 0;
-		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
+		} else if (veh_type == AIVehicle.VT_RAIL) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				if (!connection.pathInfo.build) {
 					/// @todo This will give incorrect values when we need to get the costs for the return.
@@ -126,8 +134,9 @@ class Report
 
 			loadingTime = 15;
 		} else {
-			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
-			quit();
+			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID) + ", Engine: " + AIEngine.GetName(transportEngineID));
+			isInvalid = true;
+			return;
 		}
 		InitializeReport(loadingTime, cargoAlreadyTransported, distance);
 		
