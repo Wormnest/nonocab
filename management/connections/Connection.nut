@@ -80,20 +80,37 @@ class Connection {
 	}
 	
 	function NewEngineAvailable(engineID) {
+		if (AIEngine.GetVehicleType(engineID) != vehicleTypes)
+			return;
+		local saveBestTransportEngine = bestTransportEngine;
+		local saveBestHoldingEngine = bestHoldingEngine;
+		bestTransportEngine = null; // To make it possible to re evaluate.
 		local bestEngines = GetBestTransportingEngine(vehicleTypes);
 		if ((bestEngines != null) && (bestEngines[0] != null) && (bestEngines[1] != null)) {
-			if (bestTransportEngine == null) {
+			if (saveBestTransportEngine == null) {
 				// Rare condition that seems to happen once in a while. Don't crash but report the problem.
 				Log.logError("bestTransportEngine is null! Connection: " + ToString());
-				return;
 			}
-			AIGroup.SetAutoReplace(vehicleGroupID, bestTransportEngine, bestEngines[0]);
-			AIGroup.SetAutoReplace(vehicleGroupID, bestHoldingEngine, bestEngines[1]);
-			
-			AISign.BuildSign(travelFromNode.GetLocation(), "Replace " + AIEngine.GetName(bestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
+			else {
+				if (saveBestTransportEngine == bestEngines[0] || AIEngine.GetDesignDate(bestEngines[0]) < AIEngine.GetDesignDate(saveBestTransportEngine)) {
+					bestTransportEngine = saveBestTransportEngine;
+					bestHoldingEngine = saveBestHoldingEngine;
+					return; // best engine is current engine, no need to replace
+				}
+				Log.logInfo("Autoreplace " + AIEngine.GetName(saveBestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
+				AIGroup.SetAutoReplace(vehicleGroupID, saveBestTransportEngine, bestEngines[0]);
+				if (saveBestHoldingEngine != bestEngines[1] && AIEngine.GetDesignDate(bestEngines[1]) > AIEngine.GetDesignDate(saveBestHoldingEngine))
+					AIGroup.SetAutoReplace(vehicleGroupID, saveBestHoldingEngine, bestEngines[1]);
+				
+				//AISign.BuildSign(travelFromNode.GetLocation(), "Replace " + AIEngine.GetName(bestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
+			}
 			
 			bestTransportEngine = bestEngines[0];
 			bestHoldingEngine = bestEngines[1];
+		}
+		else {
+			bestTransportEngine = saveBestTransportEngine;
+			bestHoldingEngine = saveBestHoldingEngine;
 		}
 	}
 	
