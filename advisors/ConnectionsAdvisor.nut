@@ -195,6 +195,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 	
 	// Every time something might have been built, we update all possible
 	// reports and consequentially get the latest data from the world.
+	/// @todo: Instead of reportTableLength/4 change it to an absolute value? Mayb 25?
 	if (connectionReports == null || connectionReports.Count() <= reportTableLength / 4) {
 		Log.logInfo("(Re)populate active update list.");
 		connectionReports = BinaryHeap();
@@ -204,6 +205,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		lastUpdate = AIDate.GetCurrentDate();
 		closedIndustryList = {};
 		Log.logInfo("Done populating!");
+		Log.logWarning("There are " + connectionReports.Count() + " connection reports to evaluate.");
 	}
 	else {
 		Log.logWarning("There are " + connectionReports.Count() + " connection reports left to evaluate.");
