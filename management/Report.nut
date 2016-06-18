@@ -155,8 +155,8 @@ class Report
 						AIEngine.CanRunOnRail(transportEngineID, railTypeOfTrain) &&
 						AIEngine.HasPowerOnRail(transportEngineID, railTypeOfTrain) &&
 						AIRail.GetMaxSpeed(railTypeOfTrain) > AIRail.GetMaxSpeed(foundRailTrack) &&
-						(!AIRail.TrainCanRunOnRail(railTypeOfTrain, railTypeOfConnection) ||
-						!AIRail.TrainHasPowerOnRail(railTypeOfTrain, railTypeOfConnection))) {
+						AIRail.TrainCanRunOnRail(railTypeOfTrain, railTypeOfConnection) &&
+						AIRail.TrainHasPowerOnRail(railTypeOfTrain, railTypeOfConnection)) {
 						foundRailTrack = railTypeOfTrain;
 					}
 				}
