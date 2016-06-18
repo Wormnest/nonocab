@@ -216,9 +216,9 @@ class Connection {
 				local distance = AIMap.DistanceManhattan(travelFromNode.GetLocation(), travelToNode.GetLocation());
 				return distance * Tile.straightRoadLength / maxSpeed;
 			} else {
-				Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID));
-				quit();
-				world.InitCargoTransportEngineIds();
+				// I've seen this once. Maybe happened just at the moment that this engine expired? Unknown vehicle type 255 (= invalid)
+				Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID) + ", Engine: " + AIEngine.GetName(transportEngineID));
+				return 0;
 			}
 		}
 	}
