@@ -62,7 +62,7 @@ class Connection {
 	function LoadData(data) {
 		pathInfo = PathInfo(null, null, null, null);
 		vehicleTypes = data["vehicleTypes"];
-		pathInfo.LoadData(data["pathInfo"]);
+		pathInfo.LoadData(data["pathInfo"], vehicleTypes);
 		vehicleGroupID = data["vehicleGroupID"];
 		
 		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));

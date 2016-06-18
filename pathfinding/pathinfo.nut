@@ -40,7 +40,9 @@ class PathInfo {
 		travelToNodeStationID = null;
 	}
 	
-	function LoadData(data) {
+	// Since the vehicleType in pathInfo can be AIVehicle.VT_INVALID we can't use it to determine if
+	// we need to call FixRoadList. Thus we add a parameter here.
+	function LoadData(data, actual_vehicleType) {
 		roadList = [];
 		foreach (tile in data["roadList"]) {
 			local at = AnnotatedTile();
@@ -76,10 +78,12 @@ class PathInfo {
 		refittedForArticulatedVehicles = data["refittedForArticulatedVehicles"];
 		// We need to fix up roadlists because roadList.type and direction are used
 		// in GetTravelTime which otherwise would return 0 causing problems.
-		if ((vehicleType == AIVehicle.VT_ROAD) || (vehicleType == AIVehicle.VT_RAIL)) {
+		if ((actual_vehicleType == AIVehicle.VT_ROAD) || (actual_vehicleType == AIVehicle.VT_RAIL)) {
 			// Also for rail for now!
 			RoadPathFinderHelper.FixRoadlist(roadList);
-			// @todo Do we need to do this for roadListReturn and extraRoadBits too?
+			if (actual_vehicleType == AIVehicle.VT_RAIL)
+				// Trains are the only vehicle type that uses roadListReturn
+				RoadPathFinderHelper.FixRoadlist(roadListReturn);
 		}
 		// else it looks like we don't need to do fixups for water and air since they don't use
 		// roadList.type and roadList.direction
