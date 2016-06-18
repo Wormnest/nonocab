@@ -181,7 +181,12 @@ function PathInfo::GetTravelTime(engineID, forward) {
 	else if (vehicleType == AIVehicle.VT_WATER)
 		time = WaterPathFinderHelper.GetTime(roadList, engineID, forward);
 	else if (vehicleType == AIVehicle.VT_RAIL)
-		time = RailPathFinderHelper.GetTime(roadList, engineID, forward);
+		if (forward || (roadListReturn == null) || (roadListReturn.len() == 0))
+			// roadListReturn length is 0 when we are doing estimations
+			time = RailPathFinderHelper.GetTime(roadList, engineID, forward);
+		else
+			// Trains go a different route for the return trip.
+			time = RailPathFinderHelper.GetTime(roadListReturn, engineID, true);
 	else if (vehicleType == AIVehicle.VT_AIR) {
 		
 		// For air connections the distance travelled is different (shorter in general)
