@@ -412,8 +412,10 @@ function ConnectionAdvisor::UpdateIndustryConnections(connectionNodeList) {
 	// actual pathfinding on that selection to find the best one(s).
 	for (local i = connectionNodeList.len() - 1; i > -1; i--) {
 		
-		if (AIController.GetTick() - startTicks > 1000) {
-			Log.logDebug("Time's up! " + connectionNodeList.len());
+		// Wormnest: original amount of ticks: 1000. I feel that is too long, test with 500.
+		/// @todo Maybe also stop if we have more than a certain number of possible connections?
+		if (AIController.GetTick() - startTicks > 500) {
+			Log.logDebug("Time's up! Node count: " + connectionNodeList.len());
 			break;
 		}
 		i = AIBase.RandRange(connectionNodeList.len());
