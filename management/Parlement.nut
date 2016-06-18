@@ -61,10 +61,15 @@ function Parlement::ExecuteReports() {
 				Log.logWarning("Execution of report: " + report.ToString() + " halted!");
 				action.CleanupAfterFailure();
 				report.isInvalid = true;
-				return false;
+				// Wormnest: shouldn't this just break and continue with next report?
+				// Let's test it like that.  BUT SEE main: there we test for !ExecuteReports!
+				//return false;
+				break;
 			}
 			minimalMoneyNeeded += action.GetExecutionCosts();
 		}
+		if (report.isInvalid)
+			continue;
 
 		if (minimalMoneyNeeded > mostExpensiveBuild)
 			mostExpensiveBuild = minimalMoneyNeeded;
