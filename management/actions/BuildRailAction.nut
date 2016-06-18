@@ -156,7 +156,7 @@ function BuildRailAction::Execute() {
 	// Build the actual rails.
 	local pathBuilder = RailPathBuilder(connection.pathInfo.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
-	if (!pathBuilder.RealiseConnection(buildRailStations)) {
+	if (!pathBuilder.RealiseConnection(false/*buildRailStations*/)) { // Since stations are already built here we should use false.
 		connection.forceReplan = true;
 		if (pathBuilder.lastBuildIndex != -1)
 			connection.pathInfo.roadList = connection.pathInfo.roadList.slice(pathBuilder.lastBuildIndex);
