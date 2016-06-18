@@ -264,7 +264,7 @@ function ManageVehiclesAction::BuildTrain(depot, engineID, cargoID, wagonEngineI
 {
 	// First build the train engine
 	//Log.logDebug("Build train with engine " + AIEngine.GetName(engineID));
-	local vehicleID = BuildVehicle(depot, engineID, cargoID, false);
+	local vehicleID = ManageVehiclesAction.BuildVehicle(depot, engineID, cargoID, false);
 	if (vehicleID != null) {
 		//Log.logDebug("Build wagons with engine " + AIEngine.GetName(wagonEngineID));
 		/// @todo This is expecting wagons to alwats have a length of 0.5 tile? This needs to be changed! Maybe also in a few other places!
