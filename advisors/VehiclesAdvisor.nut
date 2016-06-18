@@ -137,6 +137,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		
 		Log.logDebug("Rating = " + rating + ", production = " + production + ", vehicle count = " + nrVehicles);
 
+		/// @todo I'm not sure if limiting rating to less than 60 here is usefull.
 		if (!hasVehicles || rating < 60 || production > 100 || nrVehicles == 0) {
 
 			// We only want to buy new vehicles if the producion is at least twice the amount of
