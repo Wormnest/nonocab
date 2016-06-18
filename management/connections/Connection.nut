@@ -295,6 +295,12 @@ class Connection {
 					continue;
 				
 				local wagonEngineList = AIEngineList(vehicleType);
+				// We don't want wagons to have a max speed that is a lot slower than the engine speed
+				// but we should only care about that if wagon_speed_limits is set to true.
+				local minimum_wagonSpeed = 0;
+				if (AIGameSettings.GetValue("wagon_speed_limits"))
+					// 10% slower is acceptable for now
+					minimum_wagonSpeed = AIEngine.GetMaxSpeed(transportEngineID) * 0.9;
 				foreach (wagonEngineID, value in wagonEngineList) {
 					if (!AIEngine.IsWagon(wagonEngineID) || !AIEngine.IsValidEngine(wagonEngineID) || !AIEngine.IsBuildable(wagonEngineID))
 						continue;
@@ -305,11 +311,14 @@ class Connection {
 					if (!AIEngine.CanRunOnRail(wagonEngineID, bestRailType))
 						continue;
 					
-					// Select the wagon with the biggest capacity.
-					if (holdingEngineID == null)
-						holdingEngineID = wagonEngineID;
-					else if (AIEngine.GetCapacity(wagonEngineID) > AIEngine.GetCapacity(holdingEngineID))
-						holdingEngineID = wagonEngineID;
+					// Select the wagon with the biggest capacity and a reasonable maximum speed.
+					local wagonSpeed = AIEngine.GetMaxSpeed(wagonEngineID);
+					if ((wagonSpeed == 0) || (wagonSpeed >= minimum_wagonSpeed))
+						if (holdingEngineID == null)
+							holdingEngineID = wagonEngineID;
+						/// @todo Capacity should also depend on the length of the wagon!
+						else if (AIEngine.GetCapacity(wagonEngineID) >= AIEngine.GetCapacity(holdingEngineID))
+							holdingEngineID = wagonEngineID;
 				}
 			} else {
 				holdingEngineID = engineID;
