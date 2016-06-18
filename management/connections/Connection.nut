@@ -236,6 +236,10 @@ class Connection {
 			AIEngine.IsBuildable(bestTransportEngine) && AIEngine.IsBuildable(bestHoldingEngine)) {
 			Log.logWarning("Keeping current best engine for existing connection " + ToString() + " - " + AIEngine.GetName(bestTransportEngine));
 			return [bestTransportEngine, bestHoldingEngine];
+		}
+		
+		// WARNING: the below bestTransportEngine and bestHoldingEngine are LOCAL meaning they don't set the class vars with the same name!
+		// The class vars are only set in UpdateAfterBuild and NewEngineAvailable.
 		
 		local bestTransportEngine = null;
 		local bestHoldingEngine = null;
@@ -359,7 +363,7 @@ class Connection {
 		if (bestTransportEngine != null)
 			Log.logDebug("The best engine for the connection: " + ToString() + " is " + AIEngine.GetName(bestTransportEngine) + " holding cargo by: " + AIEngine.GetName(bestHoldingEngine));
 //		else
-//			Log.logWarning("* No engine found suitable!");
+//			Log.logDebug("No suitable engine found!");
 
 		if (bestTransportEngine == null)
 			return null;
