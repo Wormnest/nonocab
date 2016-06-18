@@ -56,53 +56,73 @@ function ConnectionManager::MaintainActiveConnections() {
 								doReplace = false;
 						}
 						
-						// Don't replace trains, ever!
-						/// @todo Replacement for trains!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-						else if (vehicleType == AIVehicle.VT_RAIL) {
-							doReplace = false;
-						}
-						
 						if (doReplace) {
 							// Create a new vehicle.
-							// Wormnest: I think when replacing it's better to sell the vehicle first and
-							// then try to replace it. However then we won't be able to share orders with
-							// the old vehicle so for now we will leave it as is.
-							local newVehicleID = AIVehicle.BuildVehicle(AIVehicle.GetLocation(vehicleID), replacementEngineID[0]);
-							if (AIVehicle.IsValidVehicle(newVehicleID)) {
-								Log.logDebug("Replacing it with " + AIVehicle.GetName(newVehicleID));
-								
-								// Let is share orders with the vehicle.
-								AIOrder.ShareOrders(newVehicleID, vehicleID);
-								AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
-								AIVehicle.StartStopVehicle(newVehicleID);
-							} else {
-								local lasterr = AIError.GetLastError();
-								if ((lasterr == AIVehicle.ERR_VEHICLE_TOO_MANY) ||
-									(lasterr == AIVehicle.ERR_VEHICLE_BUILD_DISABLED)) {
-									Log.logDebug("Can't replace vehicle because we have reached the current limit!");
-									// Next we will sell it anyway and not try again since that will keep failing.
-								}
-								else {
-								// If we failed, simply try again next time.
-									Log.logDebug("Failed to replace vehicle! " + AIError.GetLastErrorString());
-									continue;
-								}
+							// We sell the old vehicle first that way we can replace it even if we have reached the max vehicle limit.
+							
+							// If multiple vehicles share the same orders pick one to share the new vehicles orders with.
+							local depot_loc = AIVehicle.GetLocation(vehicleID);
+							local shared_vehicles = AIVehicleList_SharedOrders(vehicleID);
+							local share_veh = null;
+							if (shared_vehicles.Count() > 1) {
+								foreach (veh in shared_vehicles)
+									if (veh != vehicleID) {
+										share_veh = veh;
+										break;
+									}
 							}
+							// Now sell the old vehicle.
+							Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID));
+							AIVehicle.SellVehicle(vehicleID);
+							
+							// Build a new one and check if it's valid
+							local newVehicleID;
+							if (vehicleType == AIVehicle.VT_RAIL)
+								/// @todo Decide on actual number of wagons, however in Report.nut currently also a fixed amount of 5 is used?
+								newVehicleID = ManageVehiclesAction.BuildTrain(depot_loc, replacementEngineID[0], connection.cargoID, replacementEngineID[1], 5 /*numberWagons*/ );
+							else
+								newVehicleID = ManageVehiclesAction.BuildVehicle(depot_loc, replacementEngineID[0], connection.cargoID, true);
+							if (newVehicleID == null) {
+								// Building failed for whatever reason that is already shown in log.
+								continue;
+							}
+							Log.logDebug("Replacing it with " + AIVehicle.GetName(newVehicleID) + " using engine " + AIEngine.GetName(replacementEngineID[0]));
+							// Give orders to the new vehicle.
+							// If the sold vehicle was sharing orders with other vehicles then we can share orders.
+							// Otherwise set orders. But since we currently don't know what direction the old vehicle was going, for now always use false.
+							if (share_veh != null) {
+								Log.logDebug("Share orders with " + AIVehicle.GetName(share_veh));
+								AIOrder.ShareOrders(newVehicleID, share_veh);
+							}
+							else {
+								Log.logDebug("Set new orders");
+								ManageVehiclesAction.SetOrders(newVehicleID, vehicleType, connection, false);
+							}
+							AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
+							AIVehicle.StartStopVehicle(newVehicleID);
+							
+							// Since we already sold the vehicle if we arrive here we should go on to the next.
+							continue;
 						}
+					}
+					else {
+						Log.logWarning("We can't replace " + AIVehicle.GetName(vehicleID) + " with a new one!");
 					}
 				}
 				
-				Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID));
+				/// @todo If this was the last vehicle on this connection maybe signal
+				/// @todo that this connection should be removed!
+				Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID) + ", connection: " + connection.ToString());
 				AIVehicle.SellVehicle(vehicleID);
 			}
-			
-			// Check if the vehicle is profitable.
-			if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
-				if (vehicleType == AIVehicle.VT_WATER)
-					AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
-				else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0)
-					AIVehicle.SendVehicleToDepot(vehicleID);
-	
+			else { // Not stopped in depot
+				// Check if the vehicle is profitable.
+				if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
+					if (vehicleType == AIVehicle.VT_WATER)
+						AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
+					else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0)
+						AIVehicle.SendVehicleToDepot(vehicleID);
+				}
 			}
 		}
 	}
