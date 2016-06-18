@@ -102,6 +102,20 @@ function ManageVehiclesAction::Execute()
 		local vehicleID = null;
 		local vehicleGroup = null;
 		local vehicleType = AIEngine.GetVehicleType(engineID);
+		
+		if (vehicleType == AIVehicle.VT_RAIL) {
+			// Extra check to make sure we can build engine in current depot even though incompatibility should not happen here.
+			local railTypeOfConnection = AIRail.GetRailType(connection.pathInfo.depot);
+			if (!AIEngine.CanRunOnRail(engineID, railTypeOfConnection) ||
+				!AIEngine.HasPowerOnRail(engineID, railTypeOfConnection) ||
+				(AIRail.GetMaxSpeed(railTypeOfConnection) < AIRail.GetMaxSpeed(TrainConnectionAdvisor.GetBestRailType(engineID)))) {
+				// This shouldn't happen anymore.
+				Log.logError("Unexpectedly we can't use the chosen rail engine on the current track!");
+				Log.logWarning("Railtype: " + AIRail.GetName(railTypeOfConnection) + ", but engine: " + AIEngine.GetName(engineID) +
+					" needs: " + AIRail.GetName(TrainConnectionAdvisor.GetBestRailType(engineID)));
+				continue;
+			}
+		}
 
 		local maxBuildableVehicles =  GameSettings.GetMaxBuildableVehicles(vehicleType);
 		if (vehicleNumbers > maxBuildableVehicles)
