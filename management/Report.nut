@@ -125,9 +125,11 @@ class Report
 			} else {
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
 				assert (rail_type != AIRail.RAILTYPE_INVALID);
-				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 3 +
+				// Note: building rail seems to get a lot of overhead costs: often we seem to build quite
+				// long bridges and we terraform too sometimes. Thus we increase distance * 3 to distance * 4.
+				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 4 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_SIGNAL) * distance / 5 +
-				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) +
+				              AIRail.GetBuildCost(rail_type, AIRail.BT_DEPOT) * 2 +
 				              AIRail.GetBuildCost(rail_type, AIRail.BT_STATION) * 6 * 2;
 				//Log.logWarning("Initial cost (roadList null): " + initialCost);
 			}
