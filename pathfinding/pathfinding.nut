@@ -76,7 +76,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	pathFinderHelper.ProcessEndPositions(end, checkEndPositions);
 
 	if(end.IsEmpty()) {
-		Log.logDebug("Could not find a faster road for an empty endlist.");
+		Log.logDebug("List of usable destinations is empty.");
 		return null;
 	}
 
@@ -101,7 +101,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	
 	// Check if we have a node from which to build.
 	if (!pq.Count) {
-		Log.logDebug("Pathfinder: No start points for this road; Abort: original #start points: " + start.Count());
+		Log.logDebug("Pathfinder: No usable start positions for this route; Abort: original #start points: " + start.Count());
 		return null;
 	}
 	
