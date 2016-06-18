@@ -123,9 +123,9 @@ function ManageVehiclesAction::Execute()
 		
 		if (vehicleNumbers == 0) {
 			Log.logInfo("Can't buy more vehicles, we have reached the maximum!");
-			continue;
+			continue; /// @todo Maybe we should even use a break here since we can't get more vehicles.
 		}
-		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + AIEngine.GetName(wagonEngineID) + ".");
+		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + " " + AIEngine.GetName(wagonEngineID) + ".");
 
 		// Search if there are already have a vehicle group for this connection.
 		assert (AIGroup.IsValidGroup(connection.vehicleGroupID));
@@ -137,7 +137,7 @@ function ManageVehiclesAction::Execute()
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.
 		local directionToggle = AIStation.GetCargoWaiting(connection.pathInfo.travelFromNodeStationID, connection.cargoID) 
-		> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
+			> AIStation.GetCargoWaiting(connection.pathInfo.travelToNodeStationID, connection.cargoID);
 		
 		// Use a 'main' vehicle to enable the sharing of orders.
 		local roadList = connection.pathInfo.roadList;
