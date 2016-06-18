@@ -234,9 +234,20 @@ function NoCAB::Start()
 					local travelTimeForward = connection.pathInfo.GetTravelTime(transportEngineID, true);
 					local travelTimeBackward = connection.pathInfo.GetTravelTime(transportEngineID, false);
 					local travelTime = travelTimeForward + travelTimeBackward;
+					// For debugging purposes skip when travelTime == 0
+					if (travelTime == 0) {
+						Log.logError("TravelTime == 0 for vehicle: " + AIVehicle.GetName(vehicle) + ", connection: " + connection.ToString());
+						continue;
+					}
 					assert (travelTime > 0);
 
 					local vehicleCapacity = AIVehicle.GetCapacity(vehicle, connection.cargoID);
+					if (vehicleCapacity == 0) {
+						// This happened once around 2020. Since counter was 470 it must have been the roadvehicles. CargoID was 6.
+						// Maybe something went wrong with autoreplace. Wrong cargo?
+						Log.logError("vehicleCapacity == 0 for vehicle " + AIVehicle.GetName(vehicle) + ", cargo: " + AICargo.GetCargoLabel(connection.cargoID));
+						Log.logWarning("Connection this belongs to: " + connection.ToString());
+					}
 					assert (vehicleCapacity > 0);
 						
 					// Calculate netto income per vehicle.
