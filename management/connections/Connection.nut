@@ -134,6 +134,15 @@ class Connection {
 		
 		local transportingEngineID = bestEngines[0];
 		local holdingEngineID = bestEngines[1];
+		
+		if (vehicleType == this.vehicleTypes && pathInfo != null && pathInfo.build) {
+			// If the current best engines are not buildable anymore then update the cached best engines
+			if (bestTransportEngine != null && !AIEngine.IsBuildable(bestTransportEngine))
+				bestTransportEngine = transportingEngineID;
+			if (bestHoldingEngine != null && !AIEngine.IsBuildable(bestHoldingEngine))
+				bestHoldingEngine = holdingEngineID;
+		}
+
 
 		// First we check how much we already transport.
 		// Check if we already have vehicles who transport this cargo and deduce it from 
