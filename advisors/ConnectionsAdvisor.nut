@@ -337,6 +337,12 @@ function ConnectionAdvisor::GetReports() {
 		// The industryConnectionNode gives us the actual connection.
 		//local connection = report.connectfromConnectionNode.GetConnection(report.toConnectionNode, report.cargoID);
 		local connection = report.connection;
+		
+		// Don't evaluate report any further if we can't build anymore of this vehicleType.
+		if (GameSettings.GetMaxBuildableVehicles(vehicleType) == 0) {
+			connection.forceReplan = true; // Make sure it gets rechecked in the future.
+			continue;
+		}
 
 		// If the connection is already build, don't add it!
 		local isAlreadyTransportingCargo = false;
