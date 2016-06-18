@@ -11,9 +11,9 @@ class PathInfo {
 	/// @todo roadCost doesn't seem to be used anywhere. Remove?
 	roadCost = null;                 // The cost to create this road.
 	depot = null;                    // The location of the depot.
-	depotOtherEnd = null;            // The location of the depot at the other end (if it any).
-	build = null;                    // Is this path build?
-	vehicleType = null;              // The vehicle type this path info is for.
+	depotOtherEnd = null;            // The location of the depot at the other end (if any).
+	build = null;                    // Is this path built?
+	vehicleType = null;              // The vehicle type this path info is for. Note: Can be set to AIVehicle.VT_INVALID in ConnectionsAdvisor.nut!
 	travelFromNodeStationID = null;  // The station ID of the producing side.
 	travelToNodeStationID = null;    // The station ID of the accepting side.
 							
