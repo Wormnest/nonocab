@@ -250,9 +250,22 @@ class Connection {
 				    	continue;
 				    }
 			}
-			
-			if (AIEngine.IsWagon(transportEngineID) || !AIEngine.IsValidEngine(transportEngineID) || !AIEngine.IsBuildable(transportEngineID))
-				continue;
+			else if (vehicleType == AIVehicle.VT_RAIL) {
+				if (pathInfo.build) {
+					// If the connection is already built then make sure we only select engines that
+					// can use the current railtype.
+					local railTypeOfConnection = AIRail.GetRailType(pathInfo.depot);
+					if (railTypeOfConnection == AIRail.RAILTYPE_INVALID)
+						continue;
+					if (!AIEngine.CanRunOnRail(engineID, railTypeOfConnection) ||
+						!AIEngine.HasPowerOnRail(engineID, railTypeOfConnection) ||
+						(AIRail.GetMaxSpeed(railTypeOfConnection) < AIRail.GetMaxSpeed(TrainConnectionAdvisor.GetBestRailType(engineID)))) {
+						Log.logDebug("Skipping " + AIEngine.GetName(engineID) +
+							" because it needs: " + AIRail.GetName(TrainConnectionAdvisor.GetBestRailType(engineID)));
+						continue;
+					}
+				}
+			}
 
 //			Log.logWarning("Process the engine: " + AIEngine.GetName(transportEngineID));
 			
@@ -260,8 +273,13 @@ class Connection {
 			local holdingEngineID = null;
 			if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 				
-				// TODO: Check if there is a restriction on the rail types we can use.
-				local bestRailType = TrainConnectionAdvisor.GetBestRailType(engineID);
+				local bestRailType;
+				if (pathInfo.build)
+					// If the connection is already built then make sure we only select engines that
+					// can use the current railtype.
+					bestRailType = AIRail.GetRailType(pathInfo.depot);
+				else
+					bestRailType = TrainConnectionAdvisor.GetBestRailType(engineID);
 				
 				if (!AIEngine.CanPullCargo(transportEngineID, cargoID))
 					continue;
