@@ -53,7 +53,7 @@ function RailPathBuilder::CheckPath(roadList)
 function RailPathBuilder::RealiseConnection(buildRoadStations)
 {
 	// Check if we have enough money...
-	local estimatedCost = GetCostForRoad();
+	local estimatedCost = GetCostForRoad(buildRoadStations);
 	lastBuildIndex = -1;
 	if (estimatedCost > Finance.GetMaxMoneyToSpend()) {
 		/// @todo: Maybe instead wait a little while to see if we have the money then.
@@ -222,8 +222,9 @@ function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 /**
  * Plan and check how much it cost to create the fastest route
  * from start to end.
+ * @param include_station_costs Whether or not to include costs of building stations.
  */
-function RailPathBuilder::GetCostForRoad()
+function RailPathBuilder::GetCostForRoad(include_station_costs)
 {
 	Log.logDebug("Get cost for rail");
 	
@@ -238,7 +239,8 @@ function RailPathBuilder::GetCostForRoad()
 
 	BuildPath(roadList, true, currentRailType);
 
-	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2 * 3 * 2;
+	if (include_station_costs)
+		costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_STATION) * 2 * 3 * 2;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_SIGNAL) * roadList.len() / 6;
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_DEPOT);
 	costs += AIRail.GetBuildCost(currentRailType, AIRail.BT_TRACK) * 10;

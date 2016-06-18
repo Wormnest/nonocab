@@ -108,8 +108,12 @@ class Report
 			loadingTime = 0;
 		} else if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
-				if (!connection.pathInfo.build)
-					initialCost = RailPathBuilder(connection.pathInfo.roadList, AIEngine.GetMaxSpeed(transportEngineID)).GetCostForRoad() * 2;
+				if (!connection.pathInfo.build) {
+					/// @todo This will give incorrect values when we need to get the costs for the return.
+					/// @todo Since we compute the costs for the other track that is already built then so no costs for that.
+					initialCost = RailPathBuilder(connection.pathInfo.roadList, transportEngineID).GetCostForRoad(true) * 2;
+				//	Log.logWarning("Initial cost (roadList not null): " + initialCost);
+				}
 			} else {
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
 				assert (rail_type != AIRail.RAILTYPE_INVALID);
