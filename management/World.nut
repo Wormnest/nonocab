@@ -281,7 +281,7 @@ function World::InsertIndustry(industryID) {
 			// Check for accepting industries for these products.
 			foreach (cachedIndustry in industryCacheAccepting[cargo]) {
 
-				// Make sure we don't add industires double!
+				// Make sure we don't add industries twice!
 				if (ignoreProducersList.rawin(cachedIndustry)) continue;
 				
 				ignoreProducersList[cachedIndustry] <- null;
@@ -302,7 +302,7 @@ function World::InsertIndustry(industryID) {
 			if (!isBilateral) {
 				foreach (cachedIndustry in industryCacheProducing[cargo]) {
 					
-					// Make sure we don't add industires double!
+					// Make sure we don't add industries twice!
 					if (ignoreAccepterssList.rawin(cachedIndustry)) continue;
 
 					ignoreAccepterssList[cachedIndustry] <- null;
