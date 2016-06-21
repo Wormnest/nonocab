@@ -23,6 +23,11 @@ class PathInfo {
 	nrRoadStations = null;           // The number of road stations.
 	
 	refittedForArticulatedVehicles = null; // Has this path been refitted to allow articulated vehicles?
+	
+	// Cache the roadList data in a format that can be saved without processing.
+	saveRoadList = null;
+	saveRoadListReturn = null;
+	saveExtraRoadBits = null;
 
 	constructor(_roadList, _roadListReturn, _roadCost, _vehicleType) {
 		roadList = _roadList;
@@ -38,11 +43,47 @@ class PathInfo {
 		refittedForArticulatedVehicles = false;
 		travelFromNodeStationID = null;
 		travelToNodeStationID = null;
+
+		saveRoadList = [];
+		saveRoadListReturn = [];
+		saveExtraRoadBits = [];
+	}
+	
+	/**
+	 * Cache the pathInfo data in a format that can be saved without further processing.
+	 */
+	function CachePathInfoForSaving()
+	{
+		saveRoadList = [];
+		if (roadList) {
+			foreach (at in roadList) {
+				saveRoadList.push(at.tile);
+			}
+		}
+
+		saveRoadListReturn = [];
+		if (roadListReturn) {
+			foreach (at in roadListReturn) {
+				saveRoadListReturn.push(at.tile);
+			}
+		}
+
+		saveExtraRoadBits = [];
+		if (extraRoadBits) {
+			foreach (roadBitList in extraRoadBits) {
+				local array = [];
+				foreach (at in roadBitList) {
+					array.push(at.tile);
+				}
+				saveExtraRoadBits.push(array);
+			}
+		}
 	}
 	
 	// Since the vehicleType in pathInfo can be AIVehicle.VT_INVALID we can't use it to determine if
 	// we need to call FixRoadList. Thus we add a parameter here.
 	function LoadData(data, actual_vehicleType) {
+		saveRoadList = data["roadList"]; // Set cache for saving
 		roadList = [];
 		foreach (tile in data["roadList"]) {
 			local at = AnnotatedTile();
@@ -50,6 +91,7 @@ class PathInfo {
 			roadList.push(at);
 		}
 		
+		saveRoadListReturn = data["roadListReturn"]; // Set cache for saving
 		roadListReturn = [];
 		foreach (tile in data["roadListReturn"]) {
 			local at = AnnotatedTile();
@@ -57,6 +99,7 @@ class PathInfo {
 			roadListReturn.push(at);
 		}
 		
+		saveExtraRoadBits = data["extraRoadBits"]; // Set cache for saving
 		extraRoadBits = [];
 		foreach (roadBitList in data["extraRoadBits"]) {
 			local array = [];
@@ -91,31 +134,9 @@ class PathInfo {
 	
 	function SaveData() {
 		local saveData = {};
-		saveData["roadList"] <- [];
-		if (roadList) {
-			foreach (at in roadList) {
-				saveData["roadList"].push(at.tile);
-			}
-		}
-		
-		saveData["roadListReturn"] <- [];
-		if (roadListReturn) {
-			foreach (at in roadListReturn) {
-				saveData["roadListReturn"].push(at.tile);
-			}
-		}
-		
-		saveData["extraRoadBits"] <- [];
-		if (extraRoadBits) {
-			foreach (roadBitList in extraRoadBits) {
-				local array = [];
-				foreach (at in roadBitList) {
-					array.push(at.tile);
-				}
-				saveData["extraRoadBits"].push(array);
-			}
-		}
-		
+		saveData["roadList"] <- saveRoadList;
+		saveData["roadListReturn"] <- saveRoadListReturn;
+		saveData["extraRoadBits"] <- saveExtraRoadBits;
 		saveData["roadCost"] <- roadCost;
 		saveData["vehicleType"] <- vehicleType;
 		saveData["depot"] <- depot;
@@ -152,6 +173,8 @@ function PathInfo::UpdateAfterBuild(vehicleType, fromTile, toTile, stationCovera
 	buildDate = AIDate.GetCurrentDate();
 	travelFromNodeStationID = AIStation.GetStationID(fromTile);
 	travelToNodeStationID = AIStation.GetStationID(toTile);
+	// Prepare the path info for faster game saving.
+	CachePathInfoForSaving();
 }
 
 function PathInfo::GetTravelTime(engineID, forward) {
