@@ -156,77 +156,146 @@ function ConnectionManager::LoadData(data, world) {
 	local unsuccessfulLoads = 0;
 	
 	local savedConnectionsData = CMsaveData["allConnections"];
+	if (savedConnectionsData.len() == 0) {
+		Log.logInfo("There were no connections to load.");
+		return;
+	}
+	// Make sure all nodes used by the saved connections are present.
+	Log.logInfo("Checking industries and towns in saved connections.");
 	foreach (savedConnectionData in savedConnectionsData) {
-		Log.logDebug("Process: " + savedConnectionData["travelFromNode"] + " " + savedConnectionData["travelToNode"] + " " + AICargo.GetCargoLabel(savedConnectionData["cargoID"]));
-		local connectionProcesses = false;
-		
-		// Search for the connection which matches the saved values.
-		foreach (connectionFromNode in world.industry_tree) {
+		local saved_from_uid = savedConnectionData["travelFromNode"];
+		local saved_from_id = ConnectionNode.GetIDFromUID(saved_from_uid);
+		local saved_to_uid = savedConnectionData["travelToNode"];
+		local saved_to_id = ConnectionNode.GetIDFromUID(saved_from_uid);
+		if (ConnectionNode.GetNodeTypeFromUID(saved_from_uid) == ConnectionNode.INDUSTRY_NODE) {
+			//Log.logDebug("Saved Industry " + AIIndustry.GetName(saved_from_id));
+			if (!world.industry_table.rawin(saved_from_id)) {
+				Log.logDebug("Add industry " + AIIndustry.GetName(saved_from_id));
+				world.InsertIndustry(saved_from_id);
+			}
+		}
+		else { // town
+			//Log.logDebug("Saved Town " + AITown.GetName(saved_from_id));
+			if (!world.town_table.rawin(saved_from_id))
+				world.InsertTown(saved_from_id);
+		}
+		local saved_to_uid = savedConnectionData["travelToNode"];
+		local saved_to_id = ConnectionNode.GetIDFromUID(saved_to_uid);
+		if (ConnectionNode.GetNodeTypeFromUID(saved_to_uid) == ConnectionNode.INDUSTRY_NODE) {
+			//Log.logDebug("Saved Industry " + AIIndustry.GetName(saved_to_id));
+			if (!world.industry_table.rawin(saved_to_id)) {
+				Log.logDebug("Add industry " + AIIndustry.GetName(saved_to_id));
+				world.InsertIndustry(saved_to_id);
+			}
+		}
+		else { // town
+			//Log.logDebug("Saved Town " + AITown.GetName(saved_to_id));
+			if (!world.town_table.rawin(saved_to_id))
+				world.InsertTown(saved_to_id);
+		}
+		//Log.logDebug("Saved Cargo " + AICargo.GetCargoLabel(savedConnectionData["cargoID"]));
+		//Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
+		//	", vehicle group " + savedConnectionData["vehicleGroupID"] +
+		//	" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]));
+	}
+	
+	Log.logInfo("Restoring saved connections.");
+	foreach (connectionFromNode in world.industry_tree) {
+		foreach (savedConnectionData in savedConnectionsData) {
+			local saved_from_uid = savedConnectionData["travelFromNode"];
+			local saved_from_id = ConnectionNode.GetIDFromUID(saved_from_uid);
+			
+			// Saved node id should be same as connection node id
+			if (saved_from_uid != connectionFromNode.GetUID(savedConnectionData["cargoID"]))
+				continue;
+			
+			Log.logDebug("Process: " + savedConnectionData["travelFromNode"] + " " +
+				savedConnectionData["travelToNode"] + " " +
+				AICargo.GetCargoLabel(savedConnectionData["cargoID"]));
+			Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
+				", vehicle group " + savedConnectionData["vehicleGroupID"] +
+				" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]));
+
+			// We have found the correct node, now find the correct cargo
+			local cargoFound = false;
 			foreach (cargoID in connectionFromNode.cargoIdsProducing) {
-				if (connectionFromNode.GetUID(cargoID) != savedConnectionData["travelFromNode"])
-					continue;
-					
-				Log.logDebug("Found proper from node! " + connectionFromNode.GetName());
-					
-				if (cargoID != savedConnectionData["cargoID"])
-					continue;
-					
-				Log.logDebug("Found proper Cargo ID! " + AICargo.GetCargoLabel(cargoID));
-				
-				local foundConnectionToNode = -1;
-				
-				foreach (connectionToNode in connectionFromNode.connectionNodeList) {
-				
-					Log.logDebug("compare " + connectionToNode.GetUID(cargoID) + " v.s. " + savedConnectionData["travelToNode"] + " " + connectionToNode.GetName());
-					if (connectionToNode.GetUID(cargoID) != savedConnectionData["travelToNode"])
-						continue;
-						
+				Log.logDebug("Producing cargo: " + AICargo.GetCargoLabel(cargoID));
+				if (cargoID == savedConnectionData["cargoID"]) {
+					Log.logDebug("--> Found the cargo we wanted!");
+					cargoFound = true;
+					break;
+				}
+			}
+			local cargoID = savedConnectionData["cargoID"];
+			if (!cargoFound) {
+				Log.logError("We couldn't find the correct cargo! " + AICargo.GetCargoLabel(cargoID));
+				unsuccessfulLoads++;
+				continue;
+			}
+			
+			// Now we need to find the correct to node.
+			local foundConnectionToNode = -1;
+			local saved_to_uid = savedConnectionData["travelToNode"];
+			foreach (connectionToNode in connectionFromNode.connectionNodeList) {
+				//Log.logDebug("compare " + connectionToNode.GetUID(cargoID) + " v.s. " + savedConnectionData["travelToNode"] + " " + connectionToNode.GetName());
+				if (connectionToNode.GetUID(cargoID) == saved_to_uid) {
 					foundConnectionToNode = connectionToNode;
 					break;
 				}
-
-				// Connections from town <--> town are stored only in a single direction. Therefore we need to
-				// check if the reverse connection does exist.				
-				if (foundConnectionToNode == -1 &&
-				    connectionFromNode.nodeType == ConnectionNode.TOWN_NODE)
-				{
-					Log.logDebug("Check reversed list!");
-					foreach (connectionToNode in connectionFromNode.connectionNodeListReversed) {
-					
-						Log.logDebug("compare " + connectionToNode.GetUID(cargoID) + " v.s. " + savedConnectionData["travelToNode"] + " " + connectionToNode.GetName());
-						if (connectionToNode.GetUID(cargoID) != savedConnectionData["travelToNode"])
-							continue;
-							
+			}
+			// Connections from town <--> town are stored only in a single direction. Therefore we need to
+			// check if the reverse connection does exist.
+			// Besides towns this can also happen for industries that both produce and accept the same cargo like banks (Valuables).
+			if (foundConnectionToNode == -1 && connectionFromNode.connectionNodeListReversed.len() > 0)
+			{
+				Log.logDebug("Check reversed list!");
+				foreach (connectionToNode in connectionFromNode.connectionNodeListReversed) {
+					//Log.logDebug("compare " + connectionToNode.GetUID(cargoID) + " v.s. " + savedConnectionData["travelToNode"] + " " + connectionToNode.GetName());
+					if (connectionToNode.GetUID(cargoID) == saved_to_uid) {
 						foundConnectionToNode = connectionToNode;
 						break;
 					}
 				}
-				
-				if (foundConnectionToNode == -1)
-					continue;
-						
-				Log.logDebug("Found proper to node! " + foundConnectionToNode.GetName());
-				    	
-				local existingConnection = Connection(cargoID, connectionFromNode, foundConnectionToNode, null, this);
-				existingConnection.LoadData(savedConnectionData);
-				connectionFromNode.AddConnection(foundConnectionToNode, existingConnection);
-					
-				Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + foundConnectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
-
-				connectionProcesses = true;
-				break;
 			}
+			if (foundConnectionToNode == -1) {
+				unsuccessfulLoads++;
+				local saved_to_id = ConnectionNode.GetIDFromUID(saved_to_uid);
+				if (log.logLevel == 0) {
+					Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
+						", vehicle group " + savedConnectionData["vehicleGroupID"] +
+						" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]) +
+						", from node: " + savedConnectionData["travelFromNode"] + " = " + connectionFromNode.GetName() +
+						" to node: " + savedConnectionData["travelToNode"] + "= " +
+						(ConnectionNode.GetNodeTypeFromUID(saved_to_uid) == ConnectionNode.TOWN_NODE ? AITown.GetName(saved_to_id) : AIIndustry.GetName(saved_to_id)) +
+						", cargo " + AICargo.GetCargoLabel(cargoID));
+					if (ConnectionNode.GetNodeTypeFromUID(saved_to_uid) == ConnectionNode.TOWN_NODE) {
+						if (world.town_table.rawin(saved_to_id)) {
+							Log.logDebug("Town exists in town table!");
+						}
+						else
+							Log.logDebug("Town doesn't exists in town table!");
+					}
+					else {
+						if (world.industry_table.rawin(saved_to_id)) {
+							Log.logDebug("Industry exists in industry table!");
+						}
+						else
+							Log.logDebug("Industry doesn't exists in industry table!");
+					}
+				}
+				Log.logError("Connection destination node not found!");
+				continue;
+			}
+			Log.logDebug("Initialize connection.");
 			
-			if (connectionProcesses)
-				break;
-		}
-		
-		if (!connectionProcesses) {
-			++unsuccessfulLoads;
-			Log.logError("A saved connection was not present!");
+			// We found the connection. Now save the connection data.
+			local existingConnection = Connection(cargoID, connectionFromNode, foundConnectionToNode, null, this);
+			existingConnection.LoadData(savedConnectionData);
+			connectionFromNode.AddConnection(foundConnectionToNode, existingConnection);
+				
+			Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + foundConnectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
 		}
 	}
-		
 	Log.logInfo("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
 }
 
