@@ -286,7 +286,7 @@ function World::InsertIndustry(industryID) {
 				
 				ignoreProducersList[cachedIndustry] <- null;
 				industryNode.connectionNodeList.push(cachedIndustry);
-				if (!isBilateral)
+				if (isBilateral)
 					cachedIndustry.connectionNodeListReversed.push(industryNode);
 			}
 		}
