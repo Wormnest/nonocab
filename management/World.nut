@@ -9,6 +9,7 @@ class World {
 	// We don't need industry_list to be available all the time, commented out here.
 	//industry_list = null;		// List with all industries.
 	industry_table = null;		// Table with all industries.
+	town_table = null;			// Table with all towns.
 	cargo_list = null;			// List with all cargos.
 	town_cargo_list = null;		// List of cargos that have effect on towns.
 	townConnectionNodes = null;		// All connection nodes which are towns (replace later, now in use by AirplaneAdvisor).
@@ -36,6 +37,7 @@ class World {
 		//town_list.Valuate(AITown.GetPopulation);
 		//town_list.Sort(AIList.SORT_BY_VALUE, false);
 		industry_table = {};
+		town_table = {};
 		//industry_list = AIIndustryList();
 
 		// Construct complete industry node list.
@@ -151,9 +153,6 @@ function World::BuildIndustryTree() {
 	industry_list = null; // Free all the memory as soon as possible.
 	Log.logInfo("Build industry list - done.");
 	
-	// We want to preprocess all industries which can be build near water.
-	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
-	
 	local town_list = AITownList();
 	town_list.Valuate(AITown.GetPopulation);
 	Log.logInfo("Build town list consisting of " + town_list.Count() + " towns.");
@@ -164,63 +163,77 @@ function World::BuildIndustryTree() {
 	if (town_list.Count() > MAX_TOWNS) {
 		Log.logWarning("There are more towns on this map than we can reasonably handle. Limiting to top " + MAX_TOWNS + ".");
 		town_list.KeepTop(MAX_TOWNS);
-		/// @todo If we're loading a savegame we may be skipping a town we're already using in a connection. In that case it should be added again!
 	}
 	town_list.Sort(AIList.SORT_BY_VALUE, false);
 
 	// Now handle the connections Industry --> Town
 	foreach (town, value in town_list) {
-		Log.logDebug("Town: " + AITown.GetName(town));
-		local townNode = TownConnectionNode(town);
-		local isNearWater = townNode.isNearWater;
-		
-		/// @todo The problem with towns is that if they grow/shrink what they accept/produce can change!
-		/// @todo We may need to regularly recheck their production/acceptance. Check this!
-		// Hmm I've also seen it ignore PASS for certain town-town connections. Why? Hedingstone was already very large, maybe it couldn't find a usable tile for buses?
-		
-		// Check if this town accepts something an industry creates.
-		foreach (cargo, dummyvalue in town_cargo_list) {
-			
-			if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
-				
-				// Check if this town is near to water.
-				if (!isNearWater) {
-					local townTiles = townNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
-					townTiles.Valuate(AITile.IsCoastTile);
-					townTiles.KeepValue(1);
-					if (townTiles.Count() > 0)
-						townNode.isNearWater = true;
-					isNearWater = true;
-				}
-
-				// Check if we have an industry which actually produces this cargo.
-				foreach (connectionNode in industryCacheProducing[cargo])
-					connectionNode.connectionNodeList.push(townNode);
-				
-				// Add this town to the accepting cache for future industries.
-				industryCacheAccepting[cargo].push(townNode);
-
-				// Only add cargo as produced in town if it has at least some production
-				// This will filter out GOODS on the producing side for towns.
-				if (AITown.GetLastMonthProduction(town, cargo) > 0)
-					townNode.cargoIdsProducing.push(cargo);
-				townNode.cargoIdsAccepting.push(cargo);
-			}
-		}
-
-		// Add town <-> town connections, we only store these connections as 1-way directions
-		// because they are bidirectional.
-		/// @todo This is not completely true. Certain towns can produce or accept cargo that another doesn't.
-		foreach (townConnectionNode in townConnectionNodes) {
-			townNode.connectionNodeList.push(townConnectionNode);
-			townConnectionNode.connectionNodeListReversed.push(townNode);
-		}
-
-		townConnectionNodes.push(townNode);
-		industry_tree.push(townNode);
+		InsertTown(town);
 	}
 	
 	Log.logInfo("Build town list - done.");
+}
+
+/**
+ * Insert a townNode in the industryList.
+ * @param town The id of the town which needs to be added.
+ */
+function World::InsertTown(town)
+{
+	Log.logDebug("Town: " + AITown.GetName(town));
+	local townNode = TownConnectionNode(town);
+	local isNearWater = townNode.isNearWater;
+	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
+	
+	// Make it easier to check whether a certain town is stored in our data or not.
+	town_table[town] <- townNode;
+
+	// Check if this town accepts something an industry creates.
+	foreach (cargo, dummyvalue in town_cargo_list) {
+		
+		if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
+			
+			// Check if this town is near to water.
+			if (!isNearWater) {
+				local townTiles = townNode.GetAcceptingTiles(cargo, stationRadius, 1, 1);
+				townTiles.Valuate(AITile.IsCoastTile);
+				townTiles.KeepValue(1);
+				if (townTiles.Count() > 0)
+					townNode.isNearWater = true;
+				isNearWater = true;
+			}
+
+			// Check if we have an industry which actually produces this cargo.
+			foreach (connectionNode in industryCacheProducing[cargo])
+				connectionNode.connectionNodeList.push(townNode);
+			
+			// Add this town to the accepting cache for future industries.
+			industryCacheAccepting[cargo].push(townNode);
+
+			// Only add cargo as produced in town if it has at least some production
+			// This will filter out GOODS on the producing side for towns.
+			switch (AICargo.GetTownEffect(cargo)) {
+				case AICargo.TE_MAIL:
+				case AICargo.TE_PASSENGERS:
+					// I think mail and passengers are the only cargos that can be produced in a town.
+					/// @todo However is this also true for NewGRF industries?
+					townNode.cargoIdsProducing.push(cargo);
+					break;
+			}
+			
+			townNode.cargoIdsAccepting.push(cargo);
+		}
+	}
+
+	// Add town <-> town connections, we only store these connections as 1-way directions
+	// because they are bidirectional.
+	foreach (townConnectionNode in townConnectionNodes) {
+		townNode.connectionNodeList.push(townConnectionNode);
+		townConnectionNode.connectionNodeListReversed.push(townNode);
+	}
+
+	townConnectionNodes.push(townNode);
+	industry_tree.push(townNode);
 }
 
 /**
