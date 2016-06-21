@@ -88,7 +88,12 @@ class World {
 
 function World::HasCargoEffectOnTownsValuator(cargoID)
 {
-	return AICargo.IsValidTownEffect(AICargo.GetTownEffect(cargoID));
+	local effect = AICargo.GetTownEffect(cargoID);
+	if (effect == AICargo.TE_NONE)
+		// TE_NONE returns true when checking IsValidTownEffect
+		return false;
+	else
+		return AICargo.IsValidTownEffect(effect);
 }
 
 function World::LoadData(data) {
