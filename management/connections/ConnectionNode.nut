@@ -12,8 +12,8 @@ class ConnectionNode
 	cargoIdsProducing = null;               // The cargo IDs which are produced.
 	cargoIdsAccepting = null;               // The cargo IDs which are accepted.
 
-	connectionNodeList = null;              // All nodes which accepts the products this node produces.
-	connectionNodeListReversed = null;      // All nodes which this noded accepts cargo from.
+	connectionNodeList = null;              // All nodes which accept the cargos this node produces.
+	connectionNodeListReversed = null;      // All nodes which this node accepts cargo from.
 
 	connections = null;                     // Running connections to other nodes.
 	isNearWater = false;			// Is this node near water?
@@ -133,4 +133,27 @@ function ConnectionNode::AddBestReport(report) {
  */
 function ConnectionNode::GetUID(cargoID) {
 	return nodeType + id + "_" + cargoID;
+}
+
+/**
+ * Get the town or industry ID from the UID.
+ * @param UID The UID from which to get the ID.
+ * @return the town or industry ID or -1 if it's not a valid UID.
+ */
+function ConnectionNode::GetIDFromUID(UID)
+{
+	local underscore = UID.find("_");
+	if (underscore == null)
+		return -1;
+	return UID.slice(1,underscore).tointeger();
+}
+
+/**
+ * Get node type from UID.
+ * @param UID The UID from which to get the ID.
+ * @return The nodeType.
+ */
+function ConnectionNode::GetNodeTypeFromUID(UID)
+{
+	return UID.slice(0,1);
 }
