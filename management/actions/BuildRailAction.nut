@@ -122,8 +122,8 @@ function BuildRailAction::Execute() {
 		
 		tilesToIgnore = [];
 		// Start station.
-		for (local j = 1; j < 3; j++) {
-			for (local i = -2; i < 5; i++) {
+		for (local j = 1; j < STATION_LENGTH; j++) {
+			for (local i = -2; i < STATION_LENGTH+2; i++) {
 				// End station.
 				tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j);
 				tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j);
@@ -309,20 +309,24 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		direction = AIRail.RAILTRACK_NE_SW;
 		
 		if (railStationTile - frontRailStationTile == -1)
-			railStationTile -= 2;
-		terraFormFrom = railStationTile - 3;
-		width = 10;
-		height = 2;
+			railStationTile -= STATION_LENGTH-1; // Original 2;
+		terraFormFrom = railStationTile - TERRAFORM_TILES;
+		min_width = STATION_LENGTH +1;
+		width = STATION_LENGTH + 2*TERRAFORM_TILES + 1; // Original: 10
+		height = STATION_PLATFORMS;
+		min_height = STATION_PLATFORMS;
 		
 	} else {
 		direction = AIRail.RAILTRACK_NW_SE;
 		
 		if (railStationTile - frontRailStationTile == -AIMap.GetMapSizeX())
-			railStationTile -= 2 * AIMap.GetMapSizeX();
+			railStationTile -= (STATION_LENGTH-1) * AIMap.GetMapSizeX();
 			
-		terraFormFrom = railStationTile - 3 * AIMap.GetMapSizeX();
-		width = 2;
-		height = 10;
+		terraFormFrom = railStationTile - TERRAFORM_TILES * AIMap.GetMapSizeX();
+		width = STATION_PLATFORMS;
+		min_width = STATION_PLATFORMS;
+		min_height = STATION_LENGTH + 1;
+		height = STATION_LENGTH + 2*TERRAFORM_TILES + 1; // Original: 10
 	}
 
 	if (!AIRail.IsRailStationTile(railStationTile))
@@ -330,7 +334,7 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		local preferedHeight = -1;
 		
 		if (direction == AIRail.RAILTRACK_NW_SE)
-			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 2, 3);
+			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, STATION_PLATFORMS, STATION_LENGTH);
 		else
 			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
 		Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
@@ -338,14 +342,14 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		if (connection.travelFromNode.nodeType == "i" &&
 		    connection.travelToNode.nodeType == "i")
 		{
-			if (!AIRail.BuildNewGRFRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ?
+			if (!AIRail.BuildNewGRFRailStation(railStationTile, direction, STATION_PLATFORMS, STATION_LENGTH, joinAdjacentStations ?
 				AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW, connection.cargoID, 
 		        AIIndustry.GetIndustryType(connection.travelFromNode.id),
 		        AIIndustry.GetIndustryType(connection.travelToNode.id),
 		        distance, isStartStation))
 		        return false;
 		}
-		else if(!AIRail.BuildRailStation(railStationTile, direction, 2, 3, joinAdjacentStations ?
+		else if(!AIRail.BuildRailStation(railStationTile, direction, STATION_PLATFORMS, STATION_LENGTH, joinAdjacentStations ?
 			AIStation.STATION_JOIN_ADJACENT : AIStation.STATION_NEW))
 		{
 			return false;
@@ -593,8 +597,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 		roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == -1) ? AIMap.GetMapSizeX() : 1;
 	
 	// Start station.
-	for (local j = 1; j < 3; j++) {
-		for (local i = -2; i < 5; i++) {
+	for (local j = 1; j < STATION_LENGTH; j++) {
+		for (local i = -2; i < STATION_LENGTH+2; i++) {
 			// End station.
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j);
 			tilesToIgnore.push(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j);
