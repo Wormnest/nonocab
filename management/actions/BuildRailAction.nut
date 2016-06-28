@@ -61,6 +61,8 @@ function BuildRailAction::Execute() {
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
 	//pathFinderHelper.costForTurn = 20;
+	
+	/// @todo doing complete pathfinding here seems like a waste of time if we don't use the result except for the station building.
 	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1),
 		connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
@@ -370,6 +372,7 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	return true;
 }
 
+/// @todo Terraform depot spot to the same height as where it connects to the main track.
 function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 
 	local len = roadList.len();
@@ -782,6 +785,7 @@ function BuildRailAction::IsSingleRailTrack(railTracks) {
 		railTracks == 32 || railTracks == 64 || railTracks == 128;
 }
 
+/// @todo After a bridge tunnel we add a signal but after that it would be ideal if we continued with the spacing from before the bridge/tunnel as if it hadn't been there.
 function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
 
 	local abc = AIExecMode();
