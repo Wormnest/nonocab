@@ -906,8 +906,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			if (currentAnnotatedTile.direction != offset) {
 				annotatedTile.distanceFromStart += costForTurn;
 				
+				/// @todo Multiple turns can be bad as long as the second turn is not in the same direction as before the first turn
 				if (currentAnnotatedTile.tilesInSameDirection < 5)
-					annotatedTile.distanceFromStart += costForTurn * 3;
+					annotatedTile.distanceFromStart += (8-currentAnnotatedTile.tilesInSameDirection) * costForTurn;
 				annotatedTile.tilesInSameDirection = 0;
 			} else if (goingStraight) {
 				annotatedTile.tilesInSameDirection = currentAnnotatedTile.tilesInSameDirection + 1;
