@@ -56,10 +56,9 @@ function ManageVehiclesAction::Execute()
 		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIList.SORT_BY_VALUE, true);
-		vehicleList.Valuate(AIVehicle.GetEngineType);
-		vehicleList.KeepValue(engineID);
 		if (!connection.bilateralConnection) {
-			vehicleList.Valuate(AIVehicle.GetCargoLoad, AIEngine.GetCargoType(engineID));
+			// Don't use AIEngine.GetCargoType(engineID) below since that may be wrong for train wagons or when we need to refit first.
+			vehicleList.Valuate(AIVehicle.GetCargoLoad, connection.cargoID);
 			vehicleList.RemoveAboveValue(0);
 		}
 
