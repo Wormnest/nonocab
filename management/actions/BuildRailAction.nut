@@ -304,6 +304,8 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 	local terraFormFrom;
 	local width;
 	local height;
+	local min_width;
+	local min_height;
 	if (railStationTile - frontRailStationTile < AIMap.GetMapSizeX() &&
 	    railStationTile - frontRailStationTile > -AIMap.GetMapSizeX()) {
 		direction = AIRail.RAILTRACK_NE_SW;
@@ -336,8 +338,13 @@ function BuildRailAction::BuildRailStation(connection, railStationTile, frontRai
 		if (direction == AIRail.RAILTRACK_NW_SE)
 			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, STATION_PLATFORMS, STATION_LENGTH);
 		else
-			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, 3, 2); 
-		Terraform.Terraform(terraFormFrom, width, height, preferedHeight);
+			preferedHeight = Terraform.CalculatePreferedHeight(railStationTile, STATION_LENGTH, STATION_PLATFORMS); 
+		Log.logDebug("Terraform station area to height " + preferedHeight);
+		if (!Terraform.Terraform(terraFormFrom, width, height, preferedHeight)) {
+			// Try terraforming only the station area itself
+			Log.logDebug("Terraforming failed. Try only station itself.");
+			Terraform.Terraform(terraFormFrom, min_width, min_height, preferedHeight);
+		}
 
 		if (connection.travelFromNode.nodeType == "i" &&
 		    connection.travelToNode.nodeType == "i")
