@@ -4,6 +4,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	static MAX_BRIDGE_LENGTH = 15;
 	static MAX_TUNNEL_LENGTH = 15;
 
+	/// Warning: BuildRailAction::ConnectRailToStation uses adapted costs for tracks to connect station platforms!
 	costForRail 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 1000;     // Cost for building a new road.
 
@@ -753,7 +754,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		local goingStraight = (offset == 1 || offset == -1 || offset == mapSizeX || offset == -mapSizeX ? true : false);
 		local isBridgeOrTunnelEntrance = false;
 
-		// Check if we can exploit excising bridges and tunnels.
+		// Check if we can exploit existing bridges and tunnels.
 		if (!onlyRails && AITile.HasTransportType(nextTile, AITile.TRANSPORT_RAIL) && goingStraight) {
 			local type = Tile.NONE;
 			local otherEnd;
@@ -816,6 +817,9 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 		 */
 		if (!isBridgeOrTunnelEntrance) {
 
+			// Commenting out currentAnnotatedTile.parentTile.direction == offset makes it easier to build tunnels and bridges.
+			// However it leads in certain cases to tracks between depot and station that make it impossible to reach the station.
+			/// @todo Figure out how to fix the second problem without having to use the first comparison.
 			if (!onlyRails && currentAnnotatedTile.parentTile.direction == offset && currentAnnotatedTile.direction == offset && goingStraight) {
 				local tmp;
 				if ((tmp = GetBridge(nextTile, offset)) != null || (tmp = GetTunnel(nextTile, currentTile)) != null) {
@@ -1244,6 +1248,7 @@ function RailPathFinderHelper::GetTime(roadList, engineID, forward) {
 
 	local acceleration = AIEngine.GetPower(engineID) / (4 * AIEngine.GetWeight(engineID));
 	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
+	/// @todo Take tractive effort into account on slopes and also the hill steepness percentage
 
 	// For now we assume a train always runs on top speed.
 	/// @todo We need to check if wagon speeds matter and if so lower maxSpeed if wagon speed is lower than engine speed.
