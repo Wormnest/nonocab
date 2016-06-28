@@ -64,7 +64,7 @@ function Terraform::Terraform(startTile, width, height, preferedHeight) {
 			if (AITile.GetMinHeight(tileToSearch) == preferedHeight &&
 			    AITile.GetMaxHeight(tileToSearch) == preferedHeight) {
 
-				assert (AITile.GetSlope(tileToSearch) == AITile.SLOPE_FLAT);
+				//assert (AITile.GetSlope(tileToSearch) == AITile.SLOPE_FLAT);
 
 				if (!Terraform.IsFlat(startTile, i, j))
 					AITile.LevelTiles(tileToSearch, startTile);
