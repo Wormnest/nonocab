@@ -785,41 +785,70 @@ function BuildRailAction::IsSingleRailTrack(railTracks) {
 function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
 
 	local abc = AIExecMode();
-	//AISign.BuildSign(roadList[startIndex].tile, "SIGNALS FROM HERE");
-	//AISign.BuildSign(roadList[endIndex].tile, "SIGNALS TILL HERE");
+	
+	// Signals on rails in N-S and E-W direction vice versa need a different computation since they don't use full tiles
+	// Use a variable here that keeps track of the whole or halve track parts we have passed
+	local signal_spread = spread * 2;
+	local track_length = signal_spread; // We want a signal to be set right at the start position.
 
 	// Now build the signals.
-	local tilesAfterCrossing = spread;
 	for (local a = startIndex; a < endIndex; a++) {
 
 		local isTileBeforeCrossing = false;
-		if (tilesAfterCrossing < 0) {
-			RemoveSignal(roadList[a], true);
-			RemoveSignal(roadList[a], false);
-			if (tilesAfterCrossing == -1)
-				tilesAfterCrossing = spread;
-		}
+		local needSignal = false;
 		
 		// Only build a signal every so many steps, or if we're facing a crossing.
 		// Because we are moving from the end station to the begin station, we need
 		// to check if the previous tile was a crossing.
 
 		// Don't build signals on tunnels or bridges.
-		if (roadList[a].type != Tile.ROAD)
+		if (roadList[a].type != Tile.ROAD) {
 			continue;
-
-		// Check if the next tile is a crossing or if the previous tile was a bridge / tunnel.
-		local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
-		if (roadList[a - 1].type != Tile.ROAD || roadList[a].type != Tile.ROAD ||
-			RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
-		//	if (tilesAfterCrossing >= 0)
-				isTileBeforeCrossing = true;
-
-			tilesAfterCrossing = -spread;
 		}
 
-		if (++tilesAfterCrossing > spread && (a - startIndex) % spread == 0 || isTileBeforeCrossing)
-			BuildSignal(roadList[a], reverse, signalType);
+		// Check if the previous or next tile was a bridge / tunnel.
+		if (roadList[a - 1].type != Tile.ROAD || roadList[a + 1].type != Tile.ROAD) {
+			needSignal = true;
+		}
+		else {
+			// Get railtracks for next track piece
+			local railTracks = AIRail.GetRailTracks(roadList[a + 1].tile);
+			// Check if the next tile is a crossing
+			if (roadList[a + 1].type == Tile.ROAD && RailPathFinderHelper.DoRailsCross(roadList[a + 1].lastBuildRailTrack, (railTracks & ~(roadList[a + 1].lastBuildRailTrack)))) {
+				isTileBeforeCrossing = true;
+				needSignal = true;
+			}
+		}
+		// Check length of current rail track
+		local railTracks = AIRail.GetRailTracks(roadList[a].tile);
+		switch (railTracks) {
+			case AIRail.RAILTRACK_NW_NE: // Track in the upper corner of the tile (north).
+			case AIRail.RAILTRACK_SW_SE: // Track in the lower corner of the tile (south).
+			case AIRail.RAILTRACK_NW_SW: // Track in the left corner of the tile (west).
+			case AIRail.RAILTRACK_NE_SE: // Track in the right corner of the tile (east).
+				// Just a half tile track
+				track_length++;
+				break;
+			default:
+				// A whole tile track
+				track_length += 2;
+		}
+
+		if (track_length >= signal_spread || needSignal) {
+			if (!isTileBeforeCrossing || roadList[a].reusedPieces != 1)
+				BuildSignal(roadList[a], reverse, signalType);
+			else { // Just before splitting of from a shared track we put a one way PBS signal
+				// In case that track already has a signal remove that first.
+				RemoveSignal(roadList[a], reverse);
+				BuildSignal(roadList[a], reverse, AIRail.SIGNALTYPE_PBS_ONEWAY);
+			}
+			if (isTileBeforeCrossing) {
+				/// @todo In this case we should also check the track we are merging with just before the crossing and add a signal there if necessary.
+				track_length = -1;
+			}
+			else
+				track_length = 0;
+		}
 	}
 }
 
