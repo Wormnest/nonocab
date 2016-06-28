@@ -202,11 +202,11 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 	if (dictatedHeight != -1)
 		return dictatedHeight;
 	
-	// The first thing we do is try to estimate the average height
-	// and use this height to determine how to terraform each square.
+	// The first thing we do is try to estimate the average height and use this height to determine how to terraform each square.
+	// Wormnest: Not sure why one row/column of tiles extra besides widht/height was also measured. We changed that by changing <= to <.
 	local totalHeight = 0.0;
-	for (local i = 0; i <= width; i++) {
-		for (local j = 0; j <= height; j++) {
+	for (local i = 0; i < width; i++) {
+		for (local j = 0; j < height; j++) {
 			local tileID = startTile + i + j * AIMap.GetMapSizeX();
 			totalHeight += AITile.GetMinHeight(tileID);
 			
@@ -254,9 +254,9 @@ function Terraform::CalculatePreferedHeight(startTile, width, height) {
 		}
 	}
 	
-	// Because Squirrel rounds integers by removing all numbers
-	// after the comma we round it properly.
-	local mean = (totalHeight / ((width + 1) * (height + 1)));
+	// Because Squirrel rounds integers by removing all numbers after the comma we round it properly.
+	// Wormnest: removed the two +1 here related to the change above because we only want to measure based on the width/height we were asked for.
+	local mean = (totalHeight / ((width /*+ 1*/) * (height /*+ 1*/)));
 	local meanInt = mean.tointeger();
 	local meanFrac = mean - meanInt;
 	if (meanFrac <= 0.5)
