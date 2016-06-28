@@ -125,7 +125,19 @@ function RailPathBuilder::BuildPath(roadList, estimateCost, railType)
 				return false;
 			}*/
 			
-			if (!AIRail.BuildRailTrack(tile, railTrack) && !estimateCost) { 
+			// If we're connecting to existing rail tracks then it might happen there is a train in the way when we want to build the track.
+			// In that case wait a little and then try again up to a maximum of 10 tries.
+			local max_tries = 10;
+			local i = 0;
+			local track_built = false;
+			while (!track_built && i < max_tries) {
+				track_built = AIRail.BuildRailTrack(tile, railTrack);
+				if (track_built || (AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY))
+					break; // Only keep trying if there's a vehicle in the way
+				AIController.Sleep(50);
+				i++;
+			}
+			if (!track_built && !estimateCost) { 
 				if (!AICompany.IsMine(AITile.GetOwner(tile)) || AIRail.GetRailTracks(tile) == AIRail.RAILTRACK_INVALID || (AIRail.GetRailTracks(tile) & railTrack) == 0) {
 					lastBuildIndex = a + 1;
 					return false;
