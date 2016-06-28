@@ -103,28 +103,31 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	foreach (connection in connections) {
 		if (!connection.pathInfo.build || connection.vehicleTypes != AIVehicle.VT_RAIL)
 			continue;
+		
+		Log.logInfo("Converting rail for connection " + connection.ToString());
 
 		// Convert the rail types.
 		if (connection.pathInfo.roadList) {
-			Log.logWarning("We have a roadlist!");
+			Log.logDebug("Converting rail: roadlist.");
 			foreach (at in connection.pathInfo.roadList)
 				UpgradeTile(at.tile, newRailType);
 		}
 		
 		if (connection.pathInfo.roadListReturn) {
-			Log.logWarning("We have a roadListReturn!");
+			Log.logDebug("Converting rail: roadListReturn.");
 			foreach (at in connection.pathInfo.roadListReturn)
 				UpgradeTile(at.tile, newRailType);
 		}
 		
 		if (connection.pathInfo.extraRoadBits) {
-			Log.logWarning("We have a extraRoadBits!");
+			Log.logDebug("Converting rail: extraRoadBits.");
 			foreach (extraArray in connection.pathInfo.extraRoadBits)
 				foreach (at in extraArray)
 					UpgradeTile(at.tile, newRailType);
 		}
 	
 		// Convert the stations too!
+		Log.logDebug("Converting rail: convert the stations.");
 		assert (AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID));
 		assert (AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID));
 		local beginStationTiles = AITileList_StationType(connection.pathInfo.travelFromNodeStationID, AIStation.STATION_TRAIN);
@@ -135,6 +138,7 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			AIRail.ConvertRailType(tile, tile, newRailType);
 			
 		// Convert the depots.
+		Log.logDebug("Converting rail: convert the depots.");
 		AIRail.ConvertRailType(connection.pathInfo.depot, connection.pathInfo.depot, newRailType);
 		if (connection.pathInfo.depotOtherEnd)
 			AIRail.ConvertRailType(connection.pathInfo.depotOtherEnd, connection.pathInfo.depotOtherEnd, newRailType);
