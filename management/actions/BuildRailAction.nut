@@ -11,6 +11,10 @@ class BuildRailAction extends BuildConnectionAction
 	railStationToTile = -1;     // The location of the rail station at the dropoff location.
 	transportingEngineID = null; // Cache transportingEngineID.
 	
+	static TERRAFORM_TILES = 4; // Number of tiles to terraform in front and back of station (originally 3).
+	static STATION_LENGTH  = 3; // Length in tiles of station.
+	static STATION_PLATFORMS = 2; // Number of platforms per station.
+	
 	/**
 	 * @param pathList A PathInfo object, the rails to be build.
 	 * @buildDepot Should a depot be build?
