@@ -109,7 +109,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		local production = AIStation.GetCargoWaiting(connection.pathInfo.travelFromNodeStationID, connection.cargoID);
 		local rating = AIStation.GetCargoRating(connection.pathInfo.travelFromNodeStationID, connection.cargoID);
 		
-		// Check if the connection is actually being served by any vehiles.
+		// Check if the connection is actually being served by any vehicles.
 		local nrVehicles = connection.GetNumberOfVehicles();
 
 		if (connection.bilateralConnection) {
