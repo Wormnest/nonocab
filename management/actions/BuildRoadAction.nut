@@ -30,8 +30,12 @@ function BuildRoadAction::FailedToExecute(reason) {
 }
 
 function BuildRoadAction::Execute() {
-
-	Log.logInfo("Build a road from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
+	local info = "";
+	if (!connection.pathInfo.build)
+		info = "Build a road from ";
+	else
+		info = "Add road stations and update road from ";
+	Log.logInfo(info + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
 	local accounter = AIAccounting();
 	
 	// Find the best engine for this connection so we know what kind of stations we need to build. In this case we only need 
@@ -68,8 +72,8 @@ function BuildRoadAction::Execute() {
 
 	local bestPathToBuild = null;
 	if (connection.pathInfo.build)
-		/// @todo The distance may need to be increased if we want to support reusing existing roads more
-		/// @todo because that usually means the distance will increase.
+		// We apparently need to add extra road stations. To make sure they will connect to the other end of our route
+		// we currently have to find the whole route again.
 		bestPathToBuild = pathFinder.FindFastestRoad(connection.GetLocationsForNewStation(true), connection.GetLocationsForNewStation(false),
 			true, true, stationType, AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	else
