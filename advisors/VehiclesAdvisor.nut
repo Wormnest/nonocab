@@ -164,7 +164,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		} 
 		
 		// If we want to sell vehicle but the road isn't old enough, don't!
-		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 30 || dropoffOverload))
+		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 100 || dropoffOverload))
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!
