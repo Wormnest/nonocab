@@ -226,6 +226,51 @@ class Connection {
 		}
 	}
 	
+	function HasTrainEnoughPower(engineID, cargoID) {
+		local trainWeight = AIEngine.GetWeight(engineID) + 5*18; // Assume for now 5 wagons of 18t each.
+		local TE = AIEngine.GetMaxTractiveEffort(engineID);
+		// Internally OpenTTD works with a unit called "km-ish/h", which is equal to "mph/1.6". The conversion factor from km-ish/h to km/h is 1.00584
+		// We also convert from km/h to meter/sec. km --> * 1000; 1 hour / 60 minutes / 60 seconds. [ * 1000 / 3600 = / 36 ]
+		local maxSpeed = AIEngine.GetMaxSpeed(engineID).tofloat() * 1.00584 * 1000 / 3600;
+		local hPower = AIEngine.GetPower(engineID);
+		// Length: we can get that only from a vehicle not an engine.
+		// Assume a length of a half tile for now. meaning with TL 3 we can use 5 wagons
+		local isFreight = AICargo.IsFreight(cargoID);
+		local steepness = AIGameSettings.GetValue("train_slope_steepness"); // 0-10; // %
+		local freight_multiplier = AIGameSettings.GetValue("freight_trains");  // 1-255
+		local wagonWeight = 2*18; // Weight for 2 wagons
+		if (isFreight) {
+			// 5 wagons times 10 ton times multiplier. 10 tons is just a rough very low guess, depends per cargo type and how much the wagon can hold
+			// When going higher than 10 we have trouble finding train engines that are strong enough with say 5% incline and multiplier 5
+			trainWeight += 5 * 20 * freight_multiplier;
+			wagonWeight += 2 * 20 * freight_multiplier;
+		}
+		else {
+			trainWeight += 5 * 2;
+			wagonWeight += 2 * 2;
+		}
+	
+		// https://wiki.openttd.org/Tractive_Effort (OUTDATED according to https://www.tt-forums.net/viewtopic.php?p=960459#p960459)
+		// This seems to be better: https://wiki.openttd.org/Game_mechanics#Trains
+		/// @todo The below computations do NOT take into account the new mechanics yet but they will do for now.
+		// NOTE: The slope up steepness should only be computed for the wagons that are currently going upslope!
+		// We should have at most 2 of 3 tiles on upslope so deduct 2*wagonweight
+		local neededTE = (trainWeight.tofloat() * 35 + (trainWeight.tofloat()-wagonWeight.tofloat()) * steepness * 100) / 1000;
+		if (neededTE > TE) {
+			Log.logDebug("We needed " + neededTE + " but we have only " + TE + " TE.");
+			return false;
+		}
+		// We want a minimum speed up a slope of 10% of max speed.
+		local minSpeed = maxSpeed * 0.10;
+		local hpNeeded = neededTE.tofloat() * minSpeed * 1.34102209; // KW to hp = * 1.34102209
+		if (hpNeeded > hPower) {
+			Log.logDebug("We needed " + hpNeeded + " but we have only " + hPower + " hp.");
+			return false;
+		}
+		Log.logWarning("We needed " + neededTE + " and we have  " + TE + " TE. We needed " + hpNeeded + " and we have " + hPower + " hp.");
+		return true;
+	}
+	
 	/// @todo WE NEED TO CHECK WHY THE HELICOPTER IS CHOSEN SO OFTEN AS BEST AIRCRAFT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	function GetBestTransportingEngine(vehicleType) {
 		assert (vehicleType != AIVehicle.VT_INVALID);
@@ -268,6 +313,10 @@ class Connection {
 				    }
 			}
 			else if (vehicleType == AIVehicle.VT_RAIL) {
+				if (!HasTrainEnoughPower(engineID, cargoID)) {
+					Log.logError("Skipping " + AIEngine.GetName(engineID) + " because it doesn't have enough power.");
+					continue;
+				}
 				if (pathInfo.build) {
 					// If the connection is already built then make sure we only select engines that
 					// can use the current railtype.
