@@ -74,7 +74,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		// Make sure we don't update a connection to often!
 		local currentDate = AIDate.GetCurrentDate();
-		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 15) {
+		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 30) {
 			continue;
 		}
 		
