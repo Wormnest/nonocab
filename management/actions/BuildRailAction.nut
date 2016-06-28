@@ -547,16 +547,21 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			connection.pathInfo.extraRoadBits.push(depotRails);
 			
 			// Remove all signals on the tile between the entry and exit rails.
+			local oneway_path_location;
 			if (direction != 1 && direction != -1 && direction != mapSizeX && direction != -mapSizeX) {
 				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile + 1);
 				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile - 1);
 				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile + mapSizeX);
 				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile - mapSizeX);
 				
-				// Next build a one way signal so trains never get stuck here and no other connection is
-				// going to build a signal here!
-				BuildSignal(roadList[i], searchDirection > 0, AIRail.SIGNALTYPE_PBS_ONEWAY);
+				oneway_path_location = i-2
 			}
+			else
+				oneway_path_location = i-1;
+
+			// Build a one way path signal just before the split to the depot. Remove any signal already present at that spot.
+			RemoveSignal(roadList[oneway_path_location], searchDirection > 0);
+			BuildSignal(roadList[oneway_path_location], searchDirection > 0, AIRail.SIGNALTYPE_PBS_ONEWAY);
 			
 			depotLocation = depotTile;
 			break;
