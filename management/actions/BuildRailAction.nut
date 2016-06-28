@@ -138,7 +138,7 @@ function BuildRailAction::Execute() {
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
 	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType,
-		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, tilesToIgnore);
+		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.3 + 20, tilesToIgnore);
 
 	if (connection.pathInfo == null) {
 		if (buildRailStations) {
