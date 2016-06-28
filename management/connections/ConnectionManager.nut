@@ -200,7 +200,10 @@ function ConnectionManager::LoadData(data, world) {
 		//	" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]));
 	}
 	
-	Log.logInfo("Restoring saved connections.");
+	// Keep track of how many connections still need to be loaded.
+	local wantedConnections = savedConnectionsData.len();
+	
+	Log.logInfo("Restoring " + wantedConnections + " saved connections.");
 	foreach (connectionFromNode in world.industry_tree) {
 		foreach (savedConnectionData in savedConnectionsData) {
 			local saved_from_uid = savedConnectionData["travelFromNode"];
@@ -231,6 +234,7 @@ function ConnectionManager::LoadData(data, world) {
 			if (!cargoFound) {
 				Log.logError("We couldn't find the correct cargo! " + AICargo.GetCargoLabel(cargoID));
 				unsuccessfulLoads++;
+				wantedConnections--;
 				continue;
 			}
 			
@@ -260,6 +264,7 @@ function ConnectionManager::LoadData(data, world) {
 			}
 			if (foundConnectionToNode == -1) {
 				unsuccessfulLoads++;
+				wantedConnections--;
 				local saved_to_id = ConnectionNode.GetIDFromUID(saved_to_uid);
 				if (log.logLevel == 0) {
 					Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
@@ -295,9 +300,19 @@ function ConnectionManager::LoadData(data, world) {
 			connectionFromNode.AddConnection(foundConnectionToNode, existingConnection);
 				
 			Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + foundConnectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
+			wantedConnections--;
+			
+			// Do not break here since the same connection from node might be used for a different cargo!
+			//break;
 		}
+		// If there are no more saved connections to load then stop the loop.
+		if (wantedConnections == 0)
+			break;
 	}
-	Log.logInfo("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads) + "/" + savedConnectionsData.len() + "]");
+	if (unsuccessfulLoads > 0)
+		Log.logWarning("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads - wantedConnections) + "/" + savedConnectionsData.len() + "]");
+	else
+		Log.logInfo("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads - wantedConnections) + "/" + savedConnectionsData.len() + "]");
 }
 
 /**
