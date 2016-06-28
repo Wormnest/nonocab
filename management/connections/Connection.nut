@@ -97,10 +97,13 @@ class Connection {
 					bestHoldingEngine = saveBestHoldingEngine;
 					return; // best engine is current engine, no need to replace
 				}
-				Log.logInfo("Autoreplace " + AIEngine.GetName(saveBestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
-				AIGroup.SetAutoReplace(vehicleGroupID, saveBestTransportEngine, bestEngines[0]);
-				if (saveBestHoldingEngine != bestEngines[1] && AIEngine.GetDesignDate(bestEngines[1]) > AIEngine.GetDesignDate(saveBestHoldingEngine))
-					AIGroup.SetAutoReplace(vehicleGroupID, saveBestHoldingEngine, bestEngines[1]);
+				/// @todo We may be replacing too many vehicles all at once costing us a lot of money, We should spread it out over time!
+				ManageVehiclesAction.AutoReplaceVehicles(vehicleGroupID, vehicleTypes, bestEngines[0], bestEngines[1]);
+				if (AIGameSettings.GetValue("difficulty.vehicle_breakdowns") == 0) {
+					// If breakdowns are off vehicles may not go to depots on their own thus no replacement. So tell them to go for maintenance explicitly.
+					// Since there is no AI command to send all vehicles in a group for maintenance we have to do it ourselves.
+					ManageVehiclesAction.SendVehiclesForMaintenance(vehicleGroupID, vehicleTypes);
+				}
 				
 				//AISign.BuildSign(travelFromNode.GetLocation(), "Replace " + AIEngine.GetName(bestTransportEngine) + " with " + AIEngine.GetName(bestEngines[0]));
 			}
