@@ -60,6 +60,8 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 			    	break;
 			}
 		}
+		if (!canUpdateInPlace)
+			break;
 	}
 
 
