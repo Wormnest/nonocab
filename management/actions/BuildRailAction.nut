@@ -604,8 +604,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	}
 
 	// Build the signals.
-	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignals(roadList, false, 10, roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
 
 	Log.logInfo("Find second path.")
@@ -629,8 +628,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	}
 	stationsConnectedTo.extend(pathBuilder.stationIDsConnectedTo);
 	
-	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
+	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignals(secondPath.roadList, false, 10, secondPath.roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
 	
 	
@@ -697,15 +695,19 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
 	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
 	
-	// TODO: Handle when these signals can't be build.
-	BuildSignal(toStartStationPath.roadList[toStartStationPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(toStartStationPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
-	BuildSignal(toEndStationPath.roadList[toEndStationPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
-	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(toStartStationReturnPath.roadList[0], true, AIRail.SIGNALTYPE_ENTRY);
-	BuildSignal(toEndStationReturnPath.roadList[toEndStationReturnPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
-	BuildSignal(toEndStationReturnPath.roadList[0], false, AIRail.SIGNALTYPE_ENTRY);
+	/// @todo Handle when these signals can't be built.
+
+	// Exit of destination station
+	BuildSignal(toStartStationPath.roadList[toStartStationPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(toStartStationPath.roadList[0], true, AIRail.SIGNALTYPE_NORMAL);
+	// Entry of source station
+	BuildSignal(toEndStationPath.roadList[0], false, AIRail.SIGNALTYPE_PBS_ONEWAY);
+
+	// And now the same for the return path
+	BuildSignal(toStartStationReturnPath.roadList[toStartStationReturnPath.roadList.len() - 2], true, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(toStartStationReturnPath.roadList[0], true, AIRail.SIGNALTYPE_NORMAL);
+	BuildSignal(toEndStationReturnPath.roadList[0], false, AIRail.SIGNALTYPE_PBS_ONEWAY);
+
 	return true;
 }
 
