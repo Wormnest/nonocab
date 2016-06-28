@@ -1173,7 +1173,12 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 			annotatedTile.direction = direction;
 			annotatedTile.tile = target;
 			annotatedTile.alreadyBuild = false;
-			annotatedTile.distanceFromStart = costForBridge * (i + 1);
+			local bridgeLen = i+1;
+			local bridgeTileCosts = costForBridge * ((5*bridgeLen+100)/100);  // Increase costs with 5% for each tile extra.
+			local bridgeCosts = bridgeTileCosts * bridgeLen;
+			if (bridgeLen > 5)
+				bridgeCosts += (bridgeLen-5) * bridgeTileCosts;
+			annotatedTile.distanceFromStart = bridgeCosts;
 			annotatedTile.length = i + 1;
 			
 			if (direction == 1 || direction == -1)
