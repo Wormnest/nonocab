@@ -21,7 +21,7 @@ class UpgradeConnectionAdvisor extends Advisor/*, ConnectionListener */ {
 
 // TODO: Subtract the utility of the removed connection.
 function UpgradeConnectionAdvisor::Update(loopCounter) {
-	
+	Log.logInfo("Check if we need to upgrade some of our connections.");
 	reports = [];
 
 	foreach (connection in connections) {
