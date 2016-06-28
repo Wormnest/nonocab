@@ -860,11 +860,48 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				continue;
 
 			// Check if the road is sloped.
-			/// @todo Slope down isn't so bad but slope up is (depending on settings how bad)
-			/// @todo so maybe check Tile.GetSlope instead and depend extra costs on up or down
-			// Possibly even depending on whether there were multiple slopes close together.
-			if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
+			//if (Tile.IsSlopedRoad(currentAnnotatedTile.parentTile.tile, currentTile, nextTile))
+			/// @todo Should we base on currentTile or nextTile?
+			// 1 is slope down. However we search in reverse direction from how we will be travelling so use 2
+			
+			local slope = Tile.GetSlope(currentTile, offset)
+			if (slope == SLOPE_UP) {
 				annotatedTile.distanceFromStart = costForSlope;
+				local tileParent = currentAnnotatedTile.parentTile;
+				local slopeCount = 1;
+				local consecutiveSlopes = 1;
+				local noSlope = 0;
+				// We set a maximum of 3 slopes right after each other!
+				for (local i=0; i < 6; i++) {
+					if (tileParent == null)
+						break;
+					local slope = Tile.GetSlope(tileParent.tile, tileParent.direction);
+					if (slope == SLOPE_UP) {
+						annotatedTile.distanceFromStart += (8-i) * costForSlopeNear;
+						if (noSlope == 0 && consecutiveSlopes = maxSlopes)
+							annotatedTile.distanceFromStart += costForSlopeNear;
+						slopeCount++;
+						consecutiveSlopes++;
+						noSlope = 0;
+					}
+					else {
+						noSlope++;
+						consecutiveSlopes = 0;
+						if (noSlope == 2) {
+							slopeCount--
+							noSlope = 0;
+						}
+					}
+					tileParent = tileParent.parentTile;
+					if (slopeCount > 3)
+						continue;
+				}
+			}
+			else if (slope == SLOPE_DOWN) {
+				// Even though going down in itself isn't bad too many downslopes probably means at some time we will have to go up again.
+				// Thus we also use a smaller penalty for going down.
+				annotatedTile.distanceFromStart = costForSlope / 10;
+			}
 
 			if (currentAnnotatedTile.direction != offset) {
 				annotatedTile.distanceFromStart += costForTurn;
