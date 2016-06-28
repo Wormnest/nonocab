@@ -388,3 +388,56 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 	else
 		AIOrder.InsertOrder(vehicleID, 1, connection.pathInfo.depot, AIOrder.OF_STOP_IN_DEPOT);
 }
+
+/**
+ * Autoreplace all vehicles in this group. Checks all vehicles and sets all different engines to be auto replaced.
+ * @param groupID The vehicle group ID.
+ * @param vehicleType the type of vehicles this group has.
+ * @param newEngine The replacement engine.
+ * @param newHoldingEngine The replacement holding engine.
+ */
+function ManageVehiclesAction::AutoReplaceVehicles(groupID, vehicleType, newEngine, newHoldingEngine)
+{
+	local vehicles = AIVehicleList_Group(groupID);
+	local replaceEngines = {};
+	foreach (veh, dummy in vehicles) {
+		local oldEngine = AIVehicle.GetEngineType(veh);
+		if (oldEngine == newEngine)
+			continue;
+		if (!AIEngine.IsValidEngine(oldEngine)) {
+			Log.logWarning("Autoreplace: vehicle engine is invalid! Vehicle: " + AIVehicle.GetName(veh));
+			continue;
+		}
+		if (!replaceEngines.rawin(oldEngine)) {
+			replaceEngines.rawset(oldEngine, null);
+			local wagon = null;
+			if (vehicleType == AIVehicle.VT_RAIL && AIVehicle.GetNumWagons(veh) > 0) {
+				wagon = AIVehicle.GetWagonEngineType(veh,0);
+				if (wagon == newHoldingEngine)
+					wagon = null;
+			}
+			Log.logInfo("Autoreplace " + AIEngine.GetName(oldEngine) + " with " + AIEngine.GetName(newEngine));
+			if (!AIGroup.SetAutoReplace(groupID, oldEngine, newEngine))
+				Log.logError("Setting autoreplace failed!");
+			if (wagon != null)
+				AIGroup.SetAutoReplace(groupID, wagon, newHoldingEngine);
+		}
+	}
+}
+
+/**
+ * Send all vehicles in this group for maintenance. This should only be necessary if breakdowns are turned off.
+ * @param groupID The vehicle group ID.
+ * @param vehicleType the type of vehicles this group has.
+ */
+function ManageVehiclesAction::SendVehiclesForMaintenance(groupID, vehicleType)
+{
+	local vehicles = AIVehicleList_Group(groupID);
+	foreach (veh, dummy in vehicles) {
+		if (!AIVehicle.SendVehicleToDepotForServicing(veh) && vehicleType == AIVehicle.VT_ROAD) {
+       		AIVehicle.ReverseVehicle(veh);
+			AIController.Sleep(5);
+			AIVehicle.SendVehicleToDepotForServicing(veh);
+		}
+	}
+}
