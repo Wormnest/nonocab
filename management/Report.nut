@@ -256,10 +256,34 @@ class Report
 	}
 	
 	function ToString() {
-		return "Build the connection " + connection.ToString() + " and build " + nrVehicles + " " + AIEngine.GetName(transportEngineID) + 
-		". Route cost: " + initialCost + ", 1 vehicle cost: " + initialCostPerVehicle +
-		". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " + brutoIncomePerMonthPerVehicle + 
-		", " + Utility();
+		local result = "";
+		if (!connection.pathInfo.build)
+			result = "build "
+		result = result + "the connection " + connection.ToString();
+		if (!connection.pathInfo.build) {
+			result = result + ". Route cost: " + initialCost + ", 1 vehicle cost: " + initialCostPerVehicle;
+		}
+
+		if (nrRoadStations > 0) {
+			// We want to add more road stations.
+			result = result + ". Add " + nrRoadStations + " road stations";
+		}
+		if (upgradeToRailType != null) {
+			// We want to upgrade the type of rail used.
+			result = result + ". Upgrade rail type to " + AIRail.GetName(upgradeToRailType);
+		}
+
+		local veh_result = "";
+		if (nrVehicles > 0)
+			veh_result = ". Add " + nrVehicles;
+		else
+			veh_result = ". Remove " + (-nrVehicles);
+		
+		if  (nrVehicles != 0)
+			result = result + veh_result + " vehicles"
+
+		return result +  ". Cost pm/v: " + brutoCostPerMonthPerVehicle + ". Income pm/v: " +
+			brutoIncomePerMonthPerVehicle + ", " + Utility();
 	}
 
 	function NettoIncomePerMonthForMoney(money, forecast) {
