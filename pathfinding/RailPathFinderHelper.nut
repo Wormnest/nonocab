@@ -6,13 +6,23 @@ class RailPathFinderHelper extends PathFinderHelper {
 
 	costForRail 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 1000;     // Cost for building a new road.
-	costForTurn 	= 300;      // Additional cost if the road makes a turn.
+
 	// Wormnest: Cost for bridges and tunnels seem way to low. Changed from 1000 to 2000/1500.
 	// @todo Possibly even better for bridges would be to determine a value based on the costs of bridges
 	// since NewGRF's can sometimes make them extra expensive.
-	costForBridge 	= 2500;  	// Cost for building a bridge.
-	costForTunnel 	= 2000;  	// Cost for building a tunnel.
-	costForSlope 	= 300;      // Additional cost if the road heads up or down a slope.
+	
+	/// @todo Maybe lower costs tunnel/bridge when we have a lot of money (as long as they are not longer than 5)
+	costForBridge 	= 2000;  	// Cost for building a bridge.
+	costForTunnel 	= 1000;  	// Cost for building a tunnel.
+
+	/// @todo Do we need an additional value and additional checks for when 90 degree turns are forbidden?
+
+	// Costs for Turn and Slope depend on game settings and because of that are not set here but in constructor!
+	costForTurn 	= null;      // Additional cost if the road makes a turn. Original value: 300.
+	costForSlope 	= null;      // Additional cost if the road heads up a slope. Going down a slope should always be ok. Original value: 300.
+	costForSlopeNear = null;	 // Additional cost if another up slope is close by.
+	maxSlopes = 2;				 // Maximum number of consecutive slopes.
+
 	costTillEnd     = 1200;     // The cost for each tile till the end.
 
 	standardOffsets = null;
@@ -24,6 +34,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	
 	reverseSearch = null;       // Are we pathfinding from the end point to the begin point?
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
+	SLOPE_UP = null;            // The value of an upwards slope. Depends on reverseSearch.
+	SLOPE_DOWN = null;		    // The value of a downwards slope. Depends on reverseSearch.
 
 	updateClosedList = false;
 	
@@ -48,9 +60,30 @@ class RailPathFinderHelper extends PathFinderHelper {
 		updateClosedList = true;
 		startAndEndDoubleStraight = false;
 		expectedEnd = -1;
+
+		// Multiplier for freight trains: possible values: 1-255.
+		local freight_multiplier = (AIGameSettings.GetValue("freight_trains") / 5).tointeger();
+		if (freight_multiplier > 0)
+			maxSlopes = 1;
+		// Adapted from WormAI railbuilder costs.
+		if (AIGameSettings.GetValue("train_acceleration_model ") == 0) {
+			// Original
+			costForSlope = 1000 + freight_multiplier * 100;
+			costForSlopeNear = costForSlope;
+			costForTurn = 50;
+		}
+		else {
+			// Realistic
+			// Slope steepness percentage: values 0-10 allowed.
+			costForSlope = 250 + AIGameSettings.GetValue("train_slope_steepness") * 100 + freight_multiplier * 100;
+			costForSlopeNear = costForSlope / 2;
+			costForTurn = 300;
+		}
 	}
 	
 	function Reset() { 
+		SLOPE_UP = null;
+		SLOPE_DOWN = null;
 		closed_list = {};
 		emptyList = AIList();
 		been_near_end = false;
