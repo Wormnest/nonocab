@@ -1152,7 +1152,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 
 	//Log.logWarning("Check for bridge!");
 	local bridgeRailOrRoad = AIRail.IsRailTile(startNode + direction) || AIRoad.IsRoadTile(startNode + direction);
-	if (Tile.GetSlope(startNode, direction) != 2 && !bridgeRailOrRoad)
+	if (!bridgeRailOrRoad && Tile.GetSlope(startNode, direction) != SLOPE_DOWN)
 		return null;
 
 	/// @todo Check if we already want to build a bridge just before this one. In that case they should be combined into one bridge!
@@ -1162,7 +1162,7 @@ function RailPathFinderHelper::GetBridge(startNode, direction) {
 		if (!AIMap.DistanceFromEdge(target))
 			return null;
 
-		if ((Tile.GetSlope(target, direction) == 1 || bridgeRailOrRoad) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {
+		if ((Tile.GetSlope(target, direction) == SLOPE_UP || bridgeRailOrRoad) && !bridge_list.IsEmpty() && AIBridge.BuildBridge(AIVehicle.VT_RAIL, bridge_list.Begin(), startNode, target)) {
 
 			// Only allow to build the bridge if the next tile is free as the first tile most go straight.
 			if (!AITile.IsBuildable(target + direction))
