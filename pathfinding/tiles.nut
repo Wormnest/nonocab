@@ -107,26 +107,44 @@ function Tile::GetSlope(tile, direction)
 	// 2: Slope downwards.
 	
 	local slope = AITile.GetSlope(tile);
+	if (slope == AITile.SLOPE_FLAT)
+		return 0;
 
 	if (direction == 1) { 		// West
-		if ((slope & AITile.SLOPE_NE) == 0 && (slope & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
+		if ((slope & AITile.SLOPE_E) == 0 && (slope & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
 			return 1;
-		else if ((slope & AITile.SLOPE_SW) == 0 && (slope & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
+		else if ((slope & AITile.SLOPE_W) == 0 && (slope & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
+			return 2;
+		else if ((slope & AITile.SLOPE_E) != 0 && (slope & AITile.SLOPE_STEEP_S) == AITile.SLOPE_STEEP_S)
+			return 1;
+		else if ((slope & AITile.SLOPE_W) != 0 && (slope & AITile.SLOPE_STEEP_N) == AITile.SLOPE_STEEP_N)
 			return 2;
 	} else if (direction == -1) {	// East
-		if ((slope & AITile.SLOPE_SW) == 0 && (slope & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
+		if ((slope & AITile.SLOPE_W) == 0 && (slope & AITile.SLOPE_NE) != 0) // Western slope must be flat and one point of the eastern slope must be high
 			return 1;
-		else if ((slope & AITile.SLOPE_NE) == 0 && (slope & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
+		else if ((slope & AITile.SLOPE_E) == 0 && (slope & AITile.SLOPE_SW) != 0) // Eastern slope must be flat and one point of the western slope must be high
+			return 2;
+		else if ((slope & AITile.SLOPE_W) != 0 && (slope & AITile.SLOPE_STEEP_N) == AITile.SLOPE_STEEP_N)
+			return 1;
+		else if ((slope & AITile.SLOPE_E) != 0 && (slope & AITile.SLOPE_STEEP_S) == AITile.SLOPE_STEEP_S)
 			return 2;
 	} else if (direction == -AIMap.GetMapSizeX()) {	// North
-		if ((slope & AITile.SLOPE_SE) == 0 && (slope & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
+		if ((slope & AITile.SLOPE_S) == 0 && (slope & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
 			return 1;
-		else if ((slope & AITile.SLOPE_NW) == 0 && (slope & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
+		else if ((slope & AITile.SLOPE_N) == 0 && (slope & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
+			return 2;
+		else if ((slope & AITile.SLOPE_S) != 0 && (slope & AITile.SLOPE_STEEP_W) == AITile.SLOPE_STEEP_W)
+			return 1;
+		else if ((slope & AITile.SLOPE_N) != 0 && (slope & AITile.SLOPE_STEEP_E) == AITile.SLOPE_STEEP_E)
 			return 2;
 	} else if (direction == AIMap.GetMapSizeX()) {	// South
-		if ((slope & AITile.SLOPE_NW) == 0 && (slope & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
+		if ((slope & AITile.SLOPE_N) == 0 && (slope & AITile.SLOPE_SE) != 0) // Northern slope must be flat and one point of the southern slope must be high
 			return 1;
-		else if ((slope & AITile.SLOPE_SE) == 0 && (slope & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
+		else if ((slope & AITile.SLOPE_S) == 0 && (slope & AITile.SLOPE_NW) != 0) // Southern slope must be flat and one point of the northern slope must be high
+			return 2;
+		else if ((slope & AITile.SLOPE_N) != 0 && (slope & AITile.SLOPE_STEEP_E) == AITile.SLOPE_STEEP_E)
+			return 1;
+		else if ((slope & AITile.SLOPE_S) != 0 && (slope & AITile.SLOPE_STEEP_W) == AITile.SLOPE_STEEP_W)
 			return 2;
 	}
 
