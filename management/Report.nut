@@ -21,6 +21,7 @@ class Report
 	brutoCostPerMonthPerVehicle = 0;           // The bruto cost per month per vehicle.
 	initialCostPerVehicle = 0;                 // The initial cost per vehicle which is only paid once!
 	nrVehicles = 0;                            // The total number of vehicles.
+	maxVehicles = 0;						   // The maximum number of vehicles this route can handle.
 	nrWagonsPerVehicle = 0;                    // The number of wagons per vehicle we'll build.
 	transportEngineID = 0;                     // The engine ID to transport the cargo.
 	holdingEngineID = 0;                       // The engine ID to hold the cargo to be transported.
@@ -104,7 +105,7 @@ class Report
 				initialCost = costForFrom + costForTo;
 			}
 
-			loadingTime = 20;
+			loadingTime = 17;
 		} else if (veh_type == AIVehicle.VT_WATER) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_WATER) {
 				initialCost = WaterPathBuilder(connection.pathInfo.roadList).GetCostForRoad();
@@ -113,7 +114,7 @@ class Report
 			if (!connection.pathInfo.build)
 				initialCost += BuildShipYardAction.GetCosts();
 
-			loadingTime = 0;
+			loadingTime = 22;
 		} else if (veh_type == AIVehicle.VT_RAIL) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				if (!connection.pathInfo.build) {
@@ -134,7 +135,7 @@ class Report
 				//Log.logWarning("Initial cost (roadList null): " + initialCost);
 			}
 
-			loadingTime = 15;
+			loadingTime = 12; /// @todo Check if we can find out the real loading time. Should also depend on whether we need to use depot every time or not!
 		} else {
 			Log.logError("Unknown vehicle type: " + AIEngine.GetVehicleType(transportEngineID) + ", Engine: " + AIEngine.GetName(transportEngineID));
 			isInvalid = true;
@@ -236,7 +237,8 @@ class Report
 
 		// Calculate the maximum number of vehicles this line supports.
 		if (loadingTime != 0) {
-			local maxVehicles = min((travelTimeTo / loadingTime).tointeger(), (travelTimeFrom / loadingTime).tointeger()) * 2;
+			maxVehicles = (travelTimeTo / loadingTime).tointeger() + (travelTimeFrom / loadingTime).tointeger();
+			Log.logDebug("Maximum number of vehicles this route can handle: " + maxVehicles);
 			if (nrVehicles > maxVehicles) {
 				Log.logDebug("Reduced max nr. vehicles on line " + connection.travelFromNode.GetName() + " " + connection.travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(connection.cargoID));
 				nrVehicles = maxVehicles;

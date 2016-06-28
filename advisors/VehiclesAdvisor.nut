@@ -170,6 +170,15 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to build vehicles make sure we can actually build them!
 		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
 			continue;
+		
+		// Make sure we don't build more vehicles than the line can handle. Except for roadvehicles since we currently don't compute maxVehicles there.
+		if (report.nrVehicles > 0 && !isRoad) {
+			if (report.nrVehicles + nrVehicles > report.maxVehicles) {
+				local wanted = report.nrVehicles;
+				report.nrVehicles = report.maxVehicles - nrVehicles;
+				Log.logWarning("Reduced vehicles to add from " + wanted + " to " + report.nrVehicles + " since it was more than this route can handle.");
+			}
+		}
 
 		if (report.nrVehicles != 0) {
 			if (report.nrVehicles > 0)
