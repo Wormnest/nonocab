@@ -707,6 +707,17 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 //		closedList[currentAnnotatedTile.tile] <- true;
 
 
+	if (SLOPE_UP == null) {
+		if (reverseSearch) {
+			SLOPE_UP = 1;
+			SLOPE_DOWN = 2;
+		}
+		else {
+			SLOPE_UP = 2;
+			SLOPE_DOWN = 1;
+		}
+	}
+
 	local tileArray = [];
 	local offsets;
 
