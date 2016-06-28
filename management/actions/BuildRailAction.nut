@@ -262,21 +262,21 @@ function BuildRailAction::CleanupAfterFailure() {
 		AITile.DemolishTile(railStationToTile);
 
 	if (connection.pathInfo.roadList) {
-		Log.logDebug("We have a roadlist!");
+		Log.logDebug("Remove roadlist!");
 		foreach (at in connection.pathInfo.roadList) {
 			CleanupTile(at, considerRemovedTracks);
 		}
 	}
 	
 	if (connection.pathInfo.roadListReturn) {
-		Log.logDebug("We have a roadListReturn!");
+		Log.logDebug("Remove roadListReturn!");
 		foreach (at in connection.pathInfo.roadListReturn) {
 			CleanupTile(at, considerRemovedTracks);
 		}
 	}
 	
 	if (connection.pathInfo.extraRoadBits) {
-		Log.logDebug("We have a extraRoadBits!");
+		Log.logDebug("Remove extraRoadBits!");
 		foreach (extraArray in connection.pathInfo.extraRoadBits) {
 			foreach (at in extraArray) {
 				CleanupTile(at, considerRemovedTracks);
@@ -285,11 +285,11 @@ function BuildRailAction::CleanupAfterFailure() {
 	}
 	
 	if (connection.pathInfo.depot) {
-		Log.logDebug("We have a depot!");
+		Log.logDebug("Remove depot!");
 		AITile.DemolishTile(connection.pathInfo.depot);
 	}
 	if (connection.pathInfo.depotOtherEnd) {
-		Log.logDebug("We have a depotOtherEnd!");
+		Log.logDebug("Remove depotOtherEnd!");
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
 //	quit();
