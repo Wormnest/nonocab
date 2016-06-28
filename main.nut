@@ -150,6 +150,9 @@ function NoCAB::Start()
 		Log.logInfo("(5/5) Load successfull!");
 		// Free memory since we don't need it anymore.
 		loadData = null;
+		
+		if (Log.logLevel == 0)
+			connectionManager.PrintConnections();
 	}
 	
 	// Required by the Framwork: start with sleep.

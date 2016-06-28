@@ -421,3 +421,13 @@ function ConnectionManager::ConnectionDemolished(connection) {
 	foreach (listener in connectionListeners)
 		listener.ConnectionDemolished(connection);
 }
+
+function ConnectionManager::PrintConnections()
+{
+	Log.logInfo("We currently have " + allConnections.len() + " connections.");
+	foreach (connection in allConnections) {
+		local engine = (connection.bestTransportEngine == null ? "" : ", engine: " + AIEngine.GetName(connection.bestTransportEngine));
+		Log.logInfo("Connection: " + connection.ToString() + ", group: " + AIGroup.GetName(connection.vehicleGroupID) +
+			engine + ", vehicle count: " + connection.GetNumberOfVehicles());
+	}
+}
