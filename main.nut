@@ -155,6 +155,30 @@ function NoCAB::Start()
 			connectionManager.PrintConnections();
 	}
 	
+	// DEBUG TESTING
+	/*Log.logDebug("Tile AITile.SLOPE_FLAT " + AITile.SLOPE_FLAT);
+	Log.logDebug("Tile AITile.SLOPE_W " + AITile.SLOPE_W);
+	Log.logDebug("Tile AITile.SLOPE_S " + AITile.SLOPE_S);
+	Log.logDebug("Tile AITile.SLOPE_E " + AITile.SLOPE_E);
+	Log.logDebug("Tile AITile.SLOPE_N " + AITile.SLOPE_N);
+	Log.logDebug("Tile AITile.SLOPE_STEEP " + AITile.SLOPE_STEEP);
+	Log.logDebug("Tile AITile.SLOPE_NW " + AITile.SLOPE_NW);
+	Log.logDebug("Tile AITile.SLOPE_SW " + AITile.SLOPE_SW);
+	Log.logDebug("Tile AITile.SLOPE_SE " + AITile.SLOPE_SE);
+	Log.logDebug("Tile AITile.SLOPE_NE " + AITile.SLOPE_NE);
+	Log.logDebug("Tile AITile.SLOPE_EW " + AITile.SLOPE_EW);
+	Log.logDebug("Tile AITile.SLOPE_NS " + AITile.SLOPE_NS);
+	Log.logDebug("Tile AITile.SLOPE_ELEVATED " + AITile.SLOPE_ELEVATED);
+	Log.logDebug("Tile AITile.SLOPE_NWS " + AITile.SLOPE_NWS);
+	Log.logDebug("Tile AITile.SLOPE_WSE " + AITile.SLOPE_WSE);
+	Log.logDebug("Tile AITile.SLOPE_SEN " + AITile.SLOPE_SEN);
+	Log.logDebug("Tile AITile.SLOPE_ENW " + AITile.SLOPE_ENW);
+	Log.logDebug("Tile AITile.SLOPE_STEEP_W " + AITile.SLOPE_STEEP_W);
+	Log.logDebug("Tile AITile.SLOPE_STEEP_S " + AITile.SLOPE_STEEP_S);
+	Log.logDebug("Tile AITile.SLOPE_STEEP_E " + AITile.SLOPE_STEEP_E);
+	Log.logDebug("Tile AITile.SLOPE_STEEP_N " + AITile.SLOPE_STEEP_N);
+	Log.logDebug("Tile AITile.SLOPE_INVALID " + AITile.SLOPE_INVALID);*/
+	
 	// Required by the Framwork: start with sleep.
 	initialized = true;
 	this.Sleep(1);

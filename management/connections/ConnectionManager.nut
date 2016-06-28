@@ -132,6 +132,7 @@ function ConnectionManager::SaveData(saveData) {
 	local CMsaveData = {};
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
 	
+	Log.logInfo("Saving " + allConnections.len() + " connections.");
 	local activeConnections = [];
 	foreach (idx, connection in allConnections) {
 		// Wormnest: To me it seems better to have incomplete connections in savedata
