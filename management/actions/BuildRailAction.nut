@@ -588,11 +588,11 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	local roadList = connection.pathInfo.roadList;
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile + roadList[0].direction * 2);
-	//AISign.BuildSign(roadList[0].tile + roadList[0].direction * 3, "BEGIN RETURN ROUTE");
+	//AISign.BuildSign(roadList[0].tile + roadList[0].direction * 2, "0");
 	
 	local beginNodes = AITileList();
 	beginNodes.AddTile(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 2);
-	//AISign.BuildSign(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 3, "BEGIN RETURN ROUTE");
+	//AISign.BuildSign(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * 2, "1");
 	
 	local tilesToIgnore = [];
 	foreach (roadTile in roadList) {
@@ -746,6 +746,9 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	endNodes.AddTile(stationPoint);
 	//AISign.BuildSign(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile, "BEGIN NODE");
 	///AISign.BuildSign(stationPoint, "END NODE");
+//	AISign.BuildSign(connectingRoadList[connectingRoadList.len()-2].tile, "R");
+//	AISign.BuildSign(connectingRoadList[2].tile, "N");
+//	AISign.BuildSign(stationPoint, "E");
 	pathFinder.pathFinderHelper.Reset();
 	pathFinder.pathFinderHelper.reverseSearch = !reverse;
 	pathFinder.pathFinderHelper.costForTurn = 0;
