@@ -1205,29 +1205,27 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 	local other_tunnel_end = AITunnel.GetOtherTunnelEnd(startNode);
 	if (!AIMap.IsValidTile(other_tunnel_end)) return null;
 
-	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end);
-	local direction = (other_tunnel_end - startNode) / tunnel_length;
-
-	// Check if the slope at the tunnel's end is good. This means: the base
-	// of the other end isn't going to terraform which might form unsatisfiable.
-	local forceForward = false;
-	local slopeOtherEnd = AITile.GetSlope(other_tunnel_end);
-	if (direction ==  1 && (slopeOtherEnd & AITile.SLOPE_SW) != 0 ||			// West
-	    direction == -1 && (slopeOtherEnd & AITile.SLOPE_NE) != 0 ||			// East
-	    direction == -AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_NW) != 0 ||	// North
- 	    direction ==  AIMap.GetMapSizeX() && (slopeOtherEnd & AITile.SLOPE_SE) != 0)	// South
-		// Do something!
-		forceForward = true;
-		
+	// Since other end of the tunnel is part of the tunnel we need to add one to distance manhattan.
+	local tunnel_length = AIMap.DistanceManhattan(startNode, other_tunnel_end) + 1;
+	// Stop immediately if tunnel length is too long or invalid.
+	if (tunnel_length < 2 || tunnel_length > MAX_TUNNEL_LENGTH) {
+		return null;
+	}
 	
+	local direction = (other_tunnel_end - startNode) / (tunnel_length-1);
 	local prev_tile = startNode - direction;
-	if (tunnel_length >= 1 && tunnel_length < MAX_TUNNEL_LENGTH && prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {
+	if (prev_tile == previousNode && AITunnel.BuildTunnel(AIVehicle.VT_RAIL, startNode)) {
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.type = Tile.TUNNEL;
 		annotatedTile.direction = direction;
 		annotatedTile.tile = other_tunnel_end;
 		annotatedTile.alreadyBuild = false;
-		annotatedTile.distanceFromStart = costForTunnel * (tunnel_length < 0 ? -tunnel_length : tunnel_length);
+		local tunnel_tile_cost = costForTunnel * ((5*tunnel_length+100)/100);  // Increase costs with 5% for each tile extra.
+		local tcost =  tunnel_tile_cost * tunnel_length;
+		// Up to a length 5 We don't expect slowdowns because we will have a normal signal distance. After that we might expect slowdowns so increase costs for longer lengths.
+		if (tunnel_length > 5)
+			tcost += (tunnel_length-5) * tunnel_tile_cost;
+		annotatedTile.distanceFromStart = tcost;
 		annotatedTile.forceForward = true;
 		annotatedTile.length = tunnel_length;
 		
