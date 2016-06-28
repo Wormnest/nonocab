@@ -314,13 +314,14 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 {
 	local extraOrderFlags = (vehicleType == AIVehicle.VT_RAIL || vehicleType == AIVehicle.VT_ROAD ? AIOrder.OF_NON_STOP_INTERMEDIATE : 0);
 	local roadList = connection.pathInfo.roadList;
+	local breakdowns = AIGameSettings.GetValue("difficulty.vehicle_breakdowns") > 0;
 	
 	// Send the vehicles on their way.
 	if (connection.bilateralConnection && !directionToggle) {
-		if (vehicleType == AIVehicle.VT_RAIL)
+		if (vehicleType == AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
 		AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-		if (vehicleType != AIVehicle.VT_RAIL)
+		if (vehicleType != AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
 
 		// If it's a ship, give it additional orders!
@@ -328,21 +329,21 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 			for (local i = 1; i < roadList.len() - 1; i++)
 				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 
-		if (vehicleType == AIVehicle.VT_RAIL)
+		if (vehicleType == AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
 		AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
 
-		if (vehicleType != AIVehicle.VT_RAIL)
+		if (vehicleType != AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
 
 		if (vehicleType == AIVehicle.VT_WATER) 
 			for (local i = roadList.len() - 2; i > 0; i--)
 				AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 	} else {
-		if (vehicleType == AIVehicle.VT_RAIL)
+		if (vehicleType == AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
 		AIOrder.AppendOrder(vehicleID, roadList[roadList.len() - 1].tile, AIOrder.OF_FULL_LOAD_ANY | extraOrderFlags);
-		if (vehicleType != AIVehicle.VT_RAIL)
+		if (vehicleType != AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depot, AIOrder.OF_NONE | extraOrderFlags);
 
 		// If it's a ship, give it additional orders!
@@ -356,7 +357,7 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 			}
 		}
 
-		if (vehicleType == AIVehicle.VT_RAIL)
+		if (vehicleType == AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
 
 		if (connection.bilateralConnection)
@@ -364,7 +365,7 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 		else
 			AIOrder.AppendOrder(vehicleID, roadList[0].tile, AIOrder.OF_UNLOAD | AIOrder.OF_NO_LOAD);
 
-		if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL)
+		if (connection.bilateralConnection && vehicleType != AIVehicle.VT_RAIL && breakdowns)
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
 			
 		if (vehicleType == AIVehicle.VT_WATER)
