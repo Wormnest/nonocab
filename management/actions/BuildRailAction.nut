@@ -219,7 +219,7 @@ function BuildRailAction::Execute() {
 	return true;
 }
 
-function BuildRailAction::CleanupTile(at, considerRemovedTracks) {
+function BuildRailAction::CleanupTile(at) {
 	
 	// If the tile we are asked to remove has been marked as already built it means that the piece of rail to
 	// destroy is part of another rail network and cannot be removed lest we disrupt that other connection. Similary
@@ -227,19 +227,23 @@ function BuildRailAction::CleanupTile(at, considerRemovedTracks) {
 	if (at.alreadyBuild || AIRoad.IsRoadTile(at.tile))
 		return;
 
-	// Create an inverted bitmap off all the tracks which should already have been
-	// removed. By taking the inverted bitmap and applying an ADD operation only
-	// the remaining tracks on the tile will be checked. So if this connection built
-	// on a tile multiple times also these will be removed! :)
-	local additionalTracks = 0;
-	if (considerRemovedTracks.rawin(at.tile))
-		additionalTracks = considerRemovedTracks.rawget(at.tile);
-
 	local railTracks = AIRail.GetRailTracks(at.tile);
-	if (at.type != Tile.ROAD || IsSingleRailTrack(railTracks & (~additionalTracks)))
+	/// @todo We can probably completely remove the call to IsSingleRailTrack since the else part should also handle single rails.
+	if (at.type != Tile.ROAD || IsSingleRailTrack(railTracks))
 		while (!AITile.DemolishTile(at.tile));
-	else
-		considerRemovedTracks[at.tile] <- (additionalTracks | at.lastBuildRailTrack);
+	else {
+		if (at.lastBuildRailTrack != -1) {
+			local cnt = 0;
+			while (!AIRail.RemoveRailTrack(at.tile, at.lastBuildRailTrack)) {
+				cnt++;
+				if (cnt == 10)
+					break;
+				AIController.Sleep(10);
+			}
+			if (cnt == 10)
+				Log.logError("We failed to remove a piece of track at tile " + at.tile + ", railtrack = " + at.lastBuildRailTrack);
+		}
+	}
 }
 
 function BuildRailAction::CleanupAfterFailure() {
@@ -248,12 +252,6 @@ function BuildRailAction::CleanupAfterFailure() {
 	if (connection.pathInfo == null)
 		return;
 	assert (!connection.pathInfo.build);
-	
-	// During demolition we keep track of a list of all tiles which could not be removed
-	// because there are more than 1 rail tracks on a tile. We keep track of the rail tiles
-	// which should have been removed and when we revisit the same track we will not consider
-	// the track which should have been removed the previous time.
-	local considerRemovedTracks = {};
 	
 	// Destroy the stations.
 	if (railStationFromTile != -1)
@@ -264,14 +262,14 @@ function BuildRailAction::CleanupAfterFailure() {
 	if (connection.pathInfo.roadList) {
 		Log.logDebug("Remove roadlist!");
 		foreach (at in connection.pathInfo.roadList) {
-			CleanupTile(at, considerRemovedTracks);
+			CleanupTile(at);
 		}
 	}
 	
 	if (connection.pathInfo.roadListReturn) {
 		Log.logDebug("Remove roadListReturn!");
 		foreach (at in connection.pathInfo.roadListReturn) {
-			CleanupTile(at, considerRemovedTracks);
+			CleanupTile(at);
 		}
 	}
 	
@@ -279,7 +277,7 @@ function BuildRailAction::CleanupAfterFailure() {
 		Log.logDebug("Remove extraRoadBits!");
 		foreach (extraArray in connection.pathInfo.extraRoadBits) {
 			foreach (at in extraArray) {
-				CleanupTile(at, considerRemovedTracks);
+				CleanupTile(at);
 			}
 		}
 	}
