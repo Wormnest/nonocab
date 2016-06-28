@@ -738,6 +738,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				    
 				    if (length < 0)
 				    	length = -length;
+					
+					// Don't reuse bridges/tunnels longer than 5 for multiple routes. It might cause slowdowns.
+					if (length > 5)
+						continue;
 				    
 					local annotatedTile = AnnotatedTile();
 					annotatedTile.type = type;
