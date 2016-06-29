@@ -328,7 +328,7 @@ function World::InsertIndustry(industryID) {
 	}
 
 	// If the industry doesn't accept anything we add it to the root list.
-	if (industryNode.cargoIdsAccepting.len() == 0 || hasBilateral || isPrimaryIndustry)
+	if (industryNode.cargoIdsAccepting.len() == 0 || industryNode.cargoIdsProducing.len() > 0 || hasBilateral || isPrimaryIndustry)
 		industry_tree.push(industryNode);
 }
 
