@@ -309,8 +309,9 @@ function ConnectionManager::LoadData(data, world) {
 		if (wantedConnections == 0)
 			break;
 	}
-	if (unsuccessfulLoads > 0)
-		Log.logWarning("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads - wantedConnections) + "/" + savedConnectionsData.len() + "]");
+	if (unsuccessfulLoads > 0 || wantedConnections > 0)
+		Log.logWarning("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads - wantedConnections) + "/" + savedConnectionsData.len() + "] " +
+			"Unsuccessfull: " + unsuccessfulLoads + " Not found: " + wantedConnections);
 	else
 		Log.logInfo("Successfully loaded: [" + (savedConnectionsData.len() - unsuccessfulLoads - wantedConnections) + "/" + savedConnectionsData.len() + "]");
 }
