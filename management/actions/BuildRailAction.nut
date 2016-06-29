@@ -143,6 +143,8 @@ function BuildRailAction::Execute() {
 	beginNodes.AddTile(roadList[len - 1].tile);
 	local endNodes = AITileList();
 	endNodes.AddTile(roadList[0].tile);
+	//AISign.BuildSign(roadList[len - 1].tile, "0");
+	//AISign.BuildSign(roadList[0].tile, "1");
 	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.3 + 20, tilesToIgnore);
 
@@ -621,6 +623,12 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 			// Begin station.
 			tilesToIgnore.push(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i + startOrthogonalDirection * j);
 			tilesToIgnore.push(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i - startOrthogonalDirection * j);
+			
+			// Debug signs
+			//AISign.BuildSign(roadList[0].tile + roadList[0].direction * i + endOrthogonalDirection * j, "E0");
+			//AISign.BuildSign(roadList[0].tile + roadList[0].direction * i - endOrthogonalDirection * j, "E1");
+			//AISign.BuildSign(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i + startOrthogonalDirection * j, "B0");
+			//AISign.BuildSign(roadList[roadList.len() - 1].tile - roadList[roadList.len() - 1].direction * i - startOrthogonalDirection * j, "B1");
 		}
 	}
 
@@ -753,9 +761,11 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	endNodes.AddTile(stationPoint);
 	//AISign.BuildSign(connectingRoadList[(reverse ? connectingRoadList.len() - a : a)].tile, "BEGIN NODE");
 	///AISign.BuildSign(stationPoint, "END NODE");
-//	AISign.BuildSign(connectingRoadList[connectingRoadList.len()-2].tile, "R");
-//	AISign.BuildSign(connectingRoadList[2].tile, "N");
-//	AISign.BuildSign(stationPoint, "E");
+	//if (reverse)
+	//	AISign.BuildSign(connectingRoadList[connectingRoadList.len()-2].tile, "R");
+	//else
+	//	AISign.BuildSign(connectingRoadList[2].tile, "N");
+	//AISign.BuildSign(stationPoint, "E");
 	pathFinder.pathFinderHelper.Reset();
 	pathFinder.pathFinderHelper.reverseSearch = !reverse;
 	pathFinder.pathFinderHelper.costForTurn = 0;
