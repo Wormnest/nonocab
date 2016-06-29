@@ -627,6 +627,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	// Build the signals.
 	BuildSignal(roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignals(roadList, false, 10, roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
+	// Temporary signal to make sure pathfinding doesn't connect wrong for the second entry platform. This signal can be anything except SIGNALTYPE_NORMAL.
+	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 
 	Log.logInfo("Find second path.")
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
@@ -651,7 +653,8 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	
 	BuildSignal(secondPath.roadList[1], false, AIRail.SIGNALTYPE_NORMAL);
 	BuildSignals(secondPath.roadList, false, 10, secondPath.roadList.len() - 10, 6, AIRail.SIGNALTYPE_NORMAL);
-	
+	// Temporary signal to make sure pathfinding doesn't connect wrong for the second entry platform. This signal can be anything except SIGNALTYPE_NORMAL.
+	BuildSignal(secondPath.roadList[secondPath.roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 	
 	connection.pathInfo.roadListReturn = secondPath.roadList;
 
@@ -716,6 +719,10 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	RemoveSignals(secondPath.roadList, false, 2, returnStartIndex);
 	RemoveSignals(secondPath.roadList, false, returnEndIndex, secondPath.roadList.len() - 2);
 	
+	// Remove the exit signals at station entry needed to block wrong pathfinding.
+	RemoveSignal(roadList[roadList.len() - 2], false);
+	RemoveSignal(secondPath.roadList[secondPath.roadList.len() - 2], false);
+
 	/// @todo Handle when these signals can't be built.
 
 	// Exit of destination station
