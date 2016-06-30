@@ -267,7 +267,7 @@ class Connection {
 			Log.logDebug("We needed " + hpNeeded + " but we have only " + hPower + " hp.");
 			return false;
 		}
-		Log.logWarning("We needed " + neededTE + " and we have  " + TE + " TE. We needed " + hpNeeded + " and we have " + hPower + " hp.");
+		Log.logDebug("We needed " + neededTE + " and we have  " + TE + " TE. We needed " + hpNeeded + " and we have " + hPower + " hp.");
 		return true;
 	}
 	
@@ -314,7 +314,7 @@ class Connection {
 			}
 			else if (vehicleType == AIVehicle.VT_RAIL) {
 				if (!HasTrainEnoughPower(engineID, cargoID)) {
-					Log.logError("Skipping " + AIEngine.GetName(engineID) + " because it doesn't have enough power.");
+					Log.logDebug("Skipping " + AIEngine.GetName(engineID) + " because it doesn't have enough power.");
 					continue;
 				}
 				if (pathInfo.build) {
@@ -410,6 +410,10 @@ class Connection {
 			}// else if (bestTransportEngine != null) {
 //				Log.logWarning("- The old engine + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") is better than " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
 //			}
+			//else
+			//	Log.logDebug("-----Unprofitable: " + nettoIncomePerMonth + " br ipm " + report.brutoIncomePerMonth + " br cpm " + report.brutoCostPerMonth +
+			//		" br ipmv " + report.brutoIncomePerMonthPerVehicle + " br cpmv " + report.brutoCostPerMonthPerVehicle +
+			//		" ic pv " + report.initialCostPerVehicle);
 		}
 		
 		if (bestTransportEngine != null)
