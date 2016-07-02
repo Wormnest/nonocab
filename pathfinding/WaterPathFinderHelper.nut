@@ -101,7 +101,8 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 	foreach (i, value in tileList) {
 	
 		local slope = AITile.GetSlope(i);
-		if (slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NE && slope != AITile.SLOPE_SE || !AIMarine.BuildDock(i, AIStation.STATION_NEW) || AIMarine.IsDockTile(i))
+		if (slope != AITile.SLOPE_NW && slope != AITile.SLOPE_SW && slope != AITile.SLOPE_NE && slope != AITile.SLOPE_SE ||
+			!AIMarine.BuildDock(i, AIStation.STATION_NEW) || AIMarine.IsDockTile(i))
 			continue;
 
 		local annotatedTile = AnnotatedTile();
