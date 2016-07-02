@@ -553,6 +553,8 @@ class Connection {
 				if (!AIVehicle.SellVehicle(veh))
 					Log.logError("Couldn't sell " + AIVehicle.GetName(veh));
 			}
+			// Remove the group
+			AIGroup.DeleteGroup(vehicleGroupID);
 		}
 		
 		if (destroyFrom) {
@@ -577,13 +579,11 @@ class Connection {
 			AITile.DemolishTile(pathInfo.roadList[0].tile);
 		}
 		
-// Wormnest: Not sure why this is disabled. Maybe because before I changed it vehicles for destroyed connections were not sold?
-/*		if (destroyDepots) {
+		if (destroyDepots) {
 			AITile.DemolishTile(pathInfo.depot);
 			if (pathInfo.depotOtherEnd)
 				AITile.DemolishTile(pathInfo.depotOtherEnd);
 		}
-*/
 		
 		for (local i = 0; i < travelFromNode.activeConnections.len(); i++) {
 			if (travelFromNode.activeConnections[i] == this) {
