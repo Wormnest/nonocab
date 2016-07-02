@@ -42,6 +42,7 @@ function WaterPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyStraight
 		local annotatedTile = AnnotatedTile();
 		annotatedTile.direction = offset;
 		annotatedTile.tile = nextTile;
+		/// @todo This should probably also depend on being diagonal or not (+1 or +0.5). But see line 89.
 		annotatedTile.length = currentAnnotatedTile.length + 1;
 
 		// Check if the path is diagonal of not.
