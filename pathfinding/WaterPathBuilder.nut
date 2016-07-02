@@ -141,6 +141,8 @@ function WaterPathBuilder::BuildPath(roadList) {
 		 */
 		if (direction != currentDirection || buoyBuildTimeout == -25) {
 	
+			/** Wormnest: disabling using existing bouys since it needs extra code that inserts the route to that buoy into our roadList
+				and then next follows a new path from there. For now just only build new buoys even if that means more buoys than necessary.
 			currentDirection = roadList[a].direction;
 			// Check if there is no buoy close to this tile.
 			local list = Tile.GetRectangle(currentTile, 5, 5);
@@ -202,6 +204,7 @@ function WaterPathBuilder::BuildPath(roadList) {
 					continue;
 				}
 			}
+			*/
 			
 			// Check if we need to build an additional buoy.
 			if (!AIMarine.IsBuoyTile(currentTile) && !AIMarine.BuildBuoy(currentTile) && !WaterPathBuilder.CheckError(currentTile)) {
