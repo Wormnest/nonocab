@@ -141,7 +141,7 @@ function BuildShipYardAction::Execute() {
 		end.tile = connection.travelToNode.GetLocation();
 	
 	foreach (at in connection.pathInfo.roadList)
-		if (AIMarine.IsBuoyTile(at.tile))
+		if (AIMarine.IsBuoyTile(at.tile) || AIMarine.IsWaterDepotTile(at.tile))
 			newRoadList.push(at);
 	newRoadList.push(start);
 	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
