@@ -154,7 +154,14 @@ function VehiclesAdvisor::Update(loopCounter) {
 				report.nrRoadStations = 2;
 			}
 
-			if (production < 200 || isTrain || isAir || isShip || nrVehicles == 0) 
+			if (nrVehicles == 0) {
+				// Only add vehicles if it's a new connection or still has a reasonable production.
+				if (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 300 || production > 100)
+					report.nrVehicles = 1;
+				else
+					report.nrVehicles = 0;
+			}
+			else if (production < 200 || isTrain || isAir || isShip || nrVehicles == 0) 
 				report.nrVehicles = 1;
 			else if (production < 300)
 				report.nrVehicles = 2;
@@ -258,6 +265,10 @@ function VehiclesAdvisor::GetReports() {
 		}
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);
+		else // report.nrVehicles == 0: Remove the connection if there are no vehicles left.
+			if (AIVehicleList_Group(connection.vehicleGroupID).Count() == 0)
+				connection.Demolish(true, true, true);
+			
 
  		if (report.upgradeToRailType != null)
  			actionList.push(RailPathUpgradeAction(connection, report.upgradeToRailType));
