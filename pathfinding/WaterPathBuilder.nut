@@ -62,7 +62,7 @@ function WaterPathBuilder::CheckError(buildLocation)
 			for (local i = 0; i < 50; i++) {
 				if (AIMarine.BuildBuoy(buildLocation) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
-				AIController.Sleep(1);
+				AIController.Sleep(5);
 			}
 				
 			return true;
