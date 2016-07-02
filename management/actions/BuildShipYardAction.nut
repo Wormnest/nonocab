@@ -101,7 +101,9 @@ function BuildShipYardAction::Execute() {
 	if (connection.pathInfo.depot == null) {
 		AIMarine.RemoveDock(fromTile);
 		AIMarine.RemoveDock(toTile);
-		FailedToExecute("Build not buil the depots");
+		FailedToExecute("Could not build the first depot.");
+		// Do not replan since it most likely will fail again
+		//connection.forceReplan = true;
 		return false;
 	}
 
@@ -111,7 +113,9 @@ function BuildShipYardAction::Execute() {
 			AIMarine.RemoveDock(fromTile);
 			AIMarine.RemoveDock(toTile);
 			AIMarine.RemoveWaterDepot(connection.pathInfo.depot);
-			FailedToExecute("Build not buil the depots");
+			FailedToExecute("Could not build the second depot.");
+			// Do not replan since it most likely will fail again
+			//connection.forceReplan = true;
 			return false;
 		}
 	}
@@ -186,7 +190,7 @@ function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 	}
 
 	if (!depotLoc) {
-		Log.logWarning("Depot couldn't be build!");
+		Log.logWarning("Couldn't find a suitable location for the waterdepot!");
 		return null;
 	}
 	return depotLoc;
