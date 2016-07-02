@@ -174,19 +174,64 @@ function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 	local depotLoc = null;
 	local tilesAround = [1, AIMap.GetMapSizeX()];
 	local tilesAroundReversed = [-AIMap.GetMapSizeX(), -1];
+	local docktile = (fromTile ? roadList[roadList.len()-1].tile : roadList[0].tile);
 	for (local i = (fromTile ? roadList.len() - 3 : 3); i > 2 && i < roadList.len() - 2; i += (fromTile ? -1 : 1)) {
 		
-		local pos = roadList[i].tile;
-		for (local j = 0; j < 2; j++) {
-			if (AITile.IsWaterTile(pos + tilesAround[j] * 3) && AITile.IsWaterTile(pos + tilesAround[j] * 2) && AITile.IsWaterTile(pos - tilesAround[j]) && AITile.IsWaterTile(pos - tilesAround[j] * 2) && 
-			!AIMarine.IsDockTile(pos + tilesAround[j] * 3) && !AIMarine.IsDockTile(pos + tilesAround[j] * 2) && !AIMarine.IsDockTile(pos - tilesAround[j]) && !AIMarine.IsDockTile(pos - tilesAround[j] * 2) && AIMarine.BuildWaterDepot(pos, pos + tilesAroundReversed[j])) {
+		local pos = roadList[i].tile;		// First tile of depot
+		local pos2 = pos + tilesAround[1];	// Second tile of depot
+
+		// A water depot should be able to be reached through water from either the top or bottom short side.
+		// Besides that we need to make sure that it does not block on any side a water depot or dock
+		// Check first possible layout
+		if (/*AITile.IsWaterTile(pos + tilesAround[0] * 2) &&*/ AITile.IsWaterTile(pos + tilesAround[0]) &&
+			/*AITile.IsWaterTile(pos - tilesAround[0] * 2) &&*/ AITile.IsWaterTile(pos - tilesAround[0]) &&
+			/*AITile.IsWaterTile(pos2 + tilesAround[0] * 2) &&*/ AITile.IsWaterTile(pos2 + tilesAround[0]) &&
+			/*AITile.IsWaterTile(pos2 - tilesAround[0] * 2) &&*/ AITile.IsWaterTile(pos2 - tilesAround[0]) &&
+			/*!AIMarine.IsDockTile(pos + tilesAround[0] * 2) &&*/ !AIMarine.IsDockTile(pos + tilesAround[0]) &&
+			/*!AIMarine.IsDockTile(pos - tilesAround[0] * 2) &&*/ !AIMarine.IsDockTile(pos - tilesAround[0]) &&
+			/*!AIMarine.IsDockTile(pos2 + tilesAround[0] * 2) &&*/ !AIMarine.IsDockTile(pos2 + tilesAround[0]) &&
+			/*!AIMarine.IsDockTile(pos2 - tilesAround[0] * 2) &&*/ !AIMarine.IsDockTile(pos2 - tilesAround[0]) &&
+			/*!AIMarine.IsWaterDepotTile(pos + tilesAround[0] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos + tilesAround[0]) &&
+			/*!AIMarine.IsWaterDepotTile(pos - tilesAround[0] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos - tilesAround[0]) &&
+			/*!AIMarine.IsWaterDepotTile(pos2 + tilesAround[0] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos2 + tilesAround[0]) &&
+			/*!AIMarine.IsWaterDepotTile(pos2 - tilesAround[0] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos2 - tilesAround[0]) &&
+			AITile.IsWaterTile(pos - tilesAround[1]) &&
+			AITile.IsWaterTile(pos + tilesAround[1]  * 2) && /*AITile.IsWaterTile(pos + tilesAround[1] * 3) &&*/
+			!AIMarine.IsDockTile(pos - tilesAround[1]) &&
+			!AIMarine.IsDockTile(pos + tilesAround[1] * 2) && /*!AIMarine.IsDockTile(pos + tilesAround[1] * 3) &&*/
+			!AIMarine.IsWaterDepotTile(pos - tilesAround[1]) &&
+			!AIMarine.IsWaterDepotTile(pos + tilesAround[1] * 2) && /*!AIMarine.IsWaterDepotTile(pos + tilesAround[1] * 3) &&*/
+			AIMap.DistanceManhattan(docktile, pos) <= 15 &&
+			AIMarine.BuildWaterDepot(pos, pos + tilesAroundReversed[0])) {
 				depotLoc = pos;
 				break;
-			}
 		}
-		
-		if (depotLoc)
-			break;
+
+		pos2 = pos + tilesAround[0];	// Second tile of depot
+		// Check second possible layout
+		if (/*AITile.IsWaterTile(pos + tilesAround[1] * 2) &&*/ AITile.IsWaterTile(pos + tilesAround[1]) &&
+			/*AITile.IsWaterTile(pos - tilesAround[1] * 2) &&*/ AITile.IsWaterTile(pos - tilesAround[1]) &&
+			/*AITile.IsWaterTile(pos2 + tilesAround[1] * 2) &&*/ AITile.IsWaterTile(pos2 + tilesAround[1]) &&
+			/*AITile.IsWaterTile(pos2 - tilesAround[1] * 2) &&*/ AITile.IsWaterTile(pos2 - tilesAround[1]) &&
+			/*!AIMarine.IsDockTile(pos + tilesAround[1] * 2) &&*/ !AIMarine.IsDockTile(pos + tilesAround[1]) &&
+			/*!AIMarine.IsDockTile(pos - tilesAround[1] * 2) &&*/ !AIMarine.IsDockTile(pos - tilesAround[1]) &&
+			/*!AIMarine.IsDockTile(pos2 + tilesAround[1] * 2) &&*/ !AIMarine.IsDockTile(pos2 + tilesAround[1]) &&
+			/*!AIMarine.IsDockTile(pos2 - tilesAround[1] * 2) &&*/ !AIMarine.IsDockTile(pos2 - tilesAround[1]) &&
+			/*!AIMarine.IsWaterDepotTile(pos + tilesAround[1] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos + tilesAround[1]) &&
+			/*!AIMarine.IsWaterDepotTile(pos - tilesAround[1] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos - tilesAround[1]) &&
+			/*!AIMarine.IsWaterDepotTile(pos2 + tilesAround[1] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos2 + tilesAround[1]) &&
+			/*!AIMarine.IsWaterDepotTile(pos2 - tilesAround[1] * 2) &&*/ !AIMarine.IsWaterDepotTile(pos2 - tilesAround[1]) &&
+			AITile.IsWaterTile(pos - tilesAround[0]) &&
+			AITile.IsWaterTile(pos + tilesAround[0] * 2) && /*AITile.IsWaterTile(pos + tilesAround[0] * 3) &&*/
+			!AIMarine.IsDockTile(pos - tilesAround[0]) &&
+			!AIMarine.IsDockTile(pos + tilesAround[0] * 2) && /*!AIMarine.IsDockTile(pos + tilesAround[0] * 3) &&*/
+			!AIMarine.IsWaterDepotTile(pos - tilesAround[0]) &&
+			!AIMarine.IsWaterDepotTile(pos + tilesAround[0] * 2) && /*!AIMarine.IsWaterDepotTile(pos + tilesAround[0] * 3) &&*/
+			AIMap.DistanceManhattan(docktile, pos) <= 15 &&
+			AIMarine.BuildWaterDepot(pos, pos + tilesAroundReversed[1])) {
+				depotLoc = pos;
+				break;
+		}
 	}
 
 	if (!depotLoc) {
