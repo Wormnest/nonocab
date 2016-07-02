@@ -108,11 +108,9 @@ function WaterPathBuilder::RealiseConnection()
 }
 
 /**
- * We create a path through the water for our boats. Because applying A*
- * to the ingame pathfinding is quite hard, the pathfinding capabilities
- * of ships are quite bad. Therefor we need to build buoys to lead our
- * ships in the good direction. We don't want to build to many and not to
- * close together!
+ * Create a path through the water for our boats. Because applying A* to the ingame pathfinding is quite hard,
+ * the pathfinding capabilities of ships are quite bad. Therefor we need to build buoys to lead our ships in the right direction.
+ * We don't want to build too many and not too close together!
  */
 function WaterPathBuilder::BuildPath(roadList) {
 
@@ -122,11 +120,11 @@ function WaterPathBuilder::BuildPath(roadList) {
 	local buildFromIndex = roadList.len() - 1;
 	local currentDirection = roadList[roadList.len() - 2].direction;
 	local buoyBuildTimeout = 5;
+	local lastBuoy = roadList[buildFromIndex].tile;
 
-	for(local a = roadList.len() - 2; 5 < a; a--) {
+	for(local a = roadList.len() - 2; 3 < a; a--) {
 
-		// If we recently saw / build a buoy we add an additional timeout
-		// constraint.
+		// If we recently saw / built a buoy we add an additional timeout constraint.
 		if (--buoyBuildTimeout > 0)
 			continue;
 
@@ -134,12 +132,13 @@ function WaterPathBuilder::BuildPath(roadList) {
 		local currentTile = roadList[a + 1].tile;
 		
 		/**
-		 * Every time the path changed direction we build an aditional buoy to guide the ships. The pathfinding
-		 * is truely idiotic so there is no need to be smart here. We also impose a buoy every 25 tiles, I am
+		 * Every time the path changes direction we build an aditional buoy to guide the ships. The pathfinding
+		 * is truely idiotic so there is no need to be smart here. We also impose a buoy every 17 tiles, I am
 		 * not sure what the maximal distance is a ship can travel without guidance, but even if the connection
 		 * is a straight line over 100 tiles, it will fail.
 		 */
-		if (direction != currentDirection || buoyBuildTimeout == -25) {
+		 // 300 is about 17*17 is max distance we want between buoys.
+		if (direction != currentDirection || AIMap.DistanceSquare(lastBuoy, currentTile) > 300 || buoyBuildTimeout <= -25) {
 	
 			/** Wormnest: disabling using existing bouys since it needs extra code that inserts the route to that buoy into our roadList
 				and then next follows a new path from there. For now just only build new buoys even if that means more buoys than necessary.
@@ -208,10 +207,17 @@ function WaterPathBuilder::BuildPath(roadList) {
 			
 			// Check if we need to build an additional buoy.
 			if (!AIMarine.IsBuoyTile(currentTile) && !AIMarine.BuildBuoy(currentTile) && !WaterPathBuilder.CheckError(currentTile)) {
-				//AISign.BuildSign(currentTile, "ERROR");
+				//AISign.BuildSign(currentTile, "x");
+				Log.logError("Error building buoy at tile " + currentTile);
 				return false;
-			} else
-				buoyBuildTimeout = 5;
+			} else {
+				// Since CheckError returns true in certain cases even if no buoy was built we check for a buoy here.
+				if (AIMarine.IsBuoyTile(currentTile)) {
+					buoyBuildTimeout = 5;
+					lastBuoy = currentTile;
+					currentDirection = roadList[a].direction;
+				}
+			}
 
 			currentDirection = direction;
 		}
