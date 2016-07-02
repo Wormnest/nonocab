@@ -58,7 +58,7 @@ function WaterPathBuilder::CheckError(buildLocation)
 		// Temporal onces:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
-			// Retry the same action 5 times...
+			// Retry the same action 50 times...
 			for (local i = 0; i < 50; i++) {
 				if (AIMarine.BuildBuoy(buildLocation) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
@@ -77,11 +77,11 @@ function WaterPathBuilder::CheckError(buildLocation)
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
 		case AIError.ERR_NOT_ENOUGH_CASH:		
-			//AISign.BuildSign(buildLocation, "BOUY!");
-			Log.logDebug("Couldn't build a bouy: " + AIError.GetLastErrorString());
+			//AISign.BuildSign(buildLocation, "BUOY!");
+			Log.logDebug("Couldn't build a buoy: " + AIError.GetLastErrorString());
 			return true;
 			
-		// Trival onces:
+		// Trivial onces:
 		case AIError.ERR_ALREADY_BUILT:
 		case AIRoad.ERR_ROAD_CANNOT_BUILD_ON_TOWN_ROAD:
 			return true;
@@ -94,7 +94,7 @@ function WaterPathBuilder::CheckError(buildLocation)
 			assert(false);
 			
 		default:
-			Log.logError("Unhandled error message: " + AIError.GetLastErrorString() + "!");
+			Log.logError("Unhandled error message when building a buoy: " + AIError.GetLastErrorString() + "!");
 			return false;
 	}
 }
