@@ -91,14 +91,6 @@ function BuildShipYardAction::Execute() {
 		return false;
 	}
 
-	local waterBuilder = WaterPathBuilder(connection.pathInfo.roadList);
-	if (!waterBuilder.RealiseConnection()) {
-		FailedToExecute("Couldn't build the water way!");
-		AIMarine.RemoveDock(fromTile);
-		AIMarine.RemoveDock(toTile);
-		return false;
-	}
-		
 	local start = AnnotatedTile();
 	start.tile = fromTile;
 	local end = AnnotatedTile();
@@ -123,7 +115,21 @@ function BuildShipYardAction::Execute() {
 			return false;
 		}
 	}
-
+	
+	// Build buoys last to make it easier to find a spot for the water depots
+	local waterBuilder = WaterPathBuilder(connection.pathInfo.roadList);
+	if (!waterBuilder.RealiseConnection()) {
+		FailedToExecute("Couldn't build the water way!");
+		RemoveBuoys();
+		AIMarine.RemoveDock(fromTile);
+		AIMarine.RemoveDock(toTile);
+		AIMarine.RemoveWaterDepot(connection.pathInfo.depot);
+		if (connection.pathInfo.depotOtherEnd != null)
+			AIMarine.RemoveWaterDepot(connection.pathInfo.depotOtherEnd);
+		// Do not replan since it most likely will fail again
+		//connection.forceReplan = true;
+		return false;
+	}
 
 	// Reconstruct road list.
 	local newRoadList = [end];
@@ -142,6 +148,21 @@ function BuildShipYardAction::Execute() {
 	CallActionHandlers();
 	totalCosts = accounter.GetCosts();
 	return true;
+}
+
+function BuildShipYardAction::RemoveBuoys() {
+	if (connection.pathInfo == null || connection.pathInfo.roadList == null)
+		return;
+	waterRoute = connection.pathInfo.roadList;
+	for (local i = 0; i < waterRoute.len(); i++) {
+		if (AIMarine.IsBuoyTile(roadList[i].tile)) {
+			/// @todo It would be better to first check if there are any ships that have orders to go via this buoy
+			/// @todo but currently there is no API to access all vehicles with orders via a specific waypoint
+			// Since we are currently not reusing buoys on purpose the only way this could happen is when we
+			// try to build a buoy on a tile that already has a buoy which will probably be a rare case which we will accept for now.
+			AIMarine.RemoveBuoy(roadList[i].tile);
+		}
+	}
 }
 
 function BuildShipYardAction::BuildDepot(roadList, fromTile) {
