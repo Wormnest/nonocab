@@ -357,6 +357,20 @@ function ConnectionAdvisor::GetReports() {
 
 		if (isAlreadyTransportingCargo)
 			continue;
+		
+		if (connection.bilateralConnection) {
+			// In case of a bilateral connection the To node should also not be used yet for the cargo we want to transport.
+			local isAlreadyTransportingCargo = false;
+			foreach (activeConnection in report.connection.travelToNode.activeConnections) {
+				if (activeConnection.cargoID == report.connection.cargoID) {
+					isAlreadyTransportingCargo = true;
+					break;
+				}
+			}
+
+			if (isAlreadyTransportingCargo)
+				continue;
+		}
 
 		if (connection.forceReplan || report.isInvalid) {
 			// Only mark a connection as invalid if it's the same report!
