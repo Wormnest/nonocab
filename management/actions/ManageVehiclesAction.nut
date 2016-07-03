@@ -432,7 +432,7 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 					AIOrder.InsertOrder(vehicleID, order, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					order++;
 				}
-				else if (breakdowns && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+				else if (AIMarine.IsWaterDepotTile(roadList[i].tile)) {
 					result = AIOrder.InsertOrder(vehicleID, order, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					break;
 				}
@@ -445,7 +445,7 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 					AIOrder.InsertOrder(vehicleID, order, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					order++;
 				}
-				else if (breakdowns && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+				else if (AIMarine.IsWaterDepotTile(roadList[i].tile)) {
 					result = AIOrder.InsertOrder(vehicleID, order, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					break;
 				}
