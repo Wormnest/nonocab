@@ -4,6 +4,7 @@
  * - Make routes longer.
  * - Updating to newer engines.
  * - Etc.
+ * Wormnest: This class seems not to be used currently (commented out in main.nut).
  */
 class UpgradeConnectionAdvisor extends Advisor/*, ConnectionListener */ {
 	
