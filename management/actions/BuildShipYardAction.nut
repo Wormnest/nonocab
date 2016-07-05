@@ -47,7 +47,7 @@ function BuildShipYardAction::Execute() {
 		}
 	} else {
 		acceptingTiles.Valuate(AITile.IsWaterTile);
-		acceptingTiles.KeepValue(1);	
+		acceptingTiles.KeepValue(1);
 		pathFinder.pathFinderHelper.endLocationIsBuildOnWater = true;
 	}
 
@@ -66,14 +66,15 @@ function BuildShipYardAction::Execute() {
 	if (AITown.GetRating(AITile.GetClosestTown(acceptingTiles.Begin()), AICompany.COMPANY_SELF) < -200) {
 		FailedToExecute("No point found to build the docks");
 		return false;
-	}	
-	
+	}
+
 	local pathInfo = pathFinder.FindFastestRoad(producingTiles, acceptingTiles, true, true, stationType, AIMap.DistanceManhattan(fromNode.GetLocation(), toNode.GetLocation()) * 3, null);
 
 	if (pathInfo == null) {
 		FailedToExecute("No point found to build the docks");
 		return false;
 	}
+
 	connection.pathInfo = pathInfo;
 	local roadList = connection.pathInfo.roadList;
 	local toTile = roadList[0].tile;
@@ -90,6 +91,7 @@ function BuildShipYardAction::Execute() {
 		AIMarine.RemoveDock(fromTile);
 		return false;
 	}
+	/// @todo Now build 2 buoys right in front of our docks. That way nobody else can accidentally build something there which could block our ships!
 
 	local start = AnnotatedTile();
 	start.tile = fromTile;
