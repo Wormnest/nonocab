@@ -116,6 +116,9 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 		local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 
 		foreach (neighbour in neighbours) {
+			// First check to make sure there are no obstacles in front of our proposed dock.
+			if (!CheckForWaterObstacles(neighbour))
+				continue;
 			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd)) {
 				newList.AddTile(neighbour.tile);
 				// We need to be able to find the correct approach direction for end points.
@@ -124,6 +127,21 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 		}
 	}
 	return newList;
+}
+
+/**
+ * Check if there are any obstacles on the water on the 2 tiles straight in front of our dock candidate position.
+ * @param at The tile data of the proposed dock part that is in the water.
+ * @return Boolean true or false Whether we can safely build a dock here or not.
+ */
+function WaterPathFinderHelper::CheckForWaterObstacles(at) {
+	local tile = at.tile + at.direction;
+	if (!AITile.IsWaterTile(tile) || AIMarine.IsWaterDepotTile(tile))
+		return false;
+	tile = tile + at.direction;
+	if (!AITile.IsWaterTile(tile) || AIMarine.IsWaterDepotTile(tile))
+		return false;
+	return true;
 }
 
 function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
