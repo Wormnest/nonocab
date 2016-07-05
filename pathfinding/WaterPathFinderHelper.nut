@@ -6,6 +6,8 @@ class WaterPathFinderHelper extends PathFinderHelper {
 	startLocationIsBuildOnWater = false;
 	endLocationIsBuildOnWater = false;
 	
+	endDirections = null;								///< AIList tile, direction for endpoints because we need the correct approach direction
+	
 	vehicleType = AIVehicle.VT_WATER;
 	
 	constructor() {
@@ -13,6 +15,7 @@ class WaterPathFinderHelper extends PathFinderHelper {
 				   AIMap.GetTileIndex(1, 1), AIMap.GetTileIndex(1, -1), AIMap.GetTileIndex(-1, -1), AIMap.GetTileIndex(-1, 1)];
 		straightOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 		emptyList = AIList();
+		endDirections = AIList();
 	}
 
 	/**
@@ -113,8 +116,11 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 		local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 
 		foreach (neighbour in neighbours) {
-			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd))
+			if (callbackFunction(annotatedTile, neighbour, heap, expectedEnd)) {
 				newList.AddTile(neighbour.tile);
+				// We need to be able to find the correct approach direction for end points.
+				endDirections.AddItem(neighbour.tile, neighbour.direction);
+			}
 		}
 	}
 	return newList;
@@ -179,17 +185,20 @@ function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) 
 
 
 function WaterPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closedList) {
-	at.tile = at.tile + at.direction;
-	// If we need to check the end positions then we either have to be able to build a road station
-	// Either the slope is flat or it is downhill, othersie we can't build a depot here
-	// Don't allow a tunnel to be near the planned end points because it can do terraforming, there by ruining the prospected location.
+	// The direction of the end item can be different from the direction we are coming from with our path.
+	// Therefore we need to use the direction of the target end point or we may build the dock in a different direction
+	// than we wanted. This may cause the end point to be outside the acceptance range of an accepting industry!
+	local endDirection = -endDirections.GetValue(at.tile);
+	at.tile = at.tile + endDirection;
+
+	// If we need to check the end positions end it's not built on water then we have to be able to build a dock.
 	if (checkEndPositions && (endLocationIsBuildOnWater || !AIMarine.BuildDock(at.tile, AIStation.STATION_NEW))) {
 
-		at.tile = at.tile - at.direction;
-		// Something went wrong, the original end point isn't valid anymore! We do a quick check and remove any 
-		// endpoints that aren't valid anymore.
+		at.tile = at.tile - endDirection;
+		// Something went wrong, the original end point isn't valid anymore! Remove it.
 		end.RemoveTile(at.tile);
 
+		// Are there any end points left?
 		if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
 			return null;
