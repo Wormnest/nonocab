@@ -14,7 +14,7 @@ class BuildConnectionAction extends Action {
 
 function BuildConnectionAction::FailedToExecute(reason) {
 	if (reason != null)
-		Log.logError("Failed to build the connection, because: " + reason);
+		Log.logWarning("Failed to build the connection. Reason: " + reason);
 	
 	// If the connection wasn't built before we need to inform the connection that we need to replan because we are unable to built it.
 	if (!connection.pathInfo.build)
