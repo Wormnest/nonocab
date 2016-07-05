@@ -96,6 +96,8 @@ function WaterPathFinderHelper::GetTime(roadList, engineID, forward) {
 }
 
 function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, heap, expectedEnd) {
+
+	/// @todo Check: This seems unnecessary as this valuate is also done in BuildShipYardAction.
 	tileList.Valuate(AITile.IsCoastTile);
 	tileList.KeepValue(1);
 
@@ -112,9 +114,10 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 		annotatedTile.tile = i;
 		annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 		
-		// We preprocess all start nodes to see if a road station can be build on them.
+		// We preprocess all start nodes to see if it is a valid water tile as required by the second tile of a dock.
 		local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 
+		// The way docks are supposed to be built probably even makes it unnecessary to use a foreach since there should be only one neighbour in this case.
 		foreach (neighbour in neighbours) {
 			// First check to make sure there are no obstacles in front of our proposed dock.
 			if (!CheckForWaterObstacles(neighbour))
@@ -196,6 +199,7 @@ function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) 
 			return true;
 		}, null, null);
 
+		// Replace endList with new endpoints that all end in the water on a tile in front of a coast tile where a dock can be built.
 		endList.Clear();
 		endList.AddList(newEndList);
 	}
