@@ -325,12 +325,14 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 			AIOrder.AppendOrder(vehicleID, connection.pathInfo.depotOtherEnd, AIOrder.OF_NONE | extraOrderFlags);
 
 		// If it's a ship, give it additional orders!
+		// We now always add one depot order even with breakdowns on. This way if we use autoreplacement to upgrade a ship it can be replaced when it visits the depot.
 		if (vehicleType == AIVehicle.VT_WATER) {
 			local once = false;
 			for (local i = 1; i < roadList.len() - 1; i++) {
 				if (AIMarine.IsBuoyTile(roadList[i].tile))
 					AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-				else if (breakdowns && !once && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+				else if (!once && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+					// No check for breakdowns since we need at least one depot order for autoreplacement.
 					AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					once = true;
 				}
@@ -364,12 +366,14 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 
 		// If it's a ship, give it additional orders! (and also to depot order if breakdowns are on)
 		// The go to depot order needs to be done together with the buoy orders because sometimes the depot comes after several buoys.
+		// We now always add one depot order even with breakdowns on. This way if we use autoreplacement to upgrade a ship it can be replaced when it visits the depot.
 		if (vehicleType == AIVehicle.VT_WATER) {
 			local once = false;
 			for (local i = roadList.len() - 2; i > 0; i--) {
 				if (AIMarine.IsBuoyTile(roadList[i].tile))
 					AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
-				else if (breakdowns && !once && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+				else if (!once && AIMarine.IsWaterDepotTile(roadList[i].tile)) {
+					// No check for breakdowns since we need at least one depot order for autoreplacement.
 					AIOrder.AppendOrder(vehicleID, roadList[i].tile, AIOrder.OF_NONE | extraOrderFlags);
 					once = true;
 				}
