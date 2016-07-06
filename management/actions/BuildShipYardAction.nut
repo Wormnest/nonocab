@@ -181,6 +181,8 @@ function BuildShipYardAction::BuildDepot(roadList, fromTile) {
 		
 		local pos = roadList[i].tile;		// First tile of depot
 		local pos2 = pos + tilesAround[1];	// Second tile of depot
+		
+		/// @todo Which of the two positions we check first should depend on the direction. We should prefer building it in the direction the path is going.
 
 		// A water depot should be able to be reached through water from either the top or bottom short side.
 		// Besides that we need to make sure that it does not block on any side a water depot or dock
