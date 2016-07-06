@@ -114,7 +114,8 @@ class Report
 			if (!connection.pathInfo.build)
 				initialCost += BuildShipYardAction.GetCosts();
 
-			loadingTime = 22;
+			// Docks can handle multiple ships so don't check for a maximum number we can handle.
+			loadingTime = 0;
 		} else if (veh_type == AIVehicle.VT_RAIL) {
 			if (connection.pathInfo.roadList != null && connection.pathInfo.vehicleType == AIVehicle.VT_RAIL) {
 				if (!connection.pathInfo.build) {

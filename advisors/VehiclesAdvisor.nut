@@ -179,8 +179,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
 			continue;
 		
-		// Make sure we don't build more vehicles than the line can handle. Except for roadvehicles since we currently don't compute maxVehicles there.
-		if (report.nrVehicles > 0 && !isRoad) {
+		// Make sure we don't build more vehicles than the line can handle. Except for road and water vehicles since we currently don't compute maxVehicles there.
+		if (report.nrVehicles > 0 && !isRoad && !isShip) {
 			if (report.nrVehicles + nrVehicles > report.maxVehicles) {
 				local wanted = report.nrVehicles;
 				report.nrVehicles = report.maxVehicles - nrVehicles;
