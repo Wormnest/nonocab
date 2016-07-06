@@ -238,7 +238,12 @@ class Report
 
 		// Calculate the maximum number of vehicles this line supports.
 		if (loadingTime != 0) {
-			maxVehicles = (travelTimeTo / loadingTime).tointeger() + (travelTimeFrom / loadingTime).tointeger();
+			maxVehicles = ((travelTimeTo + travelTimeFrom) / loadingTime).tointeger();
+			// If this is an already existing route then keep at least 1 vehicle.
+			// It may have changed to 0 because of introduction of a new faster vehicle but as long as it is making a profit that's ok.
+			if (connection.pathInfo != null && connection.pathInfo.build && maxVehicles == 0)
+				maxVehicles = 1;
+			
 			Log.logDebug("Maximum number of vehicles this route can handle: " + maxVehicles);
 			if (nrVehicles > maxVehicles) {
 				Log.logDebug("Reduced max nr. vehicles on line " + connection.travelFromNode.GetName() + " " + connection.travelToNode.GetName() + " from " + nrVehicles + " to " + maxVehicles + "{" + AICargo.GetCargoLabel(connection.cargoID));
