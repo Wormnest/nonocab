@@ -322,19 +322,19 @@ function NoCAB::Start()
 				if (connection.vehicleTypes == AIVehicle.VT_WATER) {
 					++numberOfShips;
 					shipPercentageErrors.push(percentageError / numberOfVehicles);
-					Log.logWarning("SHIP CONNECTION: " + percentageList);
+					Log.logInfo("SHIP CONNECTION: " + percentageList);
 				} else if (connection.vehicleTypes == AIVehicle.VT_RAIL) {
 					++numberOfTrains;
 					trainPercentageErrors.push(percentageError / numberOfVehicles);
-					Log.logWarning("TRAIN CONNECTION: " + percentageList);
+					Log.logInfo("TRAIN CONNECTION: " + percentageList);
 				} else if (connection.vehicleTypes == AIVehicle.VT_ROAD) {
 					++numberOfTrucks;
 					truckPercentageErrors.push(percentageError / numberOfVehicles);
-					Log.logWarning("TRUCK CONNECTION: " + percentageList);
+					Log.logInfo("TRUCK CONNECTION: " + percentageList);
 				} else if (connection.vehicleTypes == AIVehicle.VT_AIR) {
 					++numberOfAirplanes;
 					airplanePercentageErrors.push(percentageError / numberOfVehicles);
-					Log.logWarning("AEROPLANE CONNECTION: " + percentageList);
+					Log.logInfo("AEROPLANE CONNECTION: " + percentageList);
 				} else {
 					assert (false);
 				}
@@ -353,7 +353,7 @@ function NoCAB::Start()
 			}
 		}
 			
-		Log.logWarning(counter + " vehicles in spected.");
+		Log.logWarning(counter + " vehicles inspected.");
 		if (numberOfShips > 0) {
 			Log.logWarning("Ships: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
 			DrawHistogram(0.37, 3, 0.25, shipPercentageErrors);
