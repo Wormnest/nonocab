@@ -176,12 +176,24 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 
 		// If we want to build vehicles make sure we can actually build them!
-		if (report.nrVehicles > 0 && !GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
-			continue;
-		
-		// Make sure we don't build more vehicles than the line can handle. Except for road and water vehicles since we currently don't compute maxVehicles there.
-		if (report.nrVehicles > 0 && !isRoad && !isShip) {
-			if (report.nrVehicles + nrVehicles > report.maxVehicles) {
+		if (report.nrVehicles > 0) {
+			if (!GameSettings.GetMaxBuildableVehicles(AIEngine.GetVehicleType(report.transportEngineID)))
+				continue;
+			// Don't add any vehicles if the actual earnings are a lot lower than we expected.
+			else if (connection.expectedAvgEarnings != null && connection.actualAvgEarnings != null &&
+				connection.actualAvgEarnings * 3 < connection.expectedAvgEarnings) {
+				// If earnings are negative and this is not a new connection then even decrease the amount of vehicles until we have 1 left.
+				if (connection.actualAvgEarnings < 0 && nrVehicles > 1 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) > 1000) {
+					Log.logDebug("Decreasing number of vehicles since we have negative earnings.");
+					report.nrVehicles = -1;
+				}
+				else {
+					Log.logDebug("Not adding vehicles since the average earnings are a lot worse than expected earnings.");
+					continue;
+				}
+			}
+			// Make sure we don't build more vehicles than the line can handle. Except for road and water vehicles since we currently don't compute maxVehicles there.
+			else if (!isRoad && !isShip && report.nrVehicles + nrVehicles > report.maxVehicles) {
 				local wanted = report.nrVehicles;
 				report.nrVehicles = report.maxVehicles - nrVehicles;
 				Log.logWarning("Reduced vehicles to add from " + wanted + " to " + report.nrVehicles + " since it was more than this route can handle.");
