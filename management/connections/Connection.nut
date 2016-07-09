@@ -460,7 +460,6 @@ class Connection {
 		//Log.logDebug("Connection: UpdateAfterBuild");
 		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
 			vehicleGroupID = AIGroup.CreateGroup(vehicleType);
-			AIGroup.SetName(vehicleGroupID, travelFromNode.GetName() + " to " + travelToNode.GetName());
 			// Group names have a max length.
 			// If you try to set it to something longer the groupname doesn't get changed.
 			// However the last characters are not shown in the gui, instead "..." is shown, so use 28 as max
@@ -486,6 +485,11 @@ class Connection {
 					break;
 				namelen--;
 				groupname = groupname.slice(0, namelen);
+			}
+			if (AIGroup.GetName(vehicleGroupID) != groupname) {
+				// One last try
+				groupname = "" + vehicleGroupID + " " + fromName + " - " + toName;
+				AIGroup.SetName(vehicleGroupID, groupname);
 			}
 			Log.logDebug("Set group name for group " + vehicleGroupID + " for connection " + ToString() + " to " + groupname);
 			if (AIGroup.GetName(vehicleGroupID) != groupname)
