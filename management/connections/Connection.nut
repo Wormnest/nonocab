@@ -68,6 +68,28 @@ class Connection {
 		pathInfo.LoadData(data["pathInfo"], vehicleTypes);
 		vehicleGroupID = data["vehicleGroupID"];
 		
+		// Get current best engines from the newest vehicle in this group if possible
+		if (AIGroup.IsValidGroup(vehicleGroupID)) {
+			local vehicles = AIVehicleList_Group(vehicleGroupID);
+			vehicles.Valuate(AIVehicle.GetAge);
+			vehicles.KeepBottom(1);
+			local vehicle = vehicles.Begin();
+			if (vehicle != null) {
+				local transportEngineID = AIVehicle.GetEngineType(vehicle);
+				if (AIEngine.IsValidEngine(transportEngineID)) {
+					bestTransportEngine = transportEngineID;
+					if (vehicleTypes != AIVehicle.VT_RAIL)
+						bestHoldingEngine = transportEngineID;
+					else {
+						local wagon = AIVehicle.GetWagonEngineType(vehicle,0);
+						if (AIEngine.IsValidEngine(wagon) && AIEngine.IsWagon(wagon)) {
+							bestHoldingEngine = wagon;
+						}
+					}
+				}
+			}
+		}
+		
 		UpdateAfterBuild(vehicleTypes, pathInfo.roadList[pathInfo.roadList.len() - 1].tile, pathInfo.roadList[0].tile, AIStation.GetCoverageRadius(AIStation.GetStationID(pathInfo.roadList[0].tile)));
 	}
 	
