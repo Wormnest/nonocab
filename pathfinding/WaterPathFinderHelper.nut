@@ -160,6 +160,9 @@ function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStar
 			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
 				
 			foreach (neighbour in neighbours) {
+				// Make sure nothing is obstructing our reaching the dock position on the water industry.
+				if (!CheckForWaterObstacles(neighbour))
+					continue;
 				local offset = annotatedTile.tile - neighbour.tile;
 	
 				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
@@ -194,15 +197,38 @@ function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStar
 
 function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 
+	local newEndList = null;
 	if (!endLocationIsBuildOnWater) {
-		local newEndList = ProcessNeighbours(endList, function(annotatedTile, neighbour, heap, expectedEnd) {
+		newEndList = ProcessNeighbours(endList, function(annotatedTile, neighbour, heap, expectedEnd) {
 			return true;
 		}, null, null);
 
-		// Replace endList with new endpoints that all end in the water on a tile in front of a coast tile where a dock can be built.
-		endList.Clear();
-		endList.AddList(newEndList);
 	}
+	else {
+		// Since we need to make sure we can approach the docking position on the industry we have to
+		// process the endList here too even though we don't need to replace it with neighbours.
+		newEndList = AITileList();
+		foreach (i, value in endList) {
+			local annotatedTile = AnnotatedTile();
+			annotatedTile.tile = i;
+			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
+			
+			// We preprocess all end nodes to make sure we can reach the docking position
+			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
+				
+			foreach (neighbour in neighbours) {
+				// Make sure nothing is obstructing our reaching the dock position on the water industry.
+				if (!CheckForWaterObstacles(neighbour))
+					continue;
+				// In this case we shouldn't add the neighbour to the endList but our original tile. After that we can stop looking at neighbours.
+				newEndList.AddTile(i);
+				break;
+			}
+		}
+	}
+	// Replace endList with new endpoints that all end in the water on a tile in front of a coast tile where a dock can be built.
+	endList.Clear();
+	endList.AddList(newEndList);
 }
 
 
