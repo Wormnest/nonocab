@@ -215,6 +215,14 @@ function VehiclesAdvisor::Update(loopCounter) {
 				Log.logInfo("We advise to sell " + (-report.nrVehicles) + " vehicles.");
 			reports.push(report);
 		}
+		else if (nrVehicles == 0) {
+			// If the connection doesn't have vehicles and we don't want to add any the push the report.
+			// That way we can decide to remove the whole connection in GetReports().
+			Log.logInfo("We advise to remove the connection.");
+			reports.push(report);
+		}
+		else
+			Log.logDebug("No changes needed.");
 	}
 	Log.logInfo("Done evaluating existing connections.");
 }
