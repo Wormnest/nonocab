@@ -86,6 +86,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			//Log.logWarning("Invalid report for connection " + connection.ToString());
 			continue;
 		}
+		local reportedVehiclesNeeded = report.nrVehicles;
 		report.nrVehicles = 0;
 		
 		local stationDetails = GetVehiclesWaiting(AIStation.GetLocation(connection.pathInfo.travelFromNodeStationID), connection);
@@ -174,6 +175,13 @@ function VehiclesAdvisor::Update(loopCounter) {
 		// If we want to sell vehicle but the road isn't old enough, don't!
 		else if (report.nrVehicles < 0 && (Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) < 100 || dropoffOverload))
 			continue;
+
+		// If this connection has just one vehicle make sure it is profitable otherwise remove it.
+		// High rating means we probably are waiting too long to get filled. Low production means we are probably not getting a lot of cargo at any time.
+		else if (nrVehicles == 1 && rating > 70 && production < 10 && reportedVehiclesNeeded < -10 && Date.GetDaysBetween(AIDate.GetCurrentDate(), connection.pathInfo.buildDate) > 1000) {
+			Log.logDebug("The only vehicle on this route is performing bad.");
+			report.nrVehicles = -1; // Remove the last vehicle.
+		}
 
 		// If we want to build vehicles make sure we can actually build them!
 		if (report.nrVehicles > 0) {
