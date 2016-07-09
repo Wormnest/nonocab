@@ -26,6 +26,9 @@ class Connection {
 	bilateralConnection = null;     // If this is true, cargo is carried in both directions.
 	connectionManager = null;       // Updates are send to all listeners when connection is realised, demolished or updated.
 
+	expectedAvgEarnings = null;		///< The expected earnings per vehicles per year
+	actualAvgEarnings = null;		///< The real per vehicle per year earnings the last time we could make a computation.
+
 	forceReplan = null;		// Force this connection to be replanned.
 	
 	bestTransportEngine = null;

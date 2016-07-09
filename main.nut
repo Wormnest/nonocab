@@ -230,6 +230,8 @@ function NoCAB::Start()
 		local counter = 0;
 			
 		foreach (connection in connectionManager.allConnections) {
+			connection.expectedAvgEarnings = null;
+			connection.actualAvgEarnings = null;
 			local allVehiclesInGroup = AIVehicleList_Group(connection.vehicleGroupID);
 			local cargoIDTransported = connection.cargoID;
 			
@@ -337,7 +339,17 @@ function NoCAB::Start()
 					assert (false);
 				}
 				
-				Log.logWarning("Prospected avg earnings: " + (prospectedAvgEarnings / numberOfVehicles) + " v.s. actual avg earnings: " + (actualAvgEarnings / numberOfVehicles));
+				local prospectedAverageEarnings = prospectedAvgEarnings / numberOfVehicles;
+				local actualAverageEarnings = actualAvgEarnings / numberOfVehicles;
+				connection.expectedAvgEarnings = prospectedAverageEarnings;
+				connection.actualAvgEarnings = actualAverageEarnings;
+				local infoString = "Prospected avg earnings: " + prospectedAverageEarnings + ", actual avg earnings: " + actualAverageEarnings +
+					" for connection " + connection.ToString();
+				// Show the info as a Warning in case of negative earnings or when earnings are less than a third of what we expected.
+				if (actualAverageEarnings < 0 || actualAverageEarnings * 3 < prospectedAverageEarnings)
+					Log.logWarning(infoString);
+				else
+					Log.logInfo(infoString);
 			}
 		}
 			
