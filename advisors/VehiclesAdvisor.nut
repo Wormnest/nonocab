@@ -202,7 +202,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 			else if (!isRoad && !isShip && report.nrVehicles + nrVehicles > report.maxVehicles) {
 				local wanted = report.nrVehicles;
 				report.nrVehicles = report.maxVehicles - nrVehicles;
-				Log.logWarning("Reduced vehicles to add from " + wanted + " to " + report.nrVehicles + " since it was more than this route can handle.");
+				Log.logDebug("Reduced vehicles to add from " + wanted + " to " + report.nrVehicles + " since it was more than this route can handle.");
 			}
 		}
 
@@ -222,7 +222,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 		else
 			Log.logDebug("No changes needed.");
 	}
-	Log.logInfo("Done evaluating existing connections.");
+	Log.logInfo("Done evaluating existing connections. We added " + reports.len() + " reports.");
 }
 
 /**
@@ -232,6 +232,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 function VehiclesAdvisor::GetReports() {
 	local reportsToReturn = [];
 	local report;
+	
+	Log.logDebug("VehiclesAdvisor: Get " + reports.len() + " reports.");
 	
 	foreach (report in reports) {
 	
