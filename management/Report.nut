@@ -148,7 +148,7 @@ class Report
 			initialCostPerVehicle += AIEngine.GetPrice(holdingEngineID) * nrWagonsPerVehicle;
 			// Check if the current rail type of this connection is such that the new
 			// train cannot run on it.
-			if (connection != null && connection.pathInfo.build) {
+			if (connection.pathInfo.build) {
 				local railTypeOfConnection = AIRail.GetRailType(connection.pathInfo.depot);
 				local foundRailTrack = -1;
 				local l = AIRailTypeList();
