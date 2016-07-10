@@ -4,7 +4,7 @@ require("management/include.nut");
 require("advisors/include.nut");
 require("pathfinding/include.nut");
 
-class NoCAB extends AIController {
+class NoNoCAB extends AIController {
 	stop = false;
    	parlement = null;
    	world = null;
@@ -26,7 +26,7 @@ class NoCAB extends AIController {
 }
 
 /// Function to check the Log Level AI setting.
-function NoCAB::CheckLogLevel()
+function NoNoCAB::CheckLogLevel()
 {
 	// Since this is a class variable of a class that doesn't get instantiated
 	// we have to set it in the global table.
@@ -36,15 +36,15 @@ function NoCAB::CheckLogLevel()
 		Log.logDebug("Changed log level to " + Log.logLevel);
 }
 
-function NoCAB::Save() { 
-	Log.logInfo("Saving game using version " + minimalSaveVersion + "... (might take a while...)");
+function NoNoCAB::Save() { 
+	Log.logInfo("Saving game using version " + minimalSaveVersion);
 	local saveTable = {};
 	if (initialized) {
 		saveTable["SaveVersion"] <- minimalSaveVersion;
 		pathFixer.SaveData(saveTable);
 		world.SaveData(saveTable);
 		connectionManager.SaveData(saveTable);
-		Log.logInfo("Save successful!" + saveTable["SaveVersion"]);
+		Log.logInfo("Save successful!");
 	} else {
 		// If we didn't initialize the AI yet, make the savegame invalid.
 		Log.logWarning("Can't save, we haven't finished initializing yet!");
@@ -66,19 +66,19 @@ function NoCAB::Save() {
 	return saveTable;
 }
 
-function NoCAB::Load(version, data) {
+function NoNoCAB::Load(version, data) {
 	CheckLogLevel();
 	local saveVersion = data["SaveVersion"];
 	if (saveVersion != minimalSaveVersion) {
 		// Wormnest: If you set MinVersionToLoad in info.nut correctly you will never arrive here.
-		Log.logWarning("Saved version is incompatible with this version of NoCAB!");
+		Log.logWarning("Saved version is incompatible with this version of NoNoCAB!");
 		Log.logWarning("Only save version " + minimalSaveVersion + " is supported, your version is: " + saveVersion);
 		return;
 	}
 	loadData = data;
 }
 
-function NoCAB::Start()
+function NoNoCAB::Start()
 {
 	// Initialize the AI.
 /*	local l = AIRailTypeList();
@@ -205,7 +205,7 @@ function NoCAB::Start()
 	foreach (advisor in advisors)
 		planner.AddThread(advisor);
 
-	// Determine how much NoCAB is going to get into politics.
+	// Determine how much NoNoCAB is going to get into politics.
 	local politicHardness = GetSetting("Politics Setting");
 	local plantTrees = politicHardness > 0;
 	local buildStatues = politicHardness > 1;
@@ -473,7 +473,7 @@ function Sqrt(i) {
  
 
 /** Required by interface . */
-function NoCAB::Stop() {
+function NoNoCAB::Stop() {
 	this.stop = true;
 	logInfo("Stopped.");
 }
