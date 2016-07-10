@@ -189,8 +189,8 @@ function NoCAB::Start()
 	AICompany.SetPresidentName("B.C. Ridder");
 
 	// Set company name.
-	local companyName =  (GetSetting("NiceCAB") ? "NiceCAB" : "NoCAB");
-	local _version = " - v2.2b2";
+	local companyName =  "NoNoCAB";
+	local _version = " - v1.0";
 	if(!AICompany.SetName(companyName + _version)) {
 		local i = 2;
 		while(!AICompany.SetName(companyName + _version + " - #" + i)) { i++; }
