@@ -294,9 +294,10 @@ function VehiclesAdvisor::GetReports() {
 		else if(report.nrVehicles < 0)
 			vehicleAction.SellVehicles(report.transportEngineID, -report.nrVehicles, connection);
 		else // report.nrVehicles == 0: Remove the connection if there are no vehicles left.
-			if (AIVehicleList_Group(connection.vehicleGroupID).Count() == 0)
+			if (AIVehicleList_Group(connection.vehicleGroupID).Count() == 0) {
 				connection.Demolish(true, true, true);
-			
+				continue;
+			}
 
  		if (report.upgradeToRailType != null)
  			actionList.push(RailPathUpgradeAction(connection, report.upgradeToRailType));
