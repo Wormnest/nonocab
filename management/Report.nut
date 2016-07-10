@@ -152,22 +152,26 @@ class Report
 				local railTypeOfConnection = AIRail.GetRailType(connection.pathInfo.depot);
 				local foundRailTrack = -1;
 				local l = AIRailTypeList();
+				// The newest introduced rail types seem to come first
 				foreach (railTypeOfTrain, index in l) {
 					if (AIRail.IsRailTypeAvailable(railTypeOfTrain) && 
 						AIEngine.CanRunOnRail(transportEngineID, railTypeOfTrain) &&
 						AIEngine.HasPowerOnRail(transportEngineID, railTypeOfTrain) &&
-						AIRail.GetMaxSpeed(railTypeOfTrain) > AIRail.GetMaxSpeed(foundRailTrack) &&
-						AIRail.TrainCanRunOnRail(railTypeOfTrain, railTypeOfConnection) &&
-						AIRail.TrainHasPowerOnRail(railTypeOfTrain, railTypeOfConnection)) {
+						AIRail.GetMaxSpeed(railTypeOfTrain) > AIRail.GetMaxSpeed(foundRailTrack) && // Since newest railtypes are encountered first we don't use >= but >
+						AIRail.TrainCanRunOnRail(railTypeOfConnection, railTypeOfTrain) &&
+						AIRail.TrainHasPowerOnRail(railTypeOfConnection, railTypeOfTrain)) {
 						foundRailTrack = railTypeOfTrain;
+						//Log.logDebug("Rail upgrade: found track type " + AIRail.GetName(foundRailTrack));
 					}
 				}
 				
 				// Make sure we do not DOWNgrade the existing connection.
 				if (foundRailTrack > railTypeOfConnection) {
-					initialCost += RailPathUpgradeAction.GetCostForUpgrade(connection, foundRailTrack);
+					local upgradeCost = RailPathUpgradeAction.GetCostForUpgrade(connection, foundRailTrack);
+					initialCost += upgradeCost;
 					upgradeToRailType = foundRailTrack;
-					Log.logDebug("Best upgrade rail type: " + AIRail.GetName(foundRailTrack) + " for engine " + AIEngine.GetName(transportEngineID));
+					Log.logDebug("Best upgrade rail type: " + AIRail.GetName(foundRailTrack) + " for engine " + AIEngine.GetName(transportEngineID) +
+						", cost of upgrading: " + upgradeCost);
 				}
 				// Else, just build more trains :)
 			}
@@ -276,7 +280,7 @@ class Report
 		}
 		if (upgradeToRailType != null) {
 			// We want to upgrade the type of rail used.
-			result = result + ". Upgrade rail type to " + AIRail.GetName(upgradeToRailType);
+			result = result + ". Upgrade rail type to " + AIRail.GetName(upgradeToRailType) + ", cost: " + initialCost;
 		}
 
 		local veh_result = "";

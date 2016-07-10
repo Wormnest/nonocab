@@ -219,6 +219,10 @@ function VehiclesAdvisor::Update(loopCounter) {
 			Log.logInfo("We advise to remove the connection.");
 			reports.push(report);
 		}
+		else if (report.upgradeToRailType != null) {
+			Log.logInfo("We advise to upgrade the rails.");
+			reports.push(report);
+		}
 		else
 			Log.logDebug("No changes needed.");
 	}

@@ -191,7 +191,8 @@
 				continue;
 
 			// Keep reports which sell vehicles in a separate list, these reports will be included anyways.
-			if (reportListClone[i].nrVehicles < 0) {
+			// Also always keep reports that want to upgrade the rail type. Note: this may not always be correct for NewGRF railtypes but for now use this as best simple solution.
+			if (reportListClone[i].nrVehicles < 0 || reportListClone[i].upgradeToRailType != null) {
 				mandantoryReports.push(reportList[i]);
 				reportListClone.remove(i);
 				continue;
