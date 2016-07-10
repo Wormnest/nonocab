@@ -1,0 +1,5 @@
+syntax: glob
+**.bat
+**.py
+releases
+**.exc
