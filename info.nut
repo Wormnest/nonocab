@@ -1,16 +1,18 @@
+require("version.nut");
+
 class FNoCAB extends AIInfo {
-      function GetAuthor()    { return "Bram Ridder"; }
-      function GetName()      { return "WormCAB";	      }
-      function GetDescription()	{ return "Fixed version of NoCAB by Wormnest. Competitive AI which uses trains, trucks, busses, aircrafts and ships."; }
-      function GetVersion()	{ return 620; }
+      function GetAuthor()    { return "Bram Ridder, Jacob Boerema"; }
+      function GetName()      { return "NoNoCAB"; }
+      function GetDescription()	{ return "NoNoCAB is a fixed and improved version of NoCAB by Wormnest. It is a competitive AI which uses trains, trucks, buses, aircraft and ships."; }
+      function GetVersion()	{ return SELF_VERSION; }
       function MinVersionToLoad() { return 9; }
-      function GetDate()	{ return "2016-06-18"; }
+      function GetDate()	{ return SELF_DATE; }
       function CreateInstance()	{ return "NoCAB"; }
-      function GetShortName() { return "WCAB"; }
+      function GetShortName() { return "NoNo"; }
       function GetAPIVersion() { return "1.2"; }
-	  function GetURL()        { return "https://www.tt-forums.net/viewtopic.php?p=1170011#p1170011"; }
+	  function GetURL()        { return ""; }
 	  function GetSettings() {
-		AddSetting( { name = "NiceCAB", description = "NoCAB will try to stay away from already served industries", easy_value = 1, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
+		AddSetting( { name = "NiceCAB", description = "NoNoCAB will try to stay away from already served industries", easy_value = 1, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("NiceCAB", {_0 = "Disabled", _1 = "Enabled"});
 
 		AddSetting( { name = "Enable road vehicles", description = "Enable road vehicles", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
@@ -29,7 +31,7 @@ class FNoCAB extends AIInfo {
 		AddLabels("Allow trains town to town", {_0 = "No", _1 = "Yes (Doesn't perform well!)"});
 
 		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
-		AddLabels("Politics Setting", {_0 = "NoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues and an HQ to see who's boss", _3 = "Machiavellian - No one transports but NoCAB!"});
+		AddLabels("Politics Setting", {_0 = "NoNoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues and an HQ to see who's boss", _3 = "Machiavellian - No one transports but NoNoCAB!"});
 
 		// Developer setting to make it possible to change log level in a running game.
 		AddSetting({
