@@ -10,7 +10,7 @@ class FNoNoCAB extends AIInfo {
       function CreateInstance()	{ return "NoNoCAB"; }
       function GetShortName() { return "NONO"; }
       function GetAPIVersion() { return "1.2"; }
-	  function GetURL()        { return "x"; }
+	  function GetURL()        { return "https://www.tt-forums.net/viewtopic.php?f=65&t=75030"; }
 	  function GetSettings() {
 		AddSetting( { name = "NiceCAB", description = "NoNoCAB will try to stay away from already served industries", easy_value = 1, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("NiceCAB", {_0 = "Disabled", _1 = "Enabled"});
