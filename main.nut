@@ -3,6 +3,7 @@ require("data_structures/include.nut");
 require("management/include.nut");
 require("advisors/include.nut");
 require("pathfinding/include.nut");
+require("version.nut");
 
 class NoNoCAB extends AIController {
 	stop = false;
@@ -190,7 +191,7 @@ function NoNoCAB::Start()
 
 	// Set company name.
 	local companyName =  "NoNoCAB";
-	local _version = " - v1.0";
+	local _version = " - v" + SELF_VERSION;
 	if(!AICompany.SetName(companyName + _version)) {
 		local i = 2;
 		while(!AICompany.SetName(companyName + _version + " - #" + i)) { i++; }
