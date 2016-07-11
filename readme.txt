@@ -17,6 +17,9 @@ problems that you encounter.
 NoNoCAB forum topic:
 https://www.tt-forums.net/viewtopic.php?f=65&t=75030
 
+Requirements:
+NoNoCAB uses the AI library Queue.BinaryHeap.
+
 The original NoCAB is an AI by Morloth.
 
 Original forum topics:
