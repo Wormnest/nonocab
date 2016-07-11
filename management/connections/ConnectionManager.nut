@@ -266,7 +266,7 @@ function ConnectionManager::LoadData(data, world) {
 				unsuccessfulLoads++;
 				wantedConnections--;
 				local saved_to_id = ConnectionNode.GetIDFromUID(saved_to_uid);
-				if (log.logLevel == 0) {
+				if (Log.logLevel == 0) {
 					Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
 						", vehicle group " + savedConnectionData["vehicleGroupID"] +
 						" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]) +
