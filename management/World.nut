@@ -184,6 +184,7 @@ function World::InsertTown(town)
 	local townNode = TownConnectionNode(town);
 	local isNearWater = townNode.isNearWater;
 	local stationRadius = AIStation.GetCoverageRadius(AIStation.STATION_DOCK);
+	local rv_station_radius = AIStation.GetCoverageRadius(AIStation.STATION_BUS_STOP);
 	
 	// Make it easier to check whether a certain town is stored in our data or not.
 	town_table[town] <- townNode;
@@ -191,7 +192,10 @@ function World::InsertTown(town)
 	// Check if this town accepts something an industry creates.
 	foreach (cargo, dummyvalue in town_cargo_list) {
 		
-		if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, 1)) {
+		// Get acceptance based on radius of a roadvehicle station. Using a radius 1 instead may fail
+		// to find enough acceptance even though for the whole town there may be enough acceptance.
+		/// @todo Maybe we should completely remove this check and just depend on our checking for acceptance when we are looking for suitable connections.
+		if (AITile.GetCargoAcceptance(townNode.GetLocation(), cargo, 1, 1, rv_station_radius)) {
 			
 			// Check if this town is near to water.
 			if (!isNearWater) {
