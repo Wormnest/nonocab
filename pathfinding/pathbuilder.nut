@@ -304,7 +304,7 @@ function PathBuilder::RealiseConnection(buildRoadStations)
 //		local costs = account.GetCosts();
 //		Log.logDebug("Estimated costs: " + estimatedCost + " actual costs: " + costs);
 		if (result && !CheckPath(roadList)) {
-			Log.logWarning("Path build but with errors!!!");
+			Log.logWarning("Path was built but with errors!");
 			return false;
 		}
 
