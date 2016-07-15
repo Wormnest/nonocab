@@ -307,7 +307,7 @@ class Connection {
 		// Engines can expire so we also need to check that they are still buildable.
 		if ((vehicleType == this.vehicleTypes) && bestTransportEngine != null && bestHoldingEngine != null &&
 			AIEngine.IsBuildable(bestTransportEngine) && AIEngine.IsBuildable(bestHoldingEngine)) {
-			Log.logWarning("Keeping current best engine for existing connection " + ToString() + " - " + AIEngine.GetName(bestTransportEngine));
+			Log.logDebug("Keeping current best engine for existing connection " + ToString() + " - " + AIEngine.GetName(bestTransportEngine));
 			return [bestTransportEngine, bestHoldingEngine];
 		}
 		
