@@ -72,6 +72,17 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 		AIController.Sleep(1);
 	}
 
+	// There should be no tiles in start that are also defined in end.
+	// I've seen this happen when trying to build a water route where the path consisted of a begin and end tile on the same position.
+	// Note: This loop has to be done before ProcessEndPositions because the end tiles are changed in that function!
+	foreach (tile, value in end) {
+		if (start.HasItem(tile)) {
+			Log.logDebug("Removing tile " + tile + " from our start list since it's already defined in our end list.");
+			// We probably can just return null too since this probably means start and end are too close for a profitable route.
+			start.RemoveTile(tile);
+		}
+	}
+	
 	// Use the helper to prune all end positions which can't be reached.
 	pathFinderHelper.ProcessEndPositions(end, checkEndPositions);
 
