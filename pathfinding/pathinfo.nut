@@ -249,7 +249,16 @@ function PathInfo::GetTravelTime(engineID, forward) {
 
 	if (time > 0)
 		travelTimesCache[cacheID] <- time;
-	else
+	else {
+		Log.logWarning("Length roadList: " + roadList.len() + ", vehicleType: " + vehicleType);
+		if (roadList.len() < 2)
+			Log.logError("roadList too short!");
+		else {
+			Log.logWarning("Building signs at start and end points.");
+			AISign.BuildSign(roadList[0].tile,"0");
+			AISign.BuildSign(roadList[roadList.len()-1].tile,"1");
+		}
 		Log.logError("Computed TravelTime == 0! Something is wrong!");
+	}
 	return time;
 }
