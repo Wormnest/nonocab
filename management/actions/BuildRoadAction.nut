@@ -104,7 +104,7 @@ function BuildRoadAction::Execute() {
 		local roadVehicleType = AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) ? AIRoad.ROADVEHTYPE_BUS : AIRoad.ROADVEHTYPE_TRUCK; 
 		if (!BuildRoadStation(transportingEngineIsArticulated, roadToBuild[0].tile, roadToBuild[1].tile, roadVehicleType, true) ||
 		    !BuildRoadStation(transportingEngineIsArticulated, roadToBuild[roadListLength - 1].tile, roadToBuild[roadListLength - 2].tile, roadVehicleType, connection.pathInfo.build)) {
-			FailedToExecute("Road station couldn't be build! " + AIError.GetLastErrorString());
+			FailedToExecute("Road station couldn't be built! " + AIError.GetLastErrorString());
 			return false;
 		}
 		
