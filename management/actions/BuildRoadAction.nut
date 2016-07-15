@@ -20,15 +20,6 @@ class BuildRoadAction extends BuildConnectionAction
 	}
 }
 
-function BuildRoadAction::FailedToExecute(reason) {
-	if (reason != null)
-		Log.logError("Failed to build the road connection, because: " + reason);
-	
-	// If the connection wasn't built before we need to inform the connection that we need to replan because we are unable to built it.
-	if (!connection.pathInfo.build)
-		connection.forceReplan = true;
-}
-
 function BuildRoadAction::Execute() {
 	local info = "";
 	if (!connection.pathInfo.build)
