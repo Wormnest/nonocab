@@ -433,13 +433,16 @@ function ConnectionManager::ConnectionRealised(connection) {
 }
 
 function ConnectionManager::ConnectionDemolished(connection) {
-	
+	local found = false;
 	for (local i = 0; i < allConnections.len(); i++) {
 		if (allConnections[i] == connection) {
 			allConnections.remove(i);
+			found = true;
 			break;
 		}
 	}
+	if (!found)
+		Log.logError("ConnectionDemolished: Couldn't find connection to remove! " + connection.ToString());
 	
 	foreach (listener in connectionListeners)
 		listener.ConnectionDemolished(connection);
@@ -450,7 +453,12 @@ function ConnectionManager::PrintConnections()
 	Log.logInfo("We currently have " + allConnections.len() + " connections.");
 	foreach (connection in allConnections) {
 		local engine = (connection.bestTransportEngine == null ? "" : ", engine: " + AIEngine.GetName(connection.bestTransportEngine));
-		Log.logInfo("Connection: " + connection.ToString() + ", group: " + AIGroup.GetName(connection.vehicleGroupID) +
+		local vehGroup = connection.vehicleGroupID;
+		if (vehGroup == null) {
+			Log.logError("Vehicle group ID is null!");
+			vehGroup = -1;
+		}
+		Log.logInfo("Connection: " + connection.ToString() + ", group: " + vehGroup + " = " + AIGroup.GetName(vehGroup) +
 			engine + ", vehicle count: " + connection.GetNumberOfVehicles());
 	}
 }

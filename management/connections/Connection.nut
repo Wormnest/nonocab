@@ -543,9 +543,11 @@ class Connection {
 	 * Destroy this connection.
 	 */
 	function Demolish(destroyFrom, destroyTo, destroyDepots) {
-		if (!pathInfo.build)
+		if (!pathInfo.build) {
+			Log.logError("We tried to demolish a connection that wasn't built yet! Connection: " + ToString());
 			return;
 			//assert(false);
+		}
 			
 		Log.logWarning("Demolishing connection from " + travelFromNode.GetName() + " to " + travelToNode.GetName());
 		
@@ -638,17 +640,25 @@ class Connection {
 		}
 		
 		for (local i = 0; i < travelFromNode.activeConnections.len(); i++) {
+			local found = false;
 			if (travelFromNode.activeConnections[i] == this) {
 				travelFromNode.activeConnections.remove(i);
+				found = true;
 				break;
 			}
+			if (!found)
+				Log.logError("Demolish: From Node not found! " + ToString());
 		}
 		
 		for (local i = 0; i < travelToNode.reverseActiveConnections.len(); i++) {
+			local found = false;
 			if (travelToNode.reverseActiveConnections[i] == this) {
 				travelToNode.reverseActiveConnections.remove(i);
+				found = true;
 				break;
 			}
+			if (!found)
+				Log.logError("Demolish: To Node not found! " + ToString());
 		}
 
 		connectionManager.ConnectionDemolished(this);
