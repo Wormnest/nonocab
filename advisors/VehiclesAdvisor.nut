@@ -76,7 +76,8 @@ function VehiclesAdvisor::Update(loopCounter) {
 			continue;
 		}
 		
-		Log.logDebug("Check connection: " + connection.ToString());
+		local connectionString = connection.ToString();
+		Log.logDebug("Check connection: " + connectionString);
 
 		connection.lastChecked = currentDate;
 		local report = connection.CompileReport(connection.vehicleTypes);
@@ -208,19 +209,19 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		if (report.nrVehicles != 0) {
 			if (report.nrVehicles > 0)
-				Log.logInfo("We advise to add " + report.nrVehicles + " vehicles.");
+				Log.logInfo("We advise to add " + report.nrVehicles + " vehicles to connection " + connectionString);
 			else
-				Log.logInfo("We advise to sell " + (-report.nrVehicles) + " vehicles.");
+				Log.logInfo("We advise to sell " + (-report.nrVehicles) + " vehicles of connection " + connectionString);
 			reports.push(report);
 		}
 		else if (nrVehicles == 0) {
 			// If the connection doesn't have vehicles and we don't want to add any the push the report.
 			// That way we can decide to remove the whole connection in GetReports().
-			Log.logInfo("We advise to remove the connection.");
+			Log.logInfo("We advise to remove the connection " + connectionString);
 			reports.push(report);
 		}
 		else if (report.upgradeToRailType != null) {
-			Log.logInfo("We advise to upgrade the rails.");
+			Log.logInfo("We advise to upgrade the rails of connection " + connectionString);
 			reports.push(report);
 		}
 		else
