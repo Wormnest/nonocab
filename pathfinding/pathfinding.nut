@@ -142,7 +142,7 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 			}
 		
 			resultList.push(resultTile);
-			Log.logWarning("Path found in " + (AIDate.GetCurrentDate() - startingDay) + " days.");
+			Log.logDebug("Path found in " + (AIDate.GetCurrentDate() - startingDay) + " days.");
 			return PathInfo(resultList, null, null, pathFinderHelper.vehicleType);
 		} else if (end.IsEmpty()) {
 			Log.logDebug("End list is empty, original goal isn't satisfiable anymore.");
