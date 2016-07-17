@@ -564,7 +564,20 @@ class Connection {
 						//Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleId) + " is being sent to depot.");
 						// Check if the vehicles is actually going to the depot!
 						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0) {
-							if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
+							if (vehicleTypes == AIVehicle.VT_WATER) {
+								// Can't send to depot because that may cause the ship to get lost.
+								// Instead set age at which to go to depot to 0.
+								AIOrder.SetOrderCompareValue(vehicleId, 0, 0);
+								// If the current order is full load then skip because the industry we are trying to load from may have vanished.
+								if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_FULL_LOAD_ANY) != 0) {
+									local nextOrder = AIOrder.ResolveOrderPosition(vehicleId, AIOrder.ORDER_CURRENT);
+									nextOrder++;
+									if (nextOrder == AIOrder.GetOrderCount(vehicleId))
+										nextOrder = 0;
+									AIOrder.SkipToOrder(vehicleId, nextOrder);
+								}
+							}
+							else if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
 								AIVehicle.ReverseVehicle(vehicleId);
 								AIController.Sleep(5);
 								AIVehicle.SendVehicleToDepot(vehicleId);
