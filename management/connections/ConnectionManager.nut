@@ -419,17 +419,29 @@ function ConnectionManager::RemoveConnectionListener(listener) {
 }
 
 function ConnectionManager::ConnectionRealised(connection) {
-	
-	assert (connection.pathInfo.build);
-	allConnections.push(connection);
-	
-	assert(AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID));
-	stationIDToConnection[connection.pathInfo.travelFromNodeStationID] <- connection;
-	
-	assert(AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID));
-	stationIDToConnection[connection.pathInfo.travelToNodeStationID] <- connection;
-	foreach (listener in connectionListeners)
-		listener.ConnectionRealised(connection);
+	// In case of error we are going to ignore the connection instead of crash.
+	if (!connection.pathInfo.build)
+		Log.logError("ConnectionRealised: pathInfo.build is invalid!");
+	else if (!AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID) || !AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID)) {
+		// This should never happen! If it does give us at least some info to figure out the cause.
+		Log.logInfo("Connection from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() +
+			" carrying " + AICargo.GetCargoLabel(connection.cargoID) + ". Group: " + AIGroup.GetName(connection.vehicleGroupID));
+		Log.logInfo("From station: " + AIBaseStation.GetName(connection.pathInfo.travelFromNodeStationID) +
+			", To station: "+ AIBaseStation.GetName(connection.pathInfo.travelToNodeStationID) + ", build/update year: " + AIDate.GetYear(connection.pathInfo.buildDate));
+		Log.logInfo("From station tile based on roadList: " + connection.pathInfo.roadList[connection.pathInfo.roadList.len()-1].tile +
+			", name: " + AIBaseStation.GetName(AIStation.GetStationID(connection.pathInfo.roadList[connection.pathInfo.roadList.len()-1].tile)));
+		Log.logInfo("To station tile based on roadList: " + connection.pathInfo.roadList[0].tile + ", name: " + AIBaseStation.GetName(AIStation.GetStationID(connection.pathInfo.roadList[0].tile)));
+		Log.logError("ConnectionRealised: From or To station is invalid! Group: " + AIGroup.GetName(connection.vehicleGroupID));
+	}
+	else {
+		allConnections.push(connection);
+		
+		stationIDToConnection[connection.pathInfo.travelFromNodeStationID] <- connection;
+		stationIDToConnection[connection.pathInfo.travelToNodeStationID] <- connection;
+		
+		foreach (listener in connectionListeners)
+			listener.ConnectionRealised(connection);
+	}
 }
 
 function ConnectionManager::ConnectionDemolished(connection) {
