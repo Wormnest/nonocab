@@ -274,9 +274,11 @@ function NoNoCAB::Start()
 					local vehicleCapacity = AIVehicle.GetCapacity(vehicle, connection.cargoID);
 					if (vehicleCapacity == 0) {
 						// This happened once around 2020. Since counter was 470 it must have been the roadvehicles. CargoID was 6.
-						// Maybe something went wrong with autoreplace. Wrong cargo?
+						// It seems a vehicle got added to the wrong group.
 						Log.logError("vehicleCapacity == 0 for vehicle " + AIVehicle.GetName(vehicle) + ", cargo: " + AICargo.GetCargoLabel(connection.cargoID));
-						Log.logWarning("Connection this belongs to: " + connection.ToString());
+						Log.logError("Connection this belongs to: " + connection.ToString() + ", group: " + AIGroup.GetName(connection.vehicleGroupID));
+						// Since we probably haven't fixed this yet just continue instead of crashing to improve the user experience.
+						continue;
 					}
 					assert (vehicleCapacity > 0);
 						
