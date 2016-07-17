@@ -401,7 +401,7 @@ function ConnectionAdvisor::GetReports() {
 			
 		local actionList = [];
 		
-		Log.logWarning("Give orders to build the connection " + connection.ToString());
+		Log.logDebug("Give orders to build the connection " + connection.ToString());
 		// Give the action to build the road.
 		actionList.push(GetBuildAction(connection));
 			
