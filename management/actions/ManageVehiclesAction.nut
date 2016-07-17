@@ -161,6 +161,23 @@ function ManageVehiclesAction::Execute()
 
 		local vehicleCloneID = -1;
 		local vehicleCloneIDReverse = -1;
+		local group_vehicles = AIVehicleList_Group(connection.vehicleGroupID);
+		local share_veh = null;
+		if (group_vehicles.Count() > 1) {
+			foreach (veh in group_vehicles) {
+				// Second order (order nr 1) should be go to depot order
+				local depot_loc = AIOrder.GetOrderDestination(veh,1);
+				if (vehicleCloneID == -1 && depot_loc == connection.pathInfo.depot) {
+					vehicleCloneID = veh;
+				}
+				else if (connection.bilateralConnection && vehicleCloneIDReverse == -1 && depot_loc == connection.pathInfo.depotOtherEnd) {
+					vehicleCloneIDReverse = veh;
+				}
+				if (vehicleCloneID != -1 && (!connection.bilateralConnection || vehicleCloneIDReverse != -1))
+					break;
+			}
+		}
+
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - vehiclePrice < 0) {
@@ -170,11 +187,9 @@ function ManageVehiclesAction::Execute()
 					
 			local vehicleID;
 
-			// Currently NO SHARED vehicle routes. I think the reason is to be able to change the
-			// orders for just one vehicle easily. Possibly only used with ships to send it to depot early? NEED TO CHECK THIS!
 			if (!directionToggle && connection.bilateralConnection) {
 				if (vehicleCloneIDReverse != -1) {
-					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, false);
+					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depotOtherEnd, vehicleCloneIDReverse, true);
 					directionToggle = !directionToggle;
 					AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 					AIVehicle.StartStopVehicle(vehicleID);
@@ -189,7 +204,7 @@ function ManageVehiclesAction::Execute()
 				vehicleCloneIDReverse = vehicleID;
 			} else {
 				if (vehicleCloneID != -1) {
-					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depot, vehicleCloneID, false);
+					vehicleID = AIVehicle.CloneVehicle(connection.pathInfo.depot, vehicleCloneID, true);
 					directionToggle = !directionToggle;
 					AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 					AIVehicle.StartStopVehicle(vehicleID);
