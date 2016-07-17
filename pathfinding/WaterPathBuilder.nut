@@ -133,12 +133,12 @@ function WaterPathBuilder::BuildPath(roadList) {
 		
 		/**
 		 * Every time the path changes direction we build an aditional buoy to guide the ships. The pathfinding
-		 * is truely idiotic so there is no need to be smart here. We also impose a buoy every 17 tiles, I am
+		 * is truely idiotic so there is no need to be smart here. We also impose a buoy every 20 tiles, I am
 		 * not sure what the maximal distance is a ship can travel without guidance, but even if the connection
 		 * is a straight line over 100 tiles, it will fail.
 		 */
-		 // 300 is about 17*17 is max distance we want between buoys.
-		if (direction != currentDirection || AIMap.DistanceSquare(lastBuoy, currentTile) > 300 || buoyBuildTimeout <= -25) {
+		 // 400 is 20*20 is max distance we want between buoys.
+		if (direction != currentDirection || AIMap.DistanceSquare(lastBuoy, currentTile) >= 400 || buoyBuildTimeout <= -25) {
 	
 			/** Wormnest: disabling using existing bouys since it needs extra code that inserts the route to that buoy into our roadList
 				and then next follows a new path from there. For now just only build new buoys even if that means more buoys than necessary.
