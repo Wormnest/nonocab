@@ -98,7 +98,7 @@ class PathFixer extends Thread {
 					break;
 				}
 				
-				for (local j = 0; j < 100; j++);
+				AIController.Sleep(10);
 			}
 		}
 		
@@ -121,7 +121,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 			buildSucceded = AIRoad.BuildRoad(fromTile, toTile);
 			
 			// If we couldn't build a road in one try, try to break it down.
-			if (estimateCost && !buildSucceded) {
+			if (!buildSucceded) {
 				local direction = toTile - fromTile;
 				// Check which direction we're going.
 				if ((direction < 0 ? -direction : direction) < AIMap.GetMapSizeX())
@@ -137,10 +137,29 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 				local tmpTile = fromTile;
 				local direction = direction / length;
 				
+				local result = false;
 				while (tmpTile != toTile) {
-					AIRoad.BuildRoad(tmpTile, tmpTile + direction);
+					result = false;
+					local counter = 50;
+					// In case there is a vehicle in the way we keep retrying for a while before giving up.
+					while (!result) {
+						result = AIRoad.BuildRoad(tmpTile, tmpTile + direction);
+						if (!result) {
+							if (AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY) {
+								break;
+							}
+							if (--counter == 0) {
+								break;
+							}
+							AIController.Sleep(10);
+						}
+					}
+					if (!result)
+						break;
 					tmpTile += direction;
 				}
+				if (result)
+					buildSucceded = true;
 			}
 			
 			break;
@@ -233,8 +252,8 @@ function PathBuilder::CheckError(buildResult)
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
 
-			// Retry the same action 5 times...
-			for (local i = 0; i < 50; i++) {
+			// Retry the same action a few times...
+			for (local i = 0; i < 10; i++) {
 				if (BuildRoadPiece(buildResult[0], buildResult[1], buildResult[2], buildResult[3], true) && AIError.GetLastError() != AIError.ERR_VEHICLE_IN_THE_WAY && AIError.GetLastError() != AIRoad.ERR_ROAD_WORKS_IN_PROGRESS)
 					return true;
 				AIController.Sleep(1);
