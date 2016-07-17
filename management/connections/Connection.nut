@@ -59,7 +59,8 @@ class Connection {
 				connectionType = TOWN_TO_TOWN;
 			}
 		}
-		vehicleGroupID = -1;
+		// Leave vehicleGroupID null until we actually assign it.
+		//vehicleGroupID = AIGroup.GROUP_INVALID; // This seems safer than initializing to -1.
 	}
 	
 	function LoadData(data) {
@@ -69,7 +70,7 @@ class Connection {
 		vehicleGroupID = data["vehicleGroupID"];
 		
 		// Get current best engines from the newest vehicle in this group if possible
-		if (AIGroup.IsValidGroup(vehicleGroupID)) {
+		if (vehicleGroupID != null && AIGroup.IsValidGroup(vehicleGroupID)) {
 			local vehicles = AIVehicleList_Group(vehicleGroupID);
 			vehicles.Valuate(AIVehicle.GetAge);
 			vehicles.KeepBottom(1);
@@ -179,7 +180,7 @@ class Connection {
 		foreach (connection in travelFromNode.connections) {
 			if (connection.cargoID == cargoID) {
 				
-				if (AIGroup.IsValidGroup(vehicleGroupID)) {
+				if (vehicleGroupID != null && AIGroup.IsValidGroup(vehicleGroupID)) {
 					local vehicles = AIVehicleList_Group(vehicleGroupID);
 					foreach (vehicle, value in vehicles) {
 						local engineID = AIVehicle.GetEngineType(vehicle);
@@ -458,8 +459,11 @@ class Connection {
 	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
 		
 		//Log.logDebug("Connection: UpdateAfterBuild");
-		if (!AIGroup.IsValidGroup(vehicleGroupID)) {
+		if (vehicleGroupID == null || !AIGroup.IsValidGroup(vehicleGroupID)) {
 			vehicleGroupID = AIGroup.CreateGroup(vehicleType);
+			if (!AIGroup.IsValidGroup(vehicleGroupID)) {
+				Log.logError("Failed to create group for connection " + ToString());
+			}
 			// Group names have a max length.
 			// If you try to set it to something longer the groupname doesn't get changed.
 			// However the last characters are not shown in the gui, instead "..." is shown, so use 28 as max
@@ -530,7 +534,7 @@ class Connection {
 	 */
 	function GetNumberOfVehicles() {
 
-		if (!AIGroup.IsValidGroup(vehicleGroupID))
+		if (vehicleGroupID == null || !AIGroup.IsValidGroup(vehicleGroupID))
 			return 0;
 		return AIVehicleList_Group(vehicleGroupID).Count();
 	}
@@ -546,7 +550,7 @@ class Connection {
 		Log.logWarning("Demolishing connection from " + travelFromNode.GetName() + " to " + travelToNode.GetName());
 		
 		// Sell all vehicles.
-		if (AIGroup.IsValidGroup(vehicleGroupID)) {
+		if (vehicleGroupID != null && AIGroup.IsValidGroup(vehicleGroupID)) {
 			
 			local allVehiclesInDepot = false;
 			local startDate = AIDate.GetCurrentDate();
@@ -602,6 +606,7 @@ class Connection {
 			}
 			// Remove the group
 			AIGroup.DeleteGroup(vehicleGroupID);
+			vehicleGroupID = null;
 		}
 		
 		if (destroyFrom) {

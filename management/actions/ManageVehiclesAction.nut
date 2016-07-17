@@ -126,12 +126,12 @@ function ManageVehiclesAction::Execute()
 		}
 		Log.logInfo("Buy " + vehicleNumbers + " " + AIEngine.GetName(engineID) + " " + AIEngine.GetName(wagonEngineID) + ".");
 
-		// Search if there are already have a vehicle group for this connection.
+		if (connection.vehicleGroupID == null || !AIGroup.IsValidGroup(connection.vehicleGroupID)) {
+			connection.connectionManager.PrintConnections();
+			Log.logError("Invalid vehicle group for connection " + connection.ToString());
+			continue;
+		}
 		assert (AIGroup.IsValidGroup(connection.vehicleGroupID));
-/*		if (!AIGroup.IsValidGroup(connection.vehicleGroupID)) {
-			connection.vehicleGroupID = AIGroup.CreateGroup(AIEngine.GetVehicleType(engineID));
-			AIGroup.SetName(connection.vehicleGroupID, connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName());
-		}*/
 		
 		// In case of a bilateral connection we want to spread the load by sending the trucks
 		// in opposite directions.

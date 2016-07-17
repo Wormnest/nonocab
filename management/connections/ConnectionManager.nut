@@ -29,6 +29,12 @@ class ConnectionManager {
 function ConnectionManager::MaintainActiveConnections() {
 	
 	foreach (connection in allConnections) {
+		if (!connection.pathInfo.build) {
+			Log.logError("Something is wrong: pathInfo.build is false for connection " + connection.ToString());
+		}
+		else if (connection.vehicleGroupID == null || !AIGroup.IsValidGroup(connection.vehicleGroupID)) {
+			Log.logError("Invalid vehicle group for connection " + connection.ToString());
+		}
 		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
 		
 		foreach (vehicleID, value in vehicleList) {
