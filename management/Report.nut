@@ -193,7 +193,7 @@ class Report
 		Log.logDebug("Estimated travel time to: " + travelTimeTo + ", from: " + travelTimeFrom);
 		local travelTime = travelTimeTo + travelTimeFrom;
 		if (travelTime == 0) {
-			Log.logWarning("Invalid travel time estimation!");
+			Log.logError("Invalid travel time estimation for connection " + connection.ToString());
 			isInvalid = true;
 			return;
 		}
