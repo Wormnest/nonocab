@@ -943,7 +943,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				// If we do reuse increment the counter.
 				if (reuseRailTrack)
-					annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces + 1;
+					if (currentAnnotatedTile.reusedPieces < 0)
+						annotatedTile.reusedPieces = 1;
+					else
+						annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces + 1;
 
 				// If we cross, make sure we have reused at least 6 rail tracks so we can assure
 				// we don't get any trouble with the crossings.
@@ -964,6 +967,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
 					continue;
 				
+				// We should have at least 10 rail pieces since start or since the last time we used shared rails before thinking of using shared rails (again).
+				if (currentAnnotatedTile.reusedPieces < 0 && currentAnnotatedTile.reusedPieces > -10)
+					continue;
+				
 				annotatedTile.alreadyBuild = true;
 
 				if (!goingStraight)
@@ -981,7 +988,10 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				annotatedTile.length = currentAnnotatedTile.length + 0.5;
 				
 			if (!reuseRailTrack)
-				annotatedTile.reusedPieces = 0;
+				if (currentAnnotatedTile.reusedPieces >= 0)
+					annotatedTile.reusedPieces = 0;
+				else // Negative values to track the number of non shared rail track pieces
+					annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces - 1;
 
 			tileArray.push(annotatedTile);
 		}
