@@ -207,6 +207,8 @@ class Report
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_RAIL)
 			transportedCargoPerVehiclePerMonth *= nrWagonsPerVehicle;
 		
+		//Log.logDebug("Transported cargo pvm: " + transportedCargoPerVehiclePerMonth);
+
 		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
 		    !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_MAIL)) {
@@ -216,6 +218,9 @@ class Report
 				transportedCargoPerVehiclePerMonth *= 0.3;
 		}
 		nrVehicles = (connection.travelFromNode.GetProduction(connection.cargoID) - cargoAlreadyTransported).tofloat() / transportedCargoPerVehiclePerMonth;
+		//Log.logDebug("nrVehicles float: " + nrVehicles);
+		
+		/// @todo For Air vehicles we should also check if airport can handle the required number of aircraft.
 
 		// Testing for connection is null doesn't make sense here! If it was null we would have crashed already before we came here!
 		// Maybe it should be connection.pathInfo == null
