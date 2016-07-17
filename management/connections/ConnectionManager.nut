@@ -124,8 +124,12 @@ function ConnectionManager::MaintainActiveConnections() {
 			else { // Not stopped in depot
 				// Check if the vehicle is profitable.
 				if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
-					if (vehicleType == AIVehicle.VT_WATER)
+					if (vehicleType == AIVehicle.VT_WATER) {
+						// First make sure orders are not shared.
+						AIOrder.UnshareOrders(vehicleID);
+						// Set age at which to go to depot to 0 so it will stop as soon as it reaches the first order in the list.
 						AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
+					}
 					else if ((AIOrder.GetOrderFlags(vehicleID, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0)
 						AIVehicle.SendVehicleToDepot(vehicleID);
 				}

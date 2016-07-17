@@ -69,6 +69,9 @@ function ManageVehiclesAction::Execute()
 			
 			// Take a different approach with ships, as they might get lost.
 			if (vehicleType == AIVehicle.VT_WATER) {
+				// First make sure orders are not shared.
+				AIOrder.UnshareOrders(vehicleID);
+				// Set age at which to go to depot to 0 so it will stop as soon as it reaches the first order in the list.
 				AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
 				++vehiclesDeleted;
 			} else if (!AIVehicle.SendVehicleToDepot(vehicleID)) {

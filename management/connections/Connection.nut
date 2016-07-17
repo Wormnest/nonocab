@@ -573,6 +573,8 @@ class Connection {
 						if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_STOP_IN_DEPOT) == 0) {
 							if (vehicleTypes == AIVehicle.VT_WATER) {
 								// Can't send to depot because that may cause the ship to get lost.
+								// First make sure orders are not shared.
+								AIOrder.UnshareOrders(vehicleId);
 								// Instead set age at which to go to depot to 0.
 								AIOrder.SetOrderCompareValue(vehicleId, 0, 0);
 								// If the current order is full load then skip because the industry we are trying to load from may have vanished.
