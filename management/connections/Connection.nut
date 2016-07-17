@@ -549,6 +549,7 @@ class Connection {
 		if (AIGroup.IsValidGroup(vehicleGroupID)) {
 			
 			local allVehiclesInDepot = false;
+			local startDate = AIDate.GetCurrentDate();
 		
 			// Send and wait till all vehicles are in their respective depots.
 			while (!allVehiclesInDepot) {
@@ -584,6 +585,10 @@ class Connection {
 							}
 						}
 					}
+				}
+				if (Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) > Date.DAYS_PER_YEAR) {
+					Log.logError("Demolishing connection " + ToString() + " is taking longer than a year! We give up because we assume we are in an endless loop.");
+					break;
 				}
 				if (!allVehiclesInDepot)
 					AIController.Sleep(10);
