@@ -71,7 +71,7 @@ function ConnectionManager::MaintainActiveConnections() {
 							local shared_vehicles = AIVehicleList_SharedOrders(vehicleID);
 							local share_veh = null;
 							if (shared_vehicles.Count() > 1) {
-								foreach (veh in shared_vehicles)
+								foreach (veh, dummy in shared_vehicles)
 									if (veh != vehicleID) {
 										share_veh = veh;
 										break;
