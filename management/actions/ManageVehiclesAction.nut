@@ -169,20 +169,42 @@ function ManageVehiclesAction::Execute()
 		local vehicleCloneID = -1;
 		local vehicleCloneIDReverse = -1;
 		local group_vehicles = AIVehicleList_Group(connection.vehicleGroupID);
-		local share_veh = null;
-		if (group_vehicles.Count() > 1) {
-			foreach (veh in group_vehicles) {
-				// Second order (order nr 1) should be go to depot order
-				local depot_loc = AIOrder.GetOrderDestination(veh,1);
+		local wrongEngine = false;
+		if (group_vehicles.Count() > 0) {
+			foreach (veh, dummy in group_vehicles) {
+				// Second order (order nr 1) is the first order that can be a go to depot order. However there can be buoys in between!
+				local depot_order = 1;
+				local order_cnt = AIOrder.GetOrderCount(veh);
+				local depot_loc = -1;
+				while (depot_order < order_cnt) {
+					if (AIOrder.IsGotoDepotOrder(veh, depot_order)) {
+						depot_loc = AIOrder.GetOrderDestination(veh, depot_order);
+						break;
+					}
+					depot_order++;
+				}
+				if (depot_loc == -1)
+					Log.logError("No depot order found for vehicle " + AIVehicle.GetName(veh) + "! Group: " + AIGroup.GetName(connection.vehicleGroupID));
 				if (vehicleCloneID == -1 && depot_loc == connection.pathInfo.depot) {
-					vehicleCloneID = veh;
+					// Check whether it has the same engine that we want to use
+					if (AIVehicle.GetEngineType(veh) == engineID) {
+						vehicleCloneID = veh;
+						wrongEngine = false;
+					}
+					else
+						wrongEngine = true;
 				}
 				else if (connection.bilateralConnection && vehicleCloneIDReverse == -1 && depot_loc == connection.pathInfo.depotOtherEnd) {
-					vehicleCloneIDReverse = veh;
+					if (AIVehicle.GetEngineType(veh) == engineID) {
+						vehicleCloneIDReverse = veh;
+					}
 				}
 				if (vehicleCloneID != -1 && (!connection.bilateralConnection || vehicleCloneIDReverse != -1))
 					break;
 			}
+			if (vehicleCloneID == -1 && !wrongEngine)
+				// Note that this can happen if we had more vehicles in the past and sold some leaving only some for depotOtherEnd.
+				Log.logWarning("No vehicle that we can clone found! Group: " + AIGroup.GetName(connection.vehicleGroupID));
 		}
 
 		for (local i = 0; i < vehicleNumbers; i++) {
@@ -230,6 +252,15 @@ function ManageVehiclesAction::Execute()
 			
 			// Give the vehicle orders and start it.
 			SetOrders(vehicleID, vehicleType, connection, directionToggle);
+			// Make sure it has orders!
+			if (AIOrder.GetOrderCount(vehicleID) == 0) {
+				Log.logError("Failed to add orders to vehicle " + AIVehicle.GetName(vehicleID) + ". Error: " + AIError.GetLastErrorString());
+				// Vehicle without orders is worthless so sell it again!
+				AIVehicle.SellVehicle(vehicleID);
+				// And don't try to get more.
+				break;
+			}
+
 			AIVehicle.StartStopVehicle(vehicleID);
 
 			// Update the game setting so subsequent actions won't build more vehicles then possible!
