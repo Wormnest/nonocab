@@ -134,6 +134,8 @@ function WaterPathFinderHelper::ProcessNeighbours(tileList, callbackFunction, he
 
 /**
  * Check if there are any obstacles on the water on the 2 tiles straight in front of our dock candidate position.
+ * @todo Also check the tiles left and right of the dock part that is in the water. I've seen a new built dock blocking another dock this way. Screenshot July 11 1962.
+ * However if that other dock is pointing in the same direction it is ok (next to each other). Just not if it's pointing in a different direction.
  * @param at The tile data of the proposed dock part that is in the water.
  * @return Boolean true or false Whether we can safely build a dock here or not.
  */
