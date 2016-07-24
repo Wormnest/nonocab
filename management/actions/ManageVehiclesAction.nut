@@ -515,6 +515,8 @@ function ManageVehiclesAction::SetOrders(vehicleID, vehicleType, connection, dir
 	if (!result) {
 		Log.logError("Could not add stop in depot order! " + connection.bilateralConnection + ", " + directionToggle + ", " + AIError.GetLastErrorString());
 	}
+	if (AIOrder.GetOrderCount(vehicleID) == 0)
+		Log.logError("Failed to add orders to this vehicle! " + AIError.GetLastErrorString());
 }
 
 /**
