@@ -53,6 +53,11 @@ function ManageVehiclesAction::Execute()
 		local vehicleList = AIList();
 		local vehicleArray = null;
 
+		if (connection.vehicleGroupID == null || !AIGroup.IsValidGroup(connection.vehicleGroupID)) {
+			connection.connectionManager.PrintConnections();
+			Log.logError("Sell Vehicle: Invalid vehicle group for connection " + connection.ToString());
+			continue;
+		}
 		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
 		vehicleList.Valuate(AIVehicle.GetAge);
 		vehicleList.Sort(AIList.SORT_BY_VALUE, true);
