@@ -531,3 +531,54 @@ function ManageVehiclesAction::SendVehiclesForMaintenance(groupID, vehicleType)
 		}
 	}
 }
+
+/**
+ * Get the first vehicle that shares orders with the specified vehicleID.
+ * @param vehicleID The vehicle ID to find a shared vehicle of.
+ * @return The first found vehicle that shares orders with vehicleID or null if not found.
+ */
+function ManageVehiclesAction::GetSharedVehicle(vehicleID)
+{
+	local shared_vehicles = AIVehicleList_SharedOrders(vehicleID);
+	local share_veh = null;
+	if (shared_vehicles.Count() > 1) {
+		foreach (veh, dummy in shared_vehicles)
+			if (veh != vehicleID) {
+				share_veh = veh;
+				break;
+			}
+	}
+	return share_veh;
+}
+
+/**
+ * If a vehicles has shared orders then unshare them by copying the orders from another vehicle with the same orders.
+ * @param vehicleID The vehicle ID to unshare.
+ * @return The first found vehicle that shares orders with vehicleID or null if not found.
+ */
+function ManageVehiclesAction::UnshareVehicleOrders(vehicleID)
+{
+	// Check to see whether it shares orders.
+	if (AIVehicle.HasSharedOrders(vehicleID)) {
+		// Since AIOrder.UUnshareOrders seems to remove all orders we are going to use CopyOrders and copy from another vehicle.
+		local share_veh = ManageVehiclesAction.GetSharedVehicle(vehicleID)
+		if (share_veh == null)
+			Log.logError("Could not find shared vehicle! ");
+		else if (!AIOrder.CopyOrders(vehicleID, share_veh))
+			Log.logError("Could not copy orders! " + AIError.GetLastErrorString());
+	}
+}
+
+/**
+ * Remove full load (any) orders and change them to no loading.
+ * @param vehicleID The vehicle ID which needs its orders changed.
+ */
+function ManageVehiclesAction::RemoveFullLoadOrders(vehicleID)
+{
+	local orderCount = AIOrder.GetOrderCount(vehicleID);
+	for (local order = 0; order < orderCount; order++) {
+		local orderFlags = AIOrder.GetOrderFlags(vehicleID, order);
+		if ((orderFlags & (AIOrder.OF_FULL_LOAD+AIOrder.OF_FULL_LOAD_ANY)) != 0)
+			AIOrder.SetOrderFlags(vehicleID, order, AIOrder.OF_NO_LOAD);
+	}
+}
