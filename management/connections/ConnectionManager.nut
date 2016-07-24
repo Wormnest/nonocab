@@ -68,15 +68,7 @@ function ConnectionManager::MaintainActiveConnections() {
 							
 							// If multiple vehicles share the same orders pick one to share the new vehicles orders with.
 							local depot_loc = AIVehicle.GetLocation(vehicleID);
-							local shared_vehicles = AIVehicleList_SharedOrders(vehicleID);
-							local share_veh = null;
-							if (shared_vehicles.Count() > 1) {
-								foreach (veh, dummy in shared_vehicles)
-									if (veh != vehicleID) {
-										share_veh = veh;
-										break;
-									}
-							}
+							local share_veh = ManageVehiclesAction.GetSharedVehicle(vehicleID)
 							// Now sell the old vehicle.
 							Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID));
 							AIVehicle.SellVehicle(vehicleID);
@@ -98,11 +90,21 @@ function ConnectionManager::MaintainActiveConnections() {
 							// Otherwise set orders. But since we currently don't know what direction the old vehicle was going, for now always use false.
 							if (share_veh != null) {
 								Log.logDebug("Share orders with " + AIVehicle.GetName(share_veh));
-								AIOrder.ShareOrders(newVehicleID, share_veh);
+								if (!AIOrder.ShareOrders(newVehicleID, share_veh)) {
+									Log.logError("Sharing orders failed unexpectedly! " + AIError.GetLastErrorString());
+									share_veh = null;
+								}
 							}
-							else {
+							if (share_veh == null) {
 								Log.logDebug("Set new orders");
 								ManageVehiclesAction.SetOrders(newVehicleID, vehicleType, connection, false);
+							}
+							if (AIOrder.GetOrderCount(newVehicleID) <= 0) {
+								Log.logError("Failed to add orders to vehicle " + AIVehicle.GetName(newVehicleID));
+								// Vehicle without orders is worthless so sell it again!
+								AIVehicle.SellVehicle(newVehicleID);
+								// And don't try to get more.
+								continue;
 							}
 							AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
 							AIVehicle.StartStopVehicle(newVehicleID);
