@@ -124,11 +124,18 @@ function ConnectionManager::MaintainActiveConnections() {
 				AIVehicle.SellVehicle(vehicleID);
 			}
 			else { // Not stopped in depot
+				// If vehicle has no orders then something is wrong: send it to depot even for ships.
+				if (AIOrder.GetOrderCount(vehicleID) == 0) {
+					Log.logError("We found a vehicle without orders: " + AIVehicle.GetName(vehicleID) + ". Group: " + AIGroup.GetName(connection.vehicleGroupID));
+					AIVehicle.SendVehicleToDepot(vehicleID);
+				}
 				// Check if the vehicle is profitable.
 				if (AIVehicle.GetAge(vehicleID) > Date.DAYS_PER_YEAR * 2 && AIVehicle.GetProfitLastYear(vehicleID) < 0 && AIVehicle.GetProfitThisYear(vehicleID) < 0) {
 					if (vehicleType == AIVehicle.VT_WATER) {
 						// First make sure orders are not shared.
-						AIOrder.UnshareOrders(vehicleID);
+						ManageVehiclesAction.UnshareVehicleOrders(vehicleID);
+						// Make sure it's not going to try loading cargo.
+						ManageVehiclesAction.RemoveFullLoadOrders(vehicleID);
 						// Set age at which to go to depot to 0 so it will stop as soon as it reaches the first order in the list.
 						AIOrder.SetOrderCompareValue(vehicleID, 0, 0);
 					}
