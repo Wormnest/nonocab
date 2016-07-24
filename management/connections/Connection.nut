@@ -549,11 +549,12 @@ class Connection {
 			//assert(false);
 		}
 			
-		Log.logWarning("Demolishing connection from " + travelFromNode.GetName() + " to " + travelToNode.GetName());
-		
 		// Sell all vehicles.
 		if (vehicleGroupID != null && AIGroup.IsValidGroup(vehicleGroupID)) {
 			
+			Log.logWarning("Demolishing connection from " + travelFromNode.GetName() + " to " + travelToNode.GetName() +
+				", group: " + AIGroup.GetName(vehicleGroupID));
+
 			local allVehiclesInDepot = false;
 			local startDate = AIDate.GetCurrentDate();
 		
@@ -574,10 +575,9 @@ class Connection {
 							if (vehicleTypes == AIVehicle.VT_WATER) {
 								// Can't send to depot because that may cause the ship to get lost.
 								// First make sure orders are not shared.
-								AIOrder.UnshareOrders(vehicleId);
-								// Instead set age at which to go to depot to 0.
-								AIOrder.SetOrderCompareValue(vehicleId, 0, 0);
+								ManageVehiclesAction.UnshareVehicleOrders(vehicleId);
 								// If the current order is full load then skip because the industry we are trying to load from may have vanished.
+								// Do this before RemoveFullLoadOrder because I think it won't stop the loading if full_load_any is the current order.
 								if ((AIOrder.GetOrderFlags(vehicleId, AIOrder.ORDER_CURRENT) & AIOrder.OF_FULL_LOAD_ANY) != 0) {
 									local nextOrder = AIOrder.ResolveOrderPosition(vehicleId, AIOrder.ORDER_CURRENT);
 									nextOrder++;
@@ -585,6 +585,10 @@ class Connection {
 										nextOrder = 0;
 									AIOrder.SkipToOrder(vehicleId, nextOrder);
 								}
+								// Make sure it's not going to try loading cargo.
+								ManageVehiclesAction.RemoveFullLoadOrders(vehicleId);
+								// Instead set age at which to go to depot to 0.
+								AIOrder.SetOrderCompareValue(vehicleId, 0, 0);
 							}
 							else if (!AIVehicle.SendVehicleToDepot(vehicleId) && vehicleTypes == AIVehicle.VT_ROAD) {
 								AIVehicle.ReverseVehicle(vehicleId);
@@ -611,6 +615,9 @@ class Connection {
 			// Remove the group
 			AIGroup.DeleteGroup(vehicleGroupID);
 			vehicleGroupID = null;
+		}
+		else {
+			Log.logWarning("Trying to demolish a connection with an invalid group! " + ToString());
 		}
 		
 		if (destroyFrom) {
@@ -660,7 +667,7 @@ class Connection {
 				break;
 			}
 			if (!found)
-				Log.logError("Demolish: To Node not found! " + ToString());
+				Log.logWarning("Demolish: To Node not found! " + ToString());
 		}
 
 		connectionManager.ConnectionDemolished(this);
