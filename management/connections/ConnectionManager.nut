@@ -158,7 +158,8 @@ function ConnectionManager::SaveData(saveData) {
 		// than for the saving to run out of time since that will make us crash.
 		// Longest connection seen so far used 8625 ops (4kx4k map)!
 		// So I guess it's better to use a limit of at least 10000. Lower values may be possible on smaller maps?
-		if (AIController.GetOpsTillSuspend() < 10000) {
+		// Since we are now caching the connections we are going to try to reduce this to 5000.
+		if (AIController.GetOpsTillSuspend() < 5000) {
 			Log.logError("Almost out of time saving. Discarding " + (allConnections.len() - idx) +
 			" of " + allConnections.len() + " connections!");
 			break;
