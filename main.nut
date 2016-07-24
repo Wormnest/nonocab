@@ -288,7 +288,9 @@ function NoNoCAB::Start()
 					local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 					if (distance < 0) {
 						// This could happen if from or to node (industry) disappears.
-						Log.logError("Invalid distance: " + distance + ", From and/or To node probably invalid!");
+						Log.logError("Invalid distance: " + distance + ", From and/or To node probably invalid! " +
+							AIVehicle.GetName(vehicle) + ", cargo: " + AICargo.GetCargoLabel(connection.cargoID));
+						Log.logError("Connection this belongs to: " + connection.ToString() + ", group: " + AIGroup.GetName(connection.vehicleGroupID));
 						continue;
 					}
 					local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeForward.tointeger()) * transportedCargoPerVehiclePerMonth;
