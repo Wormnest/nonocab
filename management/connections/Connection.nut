@@ -327,9 +327,17 @@ class Connection {
 			}
 			local transportEngineID = engineID;
 			
+			if (vehicleType == AIVehicle.VT_ROAD) {
+				// We don't handle trams yet so weed them out.
+				if (AIEngine.GetRoadType(engineID) != AIRoad.ROADTYPE_ROAD)
+					continue;
+				// Make sure it can handle the cargo we want.
+				if (AIEngine.GetCargoType(engineID) != cargoID && !AIEngine.CanRefitCargo(engineID, cargoID))
+					continue;
+			}
 			// If the vehicle type is an aeroplane, the connection is built and the airport is a small one, make sure we only
 			// build small airplanes.
-			if (vehicleType == AIVehicle.VT_AIR) {
+			else if (vehicleType == AIVehicle.VT_AIR) {
 				if (pathInfo.build && (
 				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
 				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER
