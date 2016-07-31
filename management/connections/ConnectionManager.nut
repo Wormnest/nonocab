@@ -236,6 +236,10 @@ function ConnectionManager::LoadData(data, world) {
 			Log.logDebug("Process: " + savedConnectionData["travelFromNode"] + " " +
 				savedConnectionData["travelToNode"] + " " +
 				AICargo.GetCargoLabel(savedConnectionData["cargoID"]));
+			if (savedConnectionData["vehicleGroupID"] == null) {
+				Log.logWarning("vehicleGroupID is null (should not happen), skipping this connection since it's probably invalid.");
+				continue;
+			}
 			Log.logDebug("Save vehicle type " + savedConnectionData["vehicleTypes"] +
 				", vehicle group " + savedConnectionData["vehicleGroupID"] +
 				" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]));
