@@ -694,6 +694,7 @@ class Connection {
 			return;
  
  		local newTileList = AITileList();
+		local startDate = AIDate.GetCurrentDate();
 		foreach (tile, value in tileList) {
 
 			if (excludeList.HasItem(tile))
@@ -711,14 +712,26 @@ class Connection {
 					if (AIStation.GetName(stationID) != stationName)
 						continue;
 					
-					while (AITile.IsStationTile(surroundingTile))
-						AITile.DemolishTile(surroundingTile);
+					local maxtries = 10;
+					while (maxtries > 0) {
+						if (!AITile.IsStationTile(surroundingTile))
+							break;
+						if (AITile.DemolishTile(surroundingTile))
+							break;
+						maxtries--;
+						AIController.Sleep(10);
+					}
 					
 					if (!newTileList.HasItem(surroundingTile))
 						newTileList.AddTile(surroundingTile);
-				}			
+				}
 			}
 			
+			if (Date.GetDaysBetween(startDate, AIDate.GetCurrentDate()) > Date.DAYS_PER_MONTH) {
+				Log.logError("Demolishing road stations " + ToString() + " is taking longer than a month! We give up because we assume we are in an endless loop.");
+				return;
+			}
+
 			DemolishStations(newTileList, stationName, excludeList);
  		}
 	}
