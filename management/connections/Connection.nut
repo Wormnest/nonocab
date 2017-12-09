@@ -335,16 +335,15 @@ class Connection {
 				if (AIEngine.GetCargoType(engineID) != cargoID && !AIEngine.CanRefitCargo(engineID, cargoID))
 					continue;
 			}
-			// If the vehicle type is an aeroplane, the connection is built and the airport is a small one, make sure we only
-			// build small airplanes.
 			else if (vehicleType == AIVehicle.VT_AIR) {
-				if (pathInfo.build && (
-				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_SMALL ||
-				    AIAirport.GetAirportType(pathInfo.roadList[0].tile) == AIAirport.AT_COMMUTER
-				    )) {
-				    if (AIEngine.GetPlaneType(transportEngineID) == AIAirport.PT_BIG_PLANE)
-				    	continue;
-				    }
+				if (pathInfo.build) {
+					// We should not build big airplanes on small/commuter airports
+					local at = AIAirport.GetAirportType(pathInfo.roadList[0].tile);
+					if ((at == AIAirport.AT_SMALL || at == AIAirport.AT_COMMUTER) &&
+						(AIEngine.GetPlaneType(transportEngineID) == AIAirport.PT_BIG_PLANE)) {
+						continue;
+					}
+				}
 			}
 			else if (vehicleType == AIVehicle.VT_RAIL) {
 				if (!HasTrainEnoughPower(engineID, cargoID)) {
