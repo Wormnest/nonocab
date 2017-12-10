@@ -230,13 +230,12 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 			local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
 			if (airportType == null)
 				continue;
-        		local nearestTown = AIAirport.GetNearestTown(tile, airportType);
+			local nearestTown = AIAirport.GetNearestTown(tile, airportType);
 			// Check if we can build an airport here, either directly or by terraforming.
 			if (!AIAirport.BuildAirport(tile, airportType, AIStation.STATION_NEW) ||
 			    AITown.GetRating(nearestTown, AICompany.COMPANY_SELF) <= -200)
 				continue
 
-// || AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType)) continue;
 			good_tile = tile;
 			airport_type = airportType;
 			break;
@@ -247,7 +246,6 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 				local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
 				if (airportType == null)
 					continue;
-        			local nearestTown = AIAirport.GetNearestTown(tile, airportType);
 				airportX = AIAirport.GetAirportWidth(airportType);
 				airportY = AIAirport.GetAirportHeight(airportType);
 				// Check if we can build an airport here, either directly or by terraforming.
@@ -256,7 +254,6 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 				   !Terraform.Terraform(tile, airportX, airportY, -1)))
 					continue;
 
-// || AITown.GetAllowedNoise(nearestTown) < AIAirport.GetNoiseLevelIncrease(tile, airportType))) continue;
 				good_tile = tile;
 				airport_type = airportType;
 				break;
