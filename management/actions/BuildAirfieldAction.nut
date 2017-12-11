@@ -205,7 +205,10 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	local airportRadius = AIAirport.GetAirportCoverageRadius(baseLineAirportType);
 
 	local list = AITileList();
-	if (connection.bilateralConnection) {
+	// We can't use connection.bilateralConnection because this will sometimes be called as a static function
+	// where connection doesn't exist at all! That's why we have to use for townToTown in that case.
+	// @todo Maybe add a function parameter that we can use instead.
+	if (townToTown) {
 		// Both ends of the connection need tiles that both accept and produce the requested cargo.
 		list = node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY);
 		local prodlist = node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY);
