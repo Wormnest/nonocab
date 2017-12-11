@@ -204,7 +204,18 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	local airportY = AIAirport.GetAirportHeight(baseLineAirportType);
 	local airportRadius = AIAirport.GetAirportCoverageRadius(baseLineAirportType);
 
-	local list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
+	local list = AITileList();
+	if (connection.bilateralConnection) {
+		// Both ends of the connection need tiles that both accept and produce the requested cargo.
+		list = node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY);
+		local prodlist = node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY);
+		// Keep all accepting tiles that are also present in list with producing tiles
+		list.KeepList(prodlist);
+	}
+	else {
+		list = (acceptingSide ? node.GetAllAcceptingTiles(cargoID, airportRadius, airportX, airportY) : node.GetAllProducingTiles(cargoID, airportRadius, airportX, airportY));
+	
+	}
 	list.Valuate(AITile.IsBuildableRectangle, airportX, airportY);
 	list.KeepValue(1);
 	AIController.Sleep(1);
