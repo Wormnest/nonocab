@@ -344,6 +344,29 @@ class Connection {
 						continue;
 					}
 				}
+				
+				// If airplane has a maximum range we should check if this connection falls within this range.
+				local engine_distance = AIEngine.GetMaximumOrderDistance(transportEngineID);
+				if (engine_distance > 0) {
+					local order_distance = 0;
+					if (pathInfo.build) {
+						// Check actual distance between airports
+						local from = pathInfo.roadList[0].tile;
+						local to   = pathInfo.roadList[pathInfo.roadList.len()-1].tile
+						order_distance = AIOrder.GetOrderDistance(AIVehicle.VT_AIR, from, to);
+					}
+					else {
+						// Check distance between connection centers
+						local from = travelFromNode.GetLocation();
+						local to = travelToNode.GetLocation();
+						// Since it's not actual airport distance add some slack
+						order_distance = AIOrder.GetOrderDistance(AIVehicle.VT_AIR, from, to) + 225;
+					}
+					if (engine_distance <= order_distance) {
+						// Airplane can't handle the distance of this connection
+						continue;
+					}
+				}
 			}
 			else if (vehicleType == AIVehicle.VT_RAIL) {
 				if (!HasTrainEnoughPower(engineID, cargoID)) {
