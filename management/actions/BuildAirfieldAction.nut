@@ -76,6 +76,16 @@ function BuildAirfieldAction::Execute() {
 //	local useHelipadAtFromNode = false;
 //	local useHelipadAtToNode = false;
 	local townToTown = connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE;
+	
+	if (connection.bilateralConnection &&
+		connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+		connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE &&
+		AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)
+		) {
+		FailedToExecute("Bilateral connection from town to industry on water is not supported!");
+		return false;
+	}
+	
 	local fromTileAndAirportType = FindSuitableAirportSpot(/*airportType, */connection.travelFromNode, connection.cargoID, false, false, townToTown);
 	if (fromTileAndAirportType == null) {
 		
