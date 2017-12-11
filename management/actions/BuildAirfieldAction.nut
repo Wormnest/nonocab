@@ -88,7 +88,7 @@ function BuildAirfieldAction::Execute() {
 			airportType = heliportType;
 		} else {
 */
-			FailedToExecute("No spot found for the first airfield!");
+			FailedToExecute("No spot found for the first airport!");
 			return false;
 //		}
 	}
@@ -102,7 +102,7 @@ function BuildAirfieldAction::Execute() {
 			airportType = heliportType;
 		} else {
 */
-			FailedToExecute("No spot found for the second airfield!");
+			FailedToExecute("No spot found for the second airport!");
 			return false;
 //		}
 	}
@@ -180,6 +180,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	local excludeList;
 	
 	if (getFirst && node.nodeType == ConnectionNode.TOWN_NODE) {
+		// excludeList should only be used for road stations, make it temporarily empty here
 		excludeList = clone node.excludeList;
 		node.excludeList = {};
 	}
@@ -200,6 +201,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 
 	if (getFirst) {
 		if (node.nodeType == ConnectionNode.TOWN_NODE)
+			// Restore original excludeList
 			node.excludeList = excludeList;
 	} else {
 		if (node.nodeType == ConnectionNode.TOWN_NODE || acceptingSide) {
@@ -216,7 +218,7 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
     
 	/* Couldn't find a suitable place for this town, skip to the next */
 	if (list.Count() == 0) {
-		Log.logDebug("NO spots found :(");
+		Log.logDebug("Couldn't find a suitable spot for an airport.");
 		return null;
 	}
 	list.Sort(AIList.SORT_BY_VALUE, false);
