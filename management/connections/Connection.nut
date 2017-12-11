@@ -311,6 +311,28 @@ class Connection {
 			Log.logDebug("Keeping current best engine for existing connection " + ToString() + " - " + AIEngine.GetName(bestTransportEngine));
 			return [bestTransportEngine, bestHoldingEngine];
 		}
+
+		local HelicopterOnly = false;
+		if ((travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+			AIIndustry.IsBuiltOnWater(travelFromNode.id)) ||
+			(travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE &&
+			AIIndustry.IsBuiltOnWater(travelToNode.id))) {
+			if (vehicleType == AIVehicle.VT_ROAD || vehicleType == AIVehicle.VT_RAIL) {
+				Log.logDebug("Can't use road vehicles or trains for industry on water");
+				return null;
+			}
+			else if (vehicleType == AIVehicle.VT_AIR) {
+				if (AIIndustry.HasHeliport(travelToNode.id)) {
+					Log.logDebug("Only helicopters can be used for industry on water");
+					HelicopterOnly = true;
+				}
+				else {
+					Log.logDebug("Can't use airplanes for industry on water");
+					return null;
+				}
+			}
+		}
+
 		
 		// WARNING: the below bestTransportEngine and bestHoldingEngine are LOCAL meaning they don't set the class vars with the same name!
 		// The class vars are only set in UpdateAfterBuild and NewEngineAvailable.
@@ -386,6 +408,10 @@ class Connection {
 						// Airplane can't handle the distance of this connection
 						continue;
 					}
+				}
+				
+				if (HelicopterOnly && AIEngine.GetPlaneType(transportEngineID) != AIAirport.PT_HELICOPTER) {
+					continue;
 				}
 			}
 			else if (vehicleType == AIVehicle.VT_RAIL) {
