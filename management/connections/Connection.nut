@@ -320,12 +320,32 @@ class Connection {
 		local bestIncomePerMonth = 0;
 		local engineList = AIEngineList(vehicleType);
 		
+		local monthlyIncome = Finance.GetProjectedIncomePerMonth();
+		local maxMoney = Finance.GetMaxMoneyToSpend() - 1000;
+		if (monthlyIncome <= 10000) {
+			// If monthly income less than 10k then set max money to two thirds of available money
+			maxMoney = maxMoney * 2 / 3;
+		}
+		
 		foreach (engineID, value in engineList) {
 			if (!AIEngine.IsValidEngine(engineID) || !AIEngine.IsBuildable(engineID) || AIEngine.IsWagon(engineID)) {
 				// I guess engines that become invalid still stay in the AIEngineList so filter them out.
 				continue;
 			}
 			local transportEngineID = engineID;
+			
+			/* If our monthly income is still 0 or very low then be more strict in what engines we accept. */
+			local engPrice = AIEngine.GetPrice(transportEngineID);
+			if (monthlyIncome < 25000) {
+				if (engPrice > maxMoney) {
+					continue;
+				}
+			}
+			else {
+				if (engPrice > maxMoney + 2*monthlyIncome) {
+					continue;
+				}
+			}
 			
 			if (vehicleType == AIVehicle.VT_ROAD) {
 				// We don't handle trams yet so weed them out.
