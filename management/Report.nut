@@ -209,7 +209,7 @@ class Report
 		
 		//Log.logDebug("Transported cargo pvm: " + transportedCargoPerVehiclePerMonth);
 
-		// If we refit from passengers to mail, we devide the capacity by 2, to any other cargo type by 4.
+		// For air transport we decrease expected cargo per month by 0.6 for goods and by 0.3 for anything except passengers/mail
 		if (AIEngine.GetVehicleType(transportEngineID) == AIVehicle.VT_AIR && AICargo.HasCargoClass(AIEngine.GetCargoType(holdingEngineID), AICargo.CC_PASSENGERS) && 
 		    !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_PASSENGERS) && !AICargo.HasCargoClass(connection.cargoID, AICargo.CC_MAIL)) {
 			if (AICargo.GetTownEffect(connection.cargoID) == AICargo.TE_GOODS)
