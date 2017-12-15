@@ -22,8 +22,13 @@ class BuildRoadAction extends BuildConnectionAction
 
 function BuildRoadAction::Execute() {
 	local info = "";
-	if (!connection.pathInfo.build)
+	if (!connection.pathInfo.build) {
+		if (GameSettings.GetMaxBuildableVehicles(AIVehicle.VT_ROAD) == 0) {
+			FailedToExecute("We didn't build the road connection since we can't add more road vehicles.");
+			return false;
+		}
 		info = "Build a road from ";
+	}
 	else
 		info = "Add road stations and update road from ";
 	Log.logInfo(info + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
