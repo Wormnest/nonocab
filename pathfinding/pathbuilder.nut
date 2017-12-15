@@ -140,7 +140,7 @@ function PathBuilder::BuildRoadPiece(fromTile, toTile, tileType, length, estimat
 				local result = false;
 				while (tmpTile != toTile) {
 					result = false;
-					local counter = 50;
+					local counter = 25;
 					// In case there is a vehicle in the way we keep retrying for a while before giving up.
 					while (!result) {
 						result = AIRoad.BuildRoad(tmpTile, tmpTile + direction);
