@@ -67,10 +67,14 @@ function RoadPathFinding::FindFastestRoad(start, end, checkStartPositions, check
 	local costTillEnd = pathFinderHelper.costTillEnd;
 	pathFinderHelper.Reset();
 
+	// Wormnest: Not sure why we need money here. Aren't we only pathfinding here?
+	// We will disable this for now.
+	/*
 	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) < Finance.minimumBankReserve / 2) {
 		Finance.GetMaxLoan();
 		AIController.Sleep(1);
 	}
+	*/
 
 	// There should be no tiles in start that are also defined in end.
 	// I've seen this happen when trying to build a water route where the path consisted of a begin and end tile on the same position.
