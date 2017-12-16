@@ -212,6 +212,9 @@ function ManageVehiclesAction::Execute()
 
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
+			// Make sure we have enough money (if possible)
+			Finance.GetMoney(vehiclePrice);
+
 			if (Finance.GetMaxMoneyToSpend() - vehiclePrice < 0) {
 				Log.logDebug("Not enough money to build all vehicles!");
 				break;
