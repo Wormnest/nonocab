@@ -213,7 +213,7 @@ function ManageVehiclesAction::Execute()
 		for (local i = 0; i < vehicleNumbers; i++) {
 		
 			if (Finance.GetMaxMoneyToSpend() - vehiclePrice < 0) {
-				Log.logDebug("Not enough money to build all prescibed vehicles!");
+				Log.logDebug("Not enough money to build all vehicles!");
 				break;
 			}
 					
