@@ -20,6 +20,15 @@ class RoadPathFinderHelper extends PathFinderHelper {
 	
 	constructor(buildDriveThroughStations_) {
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
+		
+		// If maintenance costs setting is turned on then infrastructure will costs us increasingly more
+		// the more we use. Thus make the cost of new roads increasingly expensive here too.
+		// Maybe we should also do that for bridges and tunnels?
+		if (AIGameSettings.GetValue("infrastructure_maintenance") == 1) {
+			// Get the number of road pieces we already have
+			local roadpieces = AIInfrastructure.GetRoadPieceCount(AICompany.COMPANY_SELF, AIRoad.ROADTYPE_ROAD);
+			costForNewRoad = 1200 + (roadpieces * 2 / 15);
+		}
 
 		// Optimalization, use a prefat annotated tile for heuristics.
 		dummyAnnotatedTile = AnnotatedTile();
