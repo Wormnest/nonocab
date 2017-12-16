@@ -129,6 +129,9 @@ function ManageVehiclesAction::Execute()
 		local maxBuildableVehicles =  GameSettings.GetMaxBuildableVehicles(vehicleType);
 		if (vehicleNumbers > maxBuildableVehicles)
 			vehicleNumbers = maxBuildableVehicles;
+		else if (maxBuildableVehicles <= 20 && vehicleNumbers > 2)
+			// When there are only a limited number of available vehicles left don't buy more than 2 per connection
+			vehicleNumbers = 2;
 		
 		if (vehicleNumbers == 0) {
 			Log.logInfo("Can't buy more vehicles, we have reached the maximum!");
