@@ -42,7 +42,7 @@ function Finance::GetMaxMoneyToSpend() {
 
 function Finance::GetMaxLoan() {
 	local loanMode = AIExecMode();
-	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());	
+	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 }
 
 function Finance::RepayLoan() {
