@@ -12,6 +12,18 @@ class Finance {
 	function GetMaxMoneyToSpend();
 	
 	/**
+	 * Get the specified amount of money.
+	 * @param AmountNeeded The amount of money we need.
+	 * @return true if we got the money needed, false if not.
+	 */
+	function GetMoney(AmountNeeded);
+	
+	/**
+	 * Checks whether we have less than minimumBankReserve in our balance and if necessary increases our loan.
+	 */
+	function CheckNegativeBalance();
+	
+	/**
 	 * Get the maximum loan.
 	 */
 	function GetMaxLoan();
@@ -38,6 +50,37 @@ function Finance::GetMaxMoneyToSpend() {
 		return balance;
 
 	return AICompany.GetBankBalance(AICompany.COMPANY_SELF) + AICompany.GetMaxLoanAmount() - AICompany.GetLoanAmount() - Finance.minimumBankReserve;
+}
+
+function Finance::GetMoney(AmountNeeded) {
+	local loanMode = AIExecMode();
+	local Cash = AICompany.GetBankBalance(AICompany.COMPANY_SELF) - Finance.minimumBankReserve;
+	
+	if (AmountNeeded <= Cash) {
+		// We have enough cash on hand
+		return true;
+	}
+	else if (AmountNeeded > Finance.GetMaxMoneyToSpend()) {
+		// Not enough cash nor can we loan enough to get the required amount
+		/// @todo Maybe we should try to loan as much as we can anyway? Or let the caller handle this situation.
+		return false;
+	}
+	else {
+		// We need to loan more money so request the amount we need besides current cash
+		local Needed = AmountNeeded - Cash;
+		Log.logInfo("AmountNeeded " + AmountNeeded + ", loan needed " + Needed);
+
+		local gotloan = AICompany.SetMinimumLoanAmount(AICompany.GetLoanAmount() + Needed);
+		//Log.logDebug("We needed " + AmountNeeded + ", we tried to loan " + Needed + ". Cash now " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
+		return gotloan;
+	}
+}
+
+function Finance::CheckNegativeBalance() {
+	local loanMode = AIExecMode();
+	local Cash = AICompany.GetBankBalance(AICompany.COMPANY_SELF);
+	if (Cash < Finance.minimumBankReserve)
+		Finance.GetMoney(Finance.minimumBankReserve);
 }
 
 function Finance::GetMaxLoan() {
