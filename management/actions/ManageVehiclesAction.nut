@@ -253,6 +253,13 @@ function ManageVehiclesAction::Execute()
 					break; // No need trying to build more of the same vehicle if building this one failed.
 				vehicleCloneID = vehicleID;
 			}
+			
+			if (vehicleID == null) {
+				Log.logError("Failed to build vehicle. Error: " + AIError.GetLastErrorString());
+				// And don't try to get more.
+				break;
+			}
+			
 			// Add vehicle to the correct group for this connection.
 			AIGroup.MoveVehicle(connection.vehicleGroupID, vehicleID);
 			
