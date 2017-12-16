@@ -221,7 +221,7 @@
 		// Check which one is the best.
 		// If the current sub sum is better than the future one we're done!
 		if (currentBestSubSum[1] >= futureBestSubSum[1]) {
-			Log.logWarning("- Current and Future subsums are the same; Return the current sub sum!");
+			Log.logWarning("Current (" + currentBestSubSum[1] + ") and Future (" + futureBestSubSum[1] + ") subsums are the same; Return the current sub sum!");
 			currentBestSubSum[0].extend(mandantoryReports);
 			return currentBestSubSum[0];
 		}
@@ -234,7 +234,7 @@
 			availableMoney -= report.GetCost(availableMoney);
 			Log.logWarning(report.ToString());
 		}
-		Log.logInfo("Current best subsum! " + currentIncomePerMonth);
+		Log.logInfo("Current best subsum (=income per month): " + currentIncomePerMonth);
 
 		//local currentIncomePerMonth = SubSum.GetIncomePerMonth(futureBestSubSum[0], [], moneyToSpend + forecast * incomePerMonth);
 		local futureIncomePerMonth = 0;
