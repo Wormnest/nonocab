@@ -503,13 +503,16 @@ class Connection {
 				nettoIncomePerMonth = report.NettoIncomePerMonthForOneVehicle();
 			}
 			if (nettoIncomePerMonth > bestIncomePerMonth) {
-//				if (bestTransportEngine != null)
-//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
-//				else
-//					Log.logWarning("+ New engine " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
-				bestIncomePerMonth = nettoIncomePerMonth;
-				bestTransportEngine = transportEngineID;
-				bestHoldingEngine = holdingEngineID;
+				// We don't want real short connections so set minimum one way travel time to 15 days
+				if (GetEstimatedTravelTime(transportEngineID, true) > 14) {
+	//				if (bestTransportEngine != null)
+	//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
+	//				else
+	//					Log.logWarning("+ New engine " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
+					bestIncomePerMonth = nettoIncomePerMonth;
+					bestTransportEngine = transportEngineID;
+					bestHoldingEngine = holdingEngineID;
+				}
 			}// else if (bestTransportEngine != null) {
 //				Log.logWarning("- The old engine + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") is better than " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
 //			}
