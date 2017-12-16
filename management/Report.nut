@@ -197,6 +197,11 @@ class Report
 			isInvalid = true;
 			return;
 		}
+		else if (travelTime > 300) {
+			//Log.logWarning("Travel time too long for connection " + connection.ToString());
+			isInvalid = true;
+			return;
+		}
 		
 		// Calculate netto income per vehicle.
 		local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * AIEngine.GetCapacity(holdingEngineID);
