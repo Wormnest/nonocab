@@ -306,15 +306,22 @@ function ManageVehiclesAction::BuildVehicle(depot, engineID, cargoID, failOnRefi
 	}
 
 	// Refit if necessary.
-	if (cargoID != AIEngine.GetCargoType(engineID))
-		if (!AIVehicle.RefitVehicle(vehicleID, cargoID) && failOnRefitError) {
-			Log.logError("Refitting vehicle " + AIVehicle.GetName(vehicleID) + " to " +
-			AICargo.GetCargoLabel(cargoID) + " failed! " + AIError.GetLastErrorString());
+	if (cargoID != AIEngine.GetCargoType(engineID)) {
+		local refitresult = AIVehicle.RefitVehicle(vehicleID, cargoID);
+		if (!refitresult) {
+			if (failOnRefitError) {
+				Log.logError("Refitting vehicle " + AIVehicle.GetName(vehicleID) + " to " +
+				AICargo.GetCargoLabel(cargoID) + " failed! " + AIError.GetLastErrorString());
 
-			// Since it's no use having a vehicle that can't transport the cargo we want sell it again!
-			AIVehicle.SellVehicle(vehicleID);
-			return null;
+				// Since it's no use having a vehicle that can't transport the cargo we want sell it again!
+				AIVehicle.SellVehicle(vehicleID);
+				return null;
+			}
+			else {
+				Log.logDebug("Refit failed for " + AIVehicle.GetName(vehicleID) + " to " + AICargo.GetCargoLabel(cargoID));
+			}
 		}
+	}
 	
 	return vehicleID;
 }
