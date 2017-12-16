@@ -75,11 +75,17 @@ function ConnectionManager::MaintainActiveConnections() {
 							
 							// Build a new one and check if it's valid
 							local newVehicleID;
-							if (vehicleType == AIVehicle.VT_RAIL)
+							local vehiclePrice = AIEngine.GetPrice(replacementEngineID[0]);
+							if (vehicleType == AIVehicle.VT_RAIL) {
 								/// @todo Decide on actual number of wagons, however in Report.nut currently also a fixed amount of 5 is used?
+								vehiclePrice += AIEngine.GetPrice(replacementEngineID[1]) * 5;
+								Finance.GetMoney(vehiclePrice);
 								newVehicleID = ManageVehiclesAction.BuildTrain(depot_loc, replacementEngineID[0], connection.cargoID, replacementEngineID[1], 5 /*numberWagons*/ );
-							else
+							}
+							else {
+								Finance.GetMoney(vehiclePrice);
 								newVehicleID = ManageVehiclesAction.BuildVehicle(depot_loc, replacementEngineID[0], connection.cargoID, true);
+							}
 							if (newVehicleID == null) {
 								// Building failed for whatever reason that is already shown in log.
 								continue;
