@@ -283,7 +283,7 @@ function NoNoCAB::Start()
 					assert (vehicleCapacity > 0);
 						
 					// Calculate netto income per vehicle.
-					local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;						
+					local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;
 
 					local distance = AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation());
 					if (distance < 0) {
@@ -295,7 +295,7 @@ function NoNoCAB::Start()
 					}
 					local brutoIncomePerMonthPerVehicle = AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeForward.tointeger()) * transportedCargoPerVehiclePerMonth;
 
-					// In case of a bilateral connection we take a persimistic take on the amount of 
+					// In case of a bilateral connection we take a pessimistic take on the amount of
 					// vehicles supported by this connection, but we do increase the income by adding
 					// the expected income of the other connection to the total.
 					if (connection.bilateralConnection || connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
@@ -357,7 +357,7 @@ function NoNoCAB::Start()
 					Log.logInfo(infoString);
 			}
 		}
-			
+		
 		Log.logWarning(counter + " vehicles inspected.");
 		if (numberOfShips > 0) {
 			Log.logWarning("Ships: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
@@ -366,25 +366,25 @@ function NoNoCAB::Start()
 		else {
 			Log.logWarning("No ships!");
 		}
-			
+		
 		if (numberOfTrains > 0) {
 			Log.logWarning("Trains: " + numberOfTrains);// + " - average error: " + (trainIncomeError / numberOfTrains) + " (" + (trainPercentageError / numberOfTrains) + ").");
 			DrawHistogram(0.37, 3, 0.25, trainPercentageErrors);
 		} else
 			Log.logWarning("No trains!");
-					
+		
 		if (numberOfTrucks > 0) {
 			Log.logWarning("Trucks: " + numberOfTrucks);// + " - average error: " + (truckIncomeError / numberOfTrucks) + " (" + (truckPercentageError / numberOfTrucks) + ").");
 			DrawHistogram(0.37, 3, 0.25, truckPercentageErrors);
 		} else
 			Log.logWarning("No trucks!");
-				
+		
 		if (numberOfAirplanes > 0) {
 			Log.logWarning("Airplanes: " + numberOfAirplanes);//	 + " - average error: " + (airplaneIncomeError / numberOfAirplanes) + " (" + (airplanePercentageError / numberOfAirplanes) + ").");
 			DrawHistogram(0.37, 3, 0.25, airplanePercentageErrors);
 		} else
 			Log.logWarning("No airplanes!");
-			
+		
 		
 		GameSettings.UpdateGameSettings();
 		Log.logWarning("Planner: Schedule and Execute");
