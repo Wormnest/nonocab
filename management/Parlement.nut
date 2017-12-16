@@ -21,10 +21,7 @@ class Parlement
  */
 function Parlement::ExecuteReports() {
 
-	// Get as much money as possible.
-	Finance.GetMaxLoan();
-
-	local canBuild = Finance.ConstructionAllowed();
+	//local canBuild = Finance.ConstructionAllowed(); // Wormnest: this seems not to be used anymore.
 	local mostExpensiveBuild = 0;
 
 	foreach (report in reports) {
@@ -45,14 +42,21 @@ function Parlement::ExecuteReports() {
 			}
 			continue;
 		}
-			
+		
+		// Get twice money we expect is needed for this report, double because we sometimes might need more than expected
+		local repcosts = report.GetCost(-1);
+		if (!Finance.GetMoney(2 * repcosts)) {
+			continue;
+		}
+		
 		// Allow building so long we have at least as much money as the most expensive build in this session.
 		if (report.connection == null || !report.connection.pathInfo.build && mostExpensiveBuild > Finance.GetMaxMoneyToSpend())
 			continue;
 
 		ignoreList.push(report);
-			
+		
 		Log.logInfo("Execute report " + report.ToString());
+		Log.logDebug("Expected costs: " + repcosts + ", cash: " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
 		local minimalMoneyNeeded = 0;
 		foreach (action in report.actions) {
 		
@@ -68,6 +72,10 @@ function Parlement::ExecuteReports() {
 			}
 			minimalMoneyNeeded += action.GetExecutionCosts();
 		}
+		Log.logDebug("Money spent: " + minimalMoneyNeeded + ", cash: " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
+		// Repay loan as soon as possible (especially important with inflation and high interest rates)
+		Finance.RepayLoan();
+		
 		if (report.isInvalid)
 			continue;
 
@@ -77,7 +85,7 @@ function Parlement::ExecuteReports() {
 		//AISign.BuildSign(report.connection.pathInfo.roadList[0].tile, "Month: " + (report.brutoIncomePerMonthPerVehicle - report.brutoCostPerMonthPerVehicle) + "; year: " + (report.brutoIncomePerMonthPerVehicle - report.brutoCostPerMonthPerVehicle) * 12);
 	}
 	
-	// Pay back as much load as possible.
+	// Pay back as much loan as possible.
 	Finance.RepayLoan();
 	return true;
 }
