@@ -79,7 +79,8 @@ function Finance::GetMoney(AmountNeeded) {
 function Finance::CheckNegativeBalance() {
 	local loanMode = AIExecMode();
 	local Cash = AICompany.GetBankBalance(AICompany.COMPANY_SELF);
-	if (Cash < Finance.minimumBankReserve)
+	// Make sure we have at least some money unless we haven't spent anything yet (0 cash and no loan)
+	if (Cash < Finance.minimumBankReserve && (Cash != 0 || AICompany.GetLoanAmount() > 0))
 		Finance.GetMoney(Finance.minimumBankReserve);
 }
 
