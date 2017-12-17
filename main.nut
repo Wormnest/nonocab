@@ -230,6 +230,7 @@ function NoNoCAB::Start()
 			
 		local counter = 0;
 			
+		Refinance();
 		foreach (connection in connectionManager.allConnections) {
 			connection.expectedAvgEarnings = null;
 			connection.actualAvgEarnings = null;
@@ -387,6 +388,7 @@ function NoNoCAB::Start()
 		
 		
 		GameSettings.UpdateGameSettings();
+		Refinance();
 		Log.logWarning("Planner: Schedule and Execute");
 		planner.ScheduleAndExecute();
 		// Get all reports from our advisors.
@@ -395,6 +397,7 @@ function NoNoCAB::Start()
 		foreach (advisor in advisors) {
 			reports.extend(advisor.GetReports());
 		}
+		Refinance();
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
 		
@@ -407,6 +410,7 @@ function NoNoCAB::Start()
 		connectionManager.MaintainActiveConnections();
 		
 		
+		Refinance();
 		AICompany.SetAutoRenewMoney(5000000);
 		Log.logWarning("Select reports");
 		parlement.SelectReports(reports);
@@ -419,8 +423,14 @@ function NoNoCAB::Start()
 		Log.logWarning("Handle politics");
 		la.HandlePolitics();
 		
+		Refinance();
 		AICompany.SetAutoRenewMoney(1000000);
 	}
+}
+
+function Refinance() {
+	Finance.RepayLoan();
+	Finance.CheckNegativeBalance();
 }
 
 function DrawHistogram(min, max, step, data) {
