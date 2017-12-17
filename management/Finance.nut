@@ -90,6 +90,11 @@ function Finance::GetMaxLoan() {
 
 function Finance::RepayLoan() {
 	local loanMode = AIExecMode();
+	if (AICompany.GetBankBalance(AICompany.COMPANY_SELF) == AICompany.GetLoanAmount()) {
+		// Get rid of the default amount of loan we have at startup.
+		AICompany.SetLoanAmount(0);
+		return;
+	}
 	local loanInterval = AICompany.GetLoanInterval();
 	while (AICompany.GetBankBalance(AICompany.COMPANY_SELF) - loanInterval > Finance.minimumBankReserve && AICompany.SetLoanAmount(AICompany.GetLoanAmount() - loanInterval));
 }
