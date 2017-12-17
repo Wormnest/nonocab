@@ -40,6 +40,7 @@ function Parlement::ExecuteReports() {
 				Log.logWarning(report.UtilityForMoney(Finance.GetMaxMoneyToSpend()));
 				quit();
 			}
+			Log.logInfo("Not enough money available to execute report.");
 			continue;
 		}
 		
@@ -53,8 +54,11 @@ function Parlement::ExecuteReports() {
 		}
 		
 		// Allow building so long we have at least as much money as the most expensive build in this session.
-		if (report.connection == null || !report.connection.pathInfo.build && mostExpensiveBuild > Finance.GetMaxMoneyToSpend())
+		if (report.connection == null || !report.connection.pathInfo.build && mostExpensiveBuild > Finance.GetMaxMoneyToSpend()) {
+			Log.logInfo("Building connection would be too expensive.");
+			Log.logWarning("Cancelled Report: " + report.ToString());
 			continue;
+		}
 
 		ignoreList.push(report);
 		
