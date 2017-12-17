@@ -68,7 +68,6 @@ function Finance::GetMoney(AmountNeeded) {
 	else {
 		// We need to loan more money so request the amount we need besides current cash
 		local Needed = AmountNeeded - Cash;
-		Log.logInfo("AmountNeeded " + AmountNeeded + ", loan needed " + Needed);
 
 		local gotloan = AICompany.SetMinimumLoanAmount(AICompany.GetLoanAmount() + Needed);
 		//Log.logDebug("We needed " + AmountNeeded + ", we tried to loan " + Needed + ". Cash now " + AICompany.GetBankBalance(AICompany.COMPANY_SELF));
