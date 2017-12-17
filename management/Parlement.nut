@@ -43,9 +43,12 @@ function Parlement::ExecuteReports() {
 			continue;
 		}
 		
-		// Get twice money we expect is needed for this report, double because we sometimes might need more than expected
-		local repcosts = report.GetCost(-1);
-		if (!Finance.GetMoney(2 * repcosts)) {
+		// Get one and a half the amount of money we expect is needed for this report, because we sometimes might need more than expected
+		// If that fails we try again with just the amount we need
+		local repcosts = report.GetCost(Finance.GetMaxMoneyToSpend());
+		if (!Finance.GetMoney(3 * repcosts / 2) && !Finance.GetMoney(repcosts)) {
+			Log.logWarning("Could not loan enough money (needed: " + repcosts + ") to execute report.");
+			Log.logWarning("Cancelled Report: " + report.ToString());
 			continue;
 		}
 		
