@@ -8,6 +8,8 @@ Since there hasn't been any progress in a while I decided to see if I could do
 something about the biggest problems especially the crashing while saving.
 Besides that lots of other problems have been fixed and improvements have been made.
 
+Current version: 4, released December 17, 2017.
+
 Details about all changes can be found in my forked repository:
 https://bitbucket.org/jacobb/nocab/overview
 
@@ -20,12 +22,18 @@ https://www.tt-forums.net/viewtopic.php?f=65&t=75030
 Requirements:
 NoNoCAB uses the AI library Queue.BinaryHeap.
 
+
 The original NoCAB is an AI by Morloth.
 
 Original forum topics:
 NoCAB: http://www.tt-forums.net/viewtopic.php?f=65&t=40203
 NoCAB Bleeding Edge: http://www.tt-forums.net/viewtopic.php?f=65&t=43259
 
+
 The fixes in this edition have been made by Wormnest (Jacob Boerema).
 
+Current version
+December 2017
+
+First version
 June-July 2016
