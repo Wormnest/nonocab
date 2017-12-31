@@ -178,7 +178,7 @@ function BuildAirfieldAction::Execute() {
  * @param airportType The type of airport which needs to be build.
  * @param node The connection node where the airport needs to be build.
  * @param cargoID The cargo that needs to be transported.
- * @param acceptingSide If true this side is considered as begin the accepting side of the connection.
+ * @param acceptingSide If true this side is considered as being the accepting side of the connection.
  * @param getFirst If true ignores the exclude list and gets the first suitable spot to build an airfield
  * ignoring terraforming (it's only used to determine the cost of building an airport).
  * @param townToTown True if this airfield is part of a town to town connection. In that case we enforce
@@ -224,9 +224,12 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 	AIController.Sleep(1);
 
 	if (getFirst) {
-		if (node.nodeType == ConnectionNode.TOWN_NODE)
+		// We only get here when determining the costs of building an airport
+		// So it doesn't mean getting the first airport of a connection!
+		if (node.nodeType == ConnectionNode.TOWN_NODE) {
 			// Restore original excludeList
 			node.excludeList = excludeList;
+		}
 	} else {
 		if (node.nodeType == ConnectionNode.TOWN_NODE || acceptingSide) {
 			list.Valuate(AITile.GetCargoAcceptance, cargoID, airportX, airportY, airportRadius);
@@ -245,6 +248,11 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 		Log.logDebug("Couldn't find a suitable spot for an airport.");
 		return null;
 	}
+	
+	/// @todo For cargo connections (instead of people) it might be better to sort in a way that
+	/// tiles closest to the industry are checked first. That way there will be less problems with
+	/// out of coverage airports. OTOH The current way favors tiles that can reach multiple industries
+	/// of the same type!
 	list.Sort(AIList.SORT_BY_VALUE, false);
     
 	local good_tile = -1;
