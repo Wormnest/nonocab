@@ -63,6 +63,7 @@ function BuildRailAction::Execute() {
 	//pathFinderHelper.costForTurn = 20;
 	
 	/// @todo doing complete pathfinding here seems like a waste of time if we don't use the result except for the station building.
+	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_PRE;
 	local prePathInfo = pathFinder.FindFastestRoad(connection.travelFromNode.GetAllProducingTiles(connection.cargoID, stationRadius, 1, 1),
 		connection.travelToNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1), true, true, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
@@ -145,6 +146,7 @@ function BuildRailAction::Execute() {
 	endNodes.AddTile(roadList[0].tile);
 	//AISign.BuildSign(roadList[len - 1].tile, "0");
 	//AISign.BuildSign(roadList[0].tile, "1");
+	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_FIRST;
 	connection.pathInfo = pathFinder.FindFastestRoad(beginNodes, endNodes, false, false, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.3 + 20, tilesToIgnore);
 
@@ -640,6 +642,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 
 	Log.logInfo("Find second path.")
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
+	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_SECOND;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.3 + 40, tilesToIgnore);
 	if (secondPath == null)
@@ -775,7 +778,10 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
 	
 	local toPlatformPath;
+	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_PRE;
+	pathFinder.pathFinderHelper.AllowNonSharedRailTracking = false;
 	toPlatformPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType, 30, null);
+	pathFinder.pathFinderHelper.AllowNonSharedRailTracking = true;
 	pathFinder.pathFinderHelper.reverseSearch = false;
 
 	if (toPlatformPath != null) {
