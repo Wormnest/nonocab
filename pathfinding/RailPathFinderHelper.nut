@@ -101,7 +101,13 @@ class RailPathFinderHelper extends PathFinderHelper {
 	}
 	
 	function GetTimeLimit() {
-		return 100;	// The maximum time in days we should try to find a path (for rail we use 100 days since rail routes can be long).
+		if (PathType == PATH_TYPE_SECOND)
+			return 150;	// Since we already built stations and first path we need to try harder (longer)
+						// to find a path since demolishing will cost us money.
+		else if (PathType == PATH_TYPE_FIRST)
+			return 100;	// The maximum time in days we should try to find a path (for rail we use 100 days since rail routes can be long).
+		else // assuming PRE PATH
+			return 75;
 	}
 	function UpdateClosedList() { return updateClosedList; }
 
