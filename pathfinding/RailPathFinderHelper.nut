@@ -1004,10 +1004,15 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				annotatedTile.length = currentAnnotatedTile.length + 0.5;
 				
 			if (!reuseRailTrack)
-				if (currentAnnotatedTile.reusedPieces >= 0)
+				if (currentAnnotatedTile.reusedPieces > 0)
 					annotatedTile.reusedPieces = 0;
-				else // Negative values to track the number of non shared rail track pieces
+				else if (AllowNonSharedRailTracking) {
+					// Zero or negative values to track the number of non shared rail track pieces
+					// Note: this should be disabled when building/connecting secondary rail tracks
+					// to the first track near a station otherwise you get very long connecting pieces.
 					annotatedTile.reusedPieces = currentAnnotatedTile.reusedPieces - 1;
+					//Log.logInfo("Reused pieces of track: " + currentAnnotatedTile.reusedPieces);
+				}
 
 			tileArray.push(annotatedTile);
 		}
