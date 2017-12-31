@@ -966,8 +966,11 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				// If we cross, make sure we have reused at least 6 rail tracks so we can assure
 				// we don't get any trouble with the crossings.
-				if (doRailCross && currentAnnotatedTile.reusedPieces < 6 && currentAnnotatedTile.reusedPieces > 0)
+				/// @todo Instead of a fixed number (6) we should compute it based on train/station length!
+				if (doRailCross && currentAnnotatedTile.reusedPieces < 6 && currentAnnotatedTile.reusedPieces > 0) {
+					//Log.logInfo("Reused pieces of track: " + currentAnnotatedTile.reusedPieces);
 					continue;
+				}
 			}
 
 			// If we're reusing a rail track, make sure we don't head in the wrong direction!!!
@@ -980,12 +983,17 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 				    !AIRail.TrainHasPowerOnRail(currentRailType, tileRailType))
 					continue;
 				
-				if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction))
+				if (!CheckSignals(annotatedTile.tile, annotatedTile.lastBuildRailTrack, annotatedTile.direction)) {
+					//Log.logInfo("Can't reuse track: wrong direction ");
 					continue;
+				}
 				
 				// We should have at least 10 rail pieces since start or since the last time we used shared rails before thinking of using shared rails (again).
-				if (currentAnnotatedTile.reusedPieces < 0 && currentAnnotatedTile.reusedPieces > -10)
+				/// @todo Instead of a fixed number (10) we should compute it based on train/station length!
+				if (currentAnnotatedTile.reusedPieces < 0 && currentAnnotatedTile.reusedPieces > -10) {
+					//Log.logInfo("Can't reuse track since reused pieces is: " + currentAnnotatedTile.reusedPieces);
 					continue;
+				}
 				
 				annotatedTile.alreadyBuild = true;
 
