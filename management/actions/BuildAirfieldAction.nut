@@ -174,6 +174,21 @@ function BuildAirfieldAction::Execute() {
 }
 
 /**
+ * Check whether an airport of type airportType at a specific tile has coverage for a producer of cargoID.
+ * @param cargoID The cargo that needs to be picked up.
+ * @param tile The tile inteded to build the airport at.
+ * @param airportType The type of airport we intend to be build.
+ * @return true if there is coverage, otherwise false.
+ */
+function BuildAirfieldAction::AirportHasCoverage(cargoID, tile, airportType) {
+	local airportX = AIAirport.GetAirportWidth(airportType);
+	local airportY = AIAirport.GetAirportHeight(airportType);
+	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
+	local producers = AITile.GetCargoProduction(tile, cargoID, airportX, airportY, airportRadius);
+	return producers > 0;
+}
+
+/**
  * Find a good location to build an airfield and return it.
  * @param airportType The type of airport which needs to be build.
  * @param node The connection node where the airport needs to be build.
