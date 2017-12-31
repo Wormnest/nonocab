@@ -3,6 +3,11 @@ class RailPathFinderHelper extends PathFinderHelper {
 	static NEAR_STATION_DISTANCE = 15;
 	static MAX_BRIDGE_LENGTH = 15;
 	static MAX_TUNNEL_LENGTH = 15;
+	
+	static PATH_TYPE_PRE    = 0;
+	static PATH_TYPE_FIRST  = 1;
+	static PATH_TYPE_SECOND = 2;
+
 
 	/// Warning: BuildRailAction::ConnectRailToStation uses adapted costs for tracks to connect station platforms!
 	costForRail 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
@@ -32,6 +37,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	vehicleType = AIVehicle.VT_RAIL;
 	closed_list = null;
 	been_near_end = false;
+	
+	PathType = 0;				// Type of path that we are finding: pre path, first path, or second path
 	
 	reverseSearch = null;       // Are we pathfinding from the end point to the begin point?
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
@@ -80,6 +87,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 			costForSlopeNear = costForSlope / 2;
 			costForTurn = 300;
 		}
+		PathType = PATH_TYPE_FIRST;
 	}
 	
 	function Reset() { 
