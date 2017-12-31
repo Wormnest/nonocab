@@ -184,7 +184,7 @@ function BuildRailAction::Execute() {
 		return false;
 	}
 	
-	Log.logDebug("Build depot!");
+	Log.logDebug("Build depots!");
 	// Check if we need to build a depot.	
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
