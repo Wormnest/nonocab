@@ -644,7 +644,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
 	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_SECOND;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType,
-		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.3 + 40, tilesToIgnore);
+		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.4 + 40, tilesToIgnore);
 	if (secondPath == null)
 		return false;
 	Log.logInfo("Build second path.")
