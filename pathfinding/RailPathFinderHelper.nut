@@ -44,6 +44,8 @@ class RailPathFinderHelper extends PathFinderHelper {
 	startAndEndDoubleStraight = false; // Should the rail to the start and end be two straight rails?
 	SLOPE_UP = null;            // The value of an upwards slope. Depends on reverseSearch.
 	SLOPE_DOWN = null;		    // The value of a downwards slope. Depends on reverseSearch.
+	
+	AllowNonSharedRailTracking = true;		// Should be turned off for connecting short pieces of rail like secondary tracks near a station
 
 	updateClosedList = false;
 	
