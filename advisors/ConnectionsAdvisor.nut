@@ -178,10 +178,11 @@ function ConnectionAdvisor::Update(loopCounter) {
 	if (loopCounter == 0) {
 
 		// Don't evaluate it further if we can't build anymore of this vehicleType.
+		local VehicleTypeDisabled = false;
 		if (GameSettings.GetMaxBuildableVehicles(vehicleType) == 0) {
-			disabled = true;
+			VehicleTypeDisabled = true;
 		} else
-			disabled = false;
+			VehicleTypeDisabled = false;
 
 		// Check if some connections in the reportTable have been built already, if so remove them!
 		local reportsToBeRemoved = [];
@@ -211,7 +212,7 @@ function ConnectionAdvisor::Update(loopCounter) {
 		Log.logWarning("There are " + connectionReports.Count() + " connection reports left to evaluate.");
 	}
 
-	if (disabled)
+	if (VehicleTypeDisabled)
 		return;
 
 	// Try to get the best subset of options.
