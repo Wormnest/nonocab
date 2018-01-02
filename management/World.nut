@@ -246,7 +246,7 @@ function World::InsertTown(town)
  */
 function World::InsertIndustry(industryID) {
 
-	local industryNode = IndustryConnectionNode(industryID, niceCABEnabled);
+	local industryNode = IndustryConnectionNode(industryID, this);
 	
 	// Make sure this industry hasn't already been added.
 	//if (!industry_table.rawin(industryID))
