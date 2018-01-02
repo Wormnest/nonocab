@@ -1,8 +1,7 @@
 /**
- * Basic class for all 'threads' this means a class that can run a certain
+ * Basic class for all 'threads'. This means a class that can run a certain
  * piece of code multiple times during the run of the AI. The idea is that
- * the class stores its initial state and incrementialy update and extends
- * upon this.
+ * the class stores its initial state and incrementally updates and extends this.
  */
 class Thread {
 	
@@ -19,7 +18,7 @@ class Thread {
 	function Update();
 	
 	/**
-	 * If the thread has a very serious report to deliver, signel a halt to the planner!
+	 * If the thread has a very serious report to deliver, signal a halt to the planner.
 	 * @return True if the planner must halt, false otherwise. 
 	 */
 	function HaltPlanner() {
