@@ -174,6 +174,12 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
  */
 function ConnectionAdvisor::Update(loopCounter) {
 
+	// Don't run this advisor if it's set to disabled.
+	if (disabled) {
+		Log.logDebug("Connection advisor for vehicletype " + vehicleType + " is disabled.");
+		return;
+	}
+
 	Log.logWarning("Connection advisor for vehicletype " + vehicleType);
 	local VehicleTypeDisabled = false;
 	if (loopCounter == 0) {
