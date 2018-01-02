@@ -97,6 +97,9 @@ function NoNoCAB::UpdateSettings() {
 		la.buildStatuesEnabled = buildStatues;
 		la.secureRightsEnabled = secureRights;
 	}
+	
+	// Check competitors setting
+	world.niceCABEnabled = GetSetting("NiceCAB");
 }
 
 function NoNoCAB::Start()
