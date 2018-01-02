@@ -175,10 +175,10 @@ function ConnectionAdvisor::ConnectionDemolished(connection) {
 function ConnectionAdvisor::Update(loopCounter) {
 
 	Log.logWarning("Connection advisor for vehicletype " + vehicleType);
+	local VehicleTypeDisabled = false;
 	if (loopCounter == 0) {
 
 		// Don't evaluate it further if we can't build anymore of this vehicleType.
-		local VehicleTypeDisabled = false;
 		if (GameSettings.GetMaxBuildableVehicles(vehicleType) == 0) {
 			VehicleTypeDisabled = true;
 		} else
