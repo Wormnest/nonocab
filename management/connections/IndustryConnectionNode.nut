@@ -4,11 +4,11 @@
  */
 class IndustryConnectionNode extends ConnectionNode
 {
-	checkCompetitors = false;
+	_world = null;
 
-	constructor(id, check_competitors) {
+	constructor(id, world) {
 		ConnectionNode.constructor(INDUSTRY_NODE, id);
-		this.checkCompetitors = check_competitors;
+		this._world = world;
 	}
 	
 	/**
@@ -35,7 +35,7 @@ class IndustryConnectionNode extends ConnectionNode
 	}
 	
 	function GetProduction(cargoID) {
-		if (checkCompetitors) {
+		if (_world.niceCABEnabled) { // Check if competitors have stations here or not
 			local nrStationsAround = AIIndustry.GetAmountOfStationsAround(id);
 
 			if (AIIndustry.GetLastMonthTransported(id, cargoID) == 0 || nrStationsAround < 0)
