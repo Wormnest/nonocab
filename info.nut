@@ -30,8 +30,13 @@ class FNoNoCAB extends AIInfo {
 		AddSetting( { name = "Allow trains town to town", description = "Allow trains town to town", easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("Allow trains town to town", {_0 = "No", _1 = "Yes (Doesn't perform well!)"});
 
-		AddSetting( { name = "Politics Setting", description = "Politics Setting", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
-		AddLabels("Politics Setting", {_0 = "NoNoCAB stays away from politics!", _1 = "Hippy friendly tree planter", _2 = "Build statues and an HQ to see who's boss", _3 = "Machiavellian - No one transports but NoNoCAB!"});
+		AddSetting( { name = "Politics Setting", description = "Aggressiveness", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
+		AddLabels(
+			"Politics Setting", 
+			{_0 = "NoNoCAB is a friendly competitor", 
+			_1 = "NoNoCAB is friendly but can plant trees", 
+			_2 = "NoNoCAB can also build statues and a headquarter", 
+			_3 = "NoNoCAB will also try to get exclusive transport rights"});
 
 		// Developer setting to make it possible to change log level in a running game.
 		AddSetting({
@@ -41,8 +46,8 @@ class FNoNoCAB extends AIInfo {
 			max_value = 3,
 			easy_value = 1,
 			medium_value = 1,
-			hard_value = 1,
-			custom_value = 1,
+			hard_value = 2,
+			custom_value = 2,
 			step_size = 1,
 			flags = CONFIG_DEVELOPER + CONFIG_INGAME
 		});
