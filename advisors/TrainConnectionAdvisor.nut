@@ -21,7 +21,7 @@ function TrainConnectionAdvisor::GetBuildAction(connection) {
  */
 function TrainConnectionAdvisor::GetPathInfo(report) {
 
-	// Don't do towns! Takes to long for the pathfinder sometimes...	
+	// Don't do towns! Takes too long for the pathfinder sometimes...
 	if (report.connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE && !allowTownToTownConnections)
 		return null;
 	local stationType = AIStation.STATION_TRAIN; 
