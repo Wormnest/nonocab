@@ -15,16 +15,16 @@ class FNoNoCAB extends AIInfo {
 		AddSetting( { name = "NiceCAB", description = "NoNoCAB will try to stay away from already serviced industries", easy_value = 1, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN + CONFIG_INGAME} );
 		AddLabels("NiceCAB", {_0 = "Disabled", _1 = "Enabled"});
 
-		AddSetting( { name = "Enable road vehicles", description = "Enable road vehicles", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddSetting( { name = "Enable road vehicles", description = "Enable road vehicles", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN + CONFIG_INGAME } );
 		AddLabels("Enable road vehicles", {_0 = "Disabled", _1 = "Enabled"});
 
-		AddSetting( { name = "Enable ships", description = "Enable ships", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddSetting( { name = "Enable ships", description = "Enable ships", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN + CONFIG_INGAME } );
 		AddLabels("Enable ships", {_0 = "Disabled", _1 = "Enabled"});
 
-		AddSetting( { name = "Enable airplanes", description = "Enable airplanes", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddSetting( { name = "Enable airplanes", description = "Enable airplanes", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN + CONFIG_INGAME } );
 		AddLabels("Enable airplanes", {_0 = "Disabled", _1 = "Enabled"});
 
-		AddSetting( { name = "Enable trains", description = "Enable trains", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN } );
+		AddSetting( { name = "Enable trains", description = "Enable trains", easy_value = 1, medium_value = 1, hard_value = 1, custom_value = 1, flags = AICONFIG_BOOLEAN + CONFIG_INGAME } );
 		AddLabels("Enable trains", {_0 = "Disabled", _1 = "Enabled"});
 
 		AddSetting( { name = "Allow trains town to town", description = "Allow trains town to town", easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
