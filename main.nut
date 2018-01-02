@@ -19,6 +19,11 @@ class NoNoCAB extends AIController {
 	minimalSaveVersion = 9;
 	initialized = null;
 	la = null;					// Local Authority class
+	// Easy access to our vehicle advisors
+	_rvAdvisor = null;
+	_airAdvisor = null;
+	_trainAdvisor = null;
+	_shipAdvisor = null;
 	
    	constructor() {
    		stop = false;
@@ -100,6 +105,12 @@ function NoNoCAB::UpdateSettings() {
 	
 	// Check competitors setting
 	world.niceCABEnabled = GetSetting("NiceCAB");
+	
+	// Check which vehicle types are enabled/disabled by the user.
+	_rvAdvisor.disabled = !GetSetting("Enable road vehicles");
+	_airAdvisor.disabled = !GetSetting("Enable airplanes");
+	_trainAdvisor.disabled = !GetSetting("Enable trains");
+	_shipAdvisor.disabled = !GetSetting("Enable ships");
 }
 
 function NoNoCAB::Start()
@@ -139,22 +150,17 @@ function NoNoCAB::Start()
 	
 	advisors = [];
 
-	if (GetSetting("Enable road vehicles")) {
-		Log.logInfo("Road vehicle advisor initiated!");
-		advisors.push(RoadConnectionAdvisor(world, worldEventManager, connectionManager));
-	}
-	if (GetSetting("Enable airplanes")) {
-		Log.logInfo("Airplane advisor initiated!");
-		advisors.push(AircraftAdvisor(world, worldEventManager, connectionManager));
-	}
-	if (GetSetting("Enable trains")) {
-		Log.logInfo("Train advisor initiated!");
-		advisors.push(TrainConnectionAdvisor(world, worldEventManager, connectionManager, GetSetting("Allow trains town to town")));
-	}
-	if (GetSetting("Enable ships")) {
-		Log.logInfo("Ship advisor initiated!");
-		advisors.push(ShipAdvisor(world, worldEventManager, connectionManager));
-	}
+	// To make it easier to update the disabled state of a certain type of vehicle advisor we save
+	// the vehicle advisors also as class variables. The disabled state is updated in UpdateSettings.
+	_rvAdvisor = RoadConnectionAdvisor(world, worldEventManager, connectionManager);
+	advisors.push(_rvAdvisor);
+	_airAdvisor = AircraftAdvisor(world, worldEventManager, connectionManager);
+	advisors.push(_airAdvisor);
+	_trainAdvisor = TrainConnectionAdvisor(world, worldEventManager, connectionManager, GetSetting("Allow trains town to town"));
+	advisors.push(_trainAdvisor);
+	_shipAdvisor = ShipAdvisor(world, worldEventManager, connectionManager);
+	advisors.push(_shipAdvisor);
+	
 	//UpgradeConnectionAdvisor(world, connectionManager)
 	
 	foreach (advisor in advisors)
