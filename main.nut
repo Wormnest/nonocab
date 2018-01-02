@@ -207,7 +207,7 @@ function NoNoCAB::Start()
 	Finance.RepayLoan();
 	
 	// Set president name.
-	AICompany.SetPresidentName("B.C. Ridder");
+	AICompany.SetPresidentName("C.E.O. Worm");
 
 	// Set company name.
 	local companyName =  "NoNoCAB";
