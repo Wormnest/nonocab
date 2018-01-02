@@ -30,7 +30,7 @@ class FNoNoCAB extends AIInfo {
 		AddSetting( { name = "Allow trains town to town", description = "Allow trains town to town", easy_value = 0, medium_value = 0, hard_value = 0, custom_value = 0, flags = AICONFIG_BOOLEAN } );
 		AddLabels("Allow trains town to town", {_0 = "No", _1 = "Yes (Doesn't perform well!)"});
 
-		AddSetting( { name = "Politics Setting", description = "Aggressiveness", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = 0} );
+		AddSetting( { name = "Politics Setting", description = "Aggressiveness", min_value = 0, max_value = 3, easy_value = 0, medium_value = 1, hard_value = 2, custom_value = 2, flags = CONFIG_INGAME} );
 		AddLabels(
 			"Politics Setting", 
 			{_0 = "NoNoCAB is a friendly competitor", 

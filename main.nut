@@ -18,6 +18,7 @@ class NoNoCAB extends AIController {
    	subsidyManager = null;
 	minimalSaveVersion = 9;
 	initialized = null;
+	la = null;					// Local Authority class
 	
    	constructor() {
    		stop = false;
@@ -77,6 +78,25 @@ function NoNoCAB::Load(version, data) {
 		return;
 	}
 	loadData = data;
+}
+
+/**
+ * Checks the user changeable settings and updates them.
+ */
+function NoNoCAB::UpdateSettings() {
+	// Determine how much NoNoCAB is going to get into politics.
+	local politicHardness = GetSetting("Politics Setting");
+	local plantTrees = politicHardness > 0;
+	local buildStatues = politicHardness > 1;
+	local secureRights = politicHardness > 2;
+	
+	if (la == null)
+		la = LocalAuthority(plantTrees, buildStatues, secureRights);
+	else {
+		la.improveRelationsEnabled = plantTrees;
+		la.buildStatuesEnabled = buildStatues;
+		la.secureRightsEnabled = secureRights;
+	}
 }
 
 function NoNoCAB::Start()
@@ -206,16 +226,10 @@ function NoNoCAB::Start()
 	foreach (advisor in advisors)
 		planner.AddThread(advisor);
 
-	// Determine how much NoNoCAB is going to get into politics.
-	local politicHardness = GetSetting("Politics Setting");
-	local plantTrees = politicHardness > 0;
-	local buildStatues = politicHardness > 1;
-	local secureRights = politicHardness > 2;
-	local la = LocalAuthority(plantTrees, buildStatues, secureRights);
-	
 	// Do what we have to do.
 	while(true) {
-		CheckLogLevel();
+		UpdateSettings();			// Checks whether any user settings have been changed.
+		CheckLogLevel();			// Checks whether the log level has been changed.
 		local numberOfShips = 0;
 		local shipPercentageErrors = [];
 			
