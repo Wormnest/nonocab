@@ -111,6 +111,9 @@ function NoNoCAB::UpdateSettings() {
 	_airAdvisor.disabled = !GetSetting("Enable airplanes");
 	_trainAdvisor.disabled = !GetSetting("Enable trains");
 	_shipAdvisor.disabled = !GetSetting("Enable ships");
+	
+	// Update setting to (dis)allow trains for town to town connections.
+	_trainAdvisor.allowTownToTownConnections = GetSetting("Allow trains town to town");
 }
 
 function NoNoCAB::Start()
