@@ -16,9 +16,9 @@ class BuildRailAction extends BuildConnectionAction
 	static STATION_PLATFORMS = 2; // Number of platforms per station.
 	
 	/**
-	 * @param pathList A PathInfo object, the rails to be build.
-	 * @buildDepot Should a depot be build?
-	 * @param buildRailStaions Should rail stations be build?
+	 * @param connection The connection object with info about the connection we need to build.
+	 * @param buildDepot Should we build a depot or not.
+	 * @param buildRailStaions Should we build rail stations or not.
 	 */
 	constructor(connection, buildDepot, buildRailStations) {
 		BuildConnectionAction.constructor(connection);
@@ -33,12 +33,11 @@ class BuildRailAction extends BuildConnectionAction
 
 function BuildRailAction::Execute() {
 
-	Log.logInfo("Build a rail from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
+	Log.logInfo("Build rail tracks from " + connection.travelFromNode.GetName() + " to " + connection.travelToNode.GetName() + ".");
 	local accounter = AIAccounting();
 
 	if (connection.pathInfo.build) {
 		
-		assert(false);
 		FailedToExecute("We do not support extending existing rail stations, skipping!");
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		return false;
@@ -56,7 +55,7 @@ function BuildRailAction::Execute() {
 	pathFinderHelper.updateClosedList = false
 	local pathFinder = RoadPathFinding(pathFinderHelper);
 	
-		
+	
 	local stationType = AIStation.STATION_TRAIN;
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	pathFinderHelper.startAndEndDoubleStraight = true;
@@ -69,13 +68,12 @@ function BuildRailAction::Execute() {
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.2 + 20, null);
 	
 	if (prePathInfo == null) {
-		FailedToExecute("Could not find a proper path!");
+		FailedToExecute("Could not find a path for rail.");
 		connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 		connection.forceReplan = true;
 		return false;
 	}
 
-	//local roadList = connection.pathInfo.roadList;
 	local roadList = prePathInfo.roadList;
 	local len = roadList.len();
 	local tilesToIgnore = null;
@@ -83,22 +81,22 @@ function BuildRailAction::Execute() {
 	// Check if we can build the rail stations.
 	if (buildRailStations) {
 		
-		// Check if we have enough permission to build here.
+		// Check if we can get permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[0].tile), AICompany.COMPANY_SELF) < -200) {
-			FailedToExecute("Authorities do not like us :(.");
+			FailedToExecute("Authorities do not like us. Can't build rail station.");
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 			return false;
 		}
 			
 		// Check if we have enough permission to build here.
 		if (AITown.GetRating(AITile.GetClosestTown(roadList[roadList.len() - 1].tile), AICompany.COMPANY_SELF) < -200) {
-			FailedToExecute("Authorities do not like us :(.");
+			FailedToExecute("Authorities do not like us. Can't build rail station.");
 			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 			return false;
 		}
 
 		local abc = AIExecMode();
-		Log.logInfo("Build stations.")
+		Log.logInfo("Building rail stations.")
 		local stationBuildingFailed = false;
 		if (!BuildRailStation(connection, roadList[0].tile, roadList[1].tile, false, false, false))
 			stationBuildingFailed = true;
@@ -109,15 +107,15 @@ function BuildRailAction::Execute() {
 		
 		if (stationBuildingFailed) {
 			FailedToExecute("BuildRailAction: Rail station couldn't be built! " + AIError.GetLastErrorString());
-			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);			
+			connection.pathInfo = PathInfo(null, null, 0, AIVehicle.VT_RAIL);
 			return false;
 		}
 		
-		// Safe the locations of the rail stations so we can demolish them later.
+		// Save the locations of the rail stations so we can remove them later if needed.
 		railStationFromTile = roadList[len - 1].tile;
 		railStationToTile = roadList[0].tile;
 		
-		// After building the stations make sure the rail approach the station in the right way.
+		// After building the stations make sure the rail approaches the station correctly.
 		local endOrthogonalDirection = (roadList[0].tile - roadList[1].tile == 1 || roadList[0].tile - roadList[1].tile == -1) ?
 			AIMap.GetMapSizeX() : 1;
 		local startOrthogonalDirection = (roadList[roadList.len() - 1].tile - roadList[roadList.len() - 2].tile == 1 ||
@@ -178,21 +176,22 @@ function BuildRailAction::Execute() {
 	
 	stationsConnectedTo = pathBuilder.stationIDsConnectedTo;
 
-	// Build the second part. First we try to establish a RoRo Station type. Otherwise we'll connect the two fronts to eachother.
+	// Build the return parth using a RoRo station type.
+	/// @todo If building a roro station fails we could try to build a station with entrance and exit on the same side.
 	if (!BuildRoRoStation(stationType, pathFinder)) {
-		FailedToExecute("Failed to build the RoRo station...");
+		FailedToExecute("Failed to build the RoRo station and return path...");
 		return false;
 	}
 	
 	Log.logDebug("Build depots!");
-	// Check if we need to build a depot.	
+	// Check if we need to build a depot.
 	if (buildDepot && connection.pathInfo.depot == null) {
 		
 		local depot = BuildDepot(roadList, len - 10, -1);
 
 		// Check if we could actualy build a depot:
 		if (depot == null) {
-			FailedToExecute("Failed to build a depot :(");
+			FailedToExecute("Failed to build a depot.");
 			return false;
 		}
 
@@ -200,7 +199,7 @@ function BuildRailAction::Execute() {
 
 		local otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
 		if (otherDepot == null) {
-			FailedToExecute("Failed to build a depot :(");
+			FailedToExecute("Failed to build a depot.");
 			return false;
 		}
 
@@ -232,7 +231,7 @@ function BuildRailAction::Execute() {
 function BuildRailAction::CleanupTile(at) {
 	
 	// If the tile we are asked to remove has been marked as already built it means that the piece of rail to
-	// destroy is part of another rail network and cannot be removed lest we disrupt that other connection. Similary
+	// destroy is part of another rail network and cannot be removed lest we disrupt that other connection. Similarly
 	// if the rail is crossing a road we will not remove it, because it might disrupt a road network.
 	if (at.alreadyBuild || AIRoad.IsRoadTile(at.tile))
 		return;
@@ -258,7 +257,7 @@ function BuildRailAction::CleanupTile(at) {
 
 function BuildRailAction::CleanupAfterFailure() {
 	local test = AIExecMode();
-	// Remove all the stations and depots build, including all their tiles.
+	// Remove all the stations and depots, including all their tiles.
 	if (connection.pathInfo == null)
 		return;
 	assert (!connection.pathInfo.build);
@@ -270,21 +269,21 @@ function BuildRailAction::CleanupAfterFailure() {
 		AITile.DemolishTile(railStationToTile);
 
 	if (connection.pathInfo.roadList) {
-		Log.logDebug("Remove roadlist!");
+		Log.logDebug("Removing rails.");
 		foreach (at in connection.pathInfo.roadList) {
 			CleanupTile(at);
 		}
 	}
 	
 	if (connection.pathInfo.roadListReturn) {
-		Log.logDebug("Remove roadListReturn!");
+		Log.logDebug("Removing rails for the return track.");
 		foreach (at in connection.pathInfo.roadListReturn) {
 			CleanupTile(at);
 		}
 	}
 	
 	if (connection.pathInfo.extraRoadBits) {
-		Log.logDebug("Remove extraRoadBits!");
+		Log.logDebug("Removing other rail tracks.");
 		foreach (extraArray in connection.pathInfo.extraRoadBits) {
 			foreach (at in extraArray) {
 				CleanupTile(at);
@@ -293,14 +292,13 @@ function BuildRailAction::CleanupAfterFailure() {
 	}
 	
 	if (connection.pathInfo.depot) {
-		Log.logDebug("Remove depot!");
+		Log.logDebug("Removing first depot.");
 		AITile.DemolishTile(connection.pathInfo.depot);
 	}
 	if (connection.pathInfo.depotOtherEnd) {
-		Log.logDebug("Remove depotOtherEnd!");
+		Log.logDebug("Removing second depot.");
 		AITile.DemolishTile(connection.pathInfo.depotOtherEnd);
 	}
-//	quit();
 }
 
 function BuildRailAction::BuildRailStation(connection, railStationTile, frontRailStationTile, isConnectionBuild, joinAdjacentStations, isStartStation) {
@@ -527,7 +525,7 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 					continue;
 			}
 			
-			// No do it for real! :)
+			// Now do the actual building.
 			if (!AIRail.BuildRailDepot(depotTile, railsToBuild[0]))
 				continue;
 			
@@ -553,7 +551,7 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			//}
 			connection.pathInfo.extraRoadBits.push(depotRails);
 			
-			// Remove all signals on the tile between the entry and exit rails.
+			// Remove all signals on the tiles between the entry and exit rails.
 			local oneway_path_location;
 			if (direction != 1 && direction != -1 && direction != mapSizeX && direction != -mapSizeX) {
 				AIRail.RemoveSignal(roadList[i].tile, roadList[i].tile + 1);
@@ -584,9 +582,8 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 }
 
 function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
-	//return false;
 	// Build the RoRo station.
-	Log.logInfo("Build RoRo.")
+	Log.logInfo("Building RoRo station and return path.")
 	assert (connection.pathInfo.roadListReturn == null);
 	
 	local roadList = connection.pathInfo.roadList;
@@ -640,14 +637,14 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	// Temporary signal to make sure pathfinding doesn't connect wrong for the second entry platform. This signal can be anything except SIGNALTYPE_NORMAL.
 	BuildSignal(roadList[roadList.len() - 2], false, AIRail.SIGNALTYPE_EXIT);
 
-	Log.logInfo("Find second path.")
+	Log.logInfo("Find second rail path.")
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = true;
 	pathFinder.pathFinderHelper.PathType = RailPathFinderHelper.PATH_TYPE_SECOND;
 	local secondPath = pathFinder.FindFastestRoad(endNodes, beginNodes, false, false, stationType,
 		AIMap.DistanceManhattan(connection.travelFromNode.GetLocation(), connection.travelToNode.GetLocation()) * 1.4 + 40, tilesToIgnore);
 	if (secondPath == null)
 		return false;
-	Log.logInfo("Build second path.")
+	Log.logInfo("Build second rail path.")
 	
 	local pathBuilder = RailPathBuilder(secondPath.roadList, transportingEngineID);
 	pathBuilder.stationIDsConnectedTo = [AIStation.GetStationID(railStationFromTile), AIStation.GetStationID(railStationToTile)];
@@ -657,7 +654,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 			secondPath.roadList = secondPath.roadList.slice(pathBuilder.lastBuildIndex);
 			connection.pathInfo.roadListReturn = secondPath.roadList;
 		}
-		Log.logWarning("Failed to build RoRo!");
+		Log.logWarning("Failed to build second path!");
 		return false;
 	}
 	stationsConnectedTo.extend(pathBuilder.stationIDsConnectedTo);
@@ -670,7 +667,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	connection.pathInfo.roadListReturn = secondPath.roadList;
 
 	Log.logInfo("Connect other platforms.")
-	// Now play to connect the other platforms.
+	// Now connect the other platforms.
 	pathFinder.pathFinderHelper.startAndEndDoubleStraight = false;
 	local toStartStationPath = ConnectRailToStation(roadList, roadList[0].tile + endOrthogonalDirection, pathFinder,
 		stationType, false, true);
@@ -689,7 +686,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 	if (toEndStationReturnPath == null)
 		return false;
 
-		
+	
 	// Figure out the index where the extra rails meet.
 	local startIndex = -1;
 	local returnStartIndex = -1;
@@ -699,7 +696,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 			break;
 		}
 	}
-		
+	
 	for (local i = 0; i < secondPath.roadList.len(); i++) {
 		if (secondPath.roadList[i].tile == toStartStationReturnPath.roadList[0].tile) {
 			returnStartIndex = i;
@@ -752,7 +749,7 @@ function BuildRailAction::BuildRoRoStation(stationType, pathFinder) {
 
 function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint, pathFinder, stationType, reverse, buildFromEnd) {
 	
-	// Now play to connect the other platforms.
+	// Connect the other platforms.
 	local beginNodes = AITileList();
 	local maxLength = connectingRoadList.len() - 2;
 	if (maxLength > 20)
@@ -797,7 +794,7 @@ function BuildRailAction::ConnectRailToStation(connectingRoadList, stationPoint,
 		//BuildSignal(toPlatformPath.roadList[0], !reverse, AIRail.SIGNALTYPE_ENTRY);
 	} else {
 		//AISign.BuildSign(stationPoint, "TO HERE!");
-		Log.logError("Failed to connect a rail piece to the rail station.");
+		Log.logError("Failed to connect a platform to the rail tracks.");
 		return null;
 	}
 	connection.pathInfo.extraRoadBits.push(toPlatformPath.roadList);
@@ -811,13 +808,13 @@ function BuildRailAction::IsSingleRailTrack(railTracks) {
 		railTracks == 32 || railTracks == 64 || railTracks == 128;
 }
 
-/// @todo After a bridge tunnel we add a signal but after that it would be ideal if we continued with the spacing from before the bridge/tunnel as if it hadn't been there.
+/// @todo After a bridge or tunnel we add a signal but after that it would be ideal if we continued with the spacing from before the bridge/tunnel as if it hadn't been there.
 function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, spread, signalType) {
 
 	local abc = AIExecMode();
 	
-	// Signals on rails in N-S and E-W direction vice versa need a different computation since they don't use full tiles
-	// Use a variable here that keeps track of the whole or halve track parts we have passed
+	// Signals on rails in N-S and E-W direction vice versa need a different computation since they don't use full tiles.
+	// Use a variable here that keeps track of the whole or half track parts we have passed.
 	local signal_spread = spread * 2;
 	local track_length = signal_spread; // We want a signal to be set right at the start position.
 
@@ -867,7 +864,7 @@ function BuildRailAction::BuildSignals(roadList, reverse, startIndex, endIndex, 
 		if (track_length >= signal_spread || needSignal) {
 			if (!isTileBeforeCrossing || roadList[a].reusedPieces != 1)
 				BuildSignal(roadList[a], reverse, signalType);
-			else { // Just before splitting of from a shared track we put a one way PBS signal
+			else { // Just before splitting off from a shared track we put a one way PBS signal
 				// In case that track already has a signal remove that first.
 				RemoveSignal(roadList[a], reverse);
 				BuildSignal(roadList[a], reverse, AIRail.SIGNALTYPE_PBS_ONEWAY);
@@ -886,7 +883,6 @@ function BuildRailAction::BuildSignal(roadAnnotatedTile, reverse, signalType) {
 	local direction = (reverse ? -roadAnnotatedTile.direction : roadAnnotatedTile.direction);
 	//local direction = roadList[a].direction;
 	local nextTile = GetSignalFrontTile(roadAnnotatedTile.tile, roadAnnotatedTile.lastBuildRailTrack, direction);
-
 
 	if (AIRail.GetSignalType(roadAnnotatedTile.tile, nextTile) == AIRail.SIGNALTYPE_NONE)
 		AIRail.BuildSignal(roadAnnotatedTile.tile, nextTile, signalType);	
@@ -912,7 +908,7 @@ function BuildRailAction::RemoveSignal(roadAnnotatedTile, reverse) {
 	local nextTile = GetSignalFrontTile(roadAnnotatedTile.tile, roadAnnotatedTile.lastBuildRailTrack, direction);
 
 	//	AISign.BuildSign(roadAnnotatedTile.tile, "RS");
-	AIRail.RemoveSignal(roadAnnotatedTile.tile, nextTile);	
+	AIRail.RemoveSignal(roadAnnotatedTile.tile, nextTile);
 }
 
 function BuildRailAction::GetSignalFrontTile(tile, railTrack, direction) {
