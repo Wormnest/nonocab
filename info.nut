@@ -1,9 +1,9 @@
 require("version.nut");
 
 class FNoNoCAB extends AIInfo {
-      function GetAuthor()    { return "Bram Ridder, Jacob Boerema"; }
+      function GetAuthor()    { return "Jacob Boerema (NoNoCAB), Bram Ridder (NoCAB)"; }
       function GetName()      { return "NoNoCAB"; }
-      function GetDescription()	{ return "NoNoCAB is a fixed and improved version of NoCAB by Wormnest. It is a competitive AI which uses trains, trucks, buses, aircraft and ships."; }
+      function GetDescription()	{ return "NoNoCAB is an improved version of NoCAB. It is a competitive AI which uses trains, trucks, buses, aircraft and ships."; }
       function GetVersion()	{ return SELF_VERSION; }
       function MinVersionToLoad() { return 1; }
       function GetDate()	{ return SELF_DATE; }
