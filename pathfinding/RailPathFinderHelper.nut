@@ -13,7 +13,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	costForRail 	= 100;      // Cost for utilizing an existing road, bridge, or tunnel.
 	costForNewRail	= 1000;     // Cost for building a new road.
 
-	// Wormnest: Cost for bridges and tunnels seem way to low. Changed from 1000 to 2000/1500.
+	// Wormnest: Cost for bridges and tunnels seem way too low. Changed from 1000 to 2000/1500.
 	// @todo Possibly even better for bridges would be to determine a value based on the costs of bridges
 	// since NewGRF's can sometimes make them extra expensive.
 	
@@ -59,7 +59,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 		currentRailType = currentRailType_;
 		standardOffsets = [AIMap.GetTileIndex(0, 1), AIMap.GetTileIndex(0, -1), AIMap.GetTileIndex(1, 0), AIMap.GetTileIndex(-1, 0)];
 
-		// Optimalization, use a prefat annotated tile for heuristics.
+		// Use a temporary dummy tile for heuristics.
 		dummyAnnotatedTile = AnnotatedTile();
 		dummyAnnotatedTile.type = Tile.ROAD;
 		dummyAnnotatedTile.parentTile = dummyAnnotatedTile;
@@ -114,7 +114,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	function UpdateClosedList() { return updateClosedList; }
 
 	/**
-	 * Search for all tiles which are reachable from the given tile, either by road or
+	 * Search for all tiles which are reachable from the given tile, either by rail or
 	 * by building bridges and tunnels or exploiting existing onces.
 	 * @param currentAnnotatedTile An instance of AnnotatedTile from where to search from.
 	 * @param onlyRails Take only rails into acccount?
@@ -124,25 +124,22 @@ class RailPathFinderHelper extends PathFinderHelper {
 	function GetNeighbours(currentAnnotatedTile, onlyRails, closedList);
 
 	/**
-	 * Get the time it takes a vehicle to travel among the given road.
-	 * @param roadList Array of annotated tiles which compounds the road.
+	 * Get the time it takes a vehicle to travel the given rail track.
+	 * @param roadList Array of annotated tiles describing the path of the rail track.
 	 * @param engineID The ID of the engine used.
 	 * @param forward Traverse the roadList in the given order if true, otherwise 
-	 * traverse it from back to the begin.
-	 * @return The number of days it takes a vehicle to traverse the given road
-	 * with the given maximum speed.
+	 * traverse it from back to the beginning.
+	 * @return The number of days it takes a vehicle to traverse the given rail track.
 	 */
 	function GetTime(roadList, engineID, forward);
 	
 	/**
-	 * Check if all the signals in this direction are standing in the right
-	 * direction.
+	 * Check if all the signals in this direction are pointing in the right direction.
 	 */
-	function CheckSignals(annotatedTile);
+	function CheckSignals(tile, railTrack, direction);
 
 	/**
-	 * Process all possible start locations and add all start locations to the
-	 * given heap.
+	 * Process all possible start locations and add all start locations to the given heap.
 	 */
 	function ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd);
 
@@ -157,7 +154,7 @@ class RailPathFinderHelper extends PathFinderHelper {
 	function CheckGoalState(at, end, checkEndPosition, closedList);
 	
 	/**
-	 * Search for all bridges which can be build.
+	 * Try to find a bridge that can be built from startTile in the given direction.
 	 * @param startTile The start location for the bridge.
 	 * @param direction The direction the bridge must head.
 	 * @return An array of tile IDs of all possible end points.
@@ -165,17 +162,17 @@ class RailPathFinderHelper extends PathFinderHelper {
 	function GetBridge(startTile, direction);
 	
 	/**
-	 * Search for all tunnels which can be build.
+	 * Try to find a tunnel that can be built from startTile in the given direction.
 	 * @param startTile The start location for the tunnel.
 	 * @param direction The direction the tunnel must head.
 	 * @return An array of tile IDs of all possible end points.
-	 */	
-	function GetTunnel(startTile, direction);	
+	 */
+	function GetTunnel(startTile, direction);
 
 }
 
 /**
- * For now, we simply select the first possible place where we can put down a station. We explore
+ * For now, we simply select the first possible place where we can build a station. We explore
  * other options later.
  */
 function RailPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
@@ -337,7 +334,7 @@ function RailPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) {
 		return;
 
 	local newEndLocations = AITileList();
-	local mapSizeX = AIMap.GetMapSizeX();	
+	local mapSizeX = AIMap.GetMapSizeX();
 	local stationLength = 3;
 
 	foreach (i, value in endList) {
@@ -395,7 +392,7 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	
 	// If this tile has a rail station, check if there is something on it.
 	if (AICompany.IsMine(AITile.GetOwner(at.tile))) {
-		// If it is a rail road station, make sure the rail tile goes in the same direction.
+		// If it is a rail station, make sure the rail tile goes in the same direction.
 		if (AIRail.IsRailStationTile(at.tile)) {
 			if (at.lastBuildRailTrack != AIRail.GetRailStationDirection(at.tile) || at.parentTile.lastBuildRailTrack != at.lastBuildRailTrack ||
 			   (startAndEndDoubleStraight && at.parentTile.parentTile.lastBuildRailTrack != at.lastBuildRailTrack))
@@ -420,7 +417,7 @@ function RailPathFinderHelper::CheckGoalState(at, end, checkEndPositions, closed
 	if (at.parentTile.direction != at.direction)
 		return false;
 
-	// If we need to check the end positions then we either have to be able to build a road station
+	// If we need to check the end positions then we have to be able to build a rail station
 	// Either the slope is flat or it is downhill, otherwise we can't build a depot here
 	// Don't allow a tunnel to be near the planned end points because it can do terraforming, thereby ruining the prospected location.
 	if (checkEndPositions) {
@@ -519,9 +516,9 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 			return null;
 		annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SE;
 	} else {
-		// To build here depends on the previous rail piece and direction.
+		// Whether we can build here depends on the previous rail piece and direction.
 		if (offset == mapSizeX - 1) {
-						
+		
 		// Going East.
 
 			// If the previous rail track is going SE, build in the upper corner.
@@ -539,7 +536,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_SW_SE;
 				nextTile -= mapSizeX;
 			}
-						
+			
 			// If the previous rail track is going E, build according to the previous railtrack.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_SW_SE) {
 				if (!BuildRailTrack(nextTile + 1, AIRail.RAILTRACK_NW_NE))
@@ -557,9 +554,9 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				assert(false);
 			}
 		} else if (offset == -mapSizeX + 1) {
-						
+			
 			// Going West.
-							
+			
 			// If the previous rail track is going SW, build in the upper corner.
 			if(currentBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
 				if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_NE))
@@ -567,7 +564,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_NE;
 				nextTile += mapSizeX;
 			}
-						
+			
 			// If the previous rail track is going NW, build in the lower corner.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
 				if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_SW_SE))
@@ -575,7 +572,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_SW_SE;
 				nextTile -= 1;
 			}
-						
+			
 			// If the previous rail track is going W, build according to the previous railtrack.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_SW_SE) {
 				if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_NE))
@@ -594,16 +591,15 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 					assert(false);
 				}
 			} else if (offset == -mapSizeX - 1) {
-					
+			
 			// Going North.
-						
+			
 			// If the previous rail track is going NE, build in the left corner.
 			if (currentBuildRailTrack == AIRail.RAILTRACK_NE_SW) {
 				if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
 					return null;
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SW;
 				nextTile += mapSizeX;
-
 			}
 
 			// If the previous rail track is going NW, build in the right corner.
@@ -612,9 +608,8 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 					return null;
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SE;
 				nextTile += 1;
-
 			}
-						
+			
 			// If the previous rail track is going N, build according to the previous railtrack.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_NE_SE) {
 				if (!BuildRailTrack(nextTile + mapSizeX, AIRail.RAILTRACK_NW_SW))
@@ -633,7 +628,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				assert(false);
 			}
 		} else if (offset == mapSizeX + 1) {
-						
+		
 		// Going South.
 
 			// If the previous rail track is going SW, build in the right corner.
@@ -643,7 +638,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NE_SE;
 				nextTile -= mapSizeX;
 			}
-							
+			
 			// If the previous rail track is going SE, build in the left corner.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_NW_SE) {
 				if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
@@ -651,7 +646,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 				annotatedTile.lastBuildRailTrack = AIRail.RAILTRACK_NW_SW;
 				nextTile -= 1;
 			}
-						
+			
 			// If the previous rail track is going S, build according to the previous railtrack.
 			else if (currentBuildRailTrack == AIRail.RAILTRACK_NE_SE) {
 				if (!BuildRailTrack(nextTile - 1, AIRail.RAILTRACK_NW_SW))
@@ -679,7 +674,7 @@ function RailPathFinderHelper::GetNextAnnotatedTile(offset, nextTile, currentBui
 
 function RailPathFinderHelper::DoRailsCross(railTrack1, railTracks2) {
 
-	// If either of these is no rail track than it's pretty obvious :).
+	// If either of these is not a rail track than it's pretty obvious :).
 	if (railTrack1 == AIRail.RAILTRACK_INVALID || railTrack1 == 0 ||
   		railTracks2 == AIRail.RAILTRACK_INVALID || railTracks2 == 0)
   		return false;
@@ -742,7 +737,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 	
 	/**
 	 * If the tile we want to build from is a bridge or tunnel, the only acceptable way 
-	 * to go is foreward. If we fail to do so the pathfinder will try to build invalid
+	 * to go is forward. If we fail to do so the pathfinder will try to build invalid
 	 * roadpieces by building over the endpoints of bridges and tunnels.
 	 */
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -856,7 +851,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 			nextTile = annotatedTile.tile;
 			railTrackDirection = annotatedTile.lastBuildRailTrack;
 			
-			// If the next tile is a rail tile, make sure we do not cross it ortogonally.
+			// If the next tile is a rail tile, make sure we do not cross it orthogonally.
 			local roadTrack = AIRail.GetRailTracks(nextTile);
 			if (roadTrack != AIRail.RAILTRACK_INVALID) {
 				if ((roadTrack & AIRail.RAILTRACK_NE_SW) == AIRail.RAILTRACK_NE_SW && 
@@ -950,7 +945,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 				reuseRailTrack = (AIRail.GetRailTracks(nextTile) & railTrackDirection) == railTrackDirection;
 				
-				// If we do now cross nor reuse a rail we cannot allow this rail to be build. Because when
+				// If we do not cross nor reuse a rail we cannot allow this rail to be built. Because when
 				// we upgrade the rails we upgrade per tile and we cannot have 2 non crossing rails on the
 				// same tile as we do not have the means to detect this. Failing to do this will result in
 				// trains being stuck after upgrading to an incompetable rail type.
@@ -1030,7 +1025,7 @@ function RailPathFinderHelper::GetNeighbours(currentAnnotatedTile, onlyRails, cl
 
 function RailPathFinderHelper::CheckStation(curTile, curRailTrack, curDirection, stationsToIgnore) {
 
-	// Work with an open / closed list. We're doing a breath first search.
+	// Work with an open / closed list. We're doing a breadth first search.
 	local openList = [];
 	local closedList = {};
 	local mapSizeX = AIMap.GetMapSizeX();
@@ -1062,7 +1057,7 @@ function RailPathFinderHelper::CheckStation(curTile, curRailTrack, curDirection,
 			
 			if (stationID == -1)
 				continue;
-			assert(AIStation.IsValidStation(stationID));	
+			assert(AIStation.IsValidStation(stationID));
 			//return AIStation.GetStationID(tile);
 			return tile;
 		}
@@ -1184,7 +1179,7 @@ function RailPathFinderHelper::BuildRailTrack(tile, railTrack) {
 
 function RailPathFinderHelper::ProcessTile(inClosedList, tile, direction) {
 	if (inClosedList)
-		return false;	
+		return false;
 
 	if (closed_list.rawin(tile + "-" + direction))
 		return false;
