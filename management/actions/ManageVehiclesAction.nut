@@ -354,7 +354,7 @@ function ManageVehiclesAction::BuildTrain(depot, engineID, cargoID, wagonEngineI
 				break;
 			}
 
-			if (cargoID != AIEngine.GetCargoType(wagonVehicleID))
+			if (cargoID != AIEngine.GetCargoType(wagonEngineID))
 				if (!AIVehicle.RefitVehicle(wagonVehicleID, cargoID)) {
 					Log.logError("Refitting wagon " + AIVehicle.GetName(wagonVehicleID) + " to " +
 					AICargo.GetCargoLabel(cargoID) + " failed! " + AIError.GetLastErrorString());
