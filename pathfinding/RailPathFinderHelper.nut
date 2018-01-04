@@ -127,11 +127,12 @@ class RailPathFinderHelper extends PathFinderHelper {
 	 * Get the time it takes a vehicle to travel the given rail track.
 	 * @param roadList Array of annotated tiles describing the path of the rail track.
 	 * @param engineID The ID of the engine used.
+	 * @param cargoEngineID The ID of the wagon engine.
 	 * @param forward Traverse the roadList in the given order if true, otherwise 
 	 * traverse it from back to the beginning.
 	 * @return The number of days it takes a vehicle to traverse the given rail track.
 	 */
-	function GetTime(roadList, engineID, forward);
+	function GetTime(roadList, engineID, cargoEngineID, forward);
 	
 	/**
 	 * Check if all the signals in this direction are pointing in the right direction.
@@ -1278,14 +1279,21 @@ function RailPathFinderHelper::GetTunnel(startNode, previousNode) {
 	return null;
 }
 
-function RailPathFinderHelper::GetTime(roadList, engineID, forward) {
+function RailPathFinderHelper::GetTime(roadList, engineID, cargoEngineID, forward) {
 
 	local acceleration = AIEngine.GetPower(engineID) / (4 * AIEngine.GetWeight(engineID));
 	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 	/// @todo Take tractive effort into account on slopes and also the hill steepness percentage
 
-	// For now we assume a train always runs on top speed.
-	/// @todo We need to check if wagon speeds matter and if so lower maxSpeed if wagon speed is lower than engine speed.
+	// We need to check if wagon speeds matter and if so lower maxSpeed if wagon speed is lower than engine speed.
+	local WagonSpeedMatters = AIController.GetSetting("wagon_speed_limits");
+	if (WagonSpeedMatters) {
+		local wagonSpeed = AIEngine.GetMaxSpeed(cargoEngineID);
+		if (wagonSpeed > 0 && wagonSpeed < maxSpeed) {
+			//Log.logDebug("Wagon speed lower than train engine speed: " + wagonSpeed + " instead of " + maxSpeed);
+			maxSpeed = wagonSpeed;
+		}
+	}
 
 	local lastDirection = roadList[0];
 	local currentSpeed = 0;

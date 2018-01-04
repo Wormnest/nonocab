@@ -150,12 +150,13 @@ class PathInfo {
 	
 	/**
 	 * Get the traveltime for a vehicle with a certain maxSpeed for this road.
-	 * @engineID The engine in question.
-	 * @forward If true, we calculate the time from the start point to the end point
+	 * @param engineID The engine in question.
+	 * @param cargoEngineID The cargo engine (only used for train wagons).
+	 * @param forward If true, we calculate the time from the start point to the end point
 	 * (as calculated by the pathfinder).
 	 * return The number of days it takes to traverse a certain road.
 	 */
-	function GetTravelTime(engineID, forward);
+	function GetTravelTime(engineID, cargoEngineID, forward);
 	
 	/**
 	 * Called after this path has been established. Used to update the internal parameters to 
@@ -177,11 +178,11 @@ function PathInfo::UpdateAfterBuild(vehicleType, fromTile, toTile, stationCovera
 	CachePathInfoForSaving();
 }
 
-function PathInfo::GetTravelTime(engineID, forward) {
+function PathInfo::GetTravelTime(engineID, cargoEngineID, forward) {
 	
 	if (roadList == null)
 		return -1;
-		
+	
 	// Check if we don't have this in our cache.
 	local maxSpeed = AIEngine.GetMaxSpeed(engineID);
 	local vehicleType = AIEngine.GetVehicleType(engineID);
@@ -206,10 +207,10 @@ function PathInfo::GetTravelTime(engineID, forward) {
 	else if (vehicleType == AIVehicle.VT_RAIL)
 		if (forward || (roadListReturn == null) || (roadListReturn.len() == 0))
 			// roadListReturn length is 0 when we are doing estimations
-			time = RailPathFinderHelper.GetTime(roadList, engineID, forward);
+			time = RailPathFinderHelper.GetTime(roadList, engineID, cargoEngineID, forward);
 		else
 			// Trains go a different route for the return trip.
-			time = RailPathFinderHelper.GetTime(roadListReturn, engineID, true);
+			time = RailPathFinderHelper.GetTime(roadListReturn, engineID, cargoEngineID, true);
 	else if (vehicleType == AIVehicle.VT_AIR) {
 		
 		// For air connections the distance travelled is different (shorter in general)

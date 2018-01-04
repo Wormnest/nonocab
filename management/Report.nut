@@ -181,8 +181,8 @@ class Report
 	function InitializeReport(loadingTime, cargoAlreadyTransported, distance) {
 
 		Log.logDebug("Report for " + connection.ToString() + " using engine " + AIEngine.GetName(transportEngineID));
-		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, true);
-		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, false);
+		local travelTimeTo = connection.GetEstimatedTravelTime(transportEngineID, holdingEngineID, true);
+		local travelTimeFrom = connection.GetEstimatedTravelTime(transportEngineID, holdingEngineID, false);
 		
 		if (travelTimeTo == null || travelTimeFrom == null) {
 			Log.logDebug("Invalid estimation!");

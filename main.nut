@@ -287,9 +287,12 @@ function NoNoCAB::Start()
 					// Don't consider vehicles who have been ordered to stop.
 					if (AIVehicle.IsStoppedInDepot(vehicle))
 						continue;
-						
-					local travelTimeForward = connection.pathInfo.GetTravelTime(transportEngineID, true);
-					local travelTimeBackward = connection.pathInfo.GetTravelTime(transportEngineID, false);
+					
+					local cargoEngineID = null;
+					if (connection.vehicleTypes == AIVehicle.VT_RAIL)
+						cargoEngineID = AIVehicle.GetWagonEngineType(vehicle, 0);
+					local travelTimeForward = connection.pathInfo.GetTravelTime(transportEngineID, cargoEngineID, true);
+					local travelTimeBackward = connection.pathInfo.GetTravelTime(transportEngineID, cargoEngineID, false);
 					local travelTime = travelTimeForward + travelTimeBackward;
 					// For debugging purposes skip when travelTime == 0
 					if (travelTime == 0) {

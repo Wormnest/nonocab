@@ -186,7 +186,11 @@ class Connection {
 						local engineID = AIVehicle.GetEngineType(vehicle);
 						if (!AIEngine.IsBuildable(engineID))
 							continue;
-						local travelTime = pathInfo.GetTravelTime(engineID, true) +  pathInfo.GetTravelTime(engineID, false);
+						local cargoEngineID = null;
+						if (vehicleType == AIVehicle.VT_RAIL)
+							cargoEngineID = AIVehicle.GetWagonEngineType(vehicle, 0);
+						local travelTime = pathInfo.GetTravelTime(engineID, cargoEngineID, true) +
+							pathInfo.GetTravelTime(engineID, cargoEngineID, false);
 						cargoAlreadyTransported += (Date.DAYS_PER_MONTH / travelTime) * AIVehicle.GetCapacity(vehicle, cargoID);
 					}
 				}
@@ -197,11 +201,11 @@ class Connection {
 		return Report(this, transportingEngineID, holdingEngineID, cargoAlreadyTransported);
 	}
 	
-	function GetEstimatedTravelTime(transportEngineID, forward) {
+	function GetEstimatedTravelTime(transportEngineID, cargoEngineID, forward) {
 		// If the road list is known we will simulate the engine and get a better estimate.
 		// But only if the path roadList is for the same vehicle type as the engine.
 		if (pathInfo != null && pathInfo.vehicleType == AIEngine.GetVehicleType(transportEngineID) && pathInfo.roadList != null) {
-			return pathInfo.GetTravelTime(transportEngineID, forward);
+			return pathInfo.GetTravelTime(transportEngineID, cargoEngineID, forward);
 		} else {
 			
 			local maxSpeed = AIEngine.GetMaxSpeed(transportEngineID);
@@ -504,7 +508,7 @@ class Connection {
 			}
 			if (nettoIncomePerMonth > bestIncomePerMonth) {
 				// We don't want real short connections so set minimum one way travel time to 15 days
-				if (GetEstimatedTravelTime(transportEngineID, true) > 14) {
+				if (GetEstimatedTravelTime(transportEngineID, holdingEngineID, true) > 14) {
 	//				if (bestTransportEngine != null)
 	//					Log.logWarning("+ Replace + " + AIEngine.GetName(bestTransportEngine) + "(" + bestIncomePerMonth + ") with " + AIEngine.GetName(transportEngineID) + "(" + nettoIncomePerMonth + ") x " + report.nrVehicles + " for the connection: " + ToString() + ".");
 	//				else
