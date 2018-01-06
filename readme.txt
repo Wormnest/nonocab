@@ -51,10 +51,14 @@ Minimum OpenTTD version: 1.2.
 --------------
 NoNoCAB generally prefers building longer (train, road vehicle) routes.
 As such it will use a lot of infrastructure which means it may have
-problems when infrastructure maintenance is on.
-It does not have any special handling for industry NewGRF's, In general
+problems when infrastructure maintenance is on. In this case it is
+advisable to disable aircraft for NoNoCAB (or all ais) or at the
+very least set the plane speed factor to 1/1 instead of the default 1/4.
+It does not have any special handling for industry NewGRFs, In general
 this usually doesn't cause too many problems but certain industry
 types may be handled non optimal.
+There is no support for goal scripts meaning NoNoCAB will try to do its
+normal thing without consideration for any possible goals.
 
 
 5. NoCAB links
