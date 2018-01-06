@@ -1295,6 +1295,31 @@ function RailPathFinderHelper::GetTime(roadList, engineID, cargoEngineID, forwar
 		}
 	}
 
+	// Take slope steepness into account for uphill track.
+	// Multiplier for freight trains: possible values: 1-255.
+	local freight_multiplier = AIGameSettings.GetValue("freight_trains");
+	local uphill_multiplier = 0.9; // We define default slowdown uphill as 10%.
+	if (AIGameSettings.GetValue("train_acceleration_model ") == 0) {
+		// Original
+		// Nothing to do here for now.
+	}
+	else {
+		// Realistic
+		// Slope steepness percentage: values 0-10 allowed.
+		// Currently decreases default 10% + steepness * 2.5%
+		uphill_multiplier = 0.9 - AIGameSettings.GetValue("train_slope_steepness") * 0.025;
+	}
+	// For now always assume freight when forward = true. Note this is incorrect for passengers
+	// As far as I know the freight multiplier is not used at all for passengers.
+	/// @todo Needs to be changed to not compute it for passengers (and mail?)
+	// However remember by default town to town (= passengers) is disabled anyway for rail.
+	if (forward) {
+		uphill_multiplier -= freight_multiplier * 0.03;
+		if (uphill_multiplier < 0.1)
+			uphill_multiplier = 0.1;
+	}
+	//Log.logDebug("Uphill multiplier: " + uphill_multiplier + ", forward: " + forward);
+
 	local lastDirection = roadList[0];
 	local currentSpeed = 0;
 	local carry = 0;
@@ -1329,7 +1354,7 @@ function RailPathFinderHelper::GetTime(roadList, engineID, cargoEngineID, forwar
 							hours++;
 						}
 						
-						currentSpeed *= 0.9;
+						currentSpeed *= uphill_multiplier;
 						qtl_carry = -qtl;
 						if (currentSpeed < 34) {
 							currentSpeed = 34;
