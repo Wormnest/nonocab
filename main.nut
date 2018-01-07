@@ -106,11 +106,21 @@ function NoNoCAB::UpdateSettings() {
 	// Check competitors setting
 	world.niceCABEnabled = GetSetting("NiceCAB");
 	
-	// Check which vehicle types are enabled/disabled by the user.
-	_rvAdvisor.disabled = !GetSetting("Enable road vehicles");
-	_airAdvisor.disabled = !GetSetting("Enable airplanes");
-	_trainAdvisor.disabled = !GetSetting("Enable trains");
-	_shipAdvisor.disabled = !GetSetting("Enable ships");
+	// Check which vehicle types are enabled/disabled by the user either for our ai or globally.
+	_rvAdvisor.disabled = !GetSetting("Enable road vehicles") ||
+		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_ROAD) ||
+		AIGameSettings.GetValue("max_roadveh") == 0;
+	_airAdvisor.disabled = !GetSetting("Enable airplanes") ||
+		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_AIR) ||
+		AIGameSettings.GetValue("max_aircraft") == 0 ||
+		// If Infrastructure maintenance is on and plane speed is slower than 1/2 disable aircraft since it won't be profitable
+		(AIGameSettings.GetValue("infrastructure_maintenance") == 1 && AIGameSettings.GetValue("plane_speed") > 2);
+	_trainAdvisor.disabled = !GetSetting("Enable trains") ||
+		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_RAIL) ||
+		AIGameSettings.GetValue("max_trains") == 0;
+	_shipAdvisor.disabled = !GetSetting("Enable ships") ||
+		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_WATER) ||
+		AIGameSettings.GetValue("max_ships") == 0;
 	
 	// Update setting to (dis)allow trains for town to town connections.
 	_trainAdvisor.allowTownToTownConnections = GetSetting("Allow trains town to town");
