@@ -252,6 +252,22 @@ function NoNoCAB::Start()
 	while(true) {
 		UpdateSettings();			// Checks whether any user settings have been changed.
 		CheckLogLevel();			// Checks whether the log level has been changed.
+		
+		/* For Debugging/Testing
+		Log.logWarning( "------------------------------");
+		Log.logWarning( "Quarterly Income: " + AICompany.GetQuarterlyIncome(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
+		Log.logWarning( "Quarterly Expenses: " + AICompany.GetQuarterlyExpenses(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
+		Log.logWarning( "Delivered Cargo: " + AICompany.GetQuarterlyCargoDelivered(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
+		Log.logWarning( "Performance Rating: " + AICompany.GetQuarterlyPerformanceRating(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
+		Log.logWarning( "Company Value: " + AICompany.GetQuarterlyCompanyValue(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
+		
+		Log.logWarning( "Monthly Road infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_ROAD));
+		Log.logWarning( "Monthly Rail infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_RAIL));
+		Log.logWarning( "Monthly Airport infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_AIRPORT));
+		Log.logWarning( "Monthly Station infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_STATION));
+		Log.logWarning( "------------------------------");
+		*/
+		
 		local numberOfShips = 0;
 		local shipPercentageErrors = [];
 			
