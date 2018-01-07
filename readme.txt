@@ -1,6 +1,6 @@
 NoNoCAB is a competitive AI which uses trains, trucks, buses, aircraft and ships.
 
-Current version: 4, released December 17, 2017.
+Current version: 5, released January 7, 2018.
 
 Contents
 --------
