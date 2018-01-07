@@ -455,7 +455,34 @@ function ConnectionManager::ConnectionRealised(connection) {
 		Log.logInfo("From station tile based on roadList: " + connection.pathInfo.roadList[connection.pathInfo.roadList.len()-1].tile +
 			", name: " + AIBaseStation.GetName(AIStation.GetStationID(connection.pathInfo.roadList[connection.pathInfo.roadList.len()-1].tile)));
 		Log.logInfo("To station tile based on roadList: " + connection.pathInfo.roadList[0].tile + ", name: " + AIBaseStation.GetName(AIStation.GetStationID(connection.pathInfo.roadList[0].tile)));
+		if (!AIStation.IsValidStation(connection.pathInfo.travelFromNodeStationID)) {
+			//AISign.BuildSign(connection.pathInfo.roadList[connection.pathInfo.roadList.len()-1].tile,"from");
+			if (connection.travelFromNode.isNearWater)
+				Log.logInfo("From node is near water");
+			if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE)
+				if (AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)) {
+					Log.logInfo("From node industry is built on water")
+					if (AIIndustry.HasDock(connection.travelFromNode.id))
+						Log.logInfo("From node industry has a built in dock.");
+					else
+						Log.logInfo("From node industry does not have a built in dock.");
+				}
+		}
+		if (!AIStation.IsValidStation(connection.pathInfo.travelToNodeStationID)) {
+			//AISign.BuildSign(connection.pathInfo.roadList[0].tile,"to");
+			if (connection.travelToNode.isNearWater)
+				Log.logInfo("To node is near water");
+			if (connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE)
+				if (AIIndustry.IsBuiltOnWater(connection.travelToNode.id)) {
+					Log.logInfo("To node industry is built on water")
+					if (AIIndustry.HasDock(connection.travelToNode.id))
+						Log.logInfo("To node industry has a built in dock.");
+					else
+						Log.logInfo("To node industry does not have a built in dock.");
+				}
+		}
 		Log.logError("ConnectionRealised: From or To station is invalid! Group: " + AIGroup.GetName(connection.vehicleGroupID));
+		Log.logError("Please report this error with screenshot and savegame to NoNoCAB's forum topic!");
 	}
 	else {
 		allConnections.push(connection);
