@@ -9,7 +9,7 @@ class BuildShipYardAction extends BuildConnectionAction {
 }
 
 
-function BuildShipYardAction::Execute() {	
+function BuildShipYardAction::Execute() {
 
 	local accounter = AIAccounting();
 	local pathFindingHelper = WaterPathFinderHelper();
@@ -23,7 +23,10 @@ function BuildShipYardAction::Execute() {
 	local acceptingTiles = toNode.GetAllAcceptingTiles(connection.cargoID, stationRadius, 1, 1);
 
 
-	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id))) {
+	/// @todo ShipAdvisor.GetPathInfo and BuildShipYardAction.Execute are duplicating code. Refactor this!
+	/// @todo For water industry we don't even need to get all producing tiles, just get the dock.
+
+	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id) && AIIndustry.HasDock(fromNode.id))) {
 		producingTiles.Valuate(AITile.IsCoastTile);
 		producingTiles.KeepValue(1);
 
@@ -32,12 +35,13 @@ function BuildShipYardAction::Execute() {
 			producingTiles.Sort(AIList.SORT_BY_VALUE, false);
 		}
 	} else {
-		producingTiles.Valuate(AITile.IsWaterTile);
-		producingTiles.KeepValue(1);
+		// For water industry with a dock we only select that tile.
+		producingTiles.Clear();
+		producingTiles.AddItem(AIIndustry.GetDockLocation(fromNode.id), 1);
 		pathFinder.pathFinderHelper.startLocationIsBuildOnWater = true;
 	}
 
-	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id))) {
+	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id) && AIIndustry.HasDock(toNode.id))) {
 		acceptingTiles.Valuate(AITile.IsCoastTile);
 		acceptingTiles.KeepValue(1);
 
@@ -46,8 +50,9 @@ function BuildShipYardAction::Execute() {
 			acceptingTiles.Sort(AIList.SORT_BY_VALUE, false);
 		}
 	} else {
-		acceptingTiles.Valuate(AITile.IsWaterTile);
-		acceptingTiles.KeepValue(1);
+		// For water industry with a dock we only select that tile.
+		acceptingTiles.Clear();
+		acceptingTiles.AddItem(AIIndustry.GetDockLocation(toNode.id), 1);
 		pathFinder.pathFinderHelper.endLocationIsBuildOnWater = true;
 	}
 
@@ -79,14 +84,19 @@ function BuildShipYardAction::Execute() {
 	local roadList = connection.pathInfo.roadList;
 	local toTile = roadList[0].tile;
 	local fromTile = roadList[roadList.len() - 1].tile;
+	
+	//AISign.BuildSign(toTile, "to");
+	//AISign.BuildSign(fromTile, "from");
 
 	/* Build the shipYards for real */
-	if (!(connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id)) && !AIMarine.BuildDock(fromTile, AIStation.STATION_NEW)) {
+	if (!(connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id) &&
+		AIIndustry.HasDock(connection.travelFromNode.id)) && !AIMarine.BuildDock(fromTile, AIStation.STATION_NEW)) {
 		FailedToExecute("Although the testing told us we could build 2 shipYards, it still failed on the first shipYard at tile " + AIError.GetLastErrorString());
 		return false;
 	}
 
-	if (!(connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id)) && !AIMarine.BuildDock(toTile, AIStation.STATION_NEW)) {
+	if (!(connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id) &&
+		AIIndustry.HasDock(connection.travelToNode.id)) && !AIMarine.BuildDock(toTile, AIStation.STATION_NEW)) {
 		FailedToExecute("Although the testing told us we could build 2 shipYards, it still failed on the second shipYard at tile." + AIError.GetLastErrorString());
 		AIMarine.RemoveDock(fromTile);
 		return false;
@@ -139,15 +149,12 @@ function BuildShipYardAction::Execute() {
 
 	// Reconstruct road list.
 	local newRoadList = [end];
-	if (connection.travelToNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelToNode.id))
-		end.tile = connection.travelToNode.GetLocation();
 	
 	foreach (at in connection.pathInfo.roadList)
 		if (AIMarine.IsBuoyTile(at.tile) || AIMarine.IsWaterDepotTile(at.tile))
 			newRoadList.push(at);
 	newRoadList.push(start);
-	if (connection.travelFromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(connection.travelFromNode.id))
-		start.tile = connection.travelFromNode.GetLocation();
+	
 	connection.pathInfo.roadList = newRoadList;
 	connection.UpdateAfterBuild(AIVehicle.VT_WATER, start.tile, end.tile, AIStation.GetCoverageRadius(AIStation.STATION_DOCK))
 

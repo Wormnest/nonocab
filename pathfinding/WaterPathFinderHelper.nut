@@ -152,31 +152,28 @@ function WaterPathFinderHelper::CheckForWaterObstacles(at) {
 function WaterPathFinderHelper::ProcessStartPositions(heap, startList, checkStartPositions, expectedEnd) {
 
 	if (startLocationIsBuildOnWater) {
+		// This is for water industries that have a built in dock only!
+		// Note that there are industries on water without a dock, e.g. firs port is built on water
+		// but connected to the coast and does not have a dock.
 
 		foreach (i, value in startList) {
+			// There should be only 1 value: the dock location tile.
+			// The position where ships stop to load is 2 tiles to the south-west of this (Y+2).
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.tile = i;
 			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 			
-			// We preprocess all start nodes to see if a road station can be build on them.
-			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
-				
-			foreach (neighbour in neighbours) {
-				// Make sure nothing is obstructing our reaching the dock position on the water industry.
-				if (!CheckForWaterObstacles(neighbour))
-					continue;
-				local offset = annotatedTile.tile - neighbour.tile;
-	
-				if (!AIMap.GetTileX(offset) || !AIMap.GetTileY(offset))
-					neighbour.distanceFromStart = Tile.diagonalRoadLength;
-				else
-					neighbour.distanceFromStart = Tile.straightRoadLength;
-	
-				neighbour.parentTile = annotatedTile;
-				neighbour.length = 1;
-					
-				heap.Insert(neighbour, AIMap.DistanceManhattan(neighbour.tile, expectedEnd) * costTillEnd);
-			}
+			// For industry on water with a dock we already know the dock tile.
+			// What we do have to check is the tile where the ships will stop at,
+			// which always seems to be at offset [2,0] from the dock tile (see discussion on IRC 2018-01-06).
+			// So  no need for anything complicated, just check that one tile if its free.
+			local shiptile = AnnotatedTile();
+			shiptile.tile = i+2;
+			shiptile.parentTile = annotatedTile;
+			shiptile.length = 1;
+			/// @todo Maybe also check that at least one of the 3 neighbors of this tile is also free? (or will that be done in pathfinding? Check!)
+			if (AITile.IsWaterTile(shiptile.tile) && !AIMarine.IsWaterDepotTile(shiptile.tile))
+				heap.Insert(shiptile, AIMap.DistanceManhattan(shiptile.tile, expectedEnd) * costTillEnd);
 		}
 	} else {
 	
@@ -207,23 +204,27 @@ function WaterPathFinderHelper::ProcessEndPositions(endList, checkEndPositions) 
 
 	}
 	else {
+		// Industry on water with an inbuilt dock.
 		// Since we need to make sure we can approach the docking position on the industry we have to
 		// process the endList here too even though we don't need to replace it with neighbours.
 		newEndList = AITileList();
 		foreach (i, value in endList) {
+			// There should be only 1 value in this list: the dock location on the industry.
 			local annotatedTile = AnnotatedTile();
 			annotatedTile.tile = i;
 			annotatedTile.parentTile = annotatedTile;               // Small hack ;)
 			
-			// We preprocess all end nodes to make sure we can reach the docking position
-			local neighbours = GetNeighbours(annotatedTile, true, emptyList);
-				
-			foreach (neighbour in neighbours) {
-				// Make sure nothing is obstructing our reaching the dock position on the water industry.
-				if (!CheckForWaterObstacles(neighbour))
-					continue;
-				// In this case we shouldn't add the neighbour to the endList but our original tile. After that we can stop looking at neighbours.
-				newEndList.AddTile(i);
+			// For industry on water with a dock we already know the dock tile.
+			// What we do have to check is the tile where the ships will stop at,
+			// which always seems to be at offset [2,0] from the dock tile (see discussion on IRC 2018-01-06).
+			// So  no need for anything complicated, just check that one tile if its free.
+			local shiptile = AnnotatedTile();
+			shiptile.tile = i+2;
+			shiptile.parentTile = annotatedTile;
+			shiptile.length = 1;
+			/// @todo Maybe also check that at least one of the 3 neighbors of this tile is also free? (or will that be done in pathfinding? Check!)
+			if (AITile.IsWaterTile(shiptile.tile) && !AIMarine.IsWaterDepotTile(shiptile.tile)) {
+				newEndList.AddTile(shiptile.tile);
 				break;
 			}
 		}

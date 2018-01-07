@@ -28,8 +28,11 @@ function ShipAdvisor::GetPathInfo(report) {
 	local stationRadius = AIStation.GetCoverageRadius(stationType);
 	local producingTiles = fromNode.GetAllProducingTiles(report.connection.cargoID, stationRadius, 1, 1);
 	local acceptingTiles = toNode.GetAllAcceptingTiles(report.connection.cargoID, stationRadius, 1, 1);
+	
+	/// @todo ShipAdvisor.GetPathInfo and BuildShipYardAction.Execute are duplicating code. Refactor this!
+	/// @todo For water industry we don't even need to get all producing tiles, just get the dock.
 
-	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id))) {
+	if (!(fromNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(fromNode.id) && AIIndustry.HasDock(fromNode.id))) {
 		producingTiles.Valuate(AITile.IsCoastTile);
 		producingTiles.KeepValue(1);
 
@@ -39,12 +42,13 @@ function ShipAdvisor::GetPathInfo(report) {
 			producingTiles.KeepTop(5);
 		}
 	} else {
-		producingTiles.Valuate(AITile.IsWaterTile);
-		producingTiles.KeepValue(1);
+		// For water industry with a dock we only select that tile.
+		producingTiles.Clear();
+		producingTiles.AddItem(AIIndustry.GetDockLocation(fromNode.id), 1);
 		pathFinder.pathFinderHelper.startLocationIsBuildOnWater = true;
 	}
 
-	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id))) {
+	if (!(toNode.nodeType == ConnectionNode.INDUSTRY_NODE && AIIndustry.IsBuiltOnWater(toNode.id) && AIIndustry.HasDock(toNode.id))) {
 		acceptingTiles.Valuate(AITile.IsCoastTile);
 		acceptingTiles.KeepValue(1);
 
@@ -54,8 +58,9 @@ function ShipAdvisor::GetPathInfo(report) {
 			acceptingTiles.KeepTop(5);
 		}
 	} else {
-		acceptingTiles.Valuate(AITile.IsWaterTile);
-		acceptingTiles.KeepValue(1);	
+		// For water industry with a dock we only select that tile.
+		acceptingTiles.Clear();
+		acceptingTiles.AddItem(AIIndustry.GetDockLocation(toNode.id), 1);
 		pathFinder.pathFinderHelper.endLocationIsBuildOnWater = true;
 	}
 
