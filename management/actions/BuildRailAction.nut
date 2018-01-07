@@ -191,16 +191,26 @@ function BuildRailAction::Execute() {
 
 		// Check if we could actualy build a depot:
 		if (depot == null) {
-			FailedToExecute("Failed to build a depot.");
-			return false;
+			// Since we already built a lot of give it another try starting a little farther away from the station
+			depot = BuildDepot(roadList, len - 20, -1);
+			if (depot == null) {
+				// Still a failure: we give up.
+				FailedToExecute("Failed to build a depot.");
+				return false;
+			}
 		}
 
 		connection.pathInfo.depot = depot;
 
 		local otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 10, -1);
 		if (otherDepot == null) {
-			FailedToExecute("Failed to build a depot.");
-			return false;
+			// Since we already built a lot of give it another try starting a little farther away from the station
+			otherDepot = BuildDepot(connection.pathInfo.roadListReturn, connection.pathInfo.roadListReturn.len() - 20, -1);
+			if (otherDepot == null) {
+				// Still a failure: we give up.
+				FailedToExecute("Failed to build a depot.");
+				return false;
+			}
 		}
 
 		connection.pathInfo.depotOtherEnd = otherDepot;
@@ -570,14 +580,15 @@ function BuildRailAction::BuildDepot(roadList, startPoint, searchDirection) {
 			
 			depotLocation = depotTile;
 			break;
-		}
+		} // end foreach direction
 		
 		
 		if (depotLocation != null)
 			return depotLocation;
 	}
 
-	assert(false);
+	// This is rare but it can happen that we are not able to build a depot.
+	Log.logDebug("We failed to find a suitable location to build a depot");
 	return null;
 }
 
