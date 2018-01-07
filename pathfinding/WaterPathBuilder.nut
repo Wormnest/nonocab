@@ -49,13 +49,12 @@ class WaterPathBuilder {
 function WaterPathBuilder::CheckError(buildLocation)
 {
 	/**
-	 * First determine whether the error is of temporeral nature (i.e. lack
-	 * of money, a vehicle was in the way, etc) or a more serious one which
-	 * requires us to replan this part of the road.
+	 * First determine whether the error is temporary (i.e. lack of money, a vehicle was in the way, etc)
+	 * or a more serious one which requires us to replan this part of the road.
 	 */
 	switch (AIError.GetLastError()) {
 	
-		// Temporal onces:
+		// Temporary errors:
 		case AIError.ERR_VEHICLE_IN_THE_WAY:
 		case AIRoad.ERR_ROAD_WORKS_IN_PROGRESS:
 			// Retry the same action 50 times...
@@ -66,8 +65,8 @@ function WaterPathBuilder::CheckError(buildLocation)
 			}
 				
 			return true;
-			
-		// Serious onces:
+		
+		// Serious errors:
 		case AIError.ERR_LOCAL_AUTHORITY_REFUSES:
 		case AIError.ERR_AREA_NOT_CLEAR:
 		case AIError.ERR_OWNED_BY_ANOTHER_COMPANY:
@@ -76,22 +75,21 @@ function WaterPathBuilder::CheckError(buildLocation)
 		case AIError.ERR_SITE_UNSUITABLE:
 		case AIError.ERR_TOO_CLOSE_TO_EDGE:
 		case AIRoad.ERR_ROAD_ONE_WAY_ROADS_CANNOT_HAVE_JUNCTIONS:
-		case AIError.ERR_NOT_ENOUGH_CASH:		
+		case AIError.ERR_NOT_ENOUGH_CASH:
 			//AISign.BuildSign(buildLocation, "BUOY!");
 			Log.logDebug("Couldn't build a buoy: " + AIError.GetLastErrorString());
 			return true;
 			
-		// Trivial onces:
+		// Trivial errors:
 		case AIError.ERR_ALREADY_BUILT:
 		case AIRoad.ERR_ROAD_CANNOT_BUILD_ON_TOWN_ROAD:
 			return true;
 			
-		// Unsolvable ones:
+		// Unsolvable errors:
 		case AIError.ERR_PRECONDITION_FAILED:
 			Log.logError("Build from " + AIMap.GetTileX(buildResult[0]) + ", " + AIMap.GetTileY(buildResult[0]) + " to " + AIMap.GetTileX(buildResult[1]) + ", " + AIMap.GetTileY(buildResult[1]) + " tileType: " + buildResult[2]);
-			Log.logError("Precondition failed for the creation of a roadpiece, this cannot be solved!");
-			Log.logError("/me slaps developer! ;)");
-			assert(false);
+			Log.logError("Precondition failed for the creation of a roadpiece! Please report this bug in NoNoCAB's forum topic.");
+			return false;
 			
 		default:
 			Log.logError("Unhandled error message when building a buoy: " + AIError.GetLastErrorString() + "!");
