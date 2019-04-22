@@ -52,12 +52,14 @@ function RailPathUpgradeAction::UpgradeAll(connections, newRailType) {
 	// the rails in place.
 	local canUpdateInPlace = true;
 	foreach (connection in connections) {
-		foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
-			local engineId = AIVehicle.GetEngineType(vehicleId);
-			if (!AIEngine.CanRunOnRail(engineId, newRailType) ||
-			    !AIEngine.HasPowerOnRail(engineId, newRailType)) {
-			    	canUpdateInPlace = false;
-			    	break;
+		if (connection.vehicleGroupID != null && AIGroup.IsValidGroup(connection.vehicleGroupID))  {
+			foreach (vehicleId, value in AIVehicleList_Group(connection.vehicleGroupID)) {
+				local engineId = AIVehicle.GetEngineType(vehicleId);
+				if (!AIEngine.CanRunOnRail(engineId, newRailType) ||
+					!AIEngine.HasPowerOnRail(engineId, newRailType)) {
+						canUpdateInPlace = false;
+						break;
+				}
 			}
 		}
 		if (!canUpdateInPlace)
