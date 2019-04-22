@@ -537,8 +537,7 @@ class Connection {
 	}
 	
 	/**
-	 * If the connection is build this function is called to update its
-	 * internal state.
+	 * When all parts of the connection are built this function is called to update its internal state.
 	 */
 	function UpdateAfterBuild(vehicleType, fromTile, toTile, stationCoverageRadius) {
 		
@@ -552,10 +551,21 @@ class Connection {
 			// If you try to set it to something longer the groupname doesn't get changed.
 			// However the last characters are not shown in the gui, instead "..." is shown, so use 28 as max
 			// Make it also less likely that group name is not unique by adding cargo label to it.
+			// Note: since industries can disappear at any time we need to take into account that GetName returns NULL.
+			// Ideally we should return an error that we can't finish this route but for now just make a dummy name UNKNOWN.
+			// TODO: If from or to name is NULL we should signal back that this route should be removed.
 			local fromName = travelFromNode.GetName();
+			if (fromName == null) {
+				fromName =  "UNKNOWN";
+				Log.logWarning("From industry/city disappeared. Can't use name and route will most likely be a failure.");
+			}
 			if (fromName.len() > 10)
 				fromName = fromName.slice(0, 10);
 			local toName = travelToNode.GetName();
+			if (toName == null) {
+				toName =  "UNKNOWN";
+				Log.logWarning("To industry/city disappeared. Can't use name and route will most likely be a failure.");
+			}
 			if (toName.len() > 10)
 				toName = toName.slice(0, 10);
 			local groupname = AICargo.GetCargoLabel(cargoID) + " " + fromName + " - " + toName;
