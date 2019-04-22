@@ -126,7 +126,11 @@ class Report
 				}
 			} else {
 				local rail_type = TrainConnectionAdvisor.GetBestRailType(transportEngineID);
-				assert (rail_type != AIRail.RAILTYPE_INVALID);
+				if (rail_type == AIRail.RAILTYPE_INVALID) {
+					Log.logWarning("No track available for vehicle type: " + AIEngine.GetVehicleType(transportEngineID) + ", Engine: " + AIEngine.GetName(transportEngineID));
+					isInvalid = true;
+					return;
+				}
 				// Note: building rail seems to get a lot of overhead costs: often we seem to build quite
 				// long bridges and we terraform too sometimes. Thus we increase distance * 3 to distance * 4.
 				initialCost = AIRail.GetBuildCost(rail_type, AIRail.BT_TRACK) * distance * 4 +
