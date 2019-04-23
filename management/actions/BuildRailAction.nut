@@ -247,8 +247,7 @@ function BuildRailAction::CleanupTile(at) {
 		return;
 
 	local railTracks = AIRail.GetRailTracks(at.tile);
-	/// @todo We can probably completely remove the call to IsSingleRailTrack since the else part should also handle single rails.
-	if (at.type != Tile.ROAD || IsSingleRailTrack(railTracks))
+	if (at.type != Tile.ROAD)
 		while (!AITile.DemolishTile(at.tile));
 	else {
 		if (at.lastBuildRailTrack != -1) {
