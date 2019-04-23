@@ -295,11 +295,18 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 			if (airportType == null)
 				continue;
 			if (airportType != baseLineAirportType && !acceptingSide && node.nodeType != ConnectionNode.TOWN_NODE) {
-				if (!BuildAirfieldAction.AirportHasCoverage(cargoID, tile, airportType)) {
-					// Smaller airport than the one we checked doesn't always have coverage of the cargo
-					//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
-					continue;
-				}
+				if (acceptingSide)
+					if (!BuildAirfieldAction.AirportHasAcceptance(cargoID, tile, airportType)) {
+						// Smaller airport than the one we checked doesn't always have acceptance of the cargo at all tiles
+						//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
+						continue;
+					}
+				else
+					if (!BuildAirfieldAction.AirportHasCoverage(cargoID, tile, airportType)) {
+						// Smaller airport than the one we checked doesn't always have coverage of the cargo
+						//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
+						continue;
+					}
 			}
 			local nearestTown = AIAirport.GetNearestTown(tile, airportType);
 			// Check if we can build an airport here, either directly or by terraforming.
@@ -317,12 +324,19 @@ function BuildAirfieldAction::FindSuitableAirportSpot(/*airportType,*/ node, car
 				local airportType = BuildAirfieldAction.GetLargestAirport(!getFirst, tile);
 				if (airportType == null)
 					continue;
-				if (airportType != baseLineAirportType && !acceptingSide && node.nodeType != ConnectionNode.TOWN_NODE) {
-					if (!BuildAirfieldAction.AirportHasCoverage(cargoID, tile, airportType)) {
-						// Smaller airport than the one we checked doesn't always have coverage of the cargo
-						//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
-						continue;
-					}
+				if (airportType != baseLineAirportType && node.nodeType != ConnectionNode.TOWN_NODE) {
+					if (acceptingSide)
+						if (!BuildAirfieldAction.AirportHasAcceptance(cargoID, tile, airportType)) {
+							// Smaller airport than the one we checked doesn't always have acceptance of the cargo at all tiles
+							//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
+							continue;
+						}
+					else
+						if (!BuildAirfieldAction.AirportHasCoverage(cargoID, tile, airportType)) {
+							// Smaller airport than the one we checked doesn't always have coverage of the cargo
+							//Log.logDebug("Chosen smaller airport doesn't have coverage for cargo on this tile!");
+							continue;
+						}
 				}
 				airportX = AIAirport.GetAirportWidth(airportType);
 				airportY = AIAirport.GetAirportHeight(airportType);
