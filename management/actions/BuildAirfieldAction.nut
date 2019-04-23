@@ -189,6 +189,21 @@ function BuildAirfieldAction::AirportHasCoverage(cargoID, tile, airportType) {
 }
 
 /**
+ * Check whether an airport of type airportType at a specific tile has acceptance for cargoID.
+ * @param cargoID The cargo that we need acceptance for.
+ * @param tile The tile we intend to build the airport at.
+ * @param airportType The type of airport we intend to build.
+ * @return true if there is acceptance, otherwise false.
+ */
+function BuildAirfieldAction::AirportHasAcceptance(cargoID, tile, airportType) {
+	local airportX = AIAirport.GetAirportWidth(airportType);
+	local airportY = AIAirport.GetAirportHeight(airportType);
+	local airportRadius = AIAirport.GetAirportCoverageRadius(airportType);
+	local acceptance = AITile.GetCargoAcceptance(tile, cargoID, airportX, airportY, airportRadius);
+	return acceptance >= 8;
+}
+
+/**
  * Find a good location to build an airfield and return it.
  * @param airportType The type of airport which needs to be build.
  * @param node The connection node where the airport needs to be build.
