@@ -176,8 +176,8 @@ function BuildAirfieldAction::Execute() {
 /**
  * Check whether an airport of type airportType at a specific tile has coverage for a producer of cargoID.
  * @param cargoID The cargo that needs to be picked up.
- * @param tile The tile inteded to build the airport at.
- * @param airportType The type of airport we intend to be build.
+ * @param tile The tile we intend to build the airport at.
+ * @param airportType The type of airport we intend to build.
  * @return true if there is coverage, otherwise false.
  */
 function BuildAirfieldAction::AirportHasCoverage(cargoID, tile, airportType) {
