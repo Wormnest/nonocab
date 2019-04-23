@@ -247,8 +247,17 @@ function BuildRailAction::CleanupTile(at) {
 		return;
 
 	local railTracks = AIRail.GetRailTracks(at.tile);
-	if (at.type != Tile.ROAD)
-		while (!AITile.DemolishTile(at.tile));
+	if (at.type != Tile.ROAD) {
+		local cnt = 0;
+		while (!AITile.DemolishTile(at.tile)) {
+			cnt++;
+			if (cnt == 10)
+				break;
+			AIController.Sleep(10);
+		}
+		if (cnt == 10)
+			Log.logError("We failed to remove a piece of track at tile " + at.tile + ", railtrack = " + at.lastBuildRailTrack);
+	}
 	else {
 		if (at.lastBuildRailTrack != -1) {
 			local cnt = 0;
