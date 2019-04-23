@@ -146,6 +146,34 @@ function WaterPathFinderHelper::CheckForWaterObstacles(at) {
 	tile = tile + at.direction;
 	if (!AITile.IsWaterTile(tile) || AIMarine.IsWaterDepotTile(tile))
 		return false;
+	
+	// Check the tiles beside our dock candidate to see if there is already a dock there with its head turned towards us.
+	local tilesToCheck = null;
+	if (at.direction == 1 || at.direction == -1) {
+		tilesToCheck = [AIMap.GetMapSizeX(), -AIMap.GetMapSizeX()];
+	}
+	else {
+		tilesToCheck = [1, -1];
+	}
+	tile = at.tile + tilesToCheck[0];
+	if (AIMap.IsValidTile(tile) && AIMarine.IsDockTile(tile)) {
+		local stid = AIStation.GetStationID(tile);
+		tile = tile + tilesToCheck[0];
+		if (AIMap.IsValidTile(tile) && AIMarine.IsDockTile(tile) && stid == AIStation.GetStationID(tile)) {
+			// Looks like there is another dock turned towards us. We can't use this for our dock.
+			return false;
+		}
+	}
+	tile = at.tile + tilesToCheck[1];
+	if (AIMap.IsValidTile(tile) && AIMarine.IsDockTile(tile)) {
+		local stid = AIStation.GetStationID(tile);
+		tile = tile + tilesToCheck[1];
+		if (AIMap.IsValidTile(tile) && AIMarine.IsDockTile(tile) && stid == AIStation.GetStationID(tile)) {
+			// Looks like there is another dock turned towards us. We can't use this for our dock.
+			return false;
+		}
+	}
+	
 	return true;
 }
 
