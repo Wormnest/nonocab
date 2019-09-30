@@ -1,0 +1,59 @@
+NoNoCAB
+========
+
+23-4-2019: I saw that apparently NoNoCab was stuck in a possible endless loop.
+It was building the first leg of a train line to an iron mine and due to other ais also building around there something went wrong.
+Depending on how NoNoCab does the building the station at the iron mine was not built but the track stopped close to it.
+Or the station at the iron mine was already deleted but NoNoCab got stuck trying to remove the rail.
+Last Log message said execution of report was halted.
+Looking at previous automatic saves it looks like it got stuck removing the rail tracks.
+It looks like it got stuck removing rail track next to a lake on a piece of land that has different heights.
+
+---
+
+ALSO for WormAI.
+OpenTTD master (future v 1.10) fixes a bug that we were taking advantage of:
+We need to check which version is running and depending on that
+turn that feature on or off.
+
+See also: 
+https://github.com/OpenTTD/OpenTTD/pull/7302
+
+Change: make crash chance at short runway independent of plane crash … #7302
+
+See SuperLib.Helper for how to check OpenTTD version.
+
+
+---
+
+irc Samu 2018-02-28
+problems with trains: getting less and less starting around 2020 on arctic
+maybe because of no electric rail?
+
+hi Wormnest , there is a problem with NoNoCAB trains, something wrong happens at around year 2028
+<Wormnest> And what might that be Samu
+<Samu> i recall these same problems in NoCAB v499
+<Samu> well it does fine from 1950-2027~ish
+<Samu> always profiting, making more trains, increasing company value etc
+<Samu> then, at around that year, the profits started to decrease, the number of trains also 
+<Samu> slowly...
+<Samu> and it's now approaching the year 2051, and only has about 40 trains, down from 1000 in 2027
+<Samu> it has been slowly selling them over the last 20 years
+<Wormnest> Maybe the tracks are expiring, can´t remember when that happens nor if nonocab considers that
+<Samu> let me investigate those savegames
+<Samu> actually, it's not around 2027, it's a bit earlier
+<Samu> yeah 2018, my bad
+<Samu> i was off by 10 years :p
+<Samu> there's still rail tracks
+<Samu> and rail engines
+<Samu> ok i see, it maxes out at around 2018, then there's a 4-5 year profits stagnates, and then from 2023 onwards it's only decreasing
+<Samu> i dunno which savegames you're interested in
+<Wormnest> not sure, don´t have time to look anyway currently
+<Samu> https://imgur.com/4SRtWK1 
+<Samu> the starting of its downfall
+<Wormnest> Maybe the problems is that there´s no electric rail in arctic iirc
+<Samu> there isn't
+<Samu> this is how it looks like right now https://imgur.com/ahjSNEV 3 years from reaching 2051 :(
+<Wormnest> Yeah I should have a look sometime that´s obvious
+
+---
