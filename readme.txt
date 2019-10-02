@@ -38,7 +38,11 @@ NoNoCAB forum topic:
 https://www.tt-forums.net/viewtopic.php?f=65&t=75030
 
 Details about all changes can be found in my forked repository:
-https://bitbucket.org/jacobb/nocab/overview
+https://github.com/Wormnest/nonocab
+
+Besides posting on the forum topic you can also add problems
+in the issue tracker on github:
+https://github.com/Wormnest/nonocab/issues
 
 
 3. Requirements
