@@ -66,8 +66,8 @@ normal thing without consideration for any possible goals.
 The original NoCAB is an AI by Morloth.
 
 Original forum topics:
-NoCAB: http://www.tt-forums.net/viewtopic.php?f=65&t=40203
-NoCAB Bleeding Edge: http://www.tt-forums.net/viewtopic.php?f=65&t=43259
+NoCAB: https://www.tt-forums.net/viewtopic.php?f=65&t=40203
+NoCAB Bleeding Edge: https://www.tt-forums.net/viewtopic.php?f=65&t=43259
 
 
 6. License
