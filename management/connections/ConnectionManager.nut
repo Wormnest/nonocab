@@ -14,7 +14,7 @@ class ConnectionManager {
 		stationIDToConnection = {};
 		interConnectedStations = {};
 	}
-	
+
 	function AddConnectionListener(listener);
 	function RemoveConnectionListener(listener);
 	function ConnectionRealised(connection);
@@ -22,12 +22,79 @@ class ConnectionManager {
 }
 
 /**
+ * Due to running out of time when saving connections, or possibly due to
+ * bugs in our code, it is possible that connections go missing.
+ * However, the actual lines and vehicles will still be there. This means
+ * we won't be able to remove or replace vehicles or close the entire line.
+ * This function will try to detect those connections, and as a start will
+ * try to sell all vehicles.
+ * In the future we could maybe try to restore the connection, although
+ * that might not be easy due to us needing path info.
+ */
+function ConnectionManager::DetectMissingConnections() {
+	Log.logInfo("Checking for vehicles without connection");
+
+	// Get global vehicle list and station list
+	local vehicleList = AIVehicleList();
+	local stationList = AIStationList(AIStation.STATION_ANY);
+
+	// For each connection
+	foreach (connection in allConnections) {
+		if (connection.vehicleGroupID == null || !AIGroup.IsValidGroup(connection.vehicleGroupID)) {
+			Log.logError("Invalid vehicle group for connection " + connection.ToString());
+		}
+		// Get the vehicle group list and subtract that list from our global list
+		local vehgroupList = AIVehicleList_Group(connection.vehicleGroupID);
+		vehicleList.RemoveList(vehgroupList);
+	}
+
+	// Check if there are any vehicles left
+	local vehcnt = vehicleList.Count();
+	if (vehcnt > 0) {
+		Log.logError ("There are " + vehcnt +" vehicles without connection!");
+
+		foreach (veh, dummy in vehicleList) {
+			if (AIVehicle.IsStoppedInDepot(veh)) {
+				Log.logWarning ("Selling vehicle " + AIVehicle.GetName(veh) + ". Reason: connection missing.");
+				AIVehicle.SellVehicle(veh);
+			}
+			else {
+				AIVehicle.SendVehicleToDepot(veh);
+			}
+		}
+	}
+
+	// Get a list of stations not in our connections list
+	local disconnected_stations = AIList()
+	foreach (stationid, dummy in stationList) {
+		if (GetConnection(stationid) == null) {
+			disconnected_stations.AddItem(stationid,0);
+		}
+	}
+	if (disconnected_stations.Count() > 0) {
+		Log.logError ("There are " + disconnected_stations.Count() + " stations not belonging to a connection!");
+		foreach (stationid, dummy in disconnected_stations) {
+			local stveh = AIVehicleList_Station(stationid);
+			if (stveh.Count() == 0) {
+				Log.logWarning ("Removing unused station not part of our connection list: " +
+					AIBaseStation.GetName(stationid));
+				// Remove station without a connection
+				// Note tile is not necessarily a station tile, for now
+				// we will assume it is our station tile, see API
+				local tile = AIBaseStation.GetLocation(stationid);
+				AITile.DemolishTile(tile);
+			}
+		}
+	}
+}
+
+/**
  * TODO: Go through all connections and check which vehicles need to be sold (at least 3 years old
  * and making a loss the last year in operation) and which need to be replaced (in depot but max age
  * not yet reached).
- */ 
+ */
 function ConnectionManager::MaintainActiveConnections() {
-	
+
 	foreach (connection in allConnections) {
 		if (!connection.pathInfo.build) {
 			Log.logError("Something is wrong: pathInfo.build is false for connection " + connection.ToString());

@@ -283,6 +283,7 @@ function NoNoCAB::Start()
 		local counter = 0;
 			
 		Refinance();
+		connectionManager.DetectMissingConnections();
 		foreach (connection in connectionManager.allConnections) {
 			connection.expectedAvgEarnings = null;
 			connection.actualAvgEarnings = null;
