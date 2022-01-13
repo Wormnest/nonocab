@@ -2,11 +2,11 @@ class ConnectionManager {
 
 	connectionListeners = null;
 	stationIDToConnection = null;  // Mapping from station IDs to connections.
-	interConnectedStations = null; // Mapping from station IDs of connections to stationIDs of 
+	interConnectedStations = null; // Mapping from station IDs of connections to stationIDs of
 	                               // other connections who are connected to it. This is done to
 	                               // keep track of rail connections which must be upgraded together.
 	allConnections = null;
-	
+
 	constructor(worldEventManager) {
 		worldEventManager.AddEventListener(this, AIEvent.ET_ENGINE_AVAILABLE);
 		connectionListeners = [];
@@ -103,12 +103,12 @@ function ConnectionManager::MaintainActiveConnections() {
 			Log.logError("Invalid vehicle group for connection " + connection.ToString());
 		}
 		local vehicleList = AIVehicleList_Group(connection.vehicleGroupID);
-		
+
 		foreach (vehicleID, value in vehicleList) {
 			local vehicleType = AIVehicle.GetVehicleType(vehicleID);
 			if (AIVehicle.IsStoppedInDepot(vehicleID)) {
 				Log.logDebug("Vehicle: " + AIVehicle.GetName(vehicleID) + " is stopped in depot.");
-				
+
 				// If the vehicle is very old, we assume it needs to be replaced
 				// by a new vehicle.
 				if (AIVehicle.GetAgeLeft(vehicleID) <= 0) {
@@ -120,7 +120,7 @@ function ConnectionManager::MaintainActiveConnections() {
 					// Replace if we have a valid replacement engine.
 					if ((replacementEngineID != null) && (replacementEngineID[0] != null) &&
 						AIEngine.IsBuildable(replacementEngineID[0])) {
-						
+
 						local doReplace = true;
 						// Don't replace an airplane if the airfield is very small.
 						if (vehicleType == AIVehicle.VT_AIR) {
@@ -128,18 +128,18 @@ function ConnectionManager::MaintainActiveConnections() {
 								AIEngine.GetPlaneType(replacementEngineID[0]))
 								doReplace = false;
 						}
-						
+
 						if (doReplace) {
 							// Create a new vehicle.
 							// We sell the old vehicle first that way we can replace it even if we have reached the max vehicle limit.
-							
+
 							// If multiple vehicles share the same orders pick one to share the new vehicles orders with.
 							local depot_loc = AIVehicle.GetLocation(vehicleID);
 							local share_veh = ManageVehiclesAction.GetSharedVehicle(vehicleID)
 							// Now sell the old vehicle.
 							Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID));
 							AIVehicle.SellVehicle(vehicleID);
-							
+
 							// Build a new one and check if it's valid
 							local newVehicleID;
 							local vehiclePrice = AIEngine.GetPrice(replacementEngineID[0]);
@@ -181,7 +181,7 @@ function ConnectionManager::MaintainActiveConnections() {
 							}
 							AIGroup.MoveVehicle(connection.vehicleGroupID, newVehicleID);
 							AIVehicle.StartStopVehicle(newVehicleID);
-							
+
 							// Since we already sold the vehicle if we arrive here we should go on to the next.
 							continue;
 						}
@@ -190,7 +190,7 @@ function ConnectionManager::MaintainActiveConnections() {
 						Log.logWarning("We can't replace " + AIVehicle.GetName(vehicleID) + " with a new one!");
 					}
 				}
-				
+
 				/// @todo If this was the last vehicle on this connection maybe signal
 				/// @todo that this connection should be removed!
 				Log.logDebug("Selling vehicle: " + AIVehicle.GetName(vehicleID) + ", connection: " + connection.ToString());
@@ -223,7 +223,7 @@ function ConnectionManager::MaintainActiveConnections() {
 function ConnectionManager::SaveData(saveData) {
 	local CMsaveData = {};
 	CMsaveData["interConnectedStations"] <- interConnectedStations;
-	
+
 	Log.logInfo("Saving " + allConnections.len() + " connections.");
 	local activeConnections = [];
 	foreach (idx, connection in allConnections) {
@@ -239,7 +239,7 @@ function ConnectionManager::SaveData(saveData) {
 		}
 		activeConnections.push(connection.SaveData());
 	}
-	
+
 	CMsaveData["allConnections"] <- activeConnections;
 	saveData["ConnectionManager"] <- CMsaveData;
 }
@@ -248,7 +248,7 @@ function ConnectionManager::LoadData(data, world) {
 	local CMsaveData = data["ConnectionManager"];
 	interConnectedStations = CMsaveData["interConnectedStations"];
 	local unsuccessfulLoads = 0;
-	
+
 	local savedConnectionsData = CMsaveData["allConnections"];
 	if (savedConnectionsData.len() == 0) {
 		Log.logInfo("There were no connections to load.");
@@ -292,20 +292,20 @@ function ConnectionManager::LoadData(data, world) {
 		//	", vehicle group " + savedConnectionData["vehicleGroupID"] +
 		//	" = " + AIGroup.GetName(savedConnectionData["vehicleGroupID"]));
 	}
-	
+
 	// Keep track of how many connections still need to be loaded.
 	local wantedConnections = savedConnectionsData.len();
-	
+
 	Log.logInfo("Restoring " + wantedConnections + " saved connections.");
 	foreach (connectionFromNode in world.industry_tree) {
 		foreach (savedConnectionData in savedConnectionsData) {
 			local saved_from_uid = savedConnectionData["travelFromNode"];
 			local saved_from_id = ConnectionNode.GetIDFromUID(saved_from_uid);
-			
+
 			// Saved node id should be same as connection node id
 			if (saved_from_uid != connectionFromNode.GetUID(savedConnectionData["cargoID"]))
 				continue;
-			
+
 			Log.logDebug("Process: " + savedConnectionData["travelFromNode"] + " " +
 				savedConnectionData["travelToNode"] + " " +
 				AICargo.GetCargoLabel(savedConnectionData["cargoID"]));
@@ -334,7 +334,7 @@ function ConnectionManager::LoadData(data, world) {
 				wantedConnections--;
 				continue;
 			}
-			
+
 			// Now we need to find the correct to node.
 			local foundConnectionToNode = -1;
 			local saved_to_uid = savedConnectionData["travelToNode"];
@@ -390,15 +390,15 @@ function ConnectionManager::LoadData(data, world) {
 				continue;
 			}
 			Log.logDebug("Initialize connection.");
-			
+
 			// We found the connection. Now save the connection data.
 			local existingConnection = Connection(cargoID, connectionFromNode, foundConnectionToNode, null, this);
 			existingConnection.LoadData(savedConnectionData);
 			connectionFromNode.AddConnection(foundConnectionToNode, existingConnection);
-				
+
 			Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + foundConnectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
 			wantedConnections--;
-			
+
 			// Do not break here since the same connection from node might be used for a different cargo!
 			//break;
 		}
@@ -424,20 +424,20 @@ function ConnectionManager::WE_EngineReplaced(newEngineID) {
 
 function ConnectionManager::FindConnectionNode(connectionNodeList, cargoID, connectionNodeToFindGUID) {
 	foreach (connectionNode in connectionNodeList) {
-	
+
 		Log.logInfo("compare " + connectionNode.GetUID(cargoID) + " v.s. " + connectionNodeToFindGUID + " " + connectionNode.GetName());
 		if (connectionNode.GetUID(cargoID) != connectionNodeToFindGUID)
 			continue;
-			
+
 		Log.logInfo("Found propper to node!");
-		    	
+
 		local existingConnection = Connection(cargoID, connectionFromNode, connectionToNode, null, this);
 		existingConnection.LoadData(savedConnectionData);
 		connectionFromNode.AddConnection(connectionToNode, existingConnection);
-			
+
 		Log.logInfo("Loaded connection from " + connectionFromNode.GetName() + " to " + connectionToNode.GetName() + " carrying " + AICargo.GetCargoLabel(cargoID));
 		ConnectionRealised(existingConnection);
-			
+
 		connectionProcesses = true;
 		break;
 	}
@@ -453,7 +453,7 @@ function ConnectionManager::GetInterconnectedConnections(connection) {
 	if (interConnectedStations.rawin(connection.pathInfo.travelFromNodeStationID)) {
 		local stationIDs = interConnectedStations.rawget(connection.pathInfo.travelFromNodeStationID);
 		local connections = [];
-		
+
 		foreach (stationID in stationIDs)
 			if (stationIDToConnection.rawin(stationID))
 				connections.push(stationIDToConnection.rawget(stationID));
@@ -473,14 +473,14 @@ function ConnectionManager::MakeInterconnected(connection1, connection2) {
 		connectedStations1 = [connection1.pathInfo.travelFromNodeStationID];
 		interConnectedStations[connection1.pathInfo.travelFromNodeStationID] <- connectedStations1;
 	}
-	
+
 	// Make sure these stations weren't connected before.
 	for (local i = 0; i < connectedStations1.len(); i++)
 		if (connectedStations1[i] == connection2.pathInfo.travelFromNodeStationID)
 			return;
-	
+
 	Log.logWarning(connection1.travelFromNode.GetName() + " connected to " + connection2.travelFromNode.GetName());
-	
+
 	local connectedStations2 = null;
 	if (interConnectedStations.rawin(connection2.pathInfo.travelFromNodeStationID))
 		connectedStations2 = interConnectedStations.rawget(connection2.pathInfo.travelFromNodeStationID);
@@ -488,7 +488,7 @@ function ConnectionManager::MakeInterconnected(connection1, connection2) {
 		connectedStations2 = [connection2.pathInfo.travelFromNodeStationID];
 		interConnectedStations[connection2.pathInfo.travelFromNodeStationID] <- connectedStations2;
 	}
-	
+
 	// Combine the arrays.
 	connectedStations1.extend(connectedStations2);
 	foreach (connectionStationID in connectedStations1) {
@@ -553,10 +553,10 @@ function ConnectionManager::ConnectionRealised(connection) {
 	}
 	else {
 		allConnections.push(connection);
-		
+
 		stationIDToConnection[connection.pathInfo.travelFromNodeStationID] <- connection;
 		stationIDToConnection[connection.pathInfo.travelToNodeStationID] <- connection;
-		
+
 		foreach (listener in connectionListeners)
 			listener.ConnectionRealised(connection);
 	}
@@ -573,7 +573,7 @@ function ConnectionManager::ConnectionDemolished(connection) {
 	}
 	if (!found)
 		Log.logError("ConnectionDemolished: Couldn't find connection to remove! " + connection.ToString());
-	
+
 	foreach (listener in connectionListeners)
 		listener.ConnectionDemolished(connection);
 }

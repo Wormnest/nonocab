@@ -24,7 +24,7 @@ class NoNoCAB extends AIController {
 	_airAdvisor = null;
 	_trainAdvisor = null;
 	_shipAdvisor = null;
-	
+
    	constructor() {
    		stop = false;
 		loadData = null;
@@ -43,7 +43,7 @@ function NoNoCAB::CheckLogLevel()
 		Log.logDebug("Changed log level to " + Log.logLevel);
 }
 
-function NoNoCAB::Save() { 
+function NoNoCAB::Save() {
 	Log.logInfo("Saving game using version " + minimalSaveVersion);
 	local saveTable = {};
 	if (initialized) {
@@ -94,7 +94,7 @@ function NoNoCAB::UpdateSettings() {
 	local plantTrees = politicHardness > 0;
 	local buildStatues = politicHardness > 1;
 	local secureRights = politicHardness > 2;
-	
+
 	if (la == null)
 		la = LocalAuthority(plantTrees, buildStatues, secureRights);
 	else {
@@ -102,10 +102,10 @@ function NoNoCAB::UpdateSettings() {
 		la.buildStatuesEnabled = buildStatues;
 		la.secureRightsEnabled = secureRights;
 	}
-	
+
 	// Check competitors setting
 	world.niceCABEnabled = GetSetting("NiceCAB");
-	
+
 	// Check which vehicle types are enabled/disabled by the user either for our ai or globally.
 	_rvAdvisor.disabled = !GetSetting("Enable road vehicles") ||
 		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_ROAD) ||
@@ -121,7 +121,7 @@ function NoNoCAB::UpdateSettings() {
 	_shipAdvisor.disabled = !GetSetting("Enable ships") ||
 		AIGameSettings.IsDisabledVehicleType(AIVehicle.VT_WATER) ||
 		AIGameSettings.GetValue("max_ships") == 0;
-	
+
 	// Update setting to (dis)allow trains for town to town connections.
 	_trainAdvisor.allowTownToTownConnections = GetSetting("Allow trains town to town");
 }
@@ -141,9 +141,9 @@ function NoNoCAB::Start()
 
 	CheckLogLevel();
 	AICompany.SetAutoRenewMoney(1000000);
-	
+
 	AIGroup.EnableWagonRemoval(true);
-	
+
 	parlement = Parlement();
 	world = World(GetSetting("NiceCAB"));
 	worldEventManager = WorldEventManager(world);
@@ -151,7 +151,7 @@ function NoNoCAB::Start()
 	connectionManager = ConnectionManager(worldEventManager);
 	pathFixer = PathFixer();
 	subsidyManager = SubsidyManager(worldEventManager);
-		
+
 	planner = Planner(world);
 
 	if (loadData) {
@@ -160,7 +160,7 @@ function NoNoCAB::Start()
 	}
 
 	world.BuildIndustryTree();
-	
+
 	advisors = [];
 
 	// To make it easier to update the disabled state of a certain type of vehicle advisor we save
@@ -173,12 +173,12 @@ function NoNoCAB::Start()
 	advisors.push(_trainAdvisor);
 	_shipAdvisor = ShipAdvisor(world, worldEventManager, connectionManager);
 	advisors.push(_shipAdvisor);
-	
+
 	//UpgradeConnectionAdvisor(world, connectionManager)
-	
+
 	foreach (advisor in advisors)
 		connectionManager.AddConnectionListener(advisor);
-		
+
 	advisors.push(VehiclesAdvisor(connectionManager));
 
 	if (loadData) {
@@ -186,18 +186,18 @@ function NoNoCAB::Start()
 		GameSettings.UpdateGameSettings();
 		Log.logInfo("(2/5) Load path fixer data");
 		pathFixer.LoadData(loadData);
-		Log.logInfo("(3/5) Load active connections");
+		Log.logInfo("(3/5) Load world data");
 		world.LoadData(loadData);
 		Log.logInfo("(4/5) Load active connections");
 		connectionManager.LoadData(loadData, world);
 		Log.logInfo("(5/5) Load successfull!");
 		// Free memory since we don't need it anymore.
 		loadData = null;
-		
+
 		if (Log.logLevel == 0)
 			connectionManager.PrintConnections();
 	}
-	
+
 	// DEBUG TESTING
 	/*Log.logDebug("Tile AITile.SLOPE_FLAT " + AITile.SLOPE_FLAT);
 	Log.logDebug("Tile AITile.SLOPE_W " + AITile.SLOPE_W);
@@ -221,13 +221,13 @@ function NoNoCAB::Start()
 	Log.logDebug("Tile AITile.SLOPE_STEEP_E " + AITile.SLOPE_STEEP_E);
 	Log.logDebug("Tile AITile.SLOPE_STEEP_N " + AITile.SLOPE_STEEP_N);
 	Log.logDebug("Tile AITile.SLOPE_INVALID " + AITile.SLOPE_INVALID);*/
-	
+
 	// Required by the Framwork: start with sleep.
 	initialized = true;
 	this.Sleep(1);
-	
+
 	Finance.RepayLoan();
-	
+
 	// Set president name.
 	AICompany.SetPresidentName("C.E.O. Worm");
 
@@ -240,11 +240,11 @@ function NoNoCAB::Start()
 	}
 
 	AIRoad.SetCurrentRoadType(AIRoad.ROADTYPE_ROAD);
-	
+
 	// Start the threads!
 	world.pathFixer = pathFixer;
 	planner.AddThread(pathFixer);
-	
+
 	foreach (advisor in advisors)
 		planner.AddThread(advisor);
 
@@ -252,7 +252,7 @@ function NoNoCAB::Start()
 	while(true) {
 		UpdateSettings();			// Checks whether any user settings have been changed.
 		CheckLogLevel();			// Checks whether the log level has been changed.
-		
+
 		/* For Debugging/Testing
 		Log.logWarning( "------------------------------");
 		Log.logWarning( "Quarterly Income: " + AICompany.GetQuarterlyIncome(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
@@ -260,28 +260,28 @@ function NoNoCAB::Start()
 		Log.logWarning( "Delivered Cargo: " + AICompany.GetQuarterlyCargoDelivered(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
 		Log.logWarning( "Performance Rating: " + AICompany.GetQuarterlyPerformanceRating(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
 		Log.logWarning( "Company Value: " + AICompany.GetQuarterlyCompanyValue(AICompany.COMPANY_SELF,AICompany.CURRENT_QUARTER+1));
-		
+
 		Log.logWarning( "Monthly Road infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_ROAD));
 		Log.logWarning( "Monthly Rail infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_RAIL));
 		Log.logWarning( "Monthly Airport infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_AIRPORT));
 		Log.logWarning( "Monthly Station infrastructure costs: " + AIInfrastructure.GetMonthlyInfrastructureCosts(AICompany.COMPANY_SELF, AIInfrastructure.INFRASTRUCTURE_STATION));
 		Log.logWarning( "------------------------------");
 		*/
-		
+
 		local numberOfShips = 0;
 		local shipPercentageErrors = [];
-			
+
 		local numberOfTrains = 0;
 		local trainPercentageErrors = [];
-			
+
 		local numberOfTrucks = 0;
 		local truckPercentageErrors = [];
-			
+
 		local numberOfAirplanes = 0;
 		local airplanePercentageErrors = [];
-			
+
 		local counter = 0;
-			
+
 		Refinance();
 		connectionManager.DetectMissingConnections();
 		foreach (connection in connectionManager.allConnections) {
@@ -289,7 +289,7 @@ function NoNoCAB::Start()
 			connection.actualAvgEarnings = null;
 			local allVehiclesInGroup = AIVehicleList_Group(connection.vehicleGroupID);
 			local cargoIDTransported = connection.cargoID;
-			
+
 			local numberOfVehicles = 0;
 			local incomeError = 0;
 			local percentageError = 0;
@@ -299,22 +299,22 @@ function NoNoCAB::Start()
 
 			foreach (vehicle, value in allVehiclesInGroup) {
 				++counter;
-				
+
 				assert (AIVehicle.IsValidVehicle(vehicle));
-				if (AIVehicle.GetAge(vehicle) > 3  * Date.DAYS_PER_YEAR) 
+				if (AIVehicle.GetAge(vehicle) > 3  * Date.DAYS_PER_YEAR)
 				{
 					// Validate that the projected income of the vehicle is close to the actual earnings.
 					local transportEngineID = AIVehicle.GetEngineType(vehicle);
 					assert (AIEngine.IsValidEngine(transportEngineID));
-						
+
 					// Wagons will be handled by the vehicles pulling them.
 					if (AIEngine.IsWagon(transportEngineID))
 						continue;
-							
+
 					// Don't consider vehicles who have been ordered to stop.
 					if (AIVehicle.IsStoppedInDepot(vehicle))
 						continue;
-					
+
 					local cargoEngineID = null;
 					if (connection.vehicleTypes == AIVehicle.VT_RAIL)
 						cargoEngineID = AIVehicle.GetWagonEngineType(vehicle, 0);
@@ -338,7 +338,7 @@ function NoNoCAB::Start()
 						continue;
 					}
 					assert (vehicleCapacity > 0);
-						
+
 					// Calculate netto income per vehicle.
 					local transportedCargoPerVehiclePerMonth = (Date.DAYS_PER_MONTH.tofloat() / travelTime) * vehicleCapacity;
 
@@ -359,13 +359,13 @@ function NoNoCAB::Start()
 						brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeBackward.tointeger()) * transportedCargoPerVehiclePerMonth;
 					}
 					assert (brutoIncomePerMonthPerVehicle > 0);
-						
+
 					local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / Date.MONTHS_PER_YEAR;
 					assert (brutoCostPerMonthPerVehicle > 0);
 					local projectedIncomePerVehiclePerYear = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * Date.MONTHS_PER_YEAR;
-						
+
 					local actualIncomePerYear = AIVehicle.GetProfitLastYear(vehicle);
-						
+
 					local error = actualIncomePerYear - projectedIncomePerVehiclePerYear;
 					//Log.logWarning(error + " - Actual income: " + actualIncomePerYear + "; Projected income: " + projectedIncomePerVehiclePerYear);
 
@@ -378,7 +378,7 @@ function NoNoCAB::Start()
 				}
 				percentageList += "}";
 			}
-			
+
 			if (numberOfVehicles > 0) {
 				//if (AIVehicle.GetVehicleType(connection.vehicleTypes) == AIVehicle.VT_WATER) {
 				if (connection.vehicleTypes == AIVehicle.VT_WATER) {
@@ -400,7 +400,7 @@ function NoNoCAB::Start()
 				} else {
 					assert (false);
 				}
-				
+
 				local prospectedAverageEarnings = prospectedAvgEarnings / numberOfVehicles;
 				local actualAverageEarnings = actualAvgEarnings / numberOfVehicles;
 				connection.expectedAvgEarnings = prospectedAverageEarnings;
@@ -414,7 +414,7 @@ function NoNoCAB::Start()
 					Log.logInfo(infoString);
 			}
 		}
-		
+
 		Log.logWarning(counter + " vehicles inspected.");
 		if (numberOfShips > 0) {
 			Log.logWarning("Ships: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
@@ -423,26 +423,26 @@ function NoNoCAB::Start()
 		else {
 			Log.logWarning("No ships!");
 		}
-		
+
 		if (numberOfTrains > 0) {
 			Log.logWarning("Trains: " + numberOfTrains);// + " - average error: " + (trainIncomeError / numberOfTrains) + " (" + (trainPercentageError / numberOfTrains) + ").");
 			DrawHistogram(0.37, 3, 0.25, trainPercentageErrors);
 		} else
 			Log.logWarning("No trains!");
-		
+
 		if (numberOfTrucks > 0) {
 			Log.logWarning("Trucks: " + numberOfTrucks);// + " - average error: " + (truckIncomeError / numberOfTrucks) + " (" + (truckPercentageError / numberOfTrucks) + ").");
 			DrawHistogram(0.37, 3, 0.25, truckPercentageErrors);
 		} else
 			Log.logWarning("No trucks!");
-		
+
 		if (numberOfAirplanes > 0) {
 			Log.logWarning("Airplanes: " + numberOfAirplanes);//	 + " - average error: " + (airplaneIncomeError / numberOfAirplanes) + " (" + (airplanePercentageError / numberOfAirplanes) + ").");
 			DrawHistogram(0.37, 3, 0.25, airplanePercentageErrors);
 		} else
 			Log.logWarning("No airplanes!");
-		
-		
+
+
 		GameSettings.UpdateGameSettings();
 		Refinance();
 		Log.logWarning("Planner: Schedule and Execute");
@@ -456,21 +456,21 @@ function NoNoCAB::Start()
 		Refinance();
 		// Let the parlement decide on these reports and execute them!
 		parlement.ClearReports();
-		
+
 		// Process all the events which have been fired in the mean time.
 		Log.logWarning("Process World Events");
 		worldEventManager.ProcessEvents();
-		
+
 		// Update all active connections and check if vehicles need to be sold / replaced, etc.
 		Log.logWarning("Maintain Active connections");
 		connectionManager.MaintainActiveConnections();
-		
-		
+
+
 		Refinance();
 		AICompany.SetAutoRenewMoney(5000000);
 		Log.logWarning("Select reports");
 		parlement.SelectReports(reports);
-		
+
 		Log.logWarning("Execute and Select reports");
 		while (!parlement.ExecuteReports()) {
 			parlement.SelectReports(reports);
@@ -478,7 +478,7 @@ function NoNoCAB::Start()
 
 		Log.logWarning("Handle politics");
 		la.HandlePolitics();
-		
+
 		Refinance();
 		AICompany.SetAutoRenewMoney(1000000);
 	}
@@ -495,14 +495,14 @@ function DrawHistogram(min, max, step, data) {
 
 	for (local i = min; i < max + step; i += step) {
 		local counter = 0.0;
-		
-		// Count all the data elements between [i - step, i]; 
+
+		// Count all the data elements between [i - step, i];
 		foreach (number in data) {
 			if ((i > max || number < i) && (i == min || number > i - step)) {
 				++counter;
-			} 
+			}
 		}
-		
+
 		local percentage = counter / data.len();
 		local axis;
 		if (i == min)
@@ -511,17 +511,17 @@ function DrawHistogram(min, max, step, data) {
 			axis = " > max ";
 		else
 			axis = "# " + (i - step) + "-" + i;
-		
+
 		for (local j = axis.len(); j < 20; j++)
 			axis += " ";
 		axis += ": ";
-		
+
 		for (local j = 0; j < percentage * 25; j++) {
 			axis += "*";
 		}
-		
+
 		axis += "    " + counter + " / " + data.len() + " - " + percentage;
-		
+
 		Log.logWarning(axis);
 	}
 }
@@ -541,7 +541,7 @@ function Sqrt(i) {
 	}
 	return n;
 }
- 
+
 
 /** Required by interface . */
 function NoNoCAB::Stop() {
