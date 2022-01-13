@@ -1,6 +1,6 @@
 NoNoCAB is a competitive AI which uses trains, trucks, buses, aircraft and ships.
 
-Current version: 6, released April 23, 2019.
+Current version: 7, released January 13, 2022.
 
 Contents
 --------
@@ -63,6 +63,19 @@ this usually doesn't cause too many problems but certain industry
 types may be handled non optimal.
 There is no support for goal scripts meaning NoNoCAB will try to do its
 normal thing without consideration for any possible goals.
+When NoNoCAB has a lot of connections, especially long ones (trains),
+then it can run out of time when saving the game. It tries to detect
+that, because it would crash when its alloted saving times is up.
+If it detects that time is almost up it will stop saving its
+connections and prefere those connections to be lost to crashing.
+When loading a save game where that happened, it won't be able to
+load the connections that did not get saved. Instead it will since
+version 7 send all vehicles without a saved connection to depot and
+sell them eventually. After that stations without a saved connection
+where no vehicles are left will be removed. Note that roads, rail
+tracks and depots are not removed in that case. If you are playing
+with infrastructure costs enabled, this will affect NoNoCAB
+negatively.
 
 
 5. NoCAB links
