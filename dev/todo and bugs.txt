@@ -1,6 +1,37 @@
 NoNoCAB
 ========
 
+2022-01-13
+I see duplicate vehicle group names now. I guess it's trying again
+a connection already tried before. We should delete vehicle group
+names after closing connection. Or was this maybe caused by a "lost"
+connection that was not saved?
+
+2022-01-13
+Due to human/AI competitors, UFOS, or maybe even city building roads and
+rail tracks can get disconnected causing cars/trucks/train to not be able
+to reach destination.
+We need to have a function that regularly checks roads/tracks if they are
+still connected, or at least react to lost vehicles.
+
+2022-01-13
+Always build bridges/tunnels across rail tracks. If we have to cross
+multiple tracks and multiple cars are waiting in line we can get
+destroyed vehicles because some are waiting on the tracks for
+the second crossing.
+
+2022-01-09: I got an error Computed traveltime == 0!
+This was apparently for a ship connection.
+It built signs at the start and end points. The signs
+0 and 1 were right next to eachother.
+After continue, the same happened with the 0 and 1
+sign in exactly the same spot as before!
+Both signs were next to the connection start city for
+passengers.
+The destination city was getting fairly close but that
+was definitely too close to allow us to try finding a
+path for that connection.
+
 23-4-2019: I saw that apparently NoNoCab was stuck in a possible endless loop.
 It was building the first leg of a train line to an iron mine and due to other ais also building around there something went wrong.
 Depending on how NoNoCab does the building the station at the iron mine was not built but the track stopped close to it.
@@ -16,10 +47,10 @@ OpenTTD master (future v 1.10) fixes a bug that we were taking advantage of:
 We need to check which version is running and depending on that
 turn that feature on or off.
 
-See also: 
+See also:
 https://github.com/OpenTTD/OpenTTD/pull/7302
 
-Change: make crash chance at short runway independent of plane crash … #7302
+Change: make crash chance at short runway independent of plane crash #7302
 
 See SuperLib.Helper for how to check OpenTTD version.
 
@@ -35,11 +66,11 @@ hi Wormnest , there is a problem with NoNoCAB trains, something wrong happens at
 <Samu> i recall these same problems in NoCAB v499
 <Samu> well it does fine from 1950-2027~ish
 <Samu> always profiting, making more trains, increasing company value etc
-<Samu> then, at around that year, the profits started to decrease, the number of trains also 
+<Samu> then, at around that year, the profits started to decrease, the number of trains also
 <Samu> slowly...
 <Samu> and it's now approaching the year 2051, and only has about 40 trains, down from 1000 in 2027
 <Samu> it has been slowly selling them over the last 20 years
-<Wormnest> Maybe the tracks are expiring, can´t remember when that happens nor if nonocab considers that
+<Wormnest> Maybe the tracks are expiring, can't remember when that happens nor if nonocab considers that
 <Samu> let me investigate those savegames
 <Samu> actually, it's not around 2027, it's a bit earlier
 <Samu> yeah 2018, my bad
@@ -48,12 +79,12 @@ hi Wormnest , there is a problem with NoNoCAB trains, something wrong happens at
 <Samu> and rail engines
 <Samu> ok i see, it maxes out at around 2018, then there's a 4-5 year profits stagnates, and then from 2023 onwards it's only decreasing
 <Samu> i dunno which savegames you're interested in
-<Wormnest> not sure, don´t have time to look anyway currently
-<Samu> https://imgur.com/4SRtWK1 
+<Wormnest> not sure, don't have time to look anyway currently
+<Samu> https://imgur.com/4SRtWK1
 <Samu> the starting of its downfall
-<Wormnest> Maybe the problems is that there´s no electric rail in arctic iirc
+<Wormnest> Maybe the problems is that there's no electric rail in arctic iirc
 <Samu> there isn't
 <Samu> this is how it looks like right now https://imgur.com/ahjSNEV 3 years from reaching 2051 :(
-<Wormnest> Yeah I should have a look sometime that´s obvious
+<Wormnest> Yeah I should have a look sometime that's obvious
 
 ---
