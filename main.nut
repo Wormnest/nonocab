@@ -300,8 +300,8 @@ function NoNoCAB::Start()
 			foreach (vehicle, value in allVehiclesInGroup) {
 				++counter;
 
-				assert (AIVehicle.IsValidVehicle(vehicle));
-				if (AIVehicle.GetAge(vehicle) > 3  * Date.DAYS_PER_YEAR)
+				if (AIVehicle.IsValidVehicle(vehicle) &&
+					AIVehicle.GetAge(vehicle) > 3 * Date.DAYS_PER_YEAR)
 				{
 					// Validate that the projected income of the vehicle is close to the actual earnings.
 					local transportEngineID = AIVehicle.GetEngineType(vehicle);
