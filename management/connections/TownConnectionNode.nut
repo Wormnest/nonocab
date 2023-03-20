@@ -6,12 +6,18 @@ class TownConnectionNode extends ConnectionNode
 {
 
 	excludeList = null;			// List of all nodes where no station may be build!
+	cacheDate     = 0;			// Date the cache was set
+	cachedXSpread = 0;			// XSpread cached value
+	cachedYSpread = 0;			// YSpread cached value
 
 	constructor(id) {
 		ConnectionNode.constructor(TOWN_NODE, id);
 		excludeList = {};
-	}
-	
+		cacheDate     = 0;
+		cachedXSpread = 0;
+		cachedYSpread = 0;
+		}
+
 	/**
 	 * Get the location of this node.
 	 * @return The tile location of this node.
@@ -54,52 +60,76 @@ function TownConnectionNode::GetTownTiles(isAcceptingCargo, cargoID, keepBestOnl
 
 	// Check how large the town is.
 	local maxXSpread = 1;
+	local maxYSpread = 1;
 	local xBuildable = false;
 	local yBuildable = false;
 
-	while (!xBuildable || !yBuildable) {
+	if (AIDate.GetCurrentDate() - cacheDate > 365) {
+		// We had a crash due to excessive CPU usage below in list.Valuate(AITile.IsBuildable);
+		// maxYSpread was 175, and maxXSpread 286.
+		// We were not checking if a tile still belonged to the town causing us to
+		// go way beyond where our town was. So, we now add a check to make sure
+		// we stay close to the town, and as extra security set a limit on the spread.
+		local spreadLimit = 150;
 
-		// We need to check that tile stays within the borders of the map thus check if
-		// tile is valid before checking IsBuildableRectangle
-		if ((!Tile.IsValidTileMaxXOffset(tile, maxXSpread)) || AITile.IsWaterTile(tile + maxXSpread) || 
-			AITile.IsBuildableRectangle(tile + maxXSpread, stationSizeX, stationSizeY))
-			xBuildable = true;
+		while ((!xBuildable || !yBuildable) && maxXSpread < spreadLimit) {
 
-		if ((!Tile.IsValidTileMinXOffset(tile, maxXSpread - stationSizeX)) || AITile.IsWaterTile(tile - maxXSpread) ||
-			AITile.IsBuildableRectangle(tile - maxXSpread - stationSizeX, stationSizeX, stationSizeY)) {
-			yBuildable = true;
+			// We need to check that tile stays within the borders of the map thus check if
+			// tile is valid before checking IsBuildableRectangle
+			if ((!Tile.IsValidTileMaxXOffset(tile, maxXSpread)) || AITile.IsWaterTile(tile + maxXSpread) ||
+				(!AITown.IsWithinTownInfluence(id, tile + maxXSpread)) ||
+				AITile.IsBuildableRectangle(tile + maxXSpread, stationSizeX, stationSizeY))
+				xBuildable = true;
+
+			if ((!Tile.IsValidTileMinXOffset(tile, maxXSpread - stationSizeX)) || AITile.IsWaterTile(tile - maxXSpread) ||
+				(!AITown.IsWithinTownInfluence(id, tile - maxXSpread)) ||
+				AITile.IsBuildableRectangle(tile - maxXSpread - stationSizeX, stationSizeX, stationSizeY)) {
+				yBuildable = true;
+			}
+
+			maxXSpread++;
+		}
+		maxXSpread += stationSizeX * 2;
+
+		// Do the same for the y value.
+		xBuildable = false;
+		yBuildable = false;
+
+		while ((!xBuildable || !yBuildable) && maxYSpread < spreadLimit) {
+
+			// We need to check that tile stays within the borders of the map thus check if
+			// tile is valid before checking IsBuildableRectangle
+			local isValidMaxY = Tile.IsValidTileMaxYOffset(tile, maxYSpread);
+			local targetTile = tile + maxYSpread * AIMap.GetMapSizeX();
+			if ((!isValidMaxY) || AITile.IsWaterTile(targetTile) ||
+				(!AITown.IsWithinTownInfluence(id, targetTile)) ||
+				AITile.IsBuildableRectangle(targetTile, stationSizeX, stationSizeY))
+				xBuildable = true;
+
+			local isValidMinY = Tile.IsValidTileMinYOffset(tile, maxYSpread+stationSizeY);
+			targetTile = tile - maxYSpread * AIMap.GetMapSizeX() - stationSizeY * AIMap.GetMapSizeX();
+			if ((!isValidMinY) || AITile.IsWaterTile(targetTile) ||
+				(!AITown.IsWithinTownInfluence(id, targetTile)) ||
+				AITile.IsBuildableRectangle(targetTile, stationSizeX, stationSizeY))
+				yBuildable = true;
+
+			maxYSpread++;
 		}
 
-		maxXSpread++;
+		maxYSpread += stationSizeY;
+		Log.logDebug("GetTownTiles: Max spread X: " + maxXSpread + ", Y: " + maxYSpread);
+		cachedXSpread = maxXSpread;
+		cachedYSpread = maxYSpread;
+		cacheDate     = AIDate.GetCurrentDate();
 	}
-	maxXSpread += stationSizeX * 2;
-
-	// Do the same for the y value.
-	local maxYSpread = 1;
-	xBuildable = false;
-	yBuildable = false;
-
-	while (!xBuildable || !yBuildable) {
-
-		// We need to check that tile stays within the borders of the map thus check if
-		// tile is valid before checking IsBuildableRectangle
-		local isValidMaxY = Tile.IsValidTileMaxYOffset(tile, maxYSpread);
-		local targetTile = tile + maxYSpread * AIMap.GetMapSizeX();
-		if ((!isValidMaxY) || AITile.IsWaterTile(targetTile) || AITile.IsBuildableRectangle(targetTile, stationSizeX, stationSizeY))
-			xBuildable = true;
-
-		local isValidMinY = Tile.IsValidTileMinYOffset(tile, maxYSpread+stationSizeY);
-		targetTile = tile - maxYSpread * AIMap.GetMapSizeX() - stationSizeY * AIMap.GetMapSizeX();
-		if ((!isValidMinY) || AITile.IsWaterTile(targetTile) || AITile.IsBuildableRectangle(targetTile, stationSizeX, stationSizeY))
-			yBuildable = true;
-
-		maxYSpread++;
+	else {
+		maxXSpread = cachedXSpread;
+		maxYSpread = cachedYSpread;
+		Log.logDebug("GetTownTiles: using cached spread X: " + maxXSpread + ", Y: " + maxYSpread);
 	}
-
-	maxYSpread += stationSizeY;
 
 	local list = Tile.GetRectangle(tile, maxXSpread, maxYSpread);
-	
+
 	// Purge all unnecessary entries from the list.
 	list.Valuate(AITile.IsBuildable);
 	list.KeepAboveValue(0);
