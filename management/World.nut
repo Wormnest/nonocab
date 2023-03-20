@@ -157,7 +157,7 @@ function World::BuildIndustryTree() {
 	town_list.Valuate(AITown.GetPopulation);
 	Log.logInfo("Build town list consisting of " + town_list.Count() + " towns.");
 	// On large maps we can get way to many towns. We should limit it.
-	// Maybe in the future let the use set it within limits depending on how much memory they have.
+	// Maybe in the future let the user set it within limits depending on how much memory they have.
 	// For now I think a reasonable limit is 1000 towns.
 	// On a test 2kx2k map I got 1600 towns on a 4kx4k map 7680 towns.
 	if (town_list.Count() > MAX_TOWNS) {
@@ -461,7 +461,7 @@ function World::PrintNode(node, depth) {
 	Log.logDebug(string + node.GetName() + " -> ");
 
 	foreach (transport in node.connections) {
-		Log.logDebug("Vehcile travel time: " + transport.timeToTravelTo);
+		Log.logDebug("Vehicle travel time: " + transport.timeToTravelTo);
 		Log.logDebug("Cargo: " + AICargo.GetCargoLabel(transport.cargoID));
 		Log.logDebug("Cost: " + node.costToBuild);
 	}
