@@ -1,6 +1,11 @@
 NoNoCAB
 ========
 
+2023-03-20
+On larger maps loading all town info takes considerable time. Maybe it would
+be better to do this incrementally and start working on other things with a
+partial town list.
+
 2022-01-13
 I see duplicate vehicle group names now. I guess it's trying again
 a connection already tried before. We should delete vehicle group
