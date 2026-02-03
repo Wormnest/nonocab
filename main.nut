@@ -358,10 +358,14 @@ function NoNoCAB::Start()
 					if (connection.bilateralConnection || connection.travelToNode.nodeType == ConnectionNode.TOWN_NODE && connection.travelFromNode.nodeType == ConnectionNode.TOWN_NODE) {
 						brutoIncomePerMonthPerVehicle += AICargo.GetCargoIncome(cargoIDTransported, distance, travelTimeBackward.tointeger()) * transportedCargoPerVehiclePerMonth;
 					}
-					assert (brutoIncomePerMonthPerVehicle > 0);
+					if (brutoIncomePerMonthPerVehicle <= 0) {
+						Log.logWarning("Invalid bruto income per month per vehicle: " + brutoIncomePerMonthPerVehicle);
+					}
 
 					local brutoCostPerMonthPerVehicle = AIEngine.GetRunningCost(transportEngineID) / Date.MONTHS_PER_YEAR;
-					assert (brutoCostPerMonthPerVehicle > 0);
+					if (brutoCostPerMonthPerVehicle <= 0) {
+						Log.logWarning("Invalid bruto cost per month per vehicle: " + brutoCostPerMonthPerVehicle);
+					}
 					local projectedIncomePerVehiclePerYear = (brutoIncomePerMonthPerVehicle - brutoCostPerMonthPerVehicle) * Date.MONTHS_PER_YEAR;
 
 					local actualIncomePerYear = AIVehicle.GetProfitLastYear(vehicle);
