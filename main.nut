@@ -281,6 +281,7 @@ function NoNoCAB::Start()
 		local airplanePercentageErrors = [];
 
 		local counter = 0;
+		local valid_count = 0;
 
 		Refinance();
 		connectionManager.DetectMissingConnections();
@@ -374,6 +375,7 @@ function NoNoCAB::Start()
 					//Log.logWarning(error + " - Actual income: " + actualIncomePerYear + "; Projected income: " + projectedIncomePerVehiclePerYear);
 
 					++numberOfVehicles;
+					++valid_count;
 					incomeError += error;
 					percentageError += projectedIncomePerVehiclePerYear / actualIncomePerYear;
 					percentageList += percentageError + ", ";
@@ -419,32 +421,32 @@ function NoNoCAB::Start()
 			}
 		}
 
-		Log.logWarning(counter + " vehicles inspected.");
+		Log.logWarning(counter + " vehicles inspected, of which " + valid_count + " were used to calculate stats (Min. 3 years old).");
 		if (numberOfShips > 0) {
-			Log.logWarning("Ships: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
+			Log.logWarning("Ship connections: " + numberOfShips);// + " - average error: " + (shipIncomeError / numberOfShips) + " (" + (shipPercentageError / numberOfShips) + ").");
 			DrawHistogram(0.37, 3, 0.25, shipPercentageErrors);
 		}
 		else {
-			Log.logWarning("No ships!");
+			Log.logWarning("No ship connections!");
 		}
 
 		if (numberOfTrains > 0) {
-			Log.logWarning("Trains: " + numberOfTrains);// + " - average error: " + (trainIncomeError / numberOfTrains) + " (" + (trainPercentageError / numberOfTrains) + ").");
+			Log.logWarning("Train connections: " + numberOfTrains);// + " - average error: " + (trainIncomeError / numberOfTrains) + " (" + (trainPercentageError / numberOfTrains) + ").");
 			DrawHistogram(0.37, 3, 0.25, trainPercentageErrors);
 		} else
-			Log.logWarning("No trains!");
+			Log.logWarning("No train connections!");
 
 		if (numberOfTrucks > 0) {
-			Log.logWarning("Trucks: " + numberOfTrucks);// + " - average error: " + (truckIncomeError / numberOfTrucks) + " (" + (truckPercentageError / numberOfTrucks) + ").");
+			Log.logWarning("Truck/Bus connections: " + numberOfTrucks);// + " - average error: " + (truckIncomeError / numberOfTrucks) + " (" + (truckPercentageError / numberOfTrucks) + ").");
 			DrawHistogram(0.37, 3, 0.25, truckPercentageErrors);
 		} else
-			Log.logWarning("No trucks!");
+			Log.logWarning("No truck/bus connections!");
 
 		if (numberOfAirplanes > 0) {
-			Log.logWarning("Airplanes: " + numberOfAirplanes);//	 + " - average error: " + (airplaneIncomeError / numberOfAirplanes) + " (" + (airplanePercentageError / numberOfAirplanes) + ").");
+			Log.logWarning("Airplane connections: " + numberOfAirplanes);//	 + " - average error: " + (airplaneIncomeError / numberOfAirplanes) + " (" + (airplanePercentageError / numberOfAirplanes) + ").");
 			DrawHistogram(0.37, 3, 0.25, airplanePercentageErrors);
 		} else
-			Log.logWarning("No airplanes!");
+			Log.logWarning("No airplane connections!");
 
 
 		GameSettings.UpdateGameSettings();
