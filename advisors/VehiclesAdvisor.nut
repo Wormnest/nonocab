@@ -42,11 +42,11 @@ function VehiclesAdvisor::GetVehiclesWaiting(stationLocation, connection) {
 			if (!isRail && AIVehicle.GetVehicleType(vehicleID) == AIVehicle.VT_RAIL)
 				isRail = true;
 
-			if (AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) > 0 && 
-				(AIMap().DistanceManhattan(AIVehicle().GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) || isRail) &&
-				(AIVehicle().GetCurrentSpeed(vehicleID) < 10 || isAir) &&
+			if (AIMap.DistanceManhattan(AIVehicle.GetLocation(vehicleID), stationLocation) > 0 && 
+				(AIMap.DistanceManhattan(AIVehicle.GetLocation(vehicleID), stationLocation) < (isAir ? 30 : 7) || isRail) &&
+				(AIVehicle.GetCurrentSpeed(vehicleID) < 10 || isAir) &&
 				(AIVehicle.GetState(vehicleID) == AIVehicle.VS_RUNNING || AIVehicle.GetState(vehicleID) == AIVehicle.VS_BROKEN) &&
-				AIOrder().GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
+				AIOrder.GetOrderDestination(vehicleID, AIOrder.ORDER_CURRENT) == stationLocation) {
 
 				nrVehicles--;
 					
@@ -72,7 +72,7 @@ function VehiclesAdvisor::Update(loopCounter) {
 
 		// Make sure we don't update a connection to often!
 		local currentDate = AIDate.GetCurrentDate();
-		if (Date().GetDaysBetween(connection.lastChecked, currentDate) < 30) {
+		if (Date.GetDaysBetween(connection.lastChecked, currentDate) < 30) {
 			continue;
 		}
 		
