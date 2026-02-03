@@ -36,6 +36,8 @@ passengers.
 The destination city was getting fairly close but that
 was definitely too close to allow us to try finding a
 path for that connection.
+2026-02-03 - also seen this for a bus connection. Due to water start and
+end locations were the same.
 
 23-4-2019: I saw that apparently NoNoCab was stuck in a possible endless loop.
 It was building the first leg of a train line to an iron mine and due to other ais also building around there something went wrong.
