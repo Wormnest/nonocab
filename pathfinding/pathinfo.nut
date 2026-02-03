@@ -253,13 +253,19 @@ function PathInfo::GetTravelTime(engineID, cargoEngineID, forward) {
 	else {
 		Log.logWarning("Length roadList: " + roadList.len() + ", vehicleType: " + vehicleType);
 		if (roadList.len() < 2)
-			Log.logError("roadList too short!");
+			Log.logError("roadList too short while computing TravelTime!");
 		else {
-			Log.logWarning("Building signs at start and end points.");
-			AISign.BuildSign(roadList[0].tile,"0");
-			AISign.BuildSign(roadList[roadList.len()-1].tile,"1");
+			local manhattanDistance = AIMap.DistanceManhattan(roadList[0].tile, roadList[roadList.len() - 1].tile);
+
+			if (manhattanDistance < 10) {
+				Log.logWarning("Start and End points too close while computing TravelTime!");
+			} else {
+				Log.logError("Computed TravelTime == 0! Something is wrong!");
+				Log.logWarning("Building signs for debugging at start and end points.");
+				AISign.BuildSign(roadList[0].tile,"0");
+				AISign.BuildSign(roadList[roadList.len()-1].tile,"1");
+			}
 		}
-		Log.logError("Computed TravelTime == 0! Something is wrong!");
 	}
 	return time;
 }
